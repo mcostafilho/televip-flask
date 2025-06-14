@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Meus Grupos - TeleVIP{% endblock %}
+
+{% block content %}
+<div class="bg-light py-4">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h3 mb-0">Meus Grupos</h1>
+                <p class="text-muted mb-0">Gerencie seus grupos VIP do Telegram</p>
+            </div>
+            <div class="col-auto">
+                <a href="{{ url_for('groups.create') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Novo Grupo
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+    {% if groups %}
+        <div class="row g-4">
+            {% for group in groups %}
+            <div class="col-lg-6">
+                <div class="card group-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h5 class="card-title mb-1">{{ group.name }}</h5>
+                                <p class="text-muted">{{ group.description or 'Sem descrição' }}</p>
+                            </div>
+                            <div>
+                                {% if group.is_active %}
+                                    <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inativo</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row text-center mb-3">
+                            <div class="col-4">
+                                <div class="fw-bold fs-4">{{ group.total_subscribers }}</div>
+                                <small class="text-muted">Assinantes</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fw-bold fs-4">{{ group.pricing_plans.count() }}</div>
+                                <small class="text-muted">Planos</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fw-bold fs-4 text-success">R$ 0</div>
+                                <small class="text-muted">Este Mês</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small text-muted">Link de Assinatura:</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" 
+                                       value="https://t.me/{{ config.BOT_USERNAME }}?start=g_{{ group.telegram_id }}"
+                                       id="link_{{ group.id }}" readonly>
+                                <button class="btn btn-outline-secondary" type="button"
+                                        onclick="copyLink('link_{{ group.id }}')">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('groups.edit', id=group.id) }}" class="btn btn-primary flex-fill">
+                                <i class="bi bi-gear"></i> Gerenciar
+                            </a>
+                            <button class="btn btn-outline-primary" 
+                                    onclick="showStats({{ group.id }})">
+                                <i class="bi bi-bar-chart"></i> Stats
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card">
+            <div class="card-body">
+                <div class="empty-state py-5">
+                    <i class="bi bi-collection"></i>
+                    <h4>Nenhum grupo ainda</h4>
+                    <p>Crie seu primeiro grupo VIP e comece a monetizar!</p>
+                    <a href="{{ url_for('groups.create') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Criar Primeiro Grupo
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal de Estatísticas -->
+<div class="modal fade" id="statsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">📊 Estatísticas do Grupo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyLink(inputId) {
+    const input = document.getElementById(inputId);
+    input.select();
+    document.execCommand('copy');
+    
+    // Feedback visual
+    const btn = input.nextElementSibling;
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-check"></i>';
+    btn.classList.add('btn-success');
+    btn.classList.remove('btn-outline-secondary');
+    
+    setTimeout(() => {
+        btn.innerHTML = originalHTML;
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-outline-secondary');
+    }, 2000);
+}
+
+function showStats(groupId) {
+    const modal = new bootstrap.Modal(document.getElementById('statsModal'));
+    modal.show();
+    
+    // Aqui você faria uma requisição AJAX para buscar as estatísticas
+    // Por enquanto, vamos simular
+    setTimeout(() => {
+        document.querySelector('#statsModal .modal-body').innerHTML = `
+            <div class="row g-3">
+                <div class="col-md-4 text-center">
+                    <h3 class="text-primary">152</h3>
+                    <p class="text-muted">Total de Assinantes</p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <h3 class="text-success">R$ 1.520</h3>
+                    <p class="text-muted">Receita Total</p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <h3 class="text-warning">89%</h3>
+                    <p class="text-muted">Taxa de Renovação</p>
+                </div>
+            </div>
+            <hr>
+            <canvas id="groupChart" height="100"></canvas>
+        `;
+        
+        // Criar gráfico
+        const ctx = document.getElementById('groupChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+                datasets: [{
+                    label: 'Novos Assinantes',
+                    data: [12, 19, 23, 25, 22, 30],
+                    backgroundColor: '#0088cc'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }, 500);
+}
+</script>
+{% endblock %}

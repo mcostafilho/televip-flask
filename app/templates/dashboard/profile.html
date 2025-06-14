@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Meu Perfil - TeleVIP{% endblock %}
+
+{% block content %}
+<div class="bg-light py-4">
+    <div class="container">
+        <h1 class="h3 mb-0">Meu Perfil</h1>
+        <p class="text-muted mb-0">Gerencie suas informações pessoais e configurações</p>
+    </div>
+</div>
+
+<div class="container py-4">
+    <div class="row">
+        <!-- Informações do Perfil -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-person-circle" style="font-size: 5rem; color: #6c757d;"></i>
+                    </div>
+                    <h4>{{ current_user.name }}</h4>
+                    <p class="text-muted">@{{ current_user.username }}</p>
+                    
+                    <hr>
+                    
+                    <div class="text-start">
+                        <p class="mb-2">
+                            <i class="bi bi-envelope text-muted"></i> 
+                            {{ current_user.email }}
+                        </p>
+                        <p class="mb-2">
+                            <i class="bi bi-telegram text-primary"></i> 
+                            {% if current_user.telegram_id %}
+                                ID: {{ current_user.telegram_id }}
+                            {% else %}
+                                <span class="text-muted">Não conectado</span>
+                            {% endif %}
+                        </p>
+                        <p class="mb-0">
+                            <i class="bi bi-calendar text-muted"></i> 
+                            Membro desde {{ current_user.created_at.strftime('%d/%m/%Y') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Estatísticas -->
+            <div class="card mt-3">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">📊 Estatísticas</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Grupos Criados:</span>
+                        <strong>{{ stats.total_groups }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Assinantes Ativos:</span>
+                        <strong>{{ stats.total_subscribers }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Receita Total:</span>
+                        <strong class="text-success">R$ {{ "%.2f"|format(stats.total_revenue) }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Saques Pendentes:</span>
+                        <strong class="text-warning">{{ stats.pending_withdrawals }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Formulário de Edição -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">✏️ Editar Informações</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <!-- Informações Básicas -->
+                        <h6 class="text-primary mb-3">Informações Básicas</h6>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nome Completo</label>
+                                <input type="text" name="name" class="form-control" 
+                                       value="{{ current_user.name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                <input type="email" name="email" class="form-control" 
+                                       value="{{ current_user.email }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Username</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">@</span>
+                                    <input type="text" class="form-control" 
+                                           value="{{ current_user.username }}" readonly 
+                                           style="background-color: #f8f9fa;">
+                                </div>
+                                <small class="text-muted">Username não pode ser alterado</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Telegram ID</label>
+                                <input type="text" name="telegram_id" class="form-control" 
+                                       value="{{ current_user.telegram_id or '' }}"
+                                       placeholder="Ex: 123456789">
+                                <small class="text-muted">ID do seu usuário no Telegram</small>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Alterar Senha -->
+                        <h6 class="text-primary mb-3">Alterar Senha</h6>
+                        <p class="text-muted small">Deixe em branco se não quiser alterar a senha</p>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Senha Atual</label>
+                                <input type="password" name="current_password" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Nova Senha</label>
+                                <input type="password" name="new_password" class="form-control" minlength="6">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Confirmar Nova Senha</label>
+                                <input type="password" name="confirm_password" class="form-control" minlength="6">
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Notificações -->
+                        <h6 class="text-primary mb-3">Preferências de Notificação</h6>
+                        
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="notifyNewSub" checked>
+                            <label class="form-check-label" for="notifyNewSub">
+                                Notificar sobre novos assinantes
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="notifyRenewal" checked>
+                            <label class="form-check-label" for="notifyRenewal">
+                                Notificar sobre renovações
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="notifyWithdrawal" checked>
+                            <label class="form-check-label" for="notifyWithdrawal">
+                                Notificar quando saques forem processados
+                            </label>
+                        </div>
+                        
+                        <!-- Botões -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Salvar Alterações
+                            </button>
+                            <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Zona de Perigo -->
+            <div class="card mt-4 border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h6 class="mb-0">⚠️ Zona de Perigo</h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Ações irreversíveis. Prossiga com cuidado.</p>
+                    <button class="btn btn-outline-danger" onclick="confirmDeleteAccount()">
+                        <i class="bi bi-trash"></i> Excluir Minha Conta
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Validar senhas
+document.querySelector('form').addEventListener('submit', function(e) {
+    const newPassword = document.querySelector('[name="new_password"]').value;
+    const confirmPassword = document.querySelector('[name="confirm_password"]').value;
+    
+    if (newPassword && newPassword !== confirmPassword) {
+        e.preventDefault();
+        alert('As senhas não coincidem!');
+        return false;
+    }
+});
+
+function confirmDeleteAccount() {
+    if (confirm('Tem certeza que deseja excluir sua conta? Esta ação é IRREVERSÍVEL!')) {
+        if (confirm('Esta é sua última chance. Todos os seus grupos e dados serão perdidos. Continuar?')) {
+            // Implementar exclusão de conta
+            alert('Funcionalidade em desenvolvimento');
+        }
+    }
+}
+</script>
+{% endblock %}

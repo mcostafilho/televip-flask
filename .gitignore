@@ -1,0 +1,78 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+*.egg-info/
+
+# Flask
+instance/
+.webassets-cache
+*.db
+*.sqlite
+televip.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+.env.production
+*.env
+
+# Logs
+logs/
+*.log
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Stripe CLI
+stripe-cli/
+
+# Sensitive files
+config.py.backup
+fix_database_path.py
+fix_python313.py
+use_root_db.py
+force_absolute_path.py
+reinstall_bot.py
+
+# Bot test files
+bot_simple.py
+bot_working.py
+bot_httpx.py
+bot_v13.py
+bot_debug.py
+test_bot.py
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*~
+
+# OS files
+Thumbs.db
+Desktop.ini
+
+# Node (if using any JS)
+node_modules/
+
+# Certificates
+*.pem
+*.key
+*.crt

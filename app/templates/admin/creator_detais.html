@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes: {{ creator.name }} - Admin TeleVIP{% endblock %}
+
+{% block content %}
+<div class="bg-danger text-white py-4 mb-4">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.index') }}" class="text-white">Admin</a></li>
+                <li class="breadcrumb-item active text-white">{{ creator.name }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Informações do Criador -->
+    <div class="card mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+                <i class="bi bi-person-circle"></i> {{ creator.name }}
+            </h4>
+            <div>
+                <a href="{{ url_for('admin.view_creator_dashboard', creator_id=creator.id) }}" 
+                   class="btn btn-primary">
+                    <i class="bi bi-speedometer2"></i> Ver Dashboard
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Email:</strong> {{ creator.email }}</p>
+                    <p><strong>Username:</strong> @{{ creator.username }}</p>
+                    <p><strong>Telegram ID:</strong> {{ creator.telegram_id or 'Não configurado' }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Cadastro:</strong> {{ creator.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                    <p><strong>Saldo Atual:</strong> <span class="text-success fw-bold">R$ {{ "%.2f"|format(creator.balance) }}</span></p>
+                    <p><strong>Total Ganho:</strong> R$ {{ "%.2f"|format(creator.total_earned or 0) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-primary">{{ stats.total_groups }}</h3>
+                    <p class="mb-0">Grupos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-success">{{ stats.active_subscribers }}</h3>
+                    <p class="mb-0">Assinantes Ativos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-info">R$ {{ "%.2f"|format(stats.total_revenue) }}</h3>
+                    <p class="mb-0">Receita Total</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-warning">R$ {{ "%.2f"|format(stats.pending_withdrawal) }}</h3>
+                    <p class="mb-0">Saques Pendentes</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grupos do Criador -->
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">📱 Grupos</h5>
+        </div>
+        <div class="card-body">
+            {% if groups %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>ID Telegram</th>
+                            <th>Assinantes</th>
+                            <th>Status</th>
+                            <th>Criado em</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for group in groups %}
+                        <tr>
+                            <td>{{ group.name }}</td>
+                            <td><code>{{ group.telegram_id }}</code></td>
+                            <td>{{ group.total_subscribers }}</td>
+                            <td>
+                                {% if group.is_active %}
+                                    <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ group.created_at.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                <a href="{{ url_for('groups.subscribers', id=group.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    Ver Assinantes
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-center text-muted py-3">Nenhum grupo criado</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Saques Pendentes -->
+    {% if pending_withdrawals %}
+    <div class="card mb-4">
+        <div class="card-header bg-warning">
+            <h5 class="mb-0">⚠️ Saques Pendentes</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Valor</th>
+                            <th>Chave PIX</th>
+                            <th>Solicitado em</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for withdrawal in pending_withdrawals %}
+                        <tr>
+                            <td class="fw-bold">R$ {{ "%.2f"|format(withdrawal.amount) }}</td>
+                            <td><code>{{ withdrawal.pix_key }}</code></td>
+                            <td>{{ withdrawal.requested_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin.process_withdrawal', id=withdrawal.id) }}" 
+                                      style="display: inline;">
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        ✅ Processar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Últimas Transações -->
+    <div class="card">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">💰 Últimas Transações</h5>
+        </div>
+        <div class="card-body">
+            {% if recent_transactions %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Usuário</th>
+                            <th>Grupo</th>
+                            <th>Plano</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in recent_transactions %}
+                        <tr>
+                            <td>{{ transaction.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>@{{ transaction.subscription.telegram_username }}</td>
+                            <td>{{ transaction.subscription.group.name }}</td>
+                            <td>{{ transaction.subscription.plan.name }}</td>
+                            <td class="fw-bold text-success">R$ {{ "%.2f"|format(transaction.net_amount) }}</td>
+                            <td>
+                                {% if transaction.status == 'completed' %}
+                                    <span class="badge bg-success">Pago</span>
+                                {% else %}
+                                    <span class="badge bg-warning">{{ transaction.status }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-center text-muted py-3">Nenhuma transação encontrada</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

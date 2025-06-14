@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Painel Admin - TeleVIP{% endblock %}
+
+{% block content %}
+<!-- Header Admin -->
+<div class="bg-danger text-white py-4 mb-4">
+    <div class="container">
+        <h1 class="h3 mb-0">🔒 Painel Administrativo</h1>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Estatísticas -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5>Criadores</h5>
+                    <h2>{{ stats.total_creators }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5>Grupos</h5>
+                    <h2>{{ stats.total_groups }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5>Assinaturas Ativas</h5>
+                    <h2>{{ stats.total_subscriptions }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning">
+                <div class="card-body text-center">
+                    <h5>Saques Pendentes</h5>
+                    <h2>{{ stats.pending_withdrawals }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Saques Pendentes -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">💰 Saques Pendentes - Total: R$ {{ "%.2f"|format(total_to_pay) }}</h5>
+        </div>
+        <div class="card-body">
+            {% if pending_withdrawals %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Criador</th>
+                                <th>Valor</th>
+                                <th>PIX</th>
+                                <th>Solicitado em</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for withdrawal in pending_withdrawals %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('admin.view_creator_dashboard', creator_id=withdrawal.creator.id) }}" 
+                                       class="text-decoration-none">
+                                        {{ withdrawal.creator.name }}
+                                        <i class="bi bi-box-arrow-up-right small"></i>
+                                    </a>
+                                </td>
+                                <td><strong>R$ {{ "%.2f"|format(withdrawal.amount) }}</strong></td>
+                                <td><code>{{ withdrawal.pix_key }}</code></td>
+                                <td>{{ withdrawal.requested_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('admin.process_withdrawal', id=withdrawal.id) }}" style="display: inline;">
+                                        <button type="submit" class="btn btn-success btn-sm" 
+                                                onclick="return confirm('Confirma que o PIX foi realizado?')">
+                                            ✅ Marcar como Pago
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-center text-muted py-3">Nenhum saque pendente</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Lista de Criadores -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">👥 Criadores de Conteúdo</h5>
+            <div>
+                <button class="btn btn-sm btn-outline-primary" onclick="filterCreators('all')">Todos</button>
+                <button class="btn btn-sm btn-outline-success" onclick="filterCreators('active')">Ativos</button>
+                <button class="btn btn-sm btn-outline-warning" onclick="filterCreators('pending')">Com Saque Pendente</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="creatorsTable">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Username</th>
+                            <th>Grupos</th>
+                            <th>Assinantes</th>
+                            <th>Saldo</th>
+                            <th>Total Ganho</th>
+                            <th>Cadastro</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for creator in creators %}
+                        <tr data-status="{{ 'pending' if creator.pending_withdrawal else 'active' }}">
+                            <td>
+                                <strong>{{ creator.name }}</strong>
+                                {% if creator.pending_withdrawal %}
+                                    <span class="badge bg-warning ms-1">Saque Pendente</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ creator.email }}</td>
+                            <td>@{{ creator.username }}</td>
+                            <td>{{ creator.groups.count() }}</td>
+                            <td>{{ creator.total_subscribers }}</td>
+                            <td class="fw-bold">R$ {{ "%.2f"|format(creator.balance) }}</td>
+                            <td>R$ {{ "%.2f"|format(creator.total_earned or 0) }}</td>
+                            <td>{{ creator.created_at.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('admin.view_creator_dashboard', creator_id=creator.id) }}" 
+                                       class="btn btn-primary" title="Ver Dashboard">
+                                        <i class="bi bi-speedometer2"></i>
+                                    </a>
+                                    <a href="{{ url_for('admin.creator_details', creator_id=creator.id) }}" 
+                                       class="btn btn-info" title="Detalhes">
+                                        <i class="bi bi-info-circle"></i>
+                                    </a>
+                                    <button class="btn btn-warning" onclick="sendMessage({{ creator.id }})" 
+                                            title="Enviar Mensagem">
+                                        <i class="bi bi-envelope"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Mensagem -->
+<div class="modal fade" id="messageModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Enviar Mensagem</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="messageForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Assunto</label>
+                        <input type="text" name="subject" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mensagem</label>
+                        <textarea name="message" class="form-control" rows="4" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Enviar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterCreators(status) {
+    const rows = document.querySelectorAll('#creatorsTable tbody tr');
+    
+    rows.forEach(row => {
+        if (status === 'all') {
+            row.style.display = '';
+        } else if (status === 'pending' && row.dataset.status === 'pending') {
+            row.style.display = '';
+        } else if (status === 'active' && row.dataset.status === 'active') {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function sendMessage(creatorId) {
+    const modal = new bootstrap.Modal(document.getElementById('messageModal'));
+    const form = document.getElementById('messageForm');
+    form.action = `/admin/creator/${creatorId}/message`;
+    modal.show();
+}
+</script>
+{% endblock %}

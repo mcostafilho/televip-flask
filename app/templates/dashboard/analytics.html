@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - TeleVIP{% endblock %}
+
+{% block content %}
+<div class="bg-light py-4">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h3 mb-0">Analytics</h1>
+                <p class="text-muted mb-0">Análise detalhada do seu desempenho</p>
+            </div>
+            <div class="col-auto">
+                <!-- Seletor de Período -->
+                <form method="GET" class="d-inline">
+                    <select name="period" class="form-select" onchange="this.form.submit()">
+                        <option value="7" {{ 'selected' if period == '7' }}>Últimos 7 dias</option>
+                        <option value="30" {{ 'selected' if period == '30' }}>Últimos 30 dias</option>
+                        <option value="90" {{ 'selected' if period == '90' }}>Últimos 90 dias</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+    <!-- Cards de Métricas -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Receita Total</h6>
+                    <h3 class="mb-0 text-success">R$ {{ "%.2f"|format(stats.total_revenue) }}</h3>
+                    <small class="text-muted">no período selecionado</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Total de Transações</h6>
+                    <h3 class="mb-0">{{ stats.total_transactions }}</h3>
+                    <small class="text-muted">pagamentos processados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Ticket Médio</h6>
+                    <h3 class="mb-0 text-primary">R$ {{ "%.2f"|format(stats.average_ticket) }}</h3>
+                    <small class="text-muted">por transação</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Assinantes Ativos</h6>
+                    <h3 class="mb-0">{{ stats.total_subscribers }}</h3>
+                    <small class="text-muted">em todos os grupos</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Novos Assinantes</h6>
+                    <h3 class="mb-0 text-info">{{ stats.new_subscribers }}</h3>
+                    <small class="text-muted">no período</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Taxa de Conversão</h6>
+                    <h3 class="mb-0">
+                        {% if stats.total_subscribers > 0 %}
+                            {{ "%.1f"|format((stats.new_subscribers / stats.total_subscribers * 100)) }}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </h3>
+                    <small class="text-muted">novos/total</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row mb-4">
+        <!-- Receita por Dia -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">📈 Receita por Dia</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Receita por Grupo -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">📊 Receita por Grupo</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="groupChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <!-- Novos Assinantes -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">👥 Novos Assinantes por Dia</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="subscribersChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Receita por Plano -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">💰 Receita por Plano</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="planChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Performance por Grupo -->
+    <div class="card">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">📱 Performance por Grupo</h5>
+        </div>
+        <div class="card-body">
+            {% if groups %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Grupo</th>
+                            <th>Assinantes</th>
+                            <th>Receita (período)</th>
+                            <th>Ticket Médio</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for group in groups %}
+                        <tr>
+                            <td>
+                                <strong>{{ group.name }}</strong>
+                            </td>
+                            <td>{{ group.total_subscribers or 0 }}</td>
+                            <td class="text-success">R$ 0,00</td>
+                            <td>R$ 0,00</td>
+                            <td>
+                                {% if group.is_active %}
+                                    <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inativo</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <p class="text-muted">Nenhum grupo criado ainda</p>
+                <a href="{{ url_for('groups.create') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Criar Primeiro Grupo
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Dados dos gráficos
+const chartsData = {{ charts_data | tojson }};
+
+// Gráfico de Receita por Dia
+const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+new Chart(revenueCtx, {
+    type: 'line',
+    data: {
+        labels: chartsData.revenue_by_day.labels,
+        datasets: [{
+            label: 'Receita (R$)',
+            data: chartsData.revenue_by_day.data,
+            borderColor: '#28a745',
+            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return 'R$ ' + context.parsed.y.toFixed(2);
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return 'R$ ' + value.toFixed(2);
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Gráfico de Novos Assinantes
+const subscribersCtx = document.getElementById('subscribersChart').getContext('2d');
+new Chart(subscribersCtx, {
+    type: 'bar',
+    data: {
+        labels: chartsData.subscribers_by_day.labels,
+        datasets: [{
+            label: 'Novos Assinantes',
+            data: chartsData.subscribers_by_day.data,
+            backgroundColor: '#0088cc',
+            borderRadius: 5
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+
+// Gráfico de Receita por Grupo (Pizza)
+const groupCtx = document.getElementById('groupChart').getContext('2d');
+new Chart(groupCtx, {
+    type: 'doughnut',
+    data: {
+        labels: chartsData.revenue_by_group.labels.length > 0 ? chartsData.revenue_by_group.labels : ['Sem dados'],
+        datasets: [{
+            data: chartsData.revenue_by_group.data.length > 0 ? chartsData.revenue_by_group.data : [1],
+            backgroundColor: [
+                '#0088cc',
+                '#28a745',
+                '#ffc107',
+                '#dc3545',
+                '#6c757d'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return context.label + ': R$ ' + context.parsed.toFixed(2);
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Gráfico de Receita por Plano
+const planCtx = document.getElementById('planChart').getContext('2d');
+new Chart(planCtx, {
+    type: 'pie',
+    data: {
+        labels: chartsData.revenue_by_plan.labels.length > 0 ? chartsData.revenue_by_plan.labels : ['Sem dados'],
+        datasets: [{
+            data: chartsData.revenue_by_plan.data.length > 0 ? chartsData.revenue_by_plan.data : [1],
+            backgroundColor: [
+                '#667eea',
+                '#764ba2',
+                '#f093fb',
+                '#f5576c',
+                '#4facfe'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return context.label + ': R$ ' + context.parsed.toFixed(2);
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

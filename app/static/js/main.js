@@ -1,0 +1,1 @@
+// TeleVIP JavaScript

@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}Usuários - Admin TeleVIP{% endblock %}
+
+{% block content %}
+<!-- Header Admin -->
+<div class="bg-danger text-white py-4 mb-4">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.index') }}" class="text-white">Admin</a></li>
+                <li class="breadcrumb-item active text-white">Usuários</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>👥 Todos os Usuários</h2>
+            <p class="text-muted">Gerencie todos os criadores de conteúdo da plataforma</p>
+        </div>
+        <div class="col-auto">
+            <div class="input-group">
+                <input type="text" class="form-control" id="searchInput" placeholder="Buscar usuário...">
+                <button class="btn btn-outline-secondary" type="button">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas Rápidas -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-primary">{{ users|length }}</h4>
+                    <p class="mb-0">Total de Usuários</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-success">{{ users|selectattr("groups")|list|length }}</h4>
+                    <p class="mb-0">Criadores Ativos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-info">{{ "{:,.2f}".format(users|sum(attribute='balance')) }}</h4>
+                    <p class="mb-0">Saldo Total (R$)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-warning">{{ "{:,.2f}".format(users|sum(attribute='total_earned') or 0) }}</h4>
+                    <p class="mb-0">Receita Total (R$)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Ordenar por</label>
+                    <select class="form-select" id="sortBy">
+                        <option value="created">Data de Cadastro</option>
+                        <option value="name">Nome</option>
+                        <option value="balance">Saldo</option>
+                        <option value="earned">Total Ganho</option>
+                        <option value="groups">Quantidade de Grupos</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Filtrar por Status</label>
+                    <select class="form-select" id="filterStatus">
+                        <option value="all">Todos</option>
+                        <option value="active">Com Grupos Ativos</option>
+                        <option value="inactive">Sem Grupos</option>
+                        <option value="balance">Com Saldo</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Período de Cadastro</label>
+                    <select class="form-select" id="filterPeriod">
+                        <option value="all">Todos</option>
+                        <option value="today">Hoje</option>
+                        <option value="week">Última Semana</option>
+                        <option value="month">Último Mês</option>
+                        <option value="year">Último Ano</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" onclick="applyFilters()">
+                        <i class="bi bi-funnel"></i> Aplicar Filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Usuários -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" class="form-check-input" id="selectAll">
+                            </th>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Username</th>
+                            <th>Grupos</th>
+                            <th>Saldo</th>
+                            <th>Total Ganho</th>
+                            <th>Cadastro</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr data-created="{{ user.created_at.timestamp() }}"
+                            data-groups="{{ user.groups.count() }}"
+                            data-balance="{{ user.balance }}"
+                            data-earned="{{ user.total_earned or 0 }}">
+                            <td>
+                                <input type="checkbox" class="form-check-input user-checkbox" value="{{ user.id }}">
+                            </td>
+                            <td>{{ user.id }}</td>
+                            <td>
+                                <strong>{{ user.name }}</strong>
+                                {% if user.telegram_id %}
+                                    <i class="bi bi-telegram text-primary" title="Telegram conectado"></i>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.email }}</td>
+                            <td>@{{ user.username }}</td>
+                            <td>
+                                <span class="badge bg-primary">{{ user.groups.count() }}</span>
+                            </td>
+                            <td class="fw-bold {{ 'text-success' if user.balance > 0 else 'text-muted' }}">
+                                R$ {{ "%.2f"|format(user.balance) }}
+                            </td>
+                            <td>R$ {{ "%.2f"|format(user.total_earned or 0) }}</td>
+                            <td>
+                                <small>{{ user.created_at.strftime('%d/%m/%Y') }}</small>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('admin.view_creator_dashboard', creator_id=user.id) }}" 
+                                       class="btn btn-primary" title="Ver Dashboard">
+                                        <i class="bi bi-speedometer2"></i>
+                                    </a>
+                                    <a href="{{ url_for('admin.creator_details', creator_id=user.id) }}" 
+                                       class="btn btn-info" title="Detalhes">
+                                        <i class="bi bi-info-circle"></i>
+                                    </a>
+                                    <button class="btn btn-warning" onclick="editUser({{ user.id }})" 
+                                            title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    {% if user.groups.count() == 0 %}
+                                    <button class="btn btn-danger" onclick="deleteUser({{ user.id }}, '{{ user.name }}')" 
+                                            title="Deletar">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ações em Massa -->
+    <div class="mt-3" id="bulkActions" style="display: none;">
+        <div class="card">
+            <div class="card-body">
+                <h6>Ações em Massa</h6>
+                <button class="btn btn-warning" onclick="bulkMessage()">
+                    <i class="bi bi-envelope"></i> Enviar Mensagem
+                </button>
+                <button class="btn btn-info" onclick="exportUsers()">
+                    <i class="bi bi-download"></i> Exportar Selecionados
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Edição -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar Usuário</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nome</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Saldo</label>
+                        <input type="number" name="balance" class="form-control" step="0.01" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Buscar usuários
+document.getElementById('searchInput').addEventListener('keyup', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('#usersTable tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+});
+
+// Select all checkbox
+document.getElementById('selectAll').addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.user-checkbox');
+    checkboxes.forEach(cb => cb.checked = this.checked);
+    toggleBulkActions();
+});
+
+// Individual checkboxes
+document.querySelectorAll('.user-checkbox').forEach(cb => {
+    cb.addEventListener('change', toggleBulkActions);
+});
+
+function toggleBulkActions() {
+    const checked = document.querySelectorAll('.user-checkbox:checked').length;
+    document.getElementById('bulkActions').style.display = checked > 0 ? 'block' : 'none';
+}
+
+// Ordenação
+document.getElementById('sortBy').addEventListener('change', function() {
+    const sortBy = this.value;
+    const tbody = document.querySelector('#usersTable tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    rows.sort((a, b) => {
+        let aVal, bVal;
+        switch(sortBy) {
+            case 'created':
+                aVal = parseFloat(a.dataset.created);
+                bVal = parseFloat(b.dataset.created);
+                return bVal - aVal;
+            case 'name':
+                aVal = a.cells[2].textContent;
+                bVal = b.cells[2].textContent;
+                return aVal.localeCompare(bVal);
+            case 'balance':
+                aVal = parseFloat(a.dataset.balance);
+                bVal = parseFloat(b.dataset.balance);
+                return bVal - aVal;
+            case 'earned':
+                aVal = parseFloat(a.dataset.earned);
+                bVal = parseFloat(b.dataset.earned);
+                return bVal - aVal;
+            case 'groups':
+                aVal = parseInt(a.dataset.groups);
+                bVal = parseInt(b.dataset.groups);
+                return bVal - aVal;
+        }
+    });
+    
+    rows.forEach(row => tbody.appendChild(row));
+});
+
+function editUser(userId) {
+    // Em produção, buscar dados via AJAX
+    const modal = new bootstrap.Modal(document.getElementById('editModal'));
+    modal.show();
+}
+
+function deleteUser(userId, userName) {
+    if (confirm(`Tem certeza que deseja deletar o usuário ${userName}?`)) {
+        // Em produção, fazer requisição DELETE
+        alert('Usuário deletado!');
+    }
+}
+
+function bulkMessage() {
+    const selected = Array.from(document.querySelectorAll('.user-checkbox:checked'))
+        .map(cb => cb.value);
+    alert(`Enviar mensagem para ${selected.length} usuários selecionados`);
+}
+
+function exportUsers() {
+    const selected = Array.from(document.querySelectorAll('.user-checkbox:checked'))
+        .map(cb => cb.value);
+    alert(`Exportar ${selected.length} usuários selecionados`);
+}
+</script>
+{% endblock %}
