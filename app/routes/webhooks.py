@@ -13,8 +13,12 @@ logger = logging.getLogger(__name__)
 @bp.route('/stripe', methods=['POST'])
 def stripe_webhook():
     """Processar webhooks do Stripe"""
+    logger.info("=== WEBHOOK RECEBIDO DO STRIPE ===")
+    
     payload = request.get_data()
     sig_header = request.headers.get('Stripe-Signature')
+    
+    logger.info(f"Signature header presente: {'Sim' if sig_header else 'Não'}")
     
     # Verificar assinatura
     webhook_secret = os.getenv('STRIPE_WEBHOOK_SECRET')
@@ -53,13 +57,18 @@ def stripe_webhook():
 
 def handle_checkout_session_completed(session):
     """Processar sessão de checkout completa"""
-    logger.info(f"Processing checkout session: {session['id']}")
+    logger.info(f"=== PROCESSANDO CHECKOUT SESSION ===")
+    logger.info(f"Session ID: {session['id']}")
+    logger.info(f"Payment status: {session.get('payment_status')}")
     
     # Extrair metadata
     metadata = session.get('metadata', {})
     subscription_id = metadata.get('subscription_id')
     transaction_id = metadata.get('transaction_id')
     telegram_username = metadata.get('telegram_username', 'Usuário')
+    
+    logger.info(f"Metadata - subscription_id: {subscription_id}")
+    logger.info(f"Metadata - transaction_id: {transaction_id}")
     
     if not subscription_id:
         logger.error("No subscription_id in metadata")

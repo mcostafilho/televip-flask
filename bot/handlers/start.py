@@ -2,6 +2,9 @@
 Handler para comandos /start e /help com melhorias de UX
 """
 import re
+import logging
+import asyncio
+from datetime import datetime, timedelta
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
@@ -10,10 +13,30 @@ from bot.utils.database import get_db_session
 from bot.keyboards.menus import get_main_menu, get_plans_menu
 from app.models import Group, Creator, PricingPlan
 
+logger = logging.getLogger(__name__)
+
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler do comando /start com experiência melhorada"""
     user = update.effective_user
     args = context.args
+    
+    # Verificar se é retorno do Stripe (success ou cancel)
+    if args:
+        if args[0].startswith('success_'):
+            # Pagamento bem-sucedido
+            await handle_payment_success(update, context)
+            return
+        elif args[0] == 'cancel':
+            # Pagamento cancelado
+            await update.message.reply_text(
+                "❌ **Pagamento cancelado**\n\n"
+                "Se mudou de ideia, use o link original para tentar novamente.",
+                parse_mode=ParseMode.MARKDOWN
+            )
+            return
+        elif args[0].startswith('g_'):
+            # É um grupo - continuar com o fluxo normal
+            pass
     
     # Verificar se veio com parâmetro de grupo
     if args and args[0].startswith('g_'):
@@ -235,46 +258,105 @@ Plataforma segura e confiável para monetização de grupos no Telegram.
     )
 
 
-async def start_success(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handler para quando o pagamento foi bem-sucedido via link"""
+async def handle_payment_success(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handler para processar retorno bem-sucedido do Stripe"""
     user = update.effective_user
     args = context.args
     
-    if args and args[0].startswith('success_'):
-        subscription_id = args[0].replace('success_', '')
+    if not args or not args[0].startswith('success_'):
+        return
         
-        with get_db_session() as session:
-            from app.models import Subscription
+    subscription_id = args[0].replace('success_', '')
+    
+    # Mostrar mensagem de processamento
+    processing_msg = await update.message.reply_text(
+        "⏳ **Verificando seu pagamento...**\n\nIsso levará apenas alguns segundos.",
+        parse_mode=ParseMode.MARKDOWN
+    )
+    
+    with get_db_session() as session:
+        from app.models import Subscription
+        
+        subscription = session.query(Subscription).get(subscription_id)
+        
+        if not subscription:
+            await processing_msg.edit_text("❌ Assinatura não encontrada.")
+            return
             
-            subscription = session.query(Subscription).get(subscription_id)
-            if subscription and subscription.telegram_user_id == str(user.id):
-                group = subscription.group
-                plan = subscription.plan
-                
-                success_text = f"""
+        if subscription.telegram_user_id != str(user.id):
+            await processing_msg.edit_text("❌ Esta assinatura não pertence a você.")
+            return
+        
+        # Aguardar um pouco para o webhook processar
+        await asyncio.sleep(3)
+        
+        # Recarregar para ver se foi ativada
+        session.refresh(subscription)
+        
+        if subscription.status == 'active':
+            group = subscription.group
+            plan = subscription.plan
+            
+            # Gerar link de convite
+            try:
+                invite_link = await context.bot.create_chat_invite_link(
+                    chat_id=group.telegram_id,
+                    member_limit=1,
+                    expire_date=datetime.now() + timedelta(hours=24)
+                )
+                invite_url = invite_link.invite_link
+            except Exception as e:
+                logger.warning(f"Erro ao criar link de convite: {e}")
+                invite_url = group.invite_link or "Link será enviado pelo administrador"
+            
+            success_text = f"""
 ✅ **Pagamento Confirmado!**
 
-🎉 Parabéns! Você agora faz parte do **{group.name}**!
+🎉 **Parabéns! Você agora é membro VIP!**
 
-📋 **Detalhes da sua assinatura:**
-• Plano: {plan.name}
-• Válida até: {subscription.end_date.strftime('%d/%m/%Y')}
-• Status: Ativa
+━━━━━━━━━━━━━━━━━━━━
 
-🔗 **Acesse o grupo agora:**
-{group.invite_link if group.invite_link else 'Link será enviado em breve'}
+📱 **{group.name}**
+📋 Plano: {plan.name}
+📅 Válido até: {subscription.end_date.strftime('%d/%m/%Y')}
 
-💡 **Primeiros passos:**
-1. Entre no grupo pelo link acima
-2. Leia as regras na mensagem fixada
-3. Ative as notificações
-4. Aproveite o conteúdo exclusivo!
+━━━━━━━━━━━━━━━━━━━━
 
-Bem-vindo à comunidade! 🚀
+🔗 **Seu link exclusivo de acesso:**
+{invite_url}
+
+⚠️ **Importante:**
+• Este link é válido por 24 horas
+• Use apenas uma vez
+• Não compartilhe com outras pessoas
+
+━━━━━━━━━━━━━━━━━━━━
+
+💡 **Próximos passos:**
+1. Clique no link acima
+2. Entre no grupo
+3. Leia as regras fixadas
+4. Aproveite o conteúdo!
+
+Bem-vindo à nossa comunidade exclusiva! 🚀
+
+_Use /status para ver suas assinaturas_
 """
-                
-                await update.message.reply_text(
-                    success_text,
-                    parse_mode=ParseMode.MARKDOWN,
-                    disable_web_page_preview=True
-                )
+            
+            await processing_msg.edit_text(
+                success_text,
+                parse_mode=ParseMode.MARKDOWN,
+                disable_web_page_preview=True
+            )
+        else:
+            # Ainda está pendente - aguardar mais
+            await processing_msg.edit_text(
+                "⏳ **Pagamento em processamento...**\n\n"
+                "O Stripe está confirmando seu pagamento. Isso pode levar até 2 minutos.\n\n"
+                "💡 **Opções:**\n"
+                "• Aguarde e use /status em alguns minutos\n"
+                "• Você receberá uma notificação quando for confirmado\n"
+                "• Se demorar muito, contate o suporte\n\n"
+                "_Normalmente é processado em segundos!_",
+                parse_mode=ParseMode.MARKDOWN
+            )
