@@ -17,12 +17,10 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Mess
 from telegram.constants import ParseMode
 
 # Importar handlers melhorados
-from bot.handlers.start import start_command, help_command, start_success
-from bot.handlers.payment_improved import (
+from bot.handlers.start import start_command, help_command, handle_payment_success
+from bot.handlers.payment_stripe import (
     handle_plan_selection, 
-    handle_pix_payment, 
-    handle_pix_confirmation,
-    process_payment_proof, 
+    handle_stripe_payment,
     cancel_payment
 )
 from bot.handlers.subscription import show_plans, check_status, handle_renewal
@@ -73,18 +71,11 @@ class TeleVIPBot:
         
         # Callbacks dos botões
         self.app.add_handler(CallbackQueryHandler(handle_plan_selection, pattern="^plan_"))
-        self.app.add_handler(CallbackQueryHandler(handle_pix_payment, pattern="^pix_"))
-        self.app.add_handler(CallbackQueryHandler(handle_pix_confirmation, pattern="^confirm_pix_"))
+        self.app.add_handler(CallbackQueryHandler(handle_stripe_payment, pattern="^stripe_"))
         self.app.add_handler(CallbackQueryHandler(cancel_payment, pattern="^cancel"))
         self.app.add_handler(CallbackQueryHandler(self.close_message, pattern="^close"))
         self.app.add_handler(CallbackQueryHandler(check_status, pattern="^check_status"))
         self.app.add_handler(CallbackQueryHandler(handle_renewal, pattern="^renew_"))
-        
-        # Handler para receber comprovantes
-        self.app.add_handler(MessageHandler(
-            filters.PHOTO & filters.ChatType.PRIVATE, 
-            process_payment_proof
-        ))
         
         # Handler geral para callbacks não tratados
         self.app.add_handler(CallbackQueryHandler(self.handle_unknown_callback))

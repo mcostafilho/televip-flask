@@ -1,13 +1,14 @@
-# app/routes/webhooks.py
 from flask import Blueprint, request, jsonify
 import stripe
 import os
+import logging
 from app import db
 from app.services.stripe_service import StripeService
 from app.models import Transaction, Subscription, Creator, Group
 from datetime import datetime
 
 bp = Blueprint('webhooks', __name__, url_prefix='/webhooks')
+logger = logging.getLogger(__name__)
 
 @bp.route('/stripe', methods=['POST'])
 def stripe_webhook():
@@ -16,90 +17,132 @@ def stripe_webhook():
     sig_header = request.headers.get('Stripe-Signature')
     
     # Verificar assinatura
-    if not StripeService.verify_webhook_signature(payload, sig_header):
-        return jsonify({'error': 'Invalid signature'}), 400
+    webhook_secret = os.getenv('STRIPE_WEBHOOK_SECRET')
+    
+    if not webhook_secret:
+        logger.error("STRIPE_WEBHOOK_SECRET não configurado!")
+        return jsonify({'error': 'Webhook secret not configured'}), 500
     
     try:
-        event = stripe.Event.construct_from(
-            request.get_json(), stripe.api_key
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, webhook_secret
         )
-        
-        # Processar diferentes tipos de eventos
-        if event['type'] == 'payment_intent.succeeded':
-            payment_intent = event['data']['object']
-            handle_payment_intent_succeeded(payment_intent)
-            
-        elif event['type'] == 'checkout.session.completed':
-            session = event['data']['object']
-            handle_checkout_session_completed(session)
-            
-        elif event['type'] == 'payment_intent.payment_failed':
-            payment_intent = event['data']['object']
-            handle_payment_failed(payment_intent)
-        
-        return jsonify({'status': 'success'}), 200
-        
-    except Exception as e:
-        print(f"Erro no webhook: {e}")
-        return jsonify({'error': str(e)}), 400
-
-def handle_payment_intent_succeeded(payment_intent):
-    """Processar pagamento bem-sucedido"""
-    metadata = payment_intent.get('metadata', {})
-    subscription_id = metadata.get('subscription_id')
+    except ValueError as e:
+        logger.error(f"Invalid payload: {e}")
+        return jsonify({'error': 'Invalid payload'}), 400
+    except stripe.error.SignatureVerificationError as e:
+        logger.error(f"Invalid signature: {e}")
+        return jsonify({'error': 'Invalid signature'}), 400
     
-    if subscription_id:
-        # Buscar e atualizar transação
-        transaction = Transaction.query.filter_by(
-            stripe_payment_intent_id=payment_intent['id']
-        ).first()
+    # Processar diferentes tipos de eventos
+    logger.info(f"Received event: {event['type']}")
+    
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        handle_checkout_session_completed(session)
         
-        if not transaction:
-            # Criar nova transação se não existir
-            subscription = Subscription.query.get(subscription_id)
-            if subscription:
-                transaction = Transaction(
-                    subscription_id=subscription_id,
-                    amount=payment_intent['amount'] / 100,  # Converter de centavos
-                    fee=(payment_intent['amount'] / 100) * 0.01,  # 1% de taxa
-                    net_amount=(payment_intent['amount'] / 100) * 0.99,
-                    status='completed',
-                    payment_method='stripe',
-                    stripe_payment_intent_id=payment_intent['id'],
-                    paid_at=datetime.utcnow()
-                )
-                db.session.add(transaction)
-        else:
-            transaction.status = 'completed'
-            transaction.paid_at = datetime.utcnow()
+    elif event['type'] == 'payment_intent.succeeded':
+        payment_intent = event['data']['object']
+        handle_payment_intent_succeeded(payment_intent)
         
-        # Ativar assinatura
-        subscription = Subscription.query.get(subscription_id)
-        if subscription:
-            subscription.status = 'active'
-            
-            # Atualizar saldo do criador
-            group = Group.query.get(subscription.group_id)
-            if group:
-                creator = Creator.query.get(group.creator_id)
-                if creator:
-                    creator.balance += transaction.net_amount
-                    creator.total_earned += transaction.net_amount
-                    
-                    # Incrementar contador de assinantes
-                    group.total_subscribers += 1
-        
-        db.session.commit()
-        
-        # TODO: Adicionar usuário ao grupo do Telegram via bot
+    elif event['type'] == 'payment_intent.payment_failed':
+        payment_intent = event['data']['object']
+        handle_payment_failed(payment_intent)
+    
+    return jsonify({'status': 'success'}), 200
 
 def handle_checkout_session_completed(session):
     """Processar sessão de checkout completa"""
-    metadata = session.get('metadata', {})
+    logger.info(f"Processing checkout session: {session['id']}")
     
-    # Processar pagamento similar ao payment_intent
-    # Útil para pagamentos via Checkout do Stripe
-    pass
+    # Extrair metadata
+    metadata = session.get('metadata', {})
+    subscription_id = metadata.get('subscription_id')
+    transaction_id = metadata.get('transaction_id')
+    telegram_username = metadata.get('telegram_username', 'Usuário')
+    
+    if not subscription_id:
+        logger.error("No subscription_id in metadata")
+        return
+    
+    # Buscar e atualizar transação e assinatura
+    transaction = None
+    if transaction_id:
+        transaction = Transaction.query.get(transaction_id)
+    
+    if not transaction:
+        # Buscar por subscription_id
+        transaction = Transaction.query.filter_by(
+            subscription_id=subscription_id,
+            status='pending'
+        ).first()
+    
+    if not transaction:
+        logger.error(f"Transaction not found for subscription {subscription_id}")
+        return
+    
+    # Atualizar transação
+    transaction.status = 'completed'
+    transaction.paid_at = datetime.utcnow()
+    transaction.stripe_payment_intent_id = session.get('payment_intent')
+    
+    # Ativar assinatura
+    subscription = Subscription.query.get(subscription_id)
+    if subscription:
+        subscription.status = 'active'
+        subscription.stripe_subscription_id = session['id']
+        
+        # Atualizar saldo do criador
+        group = Group.query.get(subscription.group_id)
+        if group:
+            creator = Creator.query.get(group.creator_id)
+            if creator:
+                creator.balance += transaction.net_amount
+                creator.total_earned = (creator.total_earned or 0) + transaction.net_amount
+                
+                # Incrementar contador de assinantes
+                group.total_subscribers = (group.total_subscribers or 0) + 1
+                
+                logger.info(f"Updated creator balance: +R$ {transaction.net_amount:.2f}")
+    
+    db.session.commit()
+    
+    # Notificar criador via Telegram (se tiver telegram_id)
+    if creator and creator.telegram_id:
+        try:
+            import requests
+            bot_token = os.getenv('BOT_TOKEN')
+            
+            message = f"""
+💰 **Nova Assinatura!**
+
+👤 Usuário: @{telegram_username}
+📱 Grupo: {group.name}
+📋 Plano: {subscription.plan.name}
+💵 Valor: R$ {transaction.net_amount:.2f} (líquido)
+
+Total de assinantes: {group.total_subscribers}
+Saldo disponível: R$ {creator.balance:.2f}
+"""
+            
+            requests.post(
+                f"https://api.telegram.org/bot{bot_token}/sendMessage",
+                json={
+                    "chat_id": creator.telegram_id,
+                    "text": message,
+                    "parse_mode": "Markdown"
+                }
+            )
+        except Exception as e:
+            logger.error(f"Error notifying creator: {e}")
+    
+    logger.info(f"Payment processed successfully for subscription {subscription_id}")
+
+def handle_payment_intent_succeeded(payment_intent):
+    """Processar payment intent bem-sucedido"""
+    # Similar ao checkout.session.completed
+    # Alguns pagamentos podem vir por aqui
+    logger.info(f"Payment intent succeeded: {payment_intent['id']}")
 
 def handle_payment_failed(payment_intent):
     """Processar falha no pagamento"""
@@ -108,12 +151,15 @@ def handle_payment_failed(payment_intent):
     
     if subscription_id:
         transaction = Transaction.query.filter_by(
+            subscription_id=subscription_id,
             stripe_payment_intent_id=payment_intent['id']
         ).first()
         
         if transaction:
             transaction.status = 'failed'
             db.session.commit()
+            
+    logger.info(f"Payment failed for intent: {payment_intent['id']}")
 
 @bp.route('/telegram', methods=['POST'])
 def telegram_webhook():

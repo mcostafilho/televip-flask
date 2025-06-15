@@ -329,13 +329,24 @@ def get_analytics_chart_data(chart_type, group_ids, start_date):
         
         results = query.all()
         
-        for date, total in results:
-            if days_diff > 30:
-                date_str = date.strftime('%d/%m')
+        for row in results:
+            # row.date pode ser string ou date object
+            if hasattr(row.date, 'strftime'):
+                # É um objeto date
+                if days_diff > 30:
+                    date_str = row.date.strftime('%d/%m')
+                else:
+                    date_str = row.date.strftime('%d')
             else:
-                date_str = date.strftime('%d')
+                # É uma string no formato YYYY-MM-DD
+                date_obj = datetime.strptime(str(row.date), '%Y-%m-%d').date()
+                if days_diff > 30:
+                    date_str = date_obj.strftime('%d/%m')
+                else:
+                    date_str = date_obj.strftime('%d')
+                    
             if date_str in data_by_day:
-                data_by_day[date_str] = float(total)
+                data_by_day[date_str] = float(row.total)
     
     elif chart_type == 'subscribers':
         # Novos assinantes por dia
@@ -349,13 +360,24 @@ def get_analytics_chart_data(chart_type, group_ids, start_date):
         
         results = query.all()
         
-        for date, total in results:
-            if days_diff > 30:
-                date_str = date.strftime('%d/%m')
+        for row in results:
+            # row.date pode ser string ou date object
+            if hasattr(row.date, 'strftime'):
+                # É um objeto date
+                if days_diff > 30:
+                    date_str = row.date.strftime('%d/%m')
+                else:
+                    date_str = row.date.strftime('%d')
             else:
-                date_str = date.strftime('%d')
+                # É uma string no formato YYYY-MM-DD
+                date_obj = datetime.strptime(str(row.date), '%Y-%m-%d').date()
+                if days_diff > 30:
+                    date_str = date_obj.strftime('%d/%m')
+                else:
+                    date_str = date_obj.strftime('%d')
+                    
             if date_str in data_by_day:
-                data_by_day[date_str] = total
+                data_by_day[date_str] = row.total
     
     return {
         'labels': list(data_by_day.keys()),

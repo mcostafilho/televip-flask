@@ -1,4 +1,3 @@
-# app/services/stripe_service.py
 """
 Serviço de integração com Stripe para pagamentos
 """
@@ -9,7 +8,7 @@ from typing import Dict, Optional
 from app import db
 from app.models import Transaction, Subscription, Creator
 
-# Configurar Stripe
+# Configurar Stripe com a chave da API
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
 class StripeService:
@@ -19,6 +18,13 @@ class StripeService:
     def create_payment_intent(amount: float, metadata: dict) -> Dict:
         """Criar uma intenção de pagamento"""
         try:
+            # Verificar se a API key está configurada
+            if not stripe.api_key:
+                return {
+                    'success': False,
+                    'error': 'Stripe API key não configurada'
+                }
+                
             intent = stripe.PaymentIntent.create(
                 amount=int(amount * 100),  # Stripe usa centavos
                 currency='brl',
@@ -49,6 +55,14 @@ class StripeService:
     ) -> Dict:
         """Criar sessão de checkout"""
         try:
+            # Verificar se a API key está configurada
+            if not stripe.api_key:
+                return {
+                    'success': False,
+                    'error': 'Stripe API key não configurada. Configure STRIPE_SECRET_KEY no .env'
+                }
+            
+            # Criar sessão usando stripe.checkout.Session
             session = stripe.checkout.Session.create(
                 payment_method_types=['card'],
                 line_items=[{
@@ -58,7 +72,7 @@ class StripeService:
                             'name': plan_name,
                             'description': f'Assinatura: {plan_name}'
                         },
-                        'unit_amount': int(amount * 100),
+                        'unit_amount': int(amount * 100),  # Converter para centavos
                     },
                     'quantity': 1,
                 }],
@@ -73,10 +87,21 @@ class StripeService:
                 'session_id': session.id,
                 'url': session.url
             }
-        except Exception as e:
+        except stripe.error.StripeError as e:
+            # Erros específicos do Stripe
+            error_message = str(e)
+            if hasattr(e, 'user_message'):
+                error_message = e.user_message
+            
             return {
                 'success': False,
-                'error': str(e)
+                'error': f'Erro Stripe: {error_message}'
+            }
+        except Exception as e:
+            # Outros erros
+            return {
+                'success': False,
+                'error': f'Erro ao criar sessão: {str(e)}'
             }
     
     @staticmethod
@@ -84,6 +109,10 @@ class StripeService:
         """Verificar assinatura do webhook"""
         try:
             webhook_secret = os.getenv('STRIPE_WEBHOOK_SECRET')
+            if not webhook_secret:
+                print("AVISO: STRIPE_WEBHOOK_SECRET não configurado")
+                return False
+                
             stripe.Webhook.construct_event(
                 payload, signature, webhook_secret
             )
@@ -124,6 +153,7 @@ class StripeService:
                     subscription.stripe_subscription_id = payment_intent_id
                     
                     # Atualizar saldo do criador
+                    from app.models import Group
                     creator = Creator.query.join(
                         Group
                     ).filter(
@@ -177,3 +207,26 @@ class StripeService:
             return True
         except:
             return False
+    
+    @staticmethod
+    def test_connection() -> Dict:
+        """Testar conexão com Stripe"""
+        try:
+            if not stripe.api_key:
+                return {
+                    'success': False,
+                    'error': 'API key não configurada'
+                }
+            
+            # Tentar listar um produto para testar a conexão
+            stripe.Product.list(limit=1)
+            
+            return {
+                'success': True,
+                'message': 'Conexão com Stripe OK'
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
