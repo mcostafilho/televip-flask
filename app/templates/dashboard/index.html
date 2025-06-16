@@ -373,7 +373,7 @@ const revenueChart = new Chart(ctx, {
         labels: revenueData.labels || ['1', '5', '10', '15', '20', '25', '30'],
         datasets: [{
             label: 'Receita (R$)',
-            data: revenueData.data || [120, 190, 300, 500, 200, 300, 450],
+            data: revenueData.data || Array(30).fill(0),
             borderColor: '#0088cc',
             backgroundColor: 'rgba(0, 136, 204, 0.1)',
             tension: 0.4

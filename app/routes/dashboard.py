@@ -105,6 +105,15 @@ def get_revenue_chart_data(group_id=None):
     # Inicializar dados com zeros
     revenue_by_day = {date: 0 for date in date_list}
     
+    # Se não houver grupos do usuário, retornar dados vazios
+    if not group_id:
+        group_ids = [g.id for g in current_user.groups.all()]
+        if not group_ids:
+            return {
+                'labels': list(revenue_by_day.keys()),
+                'data': list(revenue_by_day.values())  # Todos zeros
+            }
+    
     # Query para buscar transações
     query = db.session.query(
         func.date(Transaction.created_at).label('date'),
