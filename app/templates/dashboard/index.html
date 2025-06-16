@@ -3,203 +3,380 @@
 {% block title %}Dashboard - TeleVIP{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <!-- Main Content -->
-        <div class="col-md-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h1 class="h3 mb-0">Dashboard</h1>
-                    <p class="text-muted">Bem-vindo de volta, {{ current_user.name }}!</p>
-                </div>
-            </div>
-            
-            <!-- Stats Cards -->
-            <div class="row mb-4">
-                <div class="col-xl-3 col-md-6 mb-3">
-                    <div class="card border-start border-success border-4">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <div class="text-muted small">Saldo Disponível</div>
-                                    <div class="h4 mb-0">R$ {{ "%.2f"|format(stats.balance) }}</div>
-                                </div>
-                                <div class="text-success">
-                                    <i class="bi bi-wallet2 fs-1"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-xl-3 col-md-6 mb-3">
-                    <div class="card border-start border-primary border-4">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <div class="text-muted small">Total de Grupos</div>
-                                    <div class="h4 mb-0">{{ stats.total_groups }}</div>
-                                </div>
-                                <div class="text-primary">
-                                    <i class="bi bi-collection fs-1"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-xl-3 col-md-6 mb-3">
-                    <div class="card border-start border-warning border-4">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <div class="text-muted small">Assinantes Ativos</div>
-                                    <div class="h4 mb-0">{{ stats.active_subscribers }}</div>
-                                </div>
-                                <div class="text-warning">
-                                    <i class="bi bi-people fs-1"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-xl-3 col-md-6 mb-3">
-                    <div class="card border-start border-danger border-4">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <div class="text-muted small">Receita Total</div>
-                                    <div class="h4 mb-0">R$ {{ "%.2f"|format(stats.total_revenue) }}</div>
-                                </div>
-                                <div class="text-danger">
-                                    <i class="bi bi-graph-up-arrow fs-1"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Charts Row -->
-            <div class="row">
-                <!-- Revenue Chart -->
-                <div class="col-lg-8 mb-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">
-                                <i class="bi bi-bar-chart"></i> Receita dos Últimos 30 Dias
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="revenueChart" style="height: 300px;"></canvas>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Quick Actions -->
-                <div class="col-lg-4 mb-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">
-                                <i class="bi bi-lightning"></i> Ações Rápidas
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="d-grid gap-2">
-                                <a href="/groups/new" class="btn btn-primary">
-                                    <i class="bi bi-plus-circle"></i> Criar Novo Grupo
-                                </a>
-                                {% if current_user.balance > 0 %}
-                                <button class="btn btn-success" onclick="alert('Função de saque em desenvolvimento!')">
-                                    <i class="bi bi-cash-stack"></i> Solicitar Saque
-                                </button>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Groups List -->
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-collection"></i> Meus Grupos
-                    </h5>
-                    <a href="/groups/new" class="btn btn-sm btn-primary">
-                        <i class="bi bi-plus"></i> Novo Grupo
-                    </a>
-                </div>
-                <div class="card-body">
-                    {% if recent_groups %}
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Nome</th>
-                                        <th>Assinantes</th>
-                                        <th>Status</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for group in recent_groups %}
-                                    <tr>
-                                        <td>
-                                            <strong>{{ group.name }}</strong>
-                                            <br>
-                                            <small class="text-muted">@{{ group.telegram_username }}</small>
-                                        </td>
-                                        <td>{{ group.subscriptions.filter_by(status='active').count() }}</td>
-                                        <td>
-                                            {% if group.is_active %}
-                                                <span class="badge bg-success">Ativo</span>
-                                            {% else %}
-                                                <span class="badge bg-secondary">Inativo</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <a href="/groups/{{ group.id }}/edit" class="btn btn-sm btn-outline-primary">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
+<div class="bg-light py-4">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h3 mb-0">Dashboard</h1>
+                <p class="text-muted mb-0">
+                    Bem-vindo de volta, {{ current_user.name }}!
+                    {% if selected_group %}
+                        - Visualizando: <strong>{{ selected_group.name }}</strong>
                     {% else %}
-                        <div class="text-center py-5">
-                            <i class="bi bi-inbox fs-1 text-muted"></i>
-                            <p class="text-muted mt-2">Você ainda não criou nenhum grupo.</p>
-                            <a href="/groups/new" class="btn btn-primary">
-                                <i class="bi bi-plus-circle"></i> Criar Primeiro Grupo
-                            </a>
-                        </div>
+                        - Visualizando: <strong>Todos os Grupos</strong>
                     {% endif %}
-                </div>
+                </p>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#withdrawModal">
+                    <i class="bi bi-cash-stack"></i> Solicitar Saque
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<div class="container py-4">
+    <!-- Cards de Estatísticas -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Saldo Disponível</h6>
+                            <h3 class="mb-0">R$ {{ "%.2f"|format(balance) }}</h3>
+                        </div>
+                        <div class="text-success">
+                            <i class="bi bi-wallet2 fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Total de Grupos</h6>
+                            <h3 class="mb-0">{{ total_groups }}</h3>
+                        </div>
+                        <div class="text-primary">
+                            <i class="bi bi-collection fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stat-card warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Assinantes Ativos</h6>
+                            <h3 class="mb-0">{{ total_subscribers }}</h3>
+                        </div>
+                        <div class="text-warning">
+                            <i class="bi bi-people fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stat-card danger">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Receita Total</h6>
+                            <h3 class="mb-0">R$ {{ "%.2f"|format(total_revenue) }}</h3>
+                        </div>
+                        <div class="text-danger">
+                            <i class="bi bi-graph-up-arrow fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Gráfico de Receita -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">📊 Receita dos Últimos 30 Dias</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ações Rápidas -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">⚡ Ações Rápidas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('groups.create') }}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Criar Novo Grupo
+                        </a>
+                        <a href="{{ url_for('dashboard.analytics') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-bar-chart-line"></i> Ver Analytics
+                        </a>
+                        <a href="{{ url_for('dashboard.profile') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-person"></i> Editar Perfil
+                        </a>
+                        {% if selected_group %}
+                        <button class="btn btn-outline-primary" onclick="copyBotLink('{{ selected_group.id }}')">
+                            <i class="bi bi-link-45deg"></i> Copiar Link do Grupo
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grupos -->
+    <div class="card mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">📱 Meus Grupos</h5>
+            <div>
+                {% if groups|length > 0 %}
+                <button class="btn btn-sm btn-outline-primary me-2" onclick="window.location.href='{{ url_for('dashboard.index') }}'">
+                    <i class="bi bi-grid-3x3-gap"></i> Ver Todos
+                </button>
+                {% endif %}
+                <a href="{{ url_for('groups.create') }}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus"></i> Novo Grupo
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if groups %}
+                <div class="row g-3">
+                    {% for group in groups %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card group-card h-100 {{ 'border-primary border-2' if selected_group and selected_group.id == group.id else '' }}">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ group.name }}</h6>
+                                <p class="text-muted small">{{ (group.description[:50] + '...') if group.description else 'Sem descrição' }}</p>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="badge bg-primary">
+                                        <i class="bi bi-people"></i> {{ group.total_subscribers }} assinantes
+                                    </span>
+                                    {% if group.is_active %}
+                                        <span class="badge bg-success">Ativo</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inativo</span>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Link do Bot -->
+                                <div class="mb-2">
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control" 
+                                               value="https://t.me/televipbra_bot?start=g_{{ group.telegram_id }}"
+                                               id="link_{{ group.id }}" readonly>
+                                        <button class="btn btn-outline-secondary" type="button"
+                                                onclick="copyLink('link_{{ group.id }}')">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <a href="{{ url_for('dashboard.index', group_id=group.id) }}" 
+                                       class="btn btn-sm {{ 'btn-primary' if selected_group and selected_group.id == group.id else 'btn-outline-primary' }}">
+                                        <i class="bi bi-eye"></i> Ver Detalhes
+                                    </a>
+                                    <a href="{{ url_for('groups.edit', id=group.id) }}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-gear"></i> Gerenciar
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <p>Você ainda não tem grupos</p>
+                    <a href="{{ url_for('groups.create') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Criar Primeiro Grupo
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Assinantes (só mostra se um grupo específico estiver selecionado) -->
+    {% if selected_group and subscribers %}
+    <div class="card mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">👥 Assinantes de {{ selected_group.name }}</h5>
+            <a href="{{ url_for('groups.subscribers', id=selected_group.id) }}" class="btn btn-sm btn-primary">
+                Ver Todos
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Plano</th>
+                            <th>Expira em</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sub in subscribers[:5] %}
+                        <tr>
+                            <td>@{{ sub.telegram_username or 'Sem username' }}</td>
+                            <td>{{ sub.plan.name }}</td>
+                            <td>{{ sub.end_date.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                {% if sub.status == 'active' %}
+                                    <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Expirado</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Transações Recentes -->
+    <div class="card">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">💰 Transações Recentes</h5>
+        </div>
+        <div class="card-body">
+            {% if recent_transactions %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Usuário</th>
+                                <th>Grupo</th>
+                                <th>Valor</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in recent_transactions %}
+                            <tr>
+                                <td>{{ transaction.created_at.strftime('%d/%m %H:%M') }}</td>
+                                <td>@{{ transaction.subscription.telegram_username }}</td>
+                                <td>{{ transaction.subscription.group.name }}</td>
+                                <td class="fw-bold text-success">R$ {{ "%.2f"|format(transaction.net_amount) }}</td>
+                                <td>
+                                    {% if transaction.status == 'completed' %}
+                                        <span class="badge bg-success">Pago</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Pendente</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-receipt"></i>
+                    <p>Nenhuma transação ainda</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Saque -->
+<div class="modal fade" id="withdrawModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">💰 Solicitar Saque</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('dashboard.withdraw') }}" method="POST">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        Saldo disponível: <strong>R$ {{ "%.2f"|format(balance) }}</strong>
+                    </div>
+                    
+                    {% if balance >= 10 %}
+                        <div class="mb-3">
+                            <label class="form-label">Valor do Saque</label>
+                            <div class="input-group">
+                                <span class="input-group-text">R$</span>
+                                <input type="number" name="amount" class="form-control" 
+                                       placeholder="0,00" max="{{ balance }}" 
+                                       step="0.01" min="10" required>
+                            </div>
+                            <small class="text-muted">Mínimo: R$ 10,00</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Chave PIX</label>
+                            <input type="text" name="pix_key" class="form-control" 
+                                   placeholder="CPF, Email, Telefone ou Chave Aleatória" required>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <small>
+                                <i class="bi bi-clock"></i>
+                                Processamento em até 24 horas úteis
+                            </small>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Saldo mínimo para saque: R$ 10,00
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    {% if balance >= 10 %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Solicitar Saque
+                        </button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
 <script>
-// Gráfico de Receitas
+// Dados do gráfico (em produção viriam do backend)
+const revenueData = {{ revenue_chart_data | tojson if revenue_chart_data else '{}' }};
+
+// Gráfico de Receita
 const ctx = document.getElementById('revenueChart').getContext('2d');
 const revenueChart = new Chart(ctx, {
     type: 'line',
     data: {
-        labels: {{ chart_data.labels | tojson }},
+        labels: revenueData.labels || ['1', '5', '10', '15', '20', '25', '30'],
         datasets: [{
             label: 'Receita (R$)',
-            data: {{ chart_data.values | tojson }},
-            borderColor: '#667eea',
-            backgroundColor: 'rgba(102, 126, 234, 0.1)',
-            borderWidth: 3,
-            tension: 0.4,
-            fill: true
+            data: revenueData.data || [120, 190, 300, 500, 200, 300, 450],
+            borderColor: '#0088cc',
+            backgroundColor: 'rgba(0, 136, 204, 0.1)',
+            tension: 0.4
         }]
     },
     options: {
@@ -208,13 +385,6 @@ const revenueChart = new Chart(ctx, {
         plugins: {
             legend: {
                 display: false
-            },
-            tooltip: {
-                callbacks: {
-                    label: function(context) {
-                        return 'R$ ' + context.parsed.y.toFixed(2);
-                    }
-                }
             }
         },
         scales: {
@@ -222,12 +392,40 @@ const revenueChart = new Chart(ctx, {
                 beginAtZero: true,
                 ticks: {
                     callback: function(value) {
-                        return 'R$ ' + value.toFixed(2);
+                        return 'R$ ' + value;
                     }
                 }
             }
         }
     }
 });
+
+// Copiar Link do Bot
+function copyBotLink(groupId) {
+    const botLink = document.getElementById('link_' + groupId).value;
+    navigator.clipboard.writeText(botLink).then(() => {
+        alert('Link copiado: ' + botLink);
+    });
+}
+
+// Copiar Link Individual
+function copyLink(inputId) {
+    const input = document.getElementById(inputId);
+    input.select();
+    document.execCommand('copy');
+    
+    // Feedback visual
+    const btn = input.nextElementSibling;
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-check"></i>';
+    btn.classList.add('btn-success');
+    btn.classList.remove('btn-outline-secondary');
+    
+    setTimeout(() => {
+        btn.innerHTML = originalHTML;
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-outline-secondary');
+    }, 2000);
+}
 </script>
 {% endblock %}
