@@ -1,51 +1,86 @@
-{% extends "base.html" %}
+{% extends "auth_base.html" %}
 
 {% block title %}Login - TeleVIP{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-5">
-            <div class="card shadow">
-                <div class="card-body p-5">
-                    <h2 class="text-center mb-4">🔐 Login</h2>
-                    
-                    {% with messages = get_flashed_messages(with_categories=true) %}
-                        {% if messages %}
-                            {% for category, message in messages %}
-                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
-                                    {{ message }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            {% endfor %}
-                        {% endif %}
-                    {% endwith %}
-                    
-                    <form method="POST">
-                        <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" name="email" class="form-control" required autofocus>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Senha</label>
-                            <input type="password" name="password" class="form-control" required>
-                        </div>
-                        
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">Entrar</button>
-                        </div>
-                    </form>
-                    
-                    <hr class="my-4">
-                    
-                    <p class="text-center mb-0">
-                        Não tem uma conta? 
-                        <a href="{{ url_for('auth.register') }}">Registre-se aqui</a>
-                    </p>
-                </div>
-            </div>
+<div class="auth-container">
+    <div class="auth-card" data-aos="zoom-in">
+        <div class="auth-header">
+            <h2 class="gradient-text">Bem-vindo de Volta!</h2>
+            <p class="text-muted">Entre na sua conta para continuar lucrando</p>
         </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <form method="POST" class="auth-form">
+            <div class="form-floating mb-3">
+                <input type="email" name="email" class="form-control" id="email" 
+                       placeholder="seu@email.com" required autofocus>
+                <label for="email">
+                    <i class="bi bi-envelope"></i> Email
+                </label>
+            </div>
+            
+            <div class="form-floating mb-3">
+                <input type="password" name="password" class="form-control" id="password" 
+                       placeholder="Senha" required>
+                <label for="password">
+                    <i class="bi bi-lock"></i> Senha
+                </label>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="remember" name="remember">
+                    <label class="form-check-label" for="remember">
+                        Lembrar de mim
+                    </label>
+                </div>
+                <a href="{{ url_for('auth.forgot_password') }}" class="text-primary text-decoration-none">
+                    Esqueceu a senha?
+                </a>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-auth">
+                <i class="bi bi-box-arrow-in-right"></i> Entrar
+            </button>
+            
+            <div class="divider">
+                <span>ou</span>
+            </div>
+            
+            <button type="button" class="btn btn-social btn-google">
+                <i class="bi bi-google"></i> Continuar com Google
+            </button>
+            
+            <button type="button" class="btn btn-social btn-telegram">
+                <i class="bi bi-telegram"></i> Continuar com Telegram
+            </button>
+        </form>
+        
+        <div class="auth-footer">
+            <p>Não tem uma conta? 
+                <a href="{{ url_for('auth.register') }}" class="text-primary fw-bold">
+                    Criar conta grátis
+                </a>
+            </p>
+        </div>
+    </div>
+    
+    <!-- Decorative Elements -->
+    <div class="auth-decoration">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
     </div>
 </div>
 {% endblock %}

@@ -83,14 +83,18 @@ async def handle_plan_selection(update: Update, context: ContextTypes.DEFAULT_TY
             )
             return
         
-        # Criar sessão de checkout
+        # Criar sessão de checkout com USERNAME
         checkout_data = {
             'user_id': user.id,
-            'username': user.username,
+            'username': user.username or '',  # IMPORTANTE: Capturar username aqui
+            'first_name': user.first_name or '',  # Também capturar nome
             'group_id': group_id,
             'plan_id': plan_id,
             'amount': plan.price
         }
+        
+        # Log para debug
+        logger.info(f"Checkout iniciado - User: {user.username} (ID: {user.id})")
         
         # Armazenar dados temporariamente
         context.user_data['checkout'] = checkout_data
@@ -175,7 +179,7 @@ async def handle_stripe_payment(update: Update, context: ContextTypes.DEFAULT_TY
             group_id=group.id,
             plan_id=plan.id,
             telegram_user_id=str(checkout_data['user_id']),
-            telegram_username=checkout_data['username'],
+            telegram_username=checkout_data.get('username', ''),  # IMPORTANTE: Incluir username aqui
             start_date=datetime.utcnow(),
             end_date=end_date,
             status='pending'  # Pendente até pagamento
@@ -183,6 +187,9 @@ async def handle_stripe_payment(update: Update, context: ContextTypes.DEFAULT_TY
         
         session.add(subscription)
         session.flush()
+        
+        # Log para debug
+        logger.info(f"Assinatura criada - ID: {subscription.id}, Username: {subscription.telegram_username}")
         
         # Criar transação pendente
         transaction = Transaction(
@@ -205,6 +212,7 @@ async def handle_stripe_payment(update: Update, context: ContextTypes.DEFAULT_TY
         # Log para debug
         logger.info(f"Criando checkout session para: {group.name} - {plan.name}")
         logger.info(f"Valor: R$ {plan.price}")
+        logger.info(f"Username sendo enviado: {checkout_data.get('username', 'N/A')}")
         
         try:
             stripe_result = StripeService.create_checkout_session(
@@ -216,7 +224,8 @@ async def handle_stripe_payment(update: Update, context: ContextTypes.DEFAULT_TY
                     'subscription_id': str(subscription.id),
                     'user_id': str(checkout_data['user_id']),
                     'group_id': str(group.id),
-                    'telegram_username': checkout_data.get('username', ''),
+                    'telegram_username': checkout_data.get('username', ''),  # IMPORTANTE: Incluir username
+                    'telegram_first_name': checkout_data.get('first_name', ''),
                     'transaction_id': str(transaction.id)
                 }
             )

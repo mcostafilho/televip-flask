@@ -1,3 +1,5 @@
+# app/routes/webhooks.py - CORREÇÃO COMPLETA
+
 from flask import Blueprint, request, jsonify
 import stripe
 import os
@@ -65,10 +67,13 @@ def handle_checkout_session_completed(session):
     metadata = session.get('metadata', {})
     subscription_id = metadata.get('subscription_id')
     transaction_id = metadata.get('transaction_id')
-    telegram_username = metadata.get('telegram_username', 'Usuário')
+    telegram_username = metadata.get('telegram_username', '')  # Pegar username da metadata
+    user_id = metadata.get('user_id', '')
     
     logger.info(f"Metadata - subscription_id: {subscription_id}")
     logger.info(f"Metadata - transaction_id: {transaction_id}")
+    logger.info(f"Metadata - telegram_username: {telegram_username}")
+    logger.info(f"Metadata - user_id: {user_id}")
     
     if not subscription_id:
         logger.error("No subscription_id in metadata")
@@ -101,6 +106,11 @@ def handle_checkout_session_completed(session):
         subscription.status = 'active'
         subscription.stripe_subscription_id = session['id']
         
+        # IMPORTANTE: Atualizar o username se estiver na metadata
+        if telegram_username and not subscription.telegram_username:
+            subscription.telegram_username = telegram_username
+            logger.info(f"Username atualizado para: {telegram_username}")
+        
         # Atualizar saldo do criador
         group = Group.query.get(subscription.group_id)
         if group:
@@ -122,10 +132,13 @@ def handle_checkout_session_completed(session):
             import requests
             bot_token = os.getenv('BOT_TOKEN')
             
+            # Usar o username correto
+            display_username = subscription.telegram_username or telegram_username or 'Usuário'
+            
             message = f"""
 💰 **Nova Assinatura!**
 
-👤 Usuário: @{telegram_username}
+👤 Usuário: @{display_username}
 📱 Grupo: {group.name}
 📋 Plano: {subscription.plan.name}
 💵 Valor: R$ {transaction.net_amount:.2f} (líquido)

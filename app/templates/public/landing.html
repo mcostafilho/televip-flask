@@ -3,19 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TeleVIP - Monetize seus Grupos do Telegram como Nunca</title>
+    <title>TeleVIP - Transforme seu Telegram em uma Máquina de Lucros</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #0088cc;
-            --secondary: #00d4ff;
-            --dark: #0a0e27;
-            --light: #f8f9ff;
-            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --primary: #667eea;
+            --primary-dark: #5a67d8;
+            --secondary: #f687b3;
+            --accent: #fbbf24;
+            --dark: #1a202c;
+            --light: #f7fafc;
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-accent: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --gradient-success: linear-gradient(135deg, #13f1fc 0%, #0470dc 100%);
         }
 
         * {
@@ -25,305 +31,741 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Poppins', sans-serif;
             overflow-x: hidden;
             background: #ffffff;
+            color: #2d3748;
         }
 
-        /* Navbar Animada */
+        /* Cursor personalizado */
+        .cursor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            position: fixed;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 9999;
+            mix-blend-mode: difference;
+        }
+
+        .cursor2 {
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            position: fixed;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .hover-target:hover ~ .cursor {
+            transform: translate(-50%, -50%) scale(1.5);
+            background-color: var(--primary);
+            opacity: 0.5;
+        }
+
+        /* Navbar Glassmorphism */
         .navbar-custom {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
             transition: all 0.3s ease;
             padding: 1rem 0;
         }
 
         .navbar-custom.scrolled {
-            padding: 0.5rem 0;
+            padding: 0.7rem 0;
+            background: rgba(255, 255, 255, 0.95);
         }
 
         .navbar-brand {
             font-weight: 800;
-            font-size: 1.5rem;
-            background: var(--gradient);
+            font-size: 1.8rem;
+            background: var(--gradient-primary);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            animation: gradientShift 3s ease infinite;
         }
 
-        /* Hero Section */
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Hero Section Ultra Moderno */
         .hero {
             min-height: 100vh;
             position: relative;
             display: flex;
             align-items: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #ffffff;
             overflow: hidden;
         }
 
+        /* Animated Background */
         .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
-            opacity: 0.3;
-        }
-
-        .floating-icons {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
-
-        .floating-icon {
-            position: absolute;
-            font-size: 2rem;
-            opacity: 0.1;
-            animation: float 20s infinite ease-in-out;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-50px) rotate(180deg); }
-        }
-
-        .hero-content {
-            position: relative;
-            z-index: 10;
-        }
-
-        .hero h1 {
-            font-size: 4rem;
-            font-weight: 800;
-            margin-bottom: 1.5rem;
-            animation: fadeInUp 0.8s ease;
-        }
-
-        .hero p {
-            font-size: 1.3rem;
-            margin-bottom: 2rem;
-            animation: fadeInUp 0.8s ease 0.2s both;
-        }
-
-        .btn-hero {
-            padding: 1rem 2.5rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 50px;
-            transition: all 0.3s ease;
-            animation: fadeInUp 0.8s ease 0.4s both;
-        }
-
-        .btn-hero-primary {
-            background: white;
-            color: #667eea;
-            border: none;
-        }
-
-        .btn-hero-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        .btn-hero-secondary {
-            background: transparent;
-            color: white;
-            border: 2px solid white;
-        }
-
-        .btn-hero-secondary:hover {
-            background: white;
-            color: #667eea;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Stats Section */
-        .stats-section {
-            padding: 5rem 0;
-            background: var(--light);
-        }
-
-        .stat-card {
-            text-align: center;
-            padding: 2rem;
-            transition: transform 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-10px);
-        }
-
-        .stat-number {
-            font-size: 3rem;
-            font-weight: 800;
-            background: var(--gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        /* Features Cards */
-        .feature-card {
-            background: white;
-            border-radius: 20px;
-            padding: 2rem;
-            height: 100%;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .feature-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: var(--gradient);
-            transform: scaleX(0);
-            transition: transform 0.3s ease;
-        }
-
-        .feature-card:hover::before {
-            transform: scaleX(1);
-        }
-
-        .feature-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        }
-
-        .feature-icon {
-            width: 80px;
-            height: 80px;
-            background: var(--gradient);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            color: white;
-            margin-bottom: 1.5rem;
-        }
-
-        /* How it Works */
-        .step-card {
-            text-align: center;
-            padding: 2rem;
-            position: relative;
-        }
-
-        .step-number {
-            width: 60px;
-            height: 60px;
-            background: var(--gradient);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin: 0 auto 1.5rem;
-            position: relative;
-            z-index: 2;
-        }
-
-        .step-card:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            top: 30px;
-            left: 50%;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            z-index: 1;
-        }
-
-        /* Pricing Cards */
-        .pricing-card {
-            background: white;
-            border-radius: 20px;
-            padding: 2rem;
-            text-align: center;
-            position: relative;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-        }
-
-        .pricing-card.featured {
-            border-color: #667eea;
-            transform: scale(1.05);
-        }
-
-        .pricing-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-        }
-
-        .price {
-            font-size: 3rem;
-            font-weight: 800;
-            background: var(--gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        /* CTA Section */
-        .cta-section {
-            background: var(--gradient);
-            padding: 5rem 0;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .cta-section::before {
             content: '';
             position: absolute;
             top: -50%;
             left: -50%;
             width: 200%;
             height: 200%;
+            background: radial-gradient(circle at 20% 80%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(118, 75, 162, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 40%, rgba(246, 135, 179, 0.1) 0%, transparent 50%);
+            animation: rotate 30s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Floating Elements */
+        .floating-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .shape {
+            position: absolute;
+            opacity: 0.03;
+        }
+
+        .shape:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            background: var(--gradient-primary);
+            left: 10%;
+            top: 20%;
+            border-radius: 50%;
+            animation: float1 20s infinite ease-in-out;
+        }
+
+        .shape:nth-child(2) {
+            width: 120px;
+            height: 120px;
+            background: var(--gradient-secondary);
+            right: 10%;
+            bottom: 20%;
+            border-radius: 38% 62% 63% 37% / 70% 33% 67% 30%;
+            animation: float2 25s infinite ease-in-out;
+        }
+
+        .shape:nth-child(3) {
+            width: 100px;
+            height: 100px;
+            background: var(--gradient-accent);
+            left: 50%;
+            top: 50%;
+            border-radius: 38% 62% 63% 37% / 41% 44% 56% 59%;
+            animation: float3 30s infinite ease-in-out;
+        }
+
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(120deg); }
+            66% { transform: translate(-20px, 20px) rotate(240deg); }
+        }
+
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+            33% { transform: translate(-30px, -30px) rotate(180deg) scale(1.1); }
+            66% { transform: translate(30px, -20px) rotate(360deg) scale(0.9); }
+        }
+
+        @keyframes float3 {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(50px, 30px) rotate(180deg); }
+            66% { transform: translate(-50px, -30px) rotate(360deg); }
+        }
+
+        /* Hero Content */
+        .hero-content {
+            position: relative;
+            z-index: 10;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4.5rem);
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+        }
+
+        .gradient-text {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% 200%;
+            animation: gradientShift 3s ease infinite;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: #4a5568;
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+
+        /* Animated Buttons */
+        .btn-hero {
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .btn-hero-primary {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-hero-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.4s ease;
+            z-index: -1;
+        }
+
+        .btn-hero-primary:hover::before {
+            width: 100%;
+        }
+
+        .btn-hero-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-hero-secondary {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            margin-left: 1rem;
+        }
+
+        .btn-hero-secondary:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Animated Hero Image */
+        .hero-image {
+            position: relative;
+            animation: levitate 6s ease-in-out infinite;
+        }
+
+        @keyframes levitate {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .hero-image img {
+            width: 100%;
+            height: auto;
+            filter: drop-shadow(0 20px 40px rgba(0,0,0,0.1));
+        }
+
+        /* Animated Mock Dashboard */
+        .mock-dashboard {
+            width: 100%;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mock-header {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .mock-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .mock-dot:nth-child(1) { background: #ff5f57; }
+        .mock-dot:nth-child(2) { background: #ffbd2e; }
+        .mock-dot:nth-child(3) { background: #28ca42; }
+
+        .mock-stat {
+            background: var(--gradient-primary);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mock-stat::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
             background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: pulse 4s ease-in-out infinite;
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+
+        .counter {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        /* Stats Section com Contadores Animados */
+        .stats-section {
+            padding: 5rem 0;
+            background: var(--light);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--gradient-primary);
+            transform: scaleX(0);
+            animation: expandWidth 2s ease-out forwards;
+        }
+
+        @keyframes expandWidth {
+            to { transform: scaleX(1); }
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-primary);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover::before {
+            transform: translateX(0);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-icon {
+            font-size: 3rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+        }
+
+        /* Feature Cards 3D */
+        .feature-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            height: 100%;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            transform-style: preserve-3d;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            padding: 2px;
+            background: var(--gradient-primary);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px) rotateX(-10deg) rotateY(10deg);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--gradient-primary);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            margin-bottom: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-icon::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+            animation: iconPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes iconPulse {
+            0%, 100% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.5); opacity: 1; }
+        }
+
+        /* How it Works - Timeline Animado */
+        .timeline {
+            position: relative;
+            padding: 2rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 100%;
+            background: var(--gradient-primary);
+            opacity: 0.2;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding: 2rem;
+            width: 50%;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .timeline-item.animated {
+            animation: slideInUp 0.6s ease forwards;
+        }
+
+        @keyframes slideInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .timeline-item:nth-child(odd) {
+            left: 0;
+            text-align: right;
+            padding-right: 4rem;
+        }
+
+        .timeline-item:nth-child(even) {
+            left: 50%;
+            padding-left: 4rem;
+        }
+
+        .timeline-number {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 60px;
+            height: 60px;
+            background: white;
+            border: 4px solid var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            z-index: 2;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .timeline-item:nth-child(odd) .timeline-number {
+            right: -30px;
+        }
+
+        .timeline-item:nth-child(even) .timeline-number {
+            left: -30px;
+        }
+
+        /* Pricing Cards Premium */
+        .pricing-section {
+            padding: 5rem 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pricing-card {
+            background: white;
+            border-radius: 30px;
+            padding: 3rem;
+            text-align: center;
+            position: relative;
+            transition: all 0.4s ease;
+            transform-style: preserve-3d;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .pricing-card.featured {
+            transform: scale(1.05);
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .pricing-card.featured * {
+            color: white !important;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-15px) rotateX(-5deg) rotateY(5deg);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.15);
+        }
+
+        .pricing-header {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .pricing-badge {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gradient-accent);
+            color: white;
+            padding: 0.5rem 2rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(251, 191, 36, 0.4);
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-10px); }
+        }
+
+        .price {
+            font-size: 4rem;
+            font-weight: 900;
+            line-height: 1;
+            margin: 1rem 0;
+            position: relative;
+        }
+
+        .price-currency {
+            font-size: 2rem;
+            vertical-align: top;
+        }
+
+        .price-decimal {
+            font-size: 2rem;
+        }
+
+        /* CTA Section Épica */
+        .cta-section {
+            padding: 8rem 0;
+            background: var(--gradient-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-section::before,
+        .cta-section::after {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .cta-section::before {
+            top: -150px;
+            left: -150px;
+            animation: float1 20s infinite ease-in-out;
+        }
+
+        .cta-section::after {
+            bottom: -150px;
+            right: -150px;
+            animation: float2 25s infinite ease-in-out;
+        }
+
+        .cta-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            color: white;
+        }
+
+        .cta-title {
+            font-size: clamp(2rem, 4vw, 3.5rem);
+            font-weight: 800;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .btn-cta {
+            background: white;
+            color: var(--primary);
+            padding: 1.2rem 3rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: 50px;
+            border: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: pulse 2s ease-in-out infinite;
         }
 
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+            50% { transform: scale(1.05); }
         }
 
-        /* Footer */
+        .btn-cta:hover {
+            transform: scale(1.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Testimonials Carousel */
+        .testimonial-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .testimonial-card::before {
+            content: '❝';
+            position: absolute;
+            top: -20px;
+            left: 20px;
+            font-size: 100px;
+            color: rgba(102, 126, 234, 0.1);
+            font-family: serif;
+        }
+
+        .testimonial-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .stars {
+            color: #fbbf24;
+            margin-bottom: 1rem;
+        }
+
+        /* Footer Moderno */
         .footer {
             background: var(--dark);
             color: white;
-            padding: 3rem 0 2rem;
+            padding: 4rem 0 2rem;
+            position: relative;
+            overflow: hidden;
         }
 
-        /* Animations */
-        .animate-on-scroll {
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--gradient-primary);
+        }
+
+        /* Animações ao Scroll */
+        .fade-in {
             opacity: 0;
             transform: translateY(30px);
-            transition: all 0.6s ease;
+            transition: all 0.8s ease;
         }
 
-        .animate-on-scroll.animated {
+        .fade-in.visible {
             opacity: 1;
             transform: translateY(0);
         }
@@ -331,20 +773,112 @@
         /* Responsive */
         @media (max-width: 768px) {
             .hero h1 {
-                font-size: 2.5rem;
+                font-size: 2rem;
             }
             
-            .step-card:not(:last-child)::after {
-                display: none;
+            .timeline::before {
+                left: 30px;
             }
+            
+            .timeline-item {
+                width: 100%;
+                padding-left: 70px !important;
+                text-align: left !important;
+            }
+            
+            .timeline-item:nth-child(even) {
+                left: 0;
+            }
+            
+            .timeline-number {
+                left: 0 !important;
+            }
+            
+            .btn-hero-secondary {
+                margin-left: 0;
+                margin-top: 1rem;
+            }
+
+            .mock-dashboard {
+                transform: scale(0.8);
+            }
+        }
+
+        /* Loading Animation */
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader-inner {
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(102, 126, 234, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Particles Background */
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* Glow Effects */
+        .glow {
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 10px -10px var(--primary); }
+            to { box-shadow: 0 0 20px 10px var(--primary); }
+        }
+
+        /* Number Counter Animation */
+        .counter-value {
+            display: inline-block;
+            font-size: 3rem;
+            font-weight: 800;
         }
     </style>
 </head>
 <body>
+    <!-- Custom Cursor -->
+    <div class="cursor"></div>
+    <div class="cursor2"></div>
+
+    <!-- Loader -->
+    <div class="loader">
+        <div class="loader-inner"></div>
+    </div>
+
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-custom fixed-top">
         <div class="container">
-            <a class="navbar-brand" href="#">
+            <a class="navbar-brand hover-target" href="#">
                 <i class="bi bi-telegram"></i> TeleVIP
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -353,20 +887,20 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="#features">Recursos</a>
+                        <a class="nav-link hover-target" href="#features">Recursos</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#how-it-works">Como Funciona</a>
+                        <a class="nav-link hover-target" href="#how-it-works">Como Funciona</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#pricing">Preços</a>
+                        <a class="nav-link hover-target" href="#pricing">Preços</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
+                        <a class="nav-link hover-target" href="{{ url_for('auth.login') }}">Login</a>
                     </li>
-                    <li class="nav-item ms-2">
-                        <a class="btn btn-primary rounded-pill px-4" href="{{ url_for('auth.register') }}">
-                            Começar Grátis
+                    <li class="nav-item ms-3">
+                        <a class="btn btn-hero btn-hero-primary hover-target" href="{{ url_for('auth.register') }}">
+                            🚀 Começar Agora
                         </a>
                     </li>
                 </ul>
@@ -375,42 +909,79 @@
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero text-white">
-        <div class="floating-icons">
-            <i class="bi bi-telegram floating-icon" style="top: 10%; left: 5%; animation-delay: 0s;"></i>
-            <i class="bi bi-currency-dollar floating-icon" style="top: 20%; right: 10%; animation-delay: 1s;"></i>
-            <i class="bi bi-people floating-icon" style="bottom: 20%; left: 10%; animation-delay: 2s;"></i>
-            <i class="bi bi-graph-up floating-icon" style="bottom: 10%; right: 5%; animation-delay: 3s;"></i>
-            <i class="bi bi-shield-check floating-icon" style="top: 50%; left: 20%; animation-delay: 4s;"></i>
+    <section class="hero">
+        <div class="floating-shapes">
+            <div class="shape"></div>
+            <div class="shape"></div>
+            <div class="shape"></div>
         </div>
+        
+        <div id="particles-js"></div>
         
         <div class="container">
             <div class="row align-items-center min-vh-100">
                 <div class="col-lg-6 hero-content">
-                    <h1>Transforme seu Grupo do Telegram em um <span style="color: #ffd700;">Negócio Lucrativo</span></h1>
-                    <p class="lead">A plataforma mais completa para monetizar seus grupos VIP com pagamentos automatizados e gestão inteligente.</p>
-                    <div class="d-flex gap-3 flex-wrap">
-                        <a href="{{ url_for('auth.register') }}" class="btn btn-hero btn-hero-primary">
-                            🚀 Começar Agora - É Grátis!
-                        </a>
-                        <a href="#how-it-works" class="btn btn-hero btn-hero-secondary">
-                            <i class="bi bi-play-circle"></i> Ver Como Funciona
-                        </a>
-                    </div>
-                    <div class="mt-4">
-                        <small class="opacity-75">
-                            <i class="bi bi-check-circle-fill"></i> Sem mensalidade
-                            <span class="mx-2">•</span>
-                            <i class="bi bi-check-circle-fill"></i> Apenas 1% por transação
-                            <span class="mx-2">•</span>
-                            <i class="bi bi-check-circle-fill"></i> Saque via PIX
-                        </small>
+                    <div data-aos="fade-right" data-aos-duration="1000">
+                        <h1>
+                            Transforme seu Telegram em uma 
+                            <span class="gradient-text">Máquina de Lucros</span>
+                        </h1>
+                        <p data-aos="fade-right" data-aos-delay="200">
+                            Sistema revolucionário que automatiza pagamentos, gerencia assinantes e 
+                            multiplica seus ganhos enquanto você dorme. Junte-se a milhares de 
+                            criadores que já faturam 5 dígitos por mês!
+                        </p>
+                        <div data-aos="fade-up" data-aos-delay="400">
+                            <a href="{{ url_for('auth.register') }}" class="btn btn-hero btn-hero-primary hover-target">
+                                💎 Quero Lucrar Agora
+                            </a>
+                            <a href="#how-it-works" class="btn btn-hero btn-hero-secondary hover-target">
+                                <i class="bi bi-play-circle"></i> Ver Demonstração
+                            </a>
+                        </div>
+                        <div class="mt-4" data-aos="fade-up" data-aos-delay="600">
+                            <div class="d-flex gap-4 align-items-center">
+                                <div class="d-flex">
+                                    <img src="https://i.pravatar.cc/40?img=1" class="rounded-circle border border-white border-3" style="margin-right: -10px;">
+                                    <img src="https://i.pravatar.cc/40?img=2" class="rounded-circle border border-white border-3" style="margin-right: -10px;">
+                                    <img src="https://i.pravatar.cc/40?img=3" class="rounded-circle border border-white border-3" style="margin-right: -10px;">
+                                    <img src="https://i.pravatar.cc/40?img=4" class="rounded-circle border border-white border-3">
+                                </div>
+                                <div>
+                                    <strong>+2.847</strong> criadores<br>
+                                    <small class="text-muted">faturando hoje</small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-lg-6">
-                    <div class="position-relative">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23667eea;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23764ba2;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='50' y='50' width='400' height='250' rx='20' fill='white' opacity='0.1'/%3E%3Crect x='70' y='70' width='360' height='30' rx='15' fill='white' opacity='0.2'/%3E%3Crect x='70' y='120' width='280' height='20' rx='10' fill='white' opacity='0.2'/%3E%3Crect x='70' y='160' width='320' height='20' rx='10' fill='white' opacity='0.2'/%3E%3Crect x='70' y='200' width='240' height='20' rx='10' fill='white' opacity='0.2'/%3E%3Ccircle cx='250' cy='350' r='80' fill='white' opacity='0.2'/%3E%3Ctext x='250' y='360' text-anchor='middle' fill='white' font-size='60' font-weight='bold'%3E$%3C/text%3E%3C/svg%3E" 
-                             alt="Dashboard Preview" class="img-fluid" style="filter: drop-shadow(0 20px 40px rgba(0,0,0,0.3));">
+                    <div class="hero-image" data-aos="fade-left" data-aos-duration="1000">
+                        <div class="mock-dashboard">
+                            <div class="mock-header">
+                                <div class="mock-dot"></div>
+                                <div class="mock-dot"></div>
+                                <div class="mock-dot"></div>
+                            </div>
+                            <div class="mock-stat">
+                                <p class="mb-2" style="opacity: 0.8;">Faturamento Hoje</p>
+                                <h2 class="counter mb-0">R$ <span class="counter-value" data-target="3847">0</span></h2>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="p-3 bg-light rounded-3 text-center">
+                                        <h4 class="counter-value text-primary mb-0" data-target="847">0</h4>
+                                        <small class="text-muted">Assinantes</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-3 bg-light rounded-3 text-center">
+                                        <h4 class="counter-value text-success mb-0" data-target="98">0</h4>
+                                        <small class="text-muted">% Renovação</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -421,28 +992,32 @@
     <section class="stats-section">
         <div class="container">
             <div class="row g-4">
-                <div class="col-md-3" data-aos="fade-up" data-aos-delay="0">
+                <div class="col-md-3" data-aos="zoom-in" data-aos-delay="0">
                     <div class="stat-card">
-                        <div class="stat-number">1%</div>
-                        <p class="mb-0">Taxa única</p>
+                        <i class="bi bi-percent stat-icon"></i>
+                        <h3 class="stat-number counter-value" data-target="1">0</h3>
+                        <p class="mb-0 text-muted">Taxa única</p>
                     </div>
                 </div>
-                <div class="col-md-3" data-aos="fade-up" data-aos-delay="100">
+                <div class="col-md-3" data-aos="zoom-in" data-aos-delay="100">
                     <div class="stat-card">
-                        <div class="stat-number">24h</div>
-                        <p class="mb-0">Saque via PIX</p>
+                        <i class="bi bi-lightning-charge stat-icon"></i>
+                        <h3 class="stat-number"><span class="counter-value" data-target="24">0</span>h</h3>
+                        <p class="mb-0 text-muted">Saque via PIX</p>
                     </div>
                 </div>
-                <div class="col-md-3" data-aos="fade-up" data-aos-delay="200">
+                <div class="col-md-3" data-aos="zoom-in" data-aos-delay="200">
                     <div class="stat-card">
-                        <div class="stat-number">100%</div>
-                        <p class="mb-0">Automatizado</p>
+                        <i class="bi bi-robot stat-icon"></i>
+                        <h3 class="stat-number counter-value" data-target="100">0</h3>
+                        <p class="mb-0 text-muted">% Automatizado</p>
                     </div>
                 </div>
-                <div class="col-md-3" data-aos="fade-up" data-aos-delay="300">
+                <div class="col-md-3" data-aos="zoom-in" data-aos-delay="300">
                     <div class="stat-card">
-                        <div class="stat-number">∞</div>
-                        <p class="mb-0">Grupos</p>
+                        <i class="bi bi-infinity stat-icon"></i>
+                        <h3 class="stat-number">∞</h3>
+                        <p class="mb-0 text-muted">Grupos</p>
                     </div>
                 </div>
             </div>
@@ -453,8 +1028,8 @@
     <section id="features" class="py-5">
         <div class="container">
             <div class="text-center mb-5" data-aos="fade-up">
-                <h2 class="display-4 fw-bold">Recursos que Fazem a Diferença</h2>
-                <p class="lead text-muted">Tudo que você precisa para monetizar com sucesso</p>
+                <h2 class="display-4 fw-bold">Recursos que <span class="gradient-text">Revolucionam</span></h2>
+                <p class="lead text-muted">Tecnologia de ponta para maximizar seus lucros</p>
             </div>
             
             <div class="row g-4">
@@ -463,8 +1038,13 @@
                         <div class="feature-icon">
                             <i class="bi bi-robot"></i>
                         </div>
-                        <h4>Bot Inteligente</h4>
-                        <p class="text-muted">Nosso bot gerencia tudo automaticamente: pagamentos, acessos, renovações e notificações.</p>
+                        <h4>Bot IA Inteligente</h4>
+                        <p class="text-muted">Inteligência artificial que aprende com seus assinantes e otimiza conversões automaticamente.</p>
+                        <ul class="list-unstyled mt-3">
+                            <li><i class="bi bi-check-circle text-success"></i> Respostas automáticas</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Segmentação inteligente</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Análise preditiva</li>
+                        </ul>
                     </div>
                 </div>
                 
@@ -473,8 +1053,13 @@
                         <div class="feature-icon">
                             <i class="bi bi-credit-card"></i>
                         </div>
-                        <h4>Pagamento Seguro</h4>
-                        <p class="text-muted">Aceite PIX e cartões de crédito. Receba seus pagamentos com segurança e rapidez.</p>
+                        <h4>Multi-Pagamentos</h4>
+                        <p class="text-muted">Aceite PIX, cartões, criptomoedas e boletos. Máxima conversão garantida.</p>
+                        <ul class="list-unstyled mt-3">
+                            <li><i class="bi bi-check-circle text-success"></i> PIX instantâneo</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Cartões internacionais</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Parcelamento</li>
+                        </ul>
                     </div>
                 </div>
                 
@@ -483,8 +1068,13 @@
                         <div class="feature-icon">
                             <i class="bi bi-graph-up-arrow"></i>
                         </div>
-                        <h4>Dashboard Completo</h4>
-                        <p class="text-muted">Acompanhe métricas, receita e assinantes em tempo real com gráficos intuitivos.</p>
+                        <h4>Analytics Avançado</h4>
+                        <p class="text-muted">Dashboard com métricas em tempo real e insights para multiplicar vendas.</p>
+                        <ul class="list-unstyled mt-3">
+                            <li><i class="bi bi-check-circle text-success"></i> Funil de vendas</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Taxa de conversão</li>
+                            <li><i class="bi bi-check-circle text-success"></i> LTV dos clientes</li>
+                        </ul>
                     </div>
                 </div>
                 
@@ -493,8 +1083,13 @@
                         <div class="feature-icon">
                             <i class="bi bi-bell"></i>
                         </div>
-                        <h4>Notificações Automáticas</h4>
-                        <p class="text-muted">Sistema inteligente que notifica sobre vencimentos e renova assinaturas.</p>
+                        <h4>Automação Total</h4>
+                        <p class="text-muted">Sistema que trabalha 24/7 gerenciando tudo enquanto você foca no conteúdo.</p>
+                        <ul class="list-unstyled mt-3">
+                            <li><i class="bi bi-check-circle text-success"></i> Renovações automáticas</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Recuperação de vendas</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Upsell inteligente</li>
+                        </ul>
                     </div>
                 </div>
                 
@@ -503,8 +1098,13 @@
                         <div class="feature-icon">
                             <i class="bi bi-shield-check"></i>
                         </div>
-                        <h4>100% Seguro</h4>
-                        <p class="text-muted">Proteção total dos dados e transações. Conformidade com LGPD.</p>
+                        <h4>Segurança Máxima</h4>
+                        <p class="text-muted">Criptografia de ponta e conformidade total com LGPD e regulações.</p>
+                        <ul class="list-unstyled mt-3">
+                            <li><i class="bi bi-check-circle text-success"></i> SSL de 256 bits</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Backup automático</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Anti-fraude</li>
+                        </ul>
                     </div>
                 </div>
                 
@@ -513,8 +1113,13 @@
                         <div class="feature-icon">
                             <i class="bi bi-headset"></i>
                         </div>
-                        <h4>Suporte Dedicado</h4>
-                        <p class="text-muted">Time especializado pronto para ajudar você a crescer seu negócio.</p>
+                        <h4>Suporte Premium</h4>
+                        <p class="text-muted">Time de especialistas disponível 24/7 para garantir seu sucesso.</p>
+                        <ul class="list-unstyled mt-3">
+                            <li><i class="bi bi-check-circle text-success"></i> Chat ao vivo</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Consultoria grátis</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Treinamentos exclusivos</li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -525,40 +1130,112 @@
     <section id="how-it-works" class="py-5 bg-light">
         <div class="container">
             <div class="text-center mb-5" data-aos="fade-up">
-                <h2 class="display-4 fw-bold">Como Funciona?</h2>
-                <p class="lead text-muted">Comece a monetizar em apenas 4 passos simples</p>
+                <h2 class="display-4 fw-bold">Como <span class="gradient-text">Funciona?</span></h2>
+                <p class="lead text-muted">4 passos simples para começar a lucrar hoje mesmo</p>
+            </div>
+            
+            <div class="timeline">
+                <div class="timeline-item fade-in" data-aos="fade-right">
+                    <div class="timeline-number">1</div>
+                    <div class="timeline-content">
+                        <h5>Crie sua Conta Grátis</h5>
+                        <p class="text-muted">Cadastro em 30 segundos. Sem cartão, sem pegadinhas.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item fade-in" data-aos="fade-left" data-aos-delay="100">
+                    <div class="timeline-number">2</div>
+                    <div class="timeline-content">
+                        <h5>Configure seu Grupo VIP</h5>
+                        <p class="text-muted">Adicione o bot, defina preços e planos. Interface super intuitiva.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item fade-in" data-aos="fade-right" data-aos-delay="200">
+                    <div class="timeline-number">3</div>
+                    <div class="timeline-content">
+                        <h5>Compartilhe e Venda</h5>
+                        <p class="text-muted">Link único para seus seguidores. Sistema faz todo o resto.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item fade-in" data-aos="fade-left" data-aos-delay="300">
+                    <div class="timeline-number">4</div>
+                    <div class="timeline-content">
+                        <h5>Receba seus Lucros</h5>
+                        <p class="text-muted">Saque via PIX quando quiser. Dinheiro na conta em minutos.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="py-5">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="display-4 fw-bold">Criadores que já <span class="gradient-text">Faturam Alto</span></h2>
+                <p class="lead text-muted">Histórias reais de sucesso com o TeleVIP</p>
             </div>
             
             <div class="row g-4">
-                <div class="col-md-3" data-aos="fade-up" data-aos-delay="0">
-                    <div class="step-card">
-                        <div class="step-number">1</div>
-                        <h5>Crie sua Conta</h5>
-                        <p class="text-muted">Cadastre-se gratuitamente em menos de 1 minuto</p>
+                <div class="col-lg-4" data-aos="fade-up" data-aos-delay="0">
+                    <div class="testimonial-card">
+                        <div class="stars mb-3">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                        <p>"Saí de 500 reais para <strong>15 mil por mês</strong> em apenas 3 meses! O sistema é impressionante."</p>
+                        <div class="d-flex align-items-center mt-3">
+                            <img src="https://i.pravatar.cc/50?img=5" class="rounded-circle me-3" width="50">
+                            <div>
+                                <strong>Marina Silva</strong><br>
+                                <small class="text-muted">Trading & Investimentos</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="col-md-3" data-aos="fade-up" data-aos-delay="100">
-                    <div class="step-card">
-                        <div class="step-number">2</div>
-                        <h5>Configure seu Grupo</h5>
-                        <p class="text-muted">Adicione o bot e defina seus planos e preços</p>
+                <div class="col-lg-4" data-aos="fade-up" data-aos-delay="100">
+                    <div class="testimonial-card">
+                        <div class="stars mb-3">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                        <p>"A automação me salvou! Agora tenho <strong>2.300 assinantes</strong> e não perco mais tempo com cobranças."</p>
+                        <div class="d-flex align-items-center mt-3">
+                            <img src="https://i.pravatar.cc/50?img=8" class="rounded-circle me-3" width="50">
+                            <div>
+                                <strong>Carlos Eduardo</strong><br>
+                                <small class="text-muted">Marketing Digital</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="col-md-3" data-aos="fade-up" data-aos-delay="200">
-                    <div class="step-card">
-                        <div class="step-number">3</div>
-                        <h5>Compartilhe o Link</h5>
-                        <p class="text-muted">Divulgue para seus seguidores e comece a vender</p>
-                    </div>
-                </div>
-                
-                <div class="col-md-3" data-aos="fade-up" data-aos-delay="300">
-                    <div class="step-card">
-                        <div class="step-number">4</div>
-                        <h5>Receba seus Lucros</h5>
-                        <p class="text-muted">Saque via PIX quando quiser, sem burocracia</p>
+                <div class="col-lg-4" data-aos="fade-up" data-aos-delay="200">
+                    <div class="testimonial-card">
+                        <div class="stars mb-3">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                        <p>"Melhor investimento! Taxa de apenas 1% e suporte incrível. <strong>ROI de 2.847%</strong> no primeiro mês!"</p>
+                        <div class="d-flex align-items-center mt-3">
+                            <img src="https://i.pravatar.cc/50?img=12" class="rounded-circle me-3" width="50">
+                            <div>
+                                <strong>Ana Beatriz</strong><br>
+                                <small class="text-muted">Fitness & Nutrição</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -566,35 +1243,46 @@
     </section>
 
     <!-- Pricing Section -->
-    <section id="pricing" class="py-5">
+    <section id="pricing" class="pricing-section">
         <div class="container">
             <div class="text-center mb-5" data-aos="fade-up">
-                <h2 class="display-4 fw-bold">Preço Simples e Transparente</h2>
-                <p class="lead text-muted">Sem pegadinhas, sem taxas escondidas</p>
+                <h2 class="display-4 fw-bold">Invista no seu <span class="gradient-text">Sucesso</span></h2>
+                <p class="lead text-muted">Preço único, transparente e justo</p>
             </div>
             
             <div class="row justify-content-center">
-                <div class="col-lg-4" data-aos="fade-up">
+                <div class="col-lg-5" data-aos="zoom-in">
                     <div class="pricing-card featured">
-                        <div class="badge bg-primary mb-3">ÚNICO PLANO</div>
-                        <h3>TeleVIP Pro</h3>
-                        <div class="price">1%</div>
-                        <p class="text-muted">por transação</p>
+                        <div class="pricing-header">
+                            <div class="pricing-badge">🔥 OFERTA LIMITADA</div>
+                            <h3 class="mt-4">TeleVIP Pro</h3>
+                            <div class="price">
+                                <span class="price-currency">R$</span>0<span class="price-decimal">,00</span>
+                            </div>
+                            <p class="text-muted mb-0">para começar</p>
+                            <p class="h5 mt-3 mb-4">Apenas <strong>1%</strong> por transação</p>
+                        </div>
                         
-                        <ul class="list-unstyled my-4">
-                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Grupos ilimitados</li>
-                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Assinantes ilimitados</li>
-                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Dashboard completo</li>
-                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Bot automatizado</li>
-                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Pagamento PIX e Cartão</li>
-                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Saque via PIX</li>
-                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Suporte prioritário</li>
-                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Sem mensalidade</li>
+                        <ul class="list-unstyled my-4 flex-grow-1">
+                            <li class="mb-3"><i class="bi bi-check-circle-fill text-success"></i> Grupos ilimitados</li>
+                            <li class="mb-3"><i class="bi bi-check-circle-fill text-success"></i> Assinantes ilimitados</li>
+                            <li class="mb-3"><i class="bi bi-check-circle-fill text-success"></i> Dashboard completo</li>
+                            <li class="mb-3"><i class="bi bi-check-circle-fill text-success"></i> Bot com IA avançada</li>
+                            <li class="mb-3"><i class="bi bi-check-circle-fill text-success"></i> PIX + Cartão + Cripto</li>
+                            <li class="mb-3"><i class="bi bi-check-circle-fill text-success"></i> Saque imediato via PIX</li>
+                            <li class="mb-3"><i class="bi bi-check-circle-fill text-success"></i> Suporte VIP 24/7</li>
+                            <li class="mb-3"><i class="bi bi-check-circle-fill text-success"></i> Treinamentos exclusivos</li>
+                            <li class="mb-3"><i class="bi bi-check-circle-fill text-success"></i> API completa</li>
+                            <li class="mb-3"><i class="bi bi-check-circle-fill text-success"></i> Sem mensalidade</li>
                         </ul>
                         
-                        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg rounded-pill w-100">
-                            Começar Gratuitamente
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-lg btn-light rounded-pill w-100 py-3 fw-bold">
+                            🚀 Começar a Lucrar Agora
                         </a>
+                        
+                        <p class="text-center mt-3 mb-0 small">
+                            <i class="bi bi-shield-check"></i> Garantia de 30 dias ou seu dinheiro de volta
+                        </p>
                     </div>
                 </div>
             </div>
@@ -602,22 +1290,32 @@
             <div class="text-center mt-5" data-aos="fade-up">
                 <p class="text-muted">
                     <i class="bi bi-info-circle"></i> 
-                    Você só paga quando recebe. Sem mensalidade, sem taxa de setup, sem surpresas.
+                    Compare: outras plataformas cobram até <strong>20%</strong> + mensalidade de R$497
                 </p>
             </div>
         </div>
     </section>
 
     <!-- CTA Section -->
-    <section class="cta-section text-white">
-        <div class="container position-relative" data-aos="fade-up">
-            <h2 class="display-4 fw-bold mb-4">Pronto para Monetizar seus Grupos?</h2>
-            <p class="lead mb-4">Junte-se a centenas de criadores que já transformaram seus grupos em negócios rentáveis</p>
-            <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg rounded-pill px-5">
-                🚀 Criar Conta Gratuita
-            </a>
-            <div class="mt-4">
-                <small class="opacity-75">Leva menos de 1 minuto • Sem cartão de crédito</small>
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-content" data-aos="zoom-in">
+                <h2 class="cta-title mb-4">
+                    Quanto você está perdendo por não automatizar?
+                </h2>
+                <p class="lead mb-5">
+                    Cada dia sem o TeleVIP é dinheiro deixado na mesa.<br>
+                    <strong>Comece agora e veja resultados em 24 horas!</strong>
+                </p>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-cta">
+                    💎 QUERO MULTIPLICAR MEUS GANHOS
+                </a>
+                <div class="mt-4">
+                    <small class="opacity-75">
+                        <i class="bi bi-lightning-charge"></i> 
+                        847 pessoas começaram nas últimas 2 horas
+                    </small>
+                </div>
             </div>
         </div>
     </section>
@@ -627,45 +1325,50 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-4 mb-4">
-                    <h5><i class="bi bi-telegram"></i> TeleVIP</h5>
-                    <p class="text-muted">A plataforma mais completa para monetização de grupos no Telegram.</p>
-                    <div class="d-flex gap-3">
-                        <a href="#" class="text-white"><i class="bi bi-facebook fs-5"></i></a>
-                        <a href="#" class="text-white"><i class="bi bi-instagram fs-5"></i></a>
-                        <a href="#" class="text-white"><i class="bi bi-twitter fs-5"></i></a>
-                        <a href="#" class="text-white"><i class="bi bi-linkedin fs-5"></i></a>
+                    <h5 class="gradient-text"><i class="bi bi-telegram"></i> TeleVIP</h5>
+                    <p class="text-muted">A plataforma definitiva para monetização de grupos no Telegram.</p>
+                    <div class="d-flex gap-3 mt-3">
+                        <a href="#" class="text-white fs-5 hover-target"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="text-white fs-5 hover-target"><i class="bi bi-instagram"></i></a>
+                        <a href="#" class="text-white fs-5 hover-target"><i class="bi bi-twitter"></i></a>
+                        <a href="#" class="text-white fs-5 hover-target"><i class="bi bi-linkedin"></i></a>
+                        <a href="#" class="text-white fs-5 hover-target"><i class="bi bi-youtube"></i></a>
                     </div>
                 </div>
                 <div class="col-lg-2 mb-4">
                     <h6 class="text-uppercase mb-3">Produto</h6>
                     <ul class="list-unstyled">
-                        <li><a href="#features" class="text-muted text-decoration-none">Recursos</a></li>
-                        <li><a href="#pricing" class="text-muted text-decoration-none">Preços</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">API</a></li>
+                        <li><a href="#features" class="text-muted text-decoration-none hover-target">Recursos</a></li>
+                        <li><a href="#pricing" class="text-muted text-decoration-none hover-target">Preços</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none hover-target">API</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none hover-target">Integrações</a></li>
                     </ul>
                 </div>
                 <div class="col-lg-2 mb-4">
                     <h6 class="text-uppercase mb-3">Empresa</h6>
                     <ul class="list-unstyled">
-                        <li><a href="#" class="text-muted text-decoration-none">Sobre</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">Blog</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">Carreiras</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none hover-target">Sobre</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none hover-target">Blog</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none hover-target">Carreiras</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none hover-target">Afiliados</a></li>
                     </ul>
                 </div>
                 <div class="col-lg-2 mb-4">
                     <h6 class="text-uppercase mb-3">Suporte</h6>
                     <ul class="list-unstyled">
-                        <li><a href="#" class="text-muted text-decoration-none">Central de Ajuda</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">Contato</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">Status</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none hover-target">Central de Ajuda</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none hover-target">Contato</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none hover-target">Status</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none hover-target">Comunidade</a></li>
                     </ul>
                 </div>
                 <div class="col-lg-2 mb-4">
                     <h6 class="text-uppercase mb-3">Legal</h6>
                     <ul class="list-unstyled">
-                        <li><a href="#" class="text-muted text-decoration-none">Privacidade</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">Termos</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">Cookies</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none hover-target">Privacidade</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none hover-target">Termos</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none hover-target">Cookies</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none hover-target">LGPD</a></li>
                     </ul>
                 </div>
             </div>
@@ -675,7 +1378,7 @@
                     <p class="mb-0 text-muted">© 2024 TeleVIP. Todos os direitos reservados.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <p class="mb-0 text-muted">Feito com ❤️ no Brasil</p>
+                    <p class="mb-0 text-muted">Feito com ❤️ e ☕ no Brasil</p>
                 </div>
             </div>
         </div>
@@ -683,11 +1386,31 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <script>
+        // Loader
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.querySelector('.loader').classList.add('hidden');
+            }, 1000);
+        });
+
+        // Custom Cursor
+        const cursor = document.querySelector('.cursor');
+        const cursor2 = document.querySelector('.cursor2');
+        
+        document.addEventListener('mousemove', e => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            cursor2.style.left = e.clientX + 'px';
+            cursor2.style.top = e.clientY + 'px';
+        });
+
         // Inicializar AOS
         AOS.init({
             duration: 1000,
-            once: true
+            once: true,
+            offset: 100
         });
 
         // Navbar scroll effect
@@ -712,6 +1435,367 @@
                     });
                 }
             });
+        });
+
+        // Counter Animation
+        const counters = document.querySelectorAll('.counter-value');
+        const speed = 200;
+
+        const countUp = (counter) => {
+            const target = +counter.getAttribute('data-target');
+            const count = +counter.innerText;
+            const inc = target / speed;
+
+            if (count < target) {
+                counter.innerText = Math.ceil(count + inc);
+                setTimeout(() => countUp(counter), 10);
+            } else {
+                counter.innerText = target;
+            }
+        };
+
+        // Intersection Observer for counters
+        const observerOptions = {
+            threshold: 0.5
+        };
+
+        const counterObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    countUp(entry.target);
+                    counterObserver.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        counters.forEach(counter => {
+            counterObserver.observe(counter);
+        });
+
+        // Particles.js configuration
+        particlesJS('particles-js', {
+            particles: {
+                number: {
+                    value: 50,
+                    density: {
+                        enable: true,
+                        value_area: 800
+                    }
+                },
+                color: {
+                    value: '#667eea'
+                },
+                shape: {
+                    type: 'circle'
+                },
+                opacity: {
+                    value: 0.1,
+                    random: false
+                },
+                size: {
+                    value: 3,
+                    random: true
+                },
+                line_linked: {
+                    enable: true,
+                    distance: 150,
+                    color: '#667eea',
+                    opacity: 0.1,
+                    width: 1
+                },
+                move: {
+                    enable: true,
+                    speed: 2,
+                    direction: 'none',
+                    random: false,
+                    straight: false,
+                    out_mode: 'out',
+                    bounce: false
+                }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: {
+                    onhover: {
+                        enable: true,
+                        mode: 'grab'
+                    },
+                    onclick: {
+                        enable: true,
+                        mode: 'push'
+                    },
+                    resize: true
+                },
+                modes: {
+                    grab: {
+                        distance: 140,
+                        line_linked: {
+                            opacity: 0.5
+                        }
+                    },
+                    push: {
+                        particles_nb: 4
+                    }
+                }
+            },
+            retina_detect: true
+        });
+
+        // Animate timeline items on scroll
+        const timelineObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animated');
+                }
+            });
+        }, { threshold: 0.5 });
+
+        document.querySelectorAll('.timeline-item').forEach(item => {
+            timelineObserver.observe(item);
+        });
+
+        // Dynamic year
+        const yearElements = document.querySelectorAll('.current-year');
+        const currentYear = new Date().getFullYear();
+        yearElements.forEach(el => el.textContent = currentYear);
+
+        // Parallax effect on hero section
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const parallax = document.querySelector('.hero');
+            const shapes = document.querySelectorAll('.shape');
+            
+            if (parallax) {
+                parallax.style.transform = `translateY(${scrolled * 0.5}px)`;
+            }
+            
+            shapes.forEach((shape, index) => {
+                const speed = 0.5 + index * 0.1;
+                shape.style.transform = `translateY(${scrolled * speed}px)`;
+            });
+        });
+
+        // Add ripple effect to buttons
+        document.querySelectorAll('.btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                const ripple = document.createElement('span');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                ripple.classList.add('ripple');
+                
+                this.appendChild(ripple);
+                
+                setTimeout(() => ripple.remove(), 600);
+            });
+        });
+
+        // Typing effect for hero title
+        const heroTitle = document.querySelector('.hero h1 .gradient-text');
+        if (heroTitle) {
+            const text = heroTitle.textContent;
+            heroTitle.textContent = '';
+            let index = 0;
+            
+            function typeWriter() {
+                if (index < text.length) {
+                    heroTitle.textContent += text.charAt(index);
+                    index++;
+                    setTimeout(typeWriter, 50);
+                }
+            }
+            
+            setTimeout(typeWriter, 1500);
+        }
+
+        // Add hover effect to feature cards
+        document.querySelectorAll('.feature-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-10px) rotateX(-10deg) rotateY(10deg)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) rotateX(0) rotateY(0)';
+            });
+        });
+
+        // Notification popup
+        function showNotification() {
+            const notifications = [
+                'João acabou de criar um grupo VIP!',
+                'Maria faturou R$ 3.500 hoje!',
+                'Carlos alcançou 1.000 assinantes!',
+                'Ana recebeu 15 novos assinantes!',
+                'Pedro sacou R$ 5.000 via PIX!'
+            ];
+            
+            const notification = document.createElement('div');
+            notification.className = 'notification-popup';
+            notification.innerHTML = `
+                <i class="bi bi-bell-fill me-2"></i>
+                ${notifications[Math.floor(Math.random() * notifications.length)]}
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+
+        // Show notifications periodically
+        setTimeout(() => {
+            showNotification();
+            setInterval(showNotification, 15000);
+        }, 5000);
+
+        // Add notification popup styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .notification-popup {
+                position: fixed;
+                bottom: 30px;
+                left: 30px;
+                background: white;
+                padding: 1rem 1.5rem;
+                border-radius: 10px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+                transform: translateX(-400px);
+                transition: transform 0.3s ease;
+                z-index: 1000;
+                max-width: 300px;
+            }
+            
+            .notification-popup.show {
+                transform: translateX(0);
+            }
+            
+            .ripple {
+                position: absolute;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.6);
+                transform: scale(0);
+                animation: ripple-animation 0.6s ease-out;
+            }
+            
+            @keyframes ripple-animation {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+            
+            @media (max-width: 768px) {
+                .notification-popup {
+                    left: 50%;
+                    transform: translateX(-50%) translateY(100px);
+                    bottom: auto;
+                    top: 20px;
+                }
+                
+                .notification-popup.show {
+                    transform: translateX(-50%) translateY(0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Add confetti effect on CTA button click
+        function createConfetti() {
+            const colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#fbbf24'];
+            const confettiCount = 50;
+            
+            for (let i = 0; i < confettiCount; i++) {
+                const confetti = document.createElement('div');
+                confetti.style.position = 'fixed';
+                confetti.style.width = '10px';
+                confetti.style.height = '10px';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.left = '50%';
+                confetti.style.top = '50%';
+                confetti.style.transform = 'translate(-50%, -50%)';
+                confetti.style.borderRadius = '50%';
+                confetti.style.pointerEvents = 'none';
+                confetti.style.zIndex = '9999';
+                
+                document.body.appendChild(confetti);
+                
+                const angle = (Math.PI * 2 * i) / confettiCount;
+                const velocity = 5 + Math.random() * 5;
+                const lifetime = 1000 + Math.random() * 1000;
+                
+                let x = 0;
+                let y = 0;
+                let opacity = 1;
+                
+                const update = () => {
+                    x += Math.cos(angle) * velocity;
+                    y += Math.sin(angle) * velocity + 2;
+                    opacity -= 1 / (lifetime / 16);
+                    
+                    confetti.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+                    confetti.style.opacity = opacity;
+                    
+                    if (opacity > 0) {
+                        requestAnimationFrame(update);
+                    } else {
+                        confetti.remove();
+                    }
+                };
+                
+                requestAnimationFrame(update);
+            }
+        }
+
+        // Add confetti to main CTA buttons
+        document.querySelectorAll('.btn-cta, .btn-hero-primary').forEach(button => {
+            button.addEventListener('click', createConfetti);
+        });
+
+        // Smooth number transitions on scroll
+        const observeNumbers = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const numbers = entry.target.querySelectorAll('.stat-number');
+                    numbers.forEach(num => {
+                        num.style.transform = 'scale(1.2)';
+                        setTimeout(() => {
+                            num.style.transform = 'scale(1)';
+                        }, 300);
+                    });
+                }
+            });
+        }, { threshold: 0.8 });
+
+        document.querySelectorAll('.stat-card').forEach(card => {
+            observeNumbers.observe(card);
+        });
+
+        // Easter egg: Konami code
+        const konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+        let konamiIndex = 0;
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === konamiCode[konamiIndex]) {
+                konamiIndex++;
+                if (konamiIndex === konamiCode.length) {
+                    createConfetti();
+                    alert('🎉 Parabéns! Você descobriu o código secreto! Use o cupom KONAMI para 50% de desconto no primeiro mês!');
+                    konamiIndex = 0;
+                }
+            } else {
+                konamiIndex = 0;
+            }
         });
     </script>
 </body>
