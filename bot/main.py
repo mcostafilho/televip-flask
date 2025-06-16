@@ -6,6 +6,7 @@ import os
 import sys
 import asyncio
 import logging
+import datetime
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
@@ -13,7 +14,7 @@ from dotenv import load_dotenv
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes, JobQueue
 from telegram.constants import ParseMode
 
 # Importar handlers melhorados
@@ -25,6 +26,7 @@ from bot.handlers.payment_stripe import (
 )
 from bot.handlers.subscription import show_plans, check_status, handle_renewal
 from bot.handlers.admin import setup_group, show_stats, broadcast_message
+from bot.handlers.group_manager import on_new_member, remove_expired_members, send_renewal_reminders
 from bot.utils.database import get_db_session
 from bot.utils.notifications import NotificationScheduler
 
@@ -80,6 +82,12 @@ class TeleVIPBot:
         # Handler geral para callbacks não tratados
         self.app.add_handler(CallbackQueryHandler(self.handle_unknown_callback))
         
+        # Handler para novos membros no grupo
+        self.app.add_handler(MessageHandler(
+            filters.StatusUpdate.NEW_CHAT_MEMBERS,
+            on_new_member
+        ))
+        
         logger.info("✅ Handlers configurados com sucesso!")
     
     async def close_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -118,6 +126,26 @@ class TeleVIPBot:
         
         # Iniciar scheduler de notificações
         await self.notification_scheduler.start()
+        
+        # Agendar jobs recorrentes
+        job_queue = application.job_queue
+        
+        # Verificar assinaturas expiradas a cada 6 horas
+        job_queue.run_repeating(
+            remove_expired_members,
+            interval=21600,  # 6 horas
+            first=60,  # Começar em 1 minuto
+            name='remove_expired'
+        )
+        
+        # Enviar lembretes de renovação 1x por dia às 10h
+        job_queue.run_daily(
+            send_renewal_reminders,
+            time=datetime.time(hour=10, minute=0),
+            name='renewal_reminders'
+        )
+        
+        logger.info("📅 Jobs agendados com sucesso")
         
         # Definir comandos no menu do Telegram
         await application.bot.set_my_commands([

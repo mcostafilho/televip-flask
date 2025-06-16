@@ -132,7 +132,16 @@ def get_revenue_chart_data(group_id=None):
     
     # Preencher dados reais
     for date, total in results:
-        date_str = date.strftime('%d/%m')
+        # date pode ser string ou date object
+        if isinstance(date, str):
+            # Se for string no formato YYYY-MM-DD, converter
+            from datetime import datetime as dt
+            date_obj = dt.strptime(date, '%Y-%m-%d').date()
+            date_str = date_obj.strftime('%d/%m')
+        else:
+            # Se já for um objeto date
+            date_str = date.strftime('%d/%m')
+            
         if date_str in revenue_by_day:
             revenue_by_day[date_str] = float(total)
     
@@ -331,19 +340,20 @@ def get_analytics_chart_data(chart_type, group_ids, start_date):
         
         for row in results:
             # row.date pode ser string ou date object
-            if hasattr(row.date, 'strftime'):
+            if isinstance(row.date, str):
+                # É uma string no formato YYYY-MM-DD
+                from datetime import datetime as dt
+                date_obj = dt.strptime(row.date, '%Y-%m-%d').date()
+                if days_diff > 30:
+                    date_str = date_obj.strftime('%d/%m')
+                else:
+                    date_str = date_obj.strftime('%d')
+            else:
                 # É um objeto date
                 if days_diff > 30:
                     date_str = row.date.strftime('%d/%m')
                 else:
                     date_str = row.date.strftime('%d')
-            else:
-                # É uma string no formato YYYY-MM-DD
-                date_obj = datetime.strptime(str(row.date), '%Y-%m-%d').date()
-                if days_diff > 30:
-                    date_str = date_obj.strftime('%d/%m')
-                else:
-                    date_str = date_obj.strftime('%d')
                     
             if date_str in data_by_day:
                 data_by_day[date_str] = float(row.total)
@@ -362,19 +372,20 @@ def get_analytics_chart_data(chart_type, group_ids, start_date):
         
         for row in results:
             # row.date pode ser string ou date object
-            if hasattr(row.date, 'strftime'):
+            if isinstance(row.date, str):
+                # É uma string no formato YYYY-MM-DD
+                from datetime import datetime as dt
+                date_obj = dt.strptime(row.date, '%Y-%m-%d').date()
+                if days_diff > 30:
+                    date_str = date_obj.strftime('%d/%m')
+                else:
+                    date_str = date_obj.strftime('%d')
+            else:
                 # É um objeto date
                 if days_diff > 30:
                     date_str = row.date.strftime('%d/%m')
                 else:
                     date_str = row.date.strftime('%d')
-            else:
-                # É uma string no formato YYYY-MM-DD
-                date_obj = datetime.strptime(str(row.date), '%Y-%m-%d').date()
-                if days_diff > 30:
-                    date_str = date_obj.strftime('%d/%m')
-                else:
-                    date_str = date_obj.strftime('%d')
                     
             if date_str in data_by_day:
                 data_by_day[date_str] = row.total

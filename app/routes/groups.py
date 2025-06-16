@@ -1,10 +1,12 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, Response
 from flask_login import login_required, current_user
 from app import db
-from app.models import Group, PricingPlan, Subscription
+from app.models import Group, PricingPlan, Subscription, Transaction
 from datetime import datetime
 import requests
 import os
+import csv
+from io import StringIO
 
 bp = Blueprint('groups', __name__, url_prefix='/groups')
 
@@ -29,61 +31,126 @@ def create():
     """Criar novo grupo"""
     if request.method == 'POST':
         # Dados básicos do grupo
-        name = request.form.get('name')
-        description = request.form.get('description')
-        telegram_id = request.form.get('telegram_id')
-        invite_link = request.form.get('invite_link')
+        name = request.form.get('name', '').strip()
+        description = request.form.get('description', '').strip()
+        telegram_id = request.form.get('telegram_id', '').strip()  # Remove espaços
+        invite_link = request.form.get('invite_link', '').strip()
         
-        # Validar se o grupo existe no Telegram
-        bot_token = os.getenv('BOT_TOKEN')
-        if bot_token and telegram_id:
-            try:
-                # Verificar se o bot está no grupo
-                response = requests.get(
-                    f"https://api.telegram.org/bot{bot_token}/getChat",
-                    params={"chat_id": telegram_id}
-                )
-                
-                if response.status_code == 200:
-                    chat_data = response.json()
-                    if chat_data.get('ok'):
-                        # Grupo existe, pegar informações
-                        chat = chat_data.get('result', {})
-                        
-                        # Verificar se o bot é admin
-                        bot_member = requests.get(
-                            f"https://api.telegram.org/bot{bot_token}/getChatMember",
-                            params={
-                                "chat_id": telegram_id,
-                                "user_id": bot_token.split(':')[0]
-                            }
-                        )
-                        
-                        if bot_member.status_code == 200:
-                            member_data = bot_member.json()
-                            if member_data.get('ok'):
-                                status = member_data.get('result', {}).get('status')
-                                if status not in ['administrator', 'creator']:
-                                    flash('O bot precisa ser administrador do grupo!', 'error')
-                                    return render_template('dashboard/group_form.html', 
-                                                         group=None,
-                                                         show_success_modal=False)
-                    else:
-                        flash('Grupo não encontrado ou bot não está no grupo!', 'error')
+        # Debug: imprimir dados recebidos
+        print(f"\n🔍 DEBUG - Dados recebidos:")
+        print(f"   Nome: {name}")
+        print(f"   Telegram ID: {telegram_id}")
+        print(f"   Skip validation: {request.form.get('skip_validation')}")
+        
+        # Verificar se deve validar no Telegram
+        skip_validation = request.form.get('skip_validation') == 'on'
+        
+        # Se marcar para pular validação, criar direto
+        if skip_validation:
+            print("⚠️ Pulando validação do Telegram...")
+        else:
+            # Tentar validar
+            bot_token = os.getenv('BOT_TOKEN')
+            print(f"\n🔍 DEBUG - BOT_TOKEN existe: {bool(bot_token)}")
+            
+            if bot_token and telegram_id:
+                try:
+                    print(f"📡 Tentando verificar grupo {telegram_id}...")
+                    
+                    # URL da API
+                    url = f"https://api.telegram.org/bot{bot_token}/getChat"
+                    print(f"📡 URL: {url[:50]}...")
+                    
+                    # Fazer requisição
+                    response = requests.get(
+                        url,
+                        params={"chat_id": telegram_id},
+                        timeout=10
+                    )
+                    
+                    print(f"📡 Status Code: {response.status_code}")
+                    
+                    if response.status_code != 200:
+                        print(f"❌ Resposta não-200: {response.text}")
+                        flash('❌ Erro ao conectar com o Telegram. Use "Pular validação" para continuar.', 'error')
                         return render_template('dashboard/group_form.html', 
                                              group=None,
                                              show_success_modal=False)
-                else:
-                    flash('Erro ao verificar grupo no Telegram!', 'error')
+                    
+                    # Processar resposta
+                    try:
+                        data = response.json()
+                        print(f"📡 Resposta JSON: {data}")
+                    except Exception as json_error:
+                        print(f"❌ Erro ao decodificar JSON: {json_error}")
+                        flash('❌ Resposta inválida do Telegram. Use "Pular validação".', 'error')
+                        return render_template('dashboard/group_form.html', 
+                                             group=None,
+                                             show_success_modal=False)
+                    
+                    if not data.get('ok'):
+                        error_msg = data.get('description', 'Erro desconhecido')
+                        print(f"❌ API retornou erro: {error_msg}")
+                        flash(f'❌ Telegram: {error_msg}', 'error')
+                        return render_template('dashboard/group_form.html', 
+                                             group=None,
+                                             show_success_modal=False)
+                    
+                    # Grupo encontrado!
+                    chat = data.get('result', {})
+                    print(f"✅ Grupo encontrado: {chat.get('title')}")
+                    
+                    # Verificar se o bot é admin
+                    bot_id = bot_token.split(':')[0]
+                    bot_member = requests.get(
+                        f"https://api.telegram.org/bot{bot_token}/getChatMember",
+                        params={
+                            "chat_id": telegram_id,
+                            "user_id": bot_id
+                        },
+                        timeout=10
+                    )
+                    
+                    if bot_member.status_code == 200:
+                        member_data = bot_member.json()
+                        if member_data.get('ok'):
+                            status = member_data.get('result', {}).get('status')
+                            if status not in ['administrator', 'creator']:
+                                flash('⚠️ O bot precisa ser administrador do grupo!', 'warning')
+                                return render_template('dashboard/group_form.html', 
+                                                     group=None,
+                                                     show_success_modal=False)
+                    
+                except requests.exceptions.RequestException as req_error:
+                    print(f"❌ Erro de requisição: {type(req_error).__name__}: {req_error}")
+                    flash(f'❌ Erro de conexão: {req_error}. Use "Pular validação".', 'error')
                     return render_template('dashboard/group_form.html', 
                                          group=None,
                                          show_success_modal=False)
+                except Exception as e:
+                    import traceback
+                    print(f"❌ Erro inesperado: {type(e).__name__}: {e}")
+                    print("Traceback completo:")
+                    traceback.print_exc()
                     
-            except Exception as e:
-                flash(f'Erro ao validar grupo: {str(e)}', 'error')
+                    flash(f'❌ Erro: {e}. Use "Pular validação".', 'error')
+                    return render_template('dashboard/group_form.html', 
+                                         group=None,
+                                         show_success_modal=False)
+            else:
+                if not bot_token:
+                    print("⚠️ BOT_TOKEN não configurado!")
+                    flash('⚠️ Bot não configurado. Use "Pular validação".', 'warning')
+                else:
+                    print("⚠️ Telegram ID não fornecido!")
+                    flash('⚠️ ID do Telegram não fornecido.', 'warning')
+                
                 return render_template('dashboard/group_form.html', 
                                      group=None,
                                      show_success_modal=False)
+        
+        # Se chegou aqui, pode criar o grupo
+        print("\n✅ Criando grupo no banco de dados...")
         
         # Criar grupo
         group = Group(
@@ -103,6 +170,8 @@ def create():
         plan_durations = request.form.getlist('plan_duration[]')
         plan_prices = request.form.getlist('plan_price[]')
         
+        print(f"\n📋 Adicionando {len(plan_names)} planos...")
+        
         for i in range(len(plan_names)):
             if plan_names[i]:  # Verificar se o nome não está vazio
                 plan = PricingPlan(
@@ -113,19 +182,109 @@ def create():
                     is_active=True
                 )
                 db.session.add(plan)
+                print(f"   ✅ Plano adicionado: {plan_names[i]}")
         
         db.session.commit()
+        print(f"\n✅ Grupo '{group.name}' criado com sucesso! ID: {group.id}")
         
         # Renderizar template com modal de sucesso
         return render_template('dashboard/group_form.html', 
                              group=None,
                              show_success_modal=True,
                              new_group_name=group.name,
-                             new_group_telegram_id=group.telegram_id)
+                             new_group_telegram_id=group.telegram_id,
+                             bot_username=os.getenv('BOT_USERNAME', 'televipbra_bot'))
     
     return render_template('dashboard/group_form.html', 
                          group=None,
                          show_success_modal=False)
+
+@bp.route('/test-telegram')
+@login_required
+def test_telegram():
+    """Rota de teste para verificar conexão com Telegram"""
+    import json
+    
+    bot_token = os.getenv('BOT_TOKEN')
+    
+    result = {
+        "bot_token_exists": bool(bot_token),
+        "bot_token_length": len(bot_token) if bot_token else 0,
+        "bot_token_preview": f"{bot_token[:10]}...{bot_token[-5:]}" if bot_token else None,
+        "environment": os.getenv('FLASK_ENV', 'not set'),
+        "tests": []
+    }
+    
+    if not bot_token:
+        result["error"] = "BOT_TOKEN não configurado no .env"
+        return jsonify(result), 500
+    
+    # Teste 1: getMe
+    try:
+        response = requests.get(
+            f"https://api.telegram.org/bot{bot_token}/getMe",
+            timeout=5
+        )
+        
+        test1 = {
+            "test": "getMe",
+            "status_code": response.status_code,
+            "success": response.status_code == 200
+        }
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('ok'):
+                test1["bot_info"] = data.get('result', {})
+        else:
+            test1["error"] = response.text
+            
+        result["tests"].append(test1)
+        
+    except Exception as e:
+        result["tests"].append({
+            "test": "getMe",
+            "success": False,
+            "error": str(e)
+        })
+    
+    # Teste 2: Verificar grupo específico
+    test_group_id = request.args.get('group_id', '-1002896357742')
+    
+    try:
+        response = requests.get(
+            f"https://api.telegram.org/bot{bot_token}/getChat",
+            params={"chat_id": test_group_id},
+            timeout=5
+        )
+        
+        test2 = {
+            "test": f"getChat ({test_group_id})",
+            "status_code": response.status_code,
+            "success": response.status_code == 200
+        }
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('ok'):
+                test2["chat_info"] = data.get('result', {})
+        else:
+            test2["error"] = response.text
+            
+        result["tests"].append(test2)
+        
+    except Exception as e:
+        result["tests"].append({
+            "test": f"getChat ({test_group_id})",
+            "success": False,
+            "error": str(e)
+        })
+    
+    # Determinar status geral
+    all_success = all(test.get('success', False) for test in result["tests"])
+    result["overall_success"] = all_success
+    
+    return jsonify(result), 200 if all_success else 500
 
 @bp.route('/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -282,10 +441,6 @@ def cancel_subscription(group_id, sub_id):
 @login_required
 def export_subscribers(id):
     """Exportar lista de assinantes em CSV"""
-    import csv
-    from io import StringIO
-    from flask import Response
-    
     group = Group.query.filter_by(id=id, creator_id=current_user.id).first_or_404()
     
     # Buscar todos os assinantes

@@ -142,8 +142,33 @@ Saldo disponível: R$ {creator.balance:.2f}
                     "parse_mode": "Markdown"
                 }
             )
+            
+            # Enviar botão para o usuário entrar no grupo
+            user_message = f"""
+✅ **Pagamento Confirmado!**
+
+Clique no botão abaixo para entrar no grupo VIP:
+"""
+            
+            keyboard = {
+                "inline_keyboard": [[{
+                    "text": "🚀 ENTRAR NO GRUPO VIP",
+                    "url": f"https://t.me/{os.getenv('BOT_USERNAME')}?start=success_{subscription_id}"
+                }]]
+            }
+            
+            requests.post(
+                f"https://api.telegram.org/bot{bot_token}/sendMessage",
+                json={
+                    "chat_id": subscription.telegram_user_id,
+                    "text": user_message,
+                    "parse_mode": "Markdown",
+                    "reply_markup": keyboard
+                }
+            )
+            
         except Exception as e:
-            logger.error(f"Error notifying creator: {e}")
+            logger.error(f"Error notifying: {e}")
     
     logger.info(f"Payment processed successfully for subscription {subscription_id}")
 
