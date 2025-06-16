@@ -1,457 +1,298 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+# app/routes/dashboard.py
+from flask import Blueprint, render_template, jsonify, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from app import db
-from app.models import Group, Subscription, Transaction, Withdrawal
-from sqlalchemy import func, extract
+from app.models import Group, Transaction, Subscription, Creator
+from app.services.payment_service import PaymentService
+from sqlalchemy import func, and_, desc
 from datetime import datetime, timedelta
-import json
 
 bp = Blueprint('dashboard', __name__, url_prefix='/dashboard')
 
 @bp.route('/')
 @login_required
 def index():
-    """Dashboard principal do criador"""
-    # Verificar se há um grupo específico selecionado
+    """Dashboard principal com estatísticas de ganhos"""
+    # Parâmetro opcional para filtrar por grupo
     group_id = request.args.get('group_id', type=int)
     selected_group = None
     
     # Buscar grupos do criador
-    groups = current_user.groups.all()
-    total_groups = len(groups)
+    groups = Group.query.filter_by(creator_id=current_user.id).all()
     
     # Se um grupo específico foi selecionado
     if group_id:
         selected_group = Group.query.filter_by(id=group_id, creator_id=current_user.id).first()
         if selected_group:
-            # Calcular estatísticas apenas deste grupo
-            total_subscribers = Subscription.query.filter_by(
-                group_id=group_id,
-                status='active'
-            ).count()
-            
-            # Receita apenas deste grupo
-            total_revenue = db.session.query(
-                func.sum(Transaction.net_amount)
-            ).join(Subscription).filter(
-                Subscription.group_id == group_id,
-                Transaction.status == 'completed'
-            ).scalar() or 0
-            
-            # Transações apenas deste grupo
-            recent_transactions = Transaction.query.join(Subscription).filter(
-                Subscription.group_id == group_id
-            ).order_by(Transaction.created_at.desc()).limit(5).all()
-            
-            # Buscar assinantes do grupo
-            subscribers = Subscription.query.filter_by(
-                group_id=group_id
-            ).order_by(Subscription.created_at.desc()).limit(5).all()
-            
-        else:
-            # Grupo inválido, redirecionar
-            return redirect(url_for('dashboard.index'))
-    else:
-        # Dados consolidados de todos os grupos
-        total_subscribers = 0
-        for group in groups:
-            active_subs = Subscription.query.filter_by(
-                group_id=group.id,
-                status='active'
-            ).count()
-            total_subscribers += active_subs
-            group.total_subscribers = active_subs
+            groups = [selected_group]
+    
+    # Calcular estatísticas
+    total_revenue = 0
+    total_subscribers = 0
+    total_transactions = 0
+    
+    for group in groups:
+        # Receita do grupo
+        group_revenue = db.session.query(func.sum(Transaction.amount)).join(
+            Subscription
+        ).filter(
+            Subscription.group_id == group.id,
+            Transaction.status == 'completed'
+        ).scalar() or 0
         
-        # Receita total de todos os grupos
-        total_revenue = current_user.total_earned or 0
+        # Número de transações do grupo
+        group_transactions = db.session.query(func.count(Transaction.id)).join(
+            Subscription
+        ).filter(
+            Subscription.group_id == group.id,
+            Transaction.status == 'completed'
+        ).scalar() or 0
         
-        # Transações de todos os grupos
-        if groups:
-            group_ids = [g.id for g in groups]
-            recent_transactions = Transaction.query.join(Subscription).filter(
-                Subscription.group_id.in_(group_ids)
-            ).order_by(Transaction.created_at.desc()).limit(5).all()
-        else:
-            recent_transactions = []
+        # Adicionar aos totais
+        total_revenue += group_revenue
+        total_transactions += group_transactions
         
-        subscribers = None
+        # Adicionar informações ao objeto grupo
+        group.total_revenue = group_revenue
+        group.total_transactions = group_transactions
+        
+        # Contar assinantes ativos
+        active_subs = Subscription.query.filter_by(
+            group_id=group.id,
+            status='active'
+        ).count()
+        total_subscribers += active_subs
     
-    # Dados do gráfico (últimos 30 dias)
-    revenue_chart_data = get_revenue_chart_data(selected_group.id if selected_group else None)
+    # Transações recentes
+    recent_transactions_query = Transaction.query.join(
+        Subscription
+    ).join(
+        Group
+    ).filter(
+        Group.creator_id == current_user.id
+    )
     
-    return render_template('dashboard/index.html',
-                         groups=groups,
-                         total_groups=total_groups,
-                         total_subscribers=total_subscribers,
-                         total_revenue=total_revenue,
-                         balance=current_user.balance or 0,
-                         recent_transactions=recent_transactions,
-                         selected_group=selected_group,
-                         subscribers=subscribers,
-                         revenue_chart_data=revenue_chart_data)
-
-def get_revenue_chart_data(group_id=None):
-    """Obter dados reais do gráfico de receita dos últimos 30 dias"""
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=29)
+    if selected_group:
+        recent_transactions_query = recent_transactions_query.filter(
+            Subscription.group_id == selected_group.id
+        )
     
-    # Criar lista com todos os dias
-    date_list = []
-    current_date = start_date
-    while current_date <= end_date:
-        date_list.append(current_date.strftime('%d/%m'))
-        current_date += timedelta(days=1)
+    recent_transactions = recent_transactions_query.order_by(
+        Transaction.created_at.desc()
+    ).limit(10).all()
     
-    # Inicializar dados com zeros
-    revenue_by_day = {date: 0 for date in date_list}
+    # Assinantes (se um grupo específico estiver selecionado)
+    subscribers = []
+    if selected_group:
+        subscribers = Subscription.query.filter_by(
+            group_id=selected_group.id,
+            status='active'
+        ).order_by(Subscription.created_at.desc()).limit(5).all()
     
-    # Se não houver grupos do usuário, retornar dados vazios
-    if not group_id:
-        group_ids = [g.id for g in current_user.groups.all()]
-        if not group_ids:
-            return {
-                'labels': list(revenue_by_day.keys()),
-                'data': list(revenue_by_day.values())  # Todos zeros
-            }
-    
-    # Query para buscar transações
-    query = db.session.query(
-        func.date(Transaction.created_at).label('date'),
-        func.sum(Transaction.net_amount).label('total')
-    ).join(Subscription)
-    
-    # Filtrar por grupo se especificado
-    if group_id:
-        query = query.filter(Subscription.group_id == group_id)
-    else:
-        # Todos os grupos do criador
-        group_ids = [g.id for g in current_user.groups.all()]
-        if group_ids:
-            query = query.filter(Subscription.group_id.in_(group_ids))
-    
-    # Filtrar por período e status
-    query = query.filter(
-        Transaction.status == 'completed',
-        Transaction.created_at >= start_date,
-        Transaction.created_at <= end_date
-    ).group_by(func.date(Transaction.created_at))
-    
-    # Executar query
-    results = query.all()
-    
-    # Preencher dados reais
-    for date, total in results:
-        # date pode ser string ou date object
-        if isinstance(date, str):
-            # Se for string no formato YYYY-MM-DD, converter
-            from datetime import datetime as dt
-            date_obj = dt.strptime(date, '%Y-%m-%d').date()
-            date_str = date_obj.strftime('%d/%m')
-        else:
-            # Se já for um objeto date
-            date_str = date.strftime('%d/%m')
-            
-        if date_str in revenue_by_day:
-            revenue_by_day[date_str] = float(total)
-    
-    return {
-        'labels': list(revenue_by_day.keys()),
-        'data': list(revenue_by_day.values())
+    # Dados para o gráfico (últimos 30 dias)
+    revenue_chart_data = {
+        'labels': [],
+        'data': []
     }
+    
+    # Resetar para todos os grupos se estava filtrado
+    all_groups = Group.query.filter_by(creator_id=current_user.id).all()
+    
+    # Passar variáveis individuais para o template
+    return render_template('dashboard/index.html',
+        # Variáveis principais
+        balance=current_user.balance or 0,
+        total_revenue=total_revenue,
+        total_subscribers=total_subscribers,
+        total_groups=len(all_groups),
+        total_transactions=total_transactions,
+        
+        # Listas
+        groups=all_groups,  # Sempre mostrar todos os grupos
+        recent_transactions=recent_transactions,
+        subscribers=subscribers,
+        
+        # Grupo selecionado (se houver)
+        selected_group=selected_group,
+        
+        # Dados do gráfico
+        revenue_chart_data=revenue_chart_data
+    )
+
+@bp.route('/profile')
+@login_required
+def profile():
+    """Página de perfil do usuário"""
+    # Verificar se o modelo Withdrawal existe
+    try:
+        from app.models import Withdrawal as RealWithdrawal
+        Withdrawal = RealWithdrawal
+        has_withdrawal_model = True
+    except ImportError:
+        has_withdrawal_model = False
+    
+    # Estatísticas do usuário
+    total_withdrawn = 0
+    if has_withdrawal_model:
+        total_withdrawn = db.session.query(func.sum(Withdrawal.amount)).filter_by(
+            creator_id=current_user.id,
+            status='completed'
+        ).scalar() or 0
+    
+    user_stats = {
+        'total_earned': getattr(current_user, 'total_earned', 0) or 0,
+        'balance': getattr(current_user, 'balance', 0) or 0,
+        'total_withdrawn': total_withdrawn,
+        'total_groups': Group.query.filter_by(creator_id=current_user.id).count(),
+        'total_subscribers': db.session.query(func.count(Subscription.id)).join(
+            Group
+        ).filter(
+            Group.creator_id == current_user.id,
+            Subscription.status == 'active'
+        ).scalar() or 0,
+        'member_since': current_user.created_at.strftime('%d/%m/%Y') if hasattr(current_user, 'created_at') and current_user.created_at else 'N/A'
+    }
+    
+    # Transações recentes
+    recent_transactions = Transaction.query.join(
+        Subscription
+    ).join(
+        Group
+    ).filter(
+        Group.creator_id == current_user.id,
+        Transaction.status == 'completed'
+    ).order_by(
+        Transaction.created_at.desc()
+    ).limit(10).all()
+    
+    # Saques recentes
+    recent_withdrawals = []
+    if has_withdrawal_model:
+        recent_withdrawals = Withdrawal.query.filter_by(
+            creator_id=current_user.id
+        ).order_by(
+            Withdrawal.created_at.desc()
+        ).limit(5).all()
+    
+    return render_template(
+        'dashboard/profile.html', 
+        user=current_user,
+        stats=user_stats,
+        recent_transactions=recent_transactions,
+        recent_withdrawals=recent_withdrawals
+    )
+
+@bp.route('/profile/update', methods=['POST'])
+@login_required
+def update_profile():
+    """Atualizar informações do perfil"""
+    name = request.form.get('name', '').strip()
+    email = request.form.get('email', '').strip()
+    telegram_username = request.form.get('telegram_username', '').strip()
+    pix_key = request.form.get('pix_key', '').strip()
+    
+    # Validações
+    if not name or len(name) < 3:
+        flash('Nome deve ter pelo menos 3 caracteres', 'error')
+        return redirect(url_for('dashboard.profile'))
+    
+    # Verificar se email já existe (se mudou)
+    if email != current_user.email:
+        existing = Creator.query.filter_by(email=email).first()
+        if existing:
+            flash('Email já está em uso', 'error')
+            return redirect(url_for('dashboard.profile'))
+    
+    # Atualizar dados
+    current_user.name = name
+    current_user.email = email
+    current_user.telegram_username = telegram_username
+    current_user.pix_key = pix_key
+    
+    db.session.commit()
+    flash('Perfil atualizado com sucesso!', 'success')
+    
+    return redirect(url_for('dashboard.profile'))
 
 @bp.route('/withdraw', methods=['POST'])
 @login_required
 def withdraw():
     """Solicitar saque"""
     amount = float(request.form.get('amount', 0))
-    pix_key = request.form.get('pix_key')
+    pix_key = request.form.get('pix_key', '').strip()
+    
+    # Validações
+    if amount < 10:
+        flash('Valor mínimo para saque é R$ 10,00', 'error')
+        return redirect(url_for('dashboard.index'))
     
     if amount > current_user.balance:
-        flash('Saldo insuficiente!', 'error')
-    elif amount < 10:
-        flash('Valor mínimo para saque: R$ 10,00', 'error')
-    else:
-        withdrawal = Withdrawal(
-            creator_id=current_user.id,
-            amount=amount,
-            pix_key=pix_key
-        )
-        db.session.add(withdrawal)
-        db.session.commit()
-        
-        flash('Saque solicitado! Processamento em até 24h.', 'success')
+        flash('Saldo insuficiente', 'error')
+        return redirect(url_for('dashboard.index'))
     
+    if not pix_key:
+        flash('Informe a chave PIX', 'error')
+        return redirect(url_for('dashboard.index'))
+    
+    # Criar solicitação de saque
+    withdrawal = Withdrawal(
+        creator_id=current_user.id,
+        amount=amount,
+        pix_key=pix_key,
+        status='pending'
+    )
+    
+    # Atualizar saldo
+    current_user.balance -= amount
+    
+    db.session.add(withdrawal)
+    db.session.commit()
+    
+    flash(f'Saque de R$ {amount:.2f} solicitado com sucesso! Processamento em até 24h.', 'success')
     return redirect(url_for('dashboard.index'))
 
-@bp.route('/profile', methods=['GET', 'POST'])
+@bp.route('/transactions')
 @login_required
-def profile():
-    """Perfil do criador"""
-    if request.method == 'POST':
-        # Atualizar dados do perfil
-        current_user.name = request.form.get('name')
-        current_user.email = request.form.get('email')
-        
-        # Verificar se mudou a senha
-        new_password = request.form.get('new_password')
-        if new_password:
-            current_password = request.form.get('current_password')
-            if current_user.check_password(current_password):
-                current_user.set_password(new_password)
-                flash('Senha atualizada com sucesso!', 'success')
-            else:
-                flash('Senha atual incorreta!', 'error')
-                return redirect(url_for('dashboard.profile'))
-        
-        # Atualizar Telegram ID se fornecido
-        telegram_id = request.form.get('telegram_id')
-        if telegram_id:
-            current_user.telegram_id = telegram_id
-        
-        db.session.commit()
-        flash('Perfil atualizado com sucesso!', 'success')
-        return redirect(url_for('dashboard.profile'))
+def transactions():
+    """Página de listagem de todas as transações"""
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
     
-    # Calcular estatísticas do perfil
-    stats = {
-        'total_groups': current_user.groups.count(),
-        'total_subscribers': 0,
-        'total_revenue': current_user.total_earned or 0,
-        'pending_withdrawals': Withdrawal.query.filter_by(
-            creator_id=current_user.id,
-            status='pending'
-        ).count()
-    }
+    # Query de transações
+    transactions_query = Transaction.query.join(
+        Subscription
+    ).join(
+        Group
+    ).filter(
+        Group.creator_id == current_user.id
+    ).order_by(
+        Transaction.created_at.desc()
+    )
     
-    # Contar total de assinantes
-    for group in current_user.groups:
-        stats['total_subscribers'] += Subscription.query.filter_by(
-            group_id=group.id,
-            status='active'
-        ).count()
+    # Paginação
+    pagination = transactions_query.paginate(
+        page=page,
+        per_page=per_page,
+        error_out=False
+    )
     
-    return render_template('dashboard/profile.html', stats=stats)
+    return render_template(
+        'dashboard/transactions.html',
+        transactions=pagination.items,
+        pagination=pagination,
+        PaymentService=PaymentService
+    )
 
 @bp.route('/analytics')
 @login_required
 def analytics():
-    """Analytics e relatórios detalhados"""
-    # Período selecionado (padrão: últimos 30 dias)
-    period = request.args.get('period', '30')
-    
-    if period == '7':
-        start_date = datetime.now() - timedelta(days=7)
-    elif period == '30':
-        start_date = datetime.now() - timedelta(days=30)
-    elif period == '90':
-        start_date = datetime.now() - timedelta(days=90)
-    else:
-        start_date = datetime.now() - timedelta(days=30)
-    
-    # Grupos do criador
-    groups = current_user.groups.all()
-    group_ids = [g.id for g in groups]
-    
-    # Estatísticas gerais
-    stats = {
-        'total_revenue': 0,
-        'total_transactions': 0,
-        'total_subscribers': 0,
-        'new_subscribers': 0,
-        'churn_rate': 0,
-        'average_ticket': 0
-    }
-    
-    if group_ids:
-        # Receita total no período
-        stats['total_revenue'] = db.session.query(
-            func.sum(Transaction.net_amount)
-        ).join(Subscription).filter(
-            Subscription.group_id.in_(group_ids),
-            Transaction.status == 'completed',
-            Transaction.created_at >= start_date
-        ).scalar() or 0
-        
-        # Total de transações
-        stats['total_transactions'] = Transaction.query.join(
-            Subscription
-        ).filter(
-            Subscription.group_id.in_(group_ids),
-            Transaction.status == 'completed',
-            Transaction.created_at >= start_date
-        ).count()
-        
-        # Assinantes ativos
-        stats['total_subscribers'] = Subscription.query.filter(
-            Subscription.group_id.in_(group_ids),
-            Subscription.status == 'active'
-        ).count()
-        
-        # Novos assinantes no período
-        stats['new_subscribers'] = Subscription.query.filter(
-            Subscription.group_id.in_(group_ids),
-            Subscription.created_at >= start_date
-        ).count()
-        
-        # Ticket médio
-        if stats['total_transactions'] > 0:
-            stats['average_ticket'] = stats['total_revenue'] / stats['total_transactions']
-    
-    # Dados para gráficos
-    charts_data = {
-        'revenue_by_day': get_analytics_chart_data('revenue', group_ids, start_date),
-        'subscribers_by_day': get_analytics_chart_data('subscribers', group_ids, start_date),
-        'revenue_by_group': get_revenue_by_group(group_ids, start_date),
-        'revenue_by_plan': get_revenue_by_plan(group_ids, start_date)
-    }
-    
-    return render_template('dashboard/analytics.html',
-                         stats=stats,
-                         charts_data=charts_data,
-                         period=period,
-                         groups=groups)
+    """Página de analytics"""
+    return render_template('dashboard/analytics.html')
 
-def get_analytics_chart_data(chart_type, group_ids, start_date):
-    """Obter dados para gráficos do analytics"""
-    if not group_ids:
-        return {'labels': [], 'data': []}
-        
-    end_date = datetime.now()
-    days_diff = (end_date - start_date).days
-    
-    # Criar lista de datas
-    date_list = []
-    current_date = start_date
-    while current_date <= end_date:
-        if days_diff > 30:
-            date_list.append(current_date.strftime('%d/%m'))
-        else:
-            date_list.append(current_date.strftime('%d'))
-        current_date += timedelta(days=1)
-    
-    # Inicializar dados
-    data_by_day = {date: 0 for date in date_list}
-    
-    if chart_type == 'revenue':
-        # Receita por dia
-        query = db.session.query(
-            func.date(Transaction.created_at).label('date'),
-            func.sum(Transaction.net_amount).label('total')
-        ).select_from(Transaction).join(
-            Subscription, Transaction.subscription_id == Subscription.id
-        ).filter(
-            Subscription.group_id.in_(group_ids),
-            Transaction.status == 'completed',
-            Transaction.created_at >= start_date
-        ).group_by(func.date(Transaction.created_at))
-        
-        results = query.all()
-        
-        for row in results:
-            # row.date pode ser string ou date object
-            if isinstance(row.date, str):
-                # É uma string no formato YYYY-MM-DD
-                from datetime import datetime as dt
-                date_obj = dt.strptime(row.date, '%Y-%m-%d').date()
-                if days_diff > 30:
-                    date_str = date_obj.strftime('%d/%m')
-                else:
-                    date_str = date_obj.strftime('%d')
-            else:
-                # É um objeto date
-                if days_diff > 30:
-                    date_str = row.date.strftime('%d/%m')
-                else:
-                    date_str = row.date.strftime('%d')
-                    
-            if date_str in data_by_day:
-                data_by_day[date_str] = float(row.total)
-    
-    elif chart_type == 'subscribers':
-        # Novos assinantes por dia
-        query = db.session.query(
-            func.date(Subscription.created_at).label('date'),
-            func.count(Subscription.id).label('total')
-        ).filter(
-            Subscription.group_id.in_(group_ids),
-            Subscription.created_at >= start_date
-        ).group_by(func.date(Subscription.created_at))
-        
-        results = query.all()
-        
-        for row in results:
-            # row.date pode ser string ou date object
-            if isinstance(row.date, str):
-                # É uma string no formato YYYY-MM-DD
-                from datetime import datetime as dt
-                date_obj = dt.strptime(row.date, '%Y-%m-%d').date()
-                if days_diff > 30:
-                    date_str = date_obj.strftime('%d/%m')
-                else:
-                    date_str = date_obj.strftime('%d')
-            else:
-                # É um objeto date
-                if days_diff > 30:
-                    date_str = row.date.strftime('%d/%m')
-                else:
-                    date_str = row.date.strftime('%d')
-                    
-            if date_str in data_by_day:
-                data_by_day[date_str] = row.total
-    
-    return {
-        'labels': list(data_by_day.keys()),
-        'data': list(data_by_day.values())
-    }
-
-def get_revenue_by_group(group_ids, start_date):
-    """Receita por grupo"""
-    if not group_ids:
-        return {'labels': [], 'data': []}
-    
-    query = db.session.query(
-        Group.name,
-        func.sum(Transaction.net_amount).label('total')
-    ).select_from(Group).join(
-        Subscription, Group.id == Subscription.group_id
-    ).join(
-        Transaction, Subscription.id == Transaction.subscription_id
-    ).filter(
-        Group.id.in_(group_ids),
-        Transaction.status == 'completed',
-        Transaction.created_at >= start_date
-    ).group_by(Group.id, Group.name)
-    
-    results = query.all()
-    
-    return {
-        'labels': [r[0] for r in results] if results else [],
-        'data': [float(r[1]) for r in results] if results else []
-    }
-
-def get_revenue_by_plan(group_ids, start_date):
-    """Receita por plano"""
-    from app.models import PricingPlan
-    
-    if not group_ids:
-        return {'labels': [], 'data': []}
-    
-    query = db.session.query(
-        PricingPlan.name,
-        func.sum(Transaction.net_amount).label('total')
-    ).select_from(PricingPlan).join(
-        Subscription, PricingPlan.id == Subscription.plan_id
-    ).join(
-        Transaction, Subscription.id == Transaction.subscription_id
-    ).filter(
-        Subscription.group_id.in_(group_ids),
-        Transaction.status == 'completed',
-        Transaction.created_at >= start_date
-    ).group_by(PricingPlan.id, PricingPlan.name)
-    
-    results = query.all()
-    
-    return {
-        'labels': [r[0] for r in results] if results else [],
-        'data': [float(r[1]) for r in results] if results else []
-    }
+# Adicionar imports necessários
+try:
+    from app.models import Withdrawal
+except ImportError:
+    # Se não tiver o modelo Withdrawal ainda
+    class Withdrawal:
+        pass

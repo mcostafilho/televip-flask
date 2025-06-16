@@ -1,3 +1,4 @@
+# app/__init__.py
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -22,6 +23,13 @@ def create_app():
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Por favor, faça login para acessar esta página.'
     
+    # Importar modelos e configurar user_loader
+    from app.models.user import Creator
+    
+    @login_manager.user_loader
+    def load_user(user_id):
+        return Creator.query.get(int(user_id))
+    
     # Registrar blueprints
     from app.routes import auth, dashboard, groups, admin, webhooks, api
     app.register_blueprint(auth.bp)
@@ -30,10 +38,6 @@ def create_app():
     app.register_blueprint(admin.bp)
     app.register_blueprint(webhooks.bp)
     app.register_blueprint(api.bp)
-    
-    # Registrar context processors
-    from app.utils.context_processor import inject_global_vars
-    app.context_processor(inject_global_vars)
     
     # Criar diretórios necessários
     import os
