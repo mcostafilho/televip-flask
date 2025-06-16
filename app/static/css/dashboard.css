@@ -1,0 +1,371 @@
+/* ========================================
+   Dashboard Centralizado - TeleVIP
+   ======================================== */
+
+/* Container Principal */
+.dashboard-wrapper {
+    min-height: calc(100vh - 56px); /* Altura da viewport menos navbar */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-attachment: fixed;
+    padding: 2rem 0;
+}
+
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Header do Dashboard */
+.dashboard-header {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+/* Grid de Estatísticas */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+.stat-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, transparent 50%, rgba(102, 126, 234, 0.1) 50%);
+    border-radius: 0 16px 0 0;
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 24px;
+}
+
+.stat-icon.success {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.stat-icon.primary {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+}
+
+.stat-icon.info {
+    background: rgba(23, 162, 184, 0.1);
+    color: #17a2b8;
+}
+
+.stat-icon.warning {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+/* Cards de Conteúdo */
+.content-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    padding: 2rem;
+    height: 100%;
+}
+
+.content-card h5 {
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.content-card h5 i {
+    color: #667eea;
+}
+
+/* Gráfico Container */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+/* Tabela Customizada */
+.custom-table {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.custom-table .table {
+    margin-bottom: 0;
+}
+
+.custom-table thead {
+    background: #f8f9fa;
+}
+
+.custom-table th {
+    border: none;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    padding: 1rem;
+}
+
+.custom-table td {
+    border: none;
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+.custom-table tbody tr {
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.2s;
+}
+
+.custom-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.custom-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+/* Botões de Ação */
+.action-buttons {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.action-buttons .btn {
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.action-buttons .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+.action-buttons .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.action-buttons .btn-outline-primary {
+    border: 2px solid #667eea;
+    color: #667eea;
+}
+
+.action-buttons .btn-outline-primary:hover {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+}
+
+/* Estado Vazio */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    color: #d0d0d0;
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    color: #999;
+    margin-bottom: 1.5rem;
+}
+
+.empty-state .btn {
+    padding: 0.5rem 1.5rem;
+    font-size: 0.95rem;
+}
+
+/* Ajuste do ícone dentro do botão */
+.empty-state .btn i {
+    font-size: 1rem !important;
+    margin-right: 0.5rem;
+}
+
+/* Badges Customizados */
+.badge {
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.8rem;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .dashboard-wrapper {
+        padding: 1rem 0;
+    }
+    
+    .dashboard-container {
+        padding: 0 0.5rem;
+    }
+    
+    .dashboard-header {
+        padding: 1.5rem;
+        border-radius: 12px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .content-card {
+        padding: 1.5rem;
+        border-radius: 12px;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+    
+    .action-buttons {
+        gap: 0.5rem;
+    }
+    
+    .custom-table {
+        font-size: 0.9rem;
+    }
+    
+    .custom-table th,
+    .custom-table td {
+        padding: 0.75rem 0.5rem;
+    }
+}
+
+/* Animações */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dashboard-header,
+.stat-card,
+.content-card {
+    animation: slideIn 0.6s ease-out;
+}
+
+.stat-card:nth-child(1) { animation-delay: 0.1s; }
+.stat-card:nth-child(2) { animation-delay: 0.2s; }
+.stat-card:nth-child(3) { animation-delay: 0.3s; }
+.stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+/* Profile Page Specific */
+.profile-page .content-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+.profile-page .dashboard-wrapper {
+    min-height: calc(100vh - 56px);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2rem 0;
+}
+
+/* Avatar Circle */
+.avatar-circle {
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+}
+
+.avatar-circle span {
+    color: white;
+    font-size: 48px;
+    font-weight: bold;
+}
+
+/* Modal Customizado */
+.modal-content {
+    border-radius: 16px;
+    border: none;
+}
+
+.modal-header {
+    border-bottom: 1px solid #f0f0f0;
+    padding: 1.5rem;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    border-top: 1px solid #f0f0f0;
+    padding: 1.5rem;
+}

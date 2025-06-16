@@ -2,37 +2,40 @@
 
 {% block title %}Meu Perfil - TeleVIP{% endblock %}
 
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/profile.css') }}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="row">
-        <div class="col-12">
-            <h1 class="h3 mb-4">
+<div class="profile-wrapper">
+    <div class="profile-container">
+        <!-- Header -->
+        <div class="profile-header">
+            <h1 class="h2">
                 <i class="bi bi-person-circle"></i> Meu Perfil
             </h1>
+            <p class="text-muted mb-0">Gerencie suas informações pessoais e configurações</p>
         </div>
-    </div>
 
-    <!-- Alertas -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+        <!-- Alertas -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show mb-3">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
 
-    <div class="row">
-        <!-- Informações do Perfil -->
-        <div class="col-lg-4 mb-4">
-            <div class="card">
-                <div class="card-body text-center">
-                    <div class="avatar-circle mx-auto mb-3" style="width: 120px; height: 120px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        <span class="text-white" style="font-size: 48px; font-weight: bold;">
-                            {{ user.name[0].upper() if user.name else 'U' }}
-                        </span>
+        <div class="row g-4">
+            <!-- Coluna Esquerda -->
+            <div class="col-lg-4">
+                <!-- Card do Perfil -->
+                <div class="profile-card text-center">
+                    <div class="profile-avatar">
+                        <span>{{ user.name[0] if user.name else 'U' }}</span>
                     </div>
                     <h4>{{ user.name }}</h4>
                     <p class="text-muted mb-1">{{ user.email }}</p>
@@ -53,168 +56,238 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Card de Saldo -->
-            <div class="card mt-3">
-                <div class="card-body">
-                    <h5 class="card-title">
+                <!-- Card Financeiro -->
+                <div class="profile-card">
+                    <h5>
                         <i class="bi bi-wallet2"></i> Resumo Financeiro
                     </h5>
-                    <div class="mb-3">
-                        <small class="text-muted">Saldo Disponível</small>
-                        <h3 class="text-success mb-0">R$ {{ "%.2f"|format(stats.balance) }}</h3>
+                    
+                    <div class="financial-summary">
+                        <small>Saldo Disponível</small>
+                        <h3>R$ {{ "%.2f"|format(stats.balance) }}</h3>
                     </div>
-                    <div class="mb-3">
-                        <small class="text-muted">Total Ganho</small>
-                        <h5 class="mb-0">R$ {{ "%.2f"|format(stats.total_earned) }}</h5>
+                    
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">Total Ganho</small>
+                            <h6>R$ {{ "%.2f"|format(stats.total_earned) }}</h6>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Total Sacado</small>
+                            <h6>R$ {{ "%.2f"|format(stats.total_withdrawn) }}</h6>
+                        </div>
                     </div>
-                    <div>
-                        <small class="text-muted">Total Sacado</small>
-                        <h5 class="mb-0">R$ {{ "%.2f"|format(stats.total_withdrawn) }}</h5>
-                    </div>
+                    
                     <hr>
-                    <button class="btn btn-primary w-100" onclick="window.location.href='{{ url_for('dashboard.index') }}'">
+                    
+                    <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#withdrawModal">
                         <i class="bi bi-cash-stack"></i> Solicitar Saque
                     </button>
                 </div>
             </div>
-        </div>
 
-        <!-- Formulário de Edição -->
-        <div class="col-lg-8">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title mb-4">
+            <!-- Coluna Direita -->
+            <div class="col-lg-8">
+                <!-- Configurações da Conta -->
+                <div class="profile-card">
+                    <h5>
                         <i class="bi bi-gear"></i> Configurações da Conta
                     </h5>
 
-                    <form method="POST" action="{{ url_for('dashboard.update_profile') }}">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
+                    <form method="POST" action="{{ url_for('dashboard.update_profile') }}" class="profile-form">
+                        <div class="row g-3">
+                            <!-- Nome -->
+                            <div class="col-md-6">
                                 <label class="form-label">Nome Completo</label>
-                                <input type="text" class="form-control" name="name" value="{{ user.name }}" required>
+                                <input type="text" class="form-control" name="name" 
+                                       value="{{ user.name }}" required>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Email</label>
-                                <input type="email" class="form-control" name="email" value="{{ user.email }}" required>
-                            </div>
-                        </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Username Telegram</label>
+                            <!-- Email -->
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" name="email" 
+                                       value="{{ user.email }}" required>
+                            </div>
+
+                            <!-- Username Telegram -->
+                            <div class="col-md-6">
+                                <label class="form-label">Username do Telegram</label>
                                 <div class="input-group">
                                     <span class="input-group-text">@</span>
                                     <input type="text" class="form-control" name="telegram_username" 
-                                           value="{{ user.telegram_username or '' }}" 
+                                           value="{{ user.telegram_username|default('', true) }}"
                                            placeholder="seu_username">
                                 </div>
+                                <small class="text-muted">Usado para contato e suporte</small>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Chave PIX</label>
-                                <input type="text" class="form-control" name="pix_key" 
-                                       value="{{ user.pix_key or '' }}" 
-                                       placeholder="CPF, Email ou Telefone">
-                                <small class="text-muted">Para receber seus saques</small>
-                            </div>
-                        </div>
 
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check-circle"></i> Salvar Alterações
-                            </button>
+                            <!-- Chave PIX -->
+                            <div class="col-md-6">
+                                <label class="form-label">Chave PIX Padrão</label>
+                                <input type="text" class="form-control" name="pix_key" 
+                                       value="{{ user.pix_key|default('', true) }}"
+                                       placeholder="CPF, email, telefone ou chave aleatória">
+                                <small class="text-muted">Para facilitar saques futuros</small>
+                            </div>
+
+                            <div class="col-12">
+                                <hr class="my-4">
+                                <h6 class="mb-3">Alterar Senha</h6>
+                            </div>
+
+                            <!-- Senha Atual -->
+                            <div class="col-md-4">
+                                <label class="form-label">Senha Atual</label>
+                                <input type="password" class="form-control" name="current_password">
+                            </div>
+
+                            <!-- Nova Senha -->
+                            <div class="col-md-4">
+                                <label class="form-label">Nova Senha</label>
+                                <input type="password" class="form-control" name="new_password" minlength="6">
+                            </div>
+
+                            <!-- Confirmar Senha -->
+                            <div class="col-md-4">
+                                <label class="form-label">Confirmar Nova Senha</label>
+                                <input type="password" class="form-control" name="confirm_password" minlength="6">
+                            </div>
+
+                            <div class="col-12">
+                                <small class="text-muted">
+                                    <i class="bi bi-info-circle"></i> 
+                                    Deixe em branco se não quiser alterar a senha
+                                </small>
+                            </div>
+
+                            <!-- Botões -->
+                            <div class="col-12 mt-4">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle"></i> Salvar Alterações
+                                </button>
+                                <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary ms-2">
+                                    <i class="bi bi-x-circle"></i> Cancelar
+                                </a>
+                            </div>
                         </div>
                     </form>
                 </div>
-            </div>
 
-            <!-- Transações Recentes -->
-            <div class="card mt-4">
-                <div class="card-body">
-                    <h5 class="card-title mb-4">
+                <!-- Transações Recentes -->
+                <div class="profile-card mt-4">
+                    <h5>
                         <i class="bi bi-clock-history"></i> Transações Recentes
                     </h5>
-
+                    
                     {% if recent_transactions %}
-                        <div class="table-responsive">
-                            <table class="table table-hover">
+                        <div class="profile-table">
+                            <table class="table table-sm">
                                 <thead>
                                     <tr>
                                         <th>Data</th>
-                                        <th>Usuário</th>
-                                        <th>Valor</th>
-                                        <th>Taxa</th>
-                                        <th>Líquido</th>
+                                        <th>Descrição</th>
+                                        <th class="text-end">Valor</th>
+                                        <th class="text-center">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for transaction in recent_transactions %}
+                                    {% for transaction in recent_transactions[:5] %}
                                     <tr>
-                                        <td>{{ transaction.created_at.strftime('%d/%m %H:%M') }}</td>
-                                        <td>@{{ transaction.subscription.telegram_username or 'Usuário' }}</td>
-                                        <td>R$ {{ "%.2f"|format(transaction.amount) }}</td>
-                                        <td class="text-danger">
-                                            R$ {{ "%.2f"|format(transaction.total_fee if transaction.total_fee else transaction.fee) }}
+                                        <td>
+                                            <small>{{ transaction.created_at.strftime('%d/%m/%Y') }}</small>
                                         </td>
-                                        <td class="text-success">
-                                            <strong>R$ {{ "%.2f"|format(transaction.net_amount) }}</strong>
+                                        <td>
+                                            <small>Assinatura - {{ transaction.subscription.group.name }}</small>
+                                        </td>
+                                        <td class="text-end">
+                                            <small>R$ {{ "%.2f"|format(transaction.amount) }}</small>
+                                        </td>
+                                        <td class="text-center">
+                                            {% if transaction.status == 'completed' %}
+                                                <span class="badge bg-success">Pago</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Pendente</span>
+                                            {% endif %}
                                         </td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
-                        
-                        <div class="text-center mt-3">
-                            <a href="{{ url_for('dashboard.transactions') }}" class="btn btn-sm btn-outline-primary">
-                                Ver Todas as Transações
-                            </a>
-                        </div>
                     {% else %}
-                        <p class="text-muted text-center">Nenhuma transação ainda.</p>
+                        <div class="empty-state">
+                            <i class="bi bi-receipt"></i>
+                            <p>Nenhuma transação ainda</p>
+                        </div>
                     {% endif %}
                 </div>
             </div>
+        </div>
+        </div>
+    </div>
+</main>
 
-            <!-- Segurança -->
-            <div class="card mt-4">
-                <div class="card-body">
-                    <h5 class="card-title mb-4">
-                        <i class="bi bi-shield-lock"></i> Segurança
-                    </h5>
-                    
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-outline-secondary" disabled>
-                            <i class="bi bi-key"></i> Alterar Senha
-                        </button>
-                        <button class="btn btn-outline-secondary" disabled>
-                            <i class="bi bi-shield-check"></i> Autenticação em 2 Fatores
-                        </button>
+<!-- Modal de Saque -->
+<div class="modal fade" id="withdrawModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-cash-stack"></i> Solicitar Saque
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('dashboard.withdraw') }}">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Saldo disponível:</strong> R$ {{ "%.2f"|format(stats.balance) }}
+                        <br>
+                        <small>Saques são processados em até 24 horas úteis</small>
                     </div>
                     
-                    <p class="text-muted mt-3 mb-0">
-                        <small>Recursos de segurança em desenvolvimento</small>
-                    </p>
+                    <div class="mb-3">
+                        <label class="form-label">Valor do Saque</label>
+                        <div class="input-group">
+                            <span class="input-group-text">R$</span>
+                            <input type="number" class="form-control" name="amount" 
+                                   step="0.01" min="10" max="{{ stats.balance }}" 
+                                   placeholder="0,00" required>
+                        </div>
+                        <small class="text-muted">Mínimo: R$ 10,00</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Chave PIX</label>
+                        <input type="text" class="form-control" name="pix_key" 
+                               value="{{ user.pix_key|default('', true) }}"
+                               placeholder="Digite sua chave PIX" required>
+                        <small class="text-muted">CPF, e-mail, telefone ou chave aleatória</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Chave PIX</label>
+                        <select class="form-select" name="pix_type" required>
+                            <option value="">Selecione o tipo</option>
+                            <option value="cpf">CPF</option>
+                            <option value="email">E-mail</option>
+                            <option value="phone">Telefone</option>
+                            <option value="random">Chave Aleatória</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Solicitar Saque
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-
-<style>
-.card {
-    border: none;
-    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
-    transition: all 0.3s ease;
-}
-
-.card:hover {
-    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
-}
-
-.avatar-circle {
-    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
-}
-</style>
 {% endblock %}

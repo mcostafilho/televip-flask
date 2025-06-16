@@ -2,180 +2,117 @@
 
 {% block title %}Dashboard - TeleVIP{% endblock %}
 
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="h3 mb-0">Dashboard</h1>
-            <p class="text-muted">Bem-vindo de volta, {{ current_user.name }}!</p>
+<div class="dashboard-wrapper">
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <h1 class="h2 mb-1">Dashboard</h1>
+            <p class="text-muted mb-0">Bem-vindo de volta, {{ current_user.name }}!</p>
         </div>
-    </div>
 
-    <!-- Cards de Estatísticas -->
-    <div class="row g-3 mb-4">
-        <!-- Card Saldo Disponível -->
-        <div class="col-xl-3 col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="rounded-circle p-3 bg-success bg-opacity-10">
-                                <i class="bi bi-wallet2 fs-3 text-success"></i>
-                            </div>
+        <!-- Cards de Estatísticas -->
+        <div class="stats-grid">
+            <!-- Card Saldo Disponível -->
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="stat-icon success">
+                            <i class="bi bi-wallet2"></i>
                         </div>
-                        <div class="flex-grow-1 ms-3">
-                            <p class="text-muted mb-1">Saldo Disponível</p>
-                            <h3 class="mb-0">R$ {{ "%.2f"|format(balance) }}</h3>
-                            <small class="text-muted">
-                                <i class="bi bi-arrow-up text-success"></i> Para saque
-                            </small>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <p class="text-muted mb-1 small">Saldo Disponível</p>
+                        <h3 class="mb-0">R$ {{ "%.2f"|format(balance) }}</h3>
+                        <small class="text-success">
+                            <i class="bi bi-arrow-up"></i> Para saque
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Total Receita -->
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="stat-icon primary">
+                            <i class="bi bi-graph-up"></i>
                         </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <p class="text-muted mb-1 small">Receita Total</p>
+                        <h3 class="mb-0">R$ {{ "%.2f"|format(total_revenue) }}</h3>
+                        <small class="text-muted">
+                            Taxa: R$ 0,99 + 7,99%
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Assinantes Ativos -->
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="stat-icon info">
+                            <i class="bi bi-people"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <p class="text-muted mb-1 small">Assinantes Ativos</p>
+                        <h3 class="mb-0">{{ total_subscribers }}</h3>
+                        <small class="text-muted">
+                            Em {{ total_groups }} grupos
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Total de Grupos -->
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="stat-icon warning">
+                            <i class="bi bi-collection"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <p class="text-muted mb-1 small">Total de Grupos</p>
+                        <h3 class="mb-0">{{ total_groups }}</h3>
+                        <small class="text-muted">
+                            {{ active_groups }} ativos
+                        </small>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Card Total Receita -->
-        <div class="col-xl-3 col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="rounded-circle p-3 bg-primary bg-opacity-10">
-                                <i class="bi bi-graph-up fs-3 text-primary"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <p class="text-muted mb-1">Receita Total</p>
-                            <h3 class="mb-0">R$ {{ "%.2f"|format(total_revenue) }}</h3>
-                            <small class="text-muted">
-                                Taxa: R$ 0,99 + 7,99%
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Card Assinantes Ativos -->
-        <div class="col-xl-3 col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="rounded-circle p-3 bg-info bg-opacity-10">
-                                <i class="bi bi-people fs-3 text-info"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <p class="text-muted mb-1">Assinantes Ativos</p>
-                            <h3 class="mb-0">{{ total_subscribers }}</h3>
-                            <small class="text-muted">
-                                Em {{ total_groups }} grupos
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Card Total Grupos -->
-        <div class="col-xl-3 col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="rounded-circle p-3 bg-warning bg-opacity-10">
-                                <i class="bi bi-collection fs-3 text-warning"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <p class="text-muted mb-1">Total de Grupos</p>
-                            <h3 class="mb-0">{{ total_groups }}</h3>
-                            <small class="text-muted">
-                                {% if groups %}{{ groups|selectattr('is_active')|list|length }}{% else %}0{% endif %} ativos
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Detalhamento de Taxas -->
-    {% if total_revenue > 0 %}
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">
-                        <i class="bi bi-calculator"></i> Resumo Financeiro
+        <!-- Conteúdo Principal em duas colunas -->
+        <div class="row g-4">
+            <!-- Gráfico de Receita -->
+            <div class="col-lg-8">
+                <div class="content-card">
+                    <h5>
+                        <i class="bi bi-graph-up"></i> 
+                        Receita dos Últimos 30 Dias
                     </h5>
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="text-center p-3">
-                                <h6 class="text-muted">Total Bruto</h6>
-                                <h4>R$ {{ "%.2f"|format(total_revenue) }}</h4>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-center p-3 border-start">
-                                <h6 class="text-muted">Total de Taxas</h6>
-                                {% set total_fees = (total_revenue * 0.0799) + (total_transactions|default(0) * 0.99) %}
-                                <h4 class="text-danger">- R$ {{ "%.2f"|format(total_fees) }}</h4>
-                                <small class="text-muted">R$ 0,99 + 7,99% por venda</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-center p-3 border-start">
-                                <h6 class="text-muted">Total Líquido</h6>
-                                <h4 class="text-success">R$ {{ "%.2f"|format(total_revenue - total_fees) }}</h4>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-center p-3 border-start">
-                                <h6 class="text-muted">Disponível para Saque</h6>
-                                <h4 class="text-primary">R$ {{ "%.2f"|format(balance) }}</h4>
-                                <button class="btn btn-sm btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#withdrawModal">
-                                    <i class="bi bi-cash-stack"></i> Sacar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <div class="row">
-        <!-- Gráfico de Receita -->
-        <div class="col-lg-8 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white py-3">
-                    <h5 class="mb-0">
-                        <i class="bi bi-graph-up"></i> Receita dos Últimos 30 Dias
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container" style="height: 300px;">
+                    <div class="chart-container">
                         <canvas id="revenueChart"></canvas>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Ações Rápidas -->
-        <div class="col-lg-4 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white py-3">
-                    <h5 class="mb-0">
-                        <i class="bi bi-lightning"></i> Ações Rápidas
+            <!-- Ações Rápidas -->
+            <div class="col-lg-4">
+                <div class="content-card">
+                    <h5>
+                        <i class="bi bi-lightning"></i> 
+                        Ações Rápidas
                     </h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
+                    <div class="action-buttons">
                         <a href="{{ url_for('groups.create') }}" class="btn btn-primary">
                             <i class="bi bi-plus-circle"></i> Criar Novo Grupo
                         </a>
@@ -185,321 +122,329 @@
                         <a href="{{ url_for('dashboard.profile') }}" class="btn btn-outline-primary">
                             <i class="bi bi-person"></i> Meu Perfil
                         </a>
-                        <a href="#" class="btn btn-outline-primary">
+                        <a href="{{ url_for('dashboard.analytics') }}" class="btn btn-outline-primary">
                             <i class="bi bi-bar-chart-line"></i> Analytics Completo
                         </a>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Grupos -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i class="bi bi-telegram"></i> Meus Grupos
-                        </h5>
-                        <a href="{{ url_for('groups.create') }}" class="btn btn-primary btn-sm">
-                            <i class="bi bi-plus-circle"></i> Novo Grupo
-                        </a>
-                    </div>
-                </div>
-                <div class="card-body">
-                    {% if groups %}
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Grupo</th>
-                                        <th>Assinantes</th>
-                                        <th>Receita Bruta</th>
-                                        <th>Taxas</th>
-                                        <th>Receita Líquida</th>
-                                        <th>Status</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for group in groups %}
-                                    <tr>
-                                        <td>
-                                            <strong>{{ group.name }}</strong>
-                                            <br>
-                                            <small class="text-muted">
-                                                <i class="bi bi-link-45deg"></i>
-                                                <a href="#" onclick="copyLink('{{ group.id }}'); return false;">
-                                                    Copiar link
-                                                </a>
-                                            </small>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-info">{{ group.total_subscribers }}</span>
-                                        </td>
-                                        <td>R$ {{ "%.2f"|format(group.total_revenue or 0) }}</td>
-                                        <td class="text-danger">
-                                            {% set group_fee = (group.total_revenue or 0) * 0.0799 + (group.total_transactions or 0) * 0.99 %}
-                                            R$ {{ "%.2f"|format(group_fee) }}
-                                        </td>
-                                        <td class="text-success">
-                                            <strong>R$ {{ "%.2f"|format((group.total_revenue or 0) - group_fee) }}</strong>
-                                        </td>
-                                        <td>
-                                            {% if group.is_active %}
-                                                <span class="badge bg-success">Ativo</span>
-                                            {% else %}
-                                                <span class="badge bg-secondary">Inativo</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <div class="btn-group" role="group">
-                                                <a href="{{ url_for('groups.edit', id=group.id) }}" 
-                                                   class="btn btn-sm btn-outline-primary" 
-                                                   title="Gerenciar">
-                                                    <i class="bi bi-gear"></i>
-                                                </a>
-                                                <a href="{{ url_for('dashboard.index', group_id=group.id) }}" 
-                                                   class="btn btn-sm btn-outline-info" 
-                                                   title="Ver Detalhes">
-                                                    <i class="bi bi-eye"></i>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-5">
-                            <i class="bi bi-inbox fs-1 text-muted"></i>
-                            <p class="text-muted mt-3">Você ainda não tem grupos criados.</p>
-                            <a href="{{ url_for('groups.create') }}" class="btn btn-primary">
-                                <i class="bi bi-plus-circle"></i> Criar Primeiro Grupo
-                            </a>
-                        </div>
-                    {% endif %}
-                </div>
+        <!-- Meus Grupos (PRIMEIRO) -->
+        <div class="content-card mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="mb-0">
+                    <i class="bi bi-telegram"></i> 
+                    Meus Grupos
+                </h5>
+                {% if groups %}
+                <a href="{{ url_for('groups.list') }}" class="btn btn-primary btn-sm">
+                    Ver Todos
+                </a>
+                {% endif %}
             </div>
+            
+            {% if groups %}
+                <div class="custom-table">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Grupo</th>
+                                <th class="text-center">Assinantes</th>
+                                <th class="text-center">Receita</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for group in groups[:5] %}
+                            <tr>
+                                <td>
+                                    <div>
+                                        <strong>{{ group.name }}</strong>
+                                        {% if group.description %}
+                                        <br>
+                                        <small class="text-muted">{{ group.description[:50] }}...</small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-info">{{ group.total_subscribers }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <strong>R$ {{ "%.2f"|format(group.total_revenue) }}</strong>
+                                </td>
+                                <td class="text-center">
+                                    {% if group.is_active %}
+                                        <span class="badge bg-success">Ativo</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inativo</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('groups.detail', id=group.id) }}" 
+                                           class="btn btn-outline-primary" title="Ver Detalhes">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('groups.edit', id=group.id) }}" 
+                                           class="btn btn-outline-secondary" title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-telegram"></i>
+                    <p>Você ainda não tem grupos criados</p>
+                    <a href="{{ url_for('groups.create') }}" class="btn btn-primary" style="padding: 0.375rem 1rem; font-size: 0.875rem;">
+                        <i class="bi bi-plus-circle"></i> Criar Primeiro Grupo
+                    </a>
+                </div>
+            {% endif %}
         </div>
-    </div>
 
-    <!-- Transações Recentes -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white py-3">
-                    <h5 class="mb-0">
-                        <i class="bi bi-clock-history"></i> Transações Recentes
-                    </h5>
-                </div>
-                <div class="card-body">
-                    {% if recent_transactions %}
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Data</th>
-                                        <th>Usuário</th>
-                                        <th>Grupo</th>
-                                        <th>Valor Bruto</th>
-                                        <th>Taxa</th>
-                                        <th>Líquido</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for transaction in recent_transactions[:10] %}
-                                    <tr>
-                                        <td>{{ transaction.created_at.strftime('%d/%m %H:%M') }}</td>
-                                        <td>@{{ transaction.subscription.telegram_username or 'Usuário' }}</td>
-                                        <td>{{ transaction.subscription.group.name }}</td>
-                                        <td>R$ {{ "%.2f"|format(transaction.amount) }}</td>
-                                        <td class="text-danger">
-                                            {% set tx_fee = transaction.total_fee if transaction.total_fee else (transaction.fee or (0.99 + transaction.amount * 0.0799)) %}
-                                            R$ {{ "%.2f"|format(tx_fee) }}
-                                        </td>
-                                        <td class="text-success fw-bold">
-                                            R$ {{ "%.2f"|format(transaction.net_amount) }}
-                                        </td>
-                                        <td>
-                                            {% if transaction.status == 'completed' %}
-                                                <span class="badge bg-success">Pago</span>
-                                            {% elif transaction.status == 'pending' %}
-                                                <span class="badge bg-warning">Pendente</span>
-                                            {% else %}
-                                                <span class="badge bg-danger">{{ transaction.status }}</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="text-center mt-3">
-                            <a href="{{ url_for('dashboard.transactions') }}" class="btn btn-sm btn-outline-primary">
-                                Ver Todas as Transações
-                            </a>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-5">
-                            <i class="bi bi-receipt fs-1 text-muted"></i>
-                            <p class="text-muted mt-3">Nenhuma transação ainda</p>
-                        </div>
-                    {% endif %}
-                </div>
+        <!-- Transações Recentes (SEGUNDO) -->
+        <div class="content-card mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history"></i> 
+                    Transações Recentes
+                </h5>
+                {% if recent_transactions %}
+                <a href="{{ url_for('dashboard.transactions') }}" class="btn btn-primary btn-sm">
+                    Ver Todas
+                </a>
+                {% endif %}
             </div>
+            
+            {% if recent_transactions %}
+                <div class="custom-table">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Assinante</th>
+                                <th>Grupo</th>
+                                <th class="text-center">Valor</th>
+                                <th class="text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in recent_transactions[:5] %}
+                            <tr>
+                                <td>
+                                    <small>{{ transaction.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                                </td>
+                                <td>
+                                    {% if transaction.subscription.telegram_user %}
+                                    <strong>{{ transaction.subscription.telegram_user.name }}</strong>
+                                    <br>
+                                    <small class="text-muted">@{{ transaction.subscription.telegram_user.username }}</small>
+                                    {% else %}
+                                    <span class="text-muted">Usuário não identificado</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ transaction.subscription.group.name }}</td>
+                                <td class="text-center">
+                                    <strong>R$ {{ "%.2f"|format(transaction.amount) }}</strong>
+                                </td>
+                                <td class="text-center">
+                                    {% if transaction.status == 'completed' %}
+                                        <span class="badge bg-success">Pago</span>
+                                    {% elif transaction.status == 'pending' %}
+                                        <span class="badge bg-warning">Pendente</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Falhou</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-receipt"></i>
+                    <p>Nenhuma transação ainda</p>
+                </div>
+            {% endif %}
         </div>
     </div>
 </div>
 
-<!-- Modal de Saque (mantido do original) -->
+<!-- Modal de Saque -->
 <div class="modal fade" id="withdrawModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">💰 Solicitar Saque</h5>
+                <h5 class="modal-title">
+                    <i class="bi bi-cash-stack"></i> Solicitar Saque
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form action="{{ url_for('dashboard.withdraw') }}" method="POST">
+            <form method="POST" action="{{ url_for('dashboard.withdraw') }}">
                 <div class="modal-body">
                     <div class="alert alert-info">
                         <i class="bi bi-info-circle"></i>
-                        Saldo disponível: <strong>R$ {{ "%.2f"|format(balance) }}</strong>
+                        <strong>Saldo disponível:</strong> R$ {{ "%.2f"|format(balance) }}
+                        <br>
+                        <small>Saques são processados em até 24 horas úteis</small>
                     </div>
                     
-                    {% if balance >= 10 %}
-                        <div class="mb-3">
-                            <label class="form-label">Valor do Saque</label>
-                            <div class="input-group">
-                                <span class="input-group-text">R$</span>
-                                <input type="number" name="amount" class="form-control" 
-                                       placeholder="0,00" max="{{ balance }}" 
-                                       step="0.01" min="10" required>
-                            </div>
-                            <small class="text-muted">Mínimo: R$ 10,00</small>
+                    <div class="mb-3">
+                        <label class="form-label">Valor do Saque</label>
+                        <div class="input-group">
+                            <span class="input-group-text">R$</span>
+                            <input type="number" class="form-control" name="amount" 
+                                   step="0.01" min="10" max="{{ balance }}" 
+                                   placeholder="0,00" required>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Chave PIX</label>
-                            <input type="text" name="pix_key" class="form-control" 
-                                   placeholder="CPF, Email, Telefone ou Chave Aleatória" required>
-                        </div>
-                        
-                        <div class="alert alert-warning">
-                            <small>
-                                <i class="bi bi-clock"></i>
-                                Processamento em até 24 horas úteis
-                            </small>
-                        </div>
-                    {% else %}
-                        <div class="alert alert-warning">
-                            <i class="bi bi-exclamation-triangle"></i>
-                            Saldo mínimo para saque: R$ 10,00
-                        </div>
-                    {% endif %}
+                        <small class="text-muted">Mínimo: R$ 10,00</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Chave PIX</label>
+                        <input type="text" class="form-control" name="pix_key" 
+                               placeholder="Digite sua chave PIX" required>
+                        <small class="text-muted">CPF, e-mail, telefone ou chave aleatória</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Chave PIX</label>
+                        <select class="form-select" name="pix_type" required>
+                            <option value="">Selecione o tipo</option>
+                            <option value="cpf">CPF</option>
+                            <option value="email">E-mail</option>
+                            <option value="phone">Telefone</option>
+                            <option value="random">Chave Aleatória</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    {% if balance >= 10 %}
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-circle"></i> Solicitar Saque
-                        </button>
-                    {% endif %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Solicitar Saque
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+{% endblock %}
 
-<!-- Input oculto para copiar links -->
-<input type="text" id="linkCopyInput" style="position: absolute; left: -9999px;">
-
-<style>
-.card {
-    transition: transform 0.2s;
-}
-
-.card:hover {
-    transform: translateY(-2px);
-}
-
-.table th {
-    font-weight: 600;
-    color: #6c757d;
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-bottom: 2px solid #dee2e6;
-}
-
-.chart-container {
-    position: relative;
-    height: 300px;
-}
-</style>
-
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Dados do gráfico
-const revenueData = {{ revenue_chart_data | tojson if revenue_chart_data else '{}' }};
-
 // Gráfico de Receita
-const ctx = document.getElementById('revenueChart').getContext('2d');
-const revenueChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: revenueData.labels || ['1', '5', '10', '15', '20', '25', '30'],
-        datasets: [{
-            label: 'Receita Líquida (R$)',
-            data: revenueData.data || Array(7).fill(0),
-            borderColor: '#0d6efd',
-            backgroundColor: 'rgba(13, 110, 253, 0.1)',
-            tension: 0.4,
-            fill: true
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false
-            }
+const ctx = document.getElementById('revenueChart');
+if (ctx) {
+    const revenueChart = new Chart(ctx.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: {{ chart_labels | tojson }},
+            datasets: [{
+                label: 'Receita Diária',
+                data: {{ chart_data | tojson }},
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#667eea',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7
+            }]
         },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    callback: function(value) {
-                        return 'R$ ' + value.toFixed(2);
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    titleFont: {
+                        size: 14
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    callbacks: {
+                        label: function(context) {
+                            return 'Receita: R$ ' + context.parsed.y.toFixed(2);
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#666'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    },
+                    ticks: {
+                        color: '#666',
+                        callback: function(value) {
+                            return 'R$ ' + value.toFixed(2);
+                        }
                     }
                 }
             }
         }
-    }
-});
-
-// Função para copiar link do grupo
-function copyLink(groupId) {
-    const link = `https://t.me/televipbra_bot?start=g_${groupId}`;
-    const input = document.getElementById('linkCopyInput');
-    input.value = link;
-    input.select();
-    document.execCommand('copy');
-    
-    // Feedback visual
-    const el = event.target;
-    const originalText = el.innerText;
-    el.innerText = 'Copiado!';
-    el.style.color = '#28a745';
-    
-    setTimeout(() => {
-        el.innerText = originalText;
-        el.style.color = '';
-    }, 2000);
+    });
 }
+
+// Animação dos números
+document.addEventListener('DOMContentLoaded', function() {
+    const counters = document.querySelectorAll('.stat-card h3');
+    
+    counters.forEach(counter => {
+        const target = parseFloat(counter.innerText.replace('R$', '').replace(',', '.'));
+        const duration = 1000;
+        const increment = target / (duration / 16);
+        let current = 0;
+        
+        const updateCounter = () => {
+            current += increment;
+            if (current < target) {
+                if (counter.innerText.includes('R$')) {
+                    counter.innerText = 'R$ ' + current.toFixed(2);
+                } else {
+                    counter.innerText = Math.floor(current);
+                }
+                requestAnimationFrame(updateCounter);
+            } else {
+                if (counter.innerText.includes('R$')) {
+                    counter.innerText = 'R$ ' + target.toFixed(2);
+                } else {
+                    counter.innerText = target;
+                }
+            }
+        };
+        
+        updateCounter();
+    });
+});
 </script>
 {% endblock %}
