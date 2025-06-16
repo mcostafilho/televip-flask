@@ -4,41 +4,40 @@
 
 {% block content %}
 <div class="auth-container">
-    <div class="auth-card auth-card-register" data-aos="zoom-in">
+    <div class="auth-card">
         <div class="auth-header">
-            <h2 class="gradient-text">Comece a Lucrar Agora!</h2>
-            <p class="text-muted">Crie sua conta em 30 segundos</p>
-            
-            <!-- Progress Steps -->
-            <div class="progress-steps">
-                <div class="step active">
-                    <span>1</span>
-                    <small>Dados</small>
-                </div>
-                <div class="step">
-                    <span>2</span>
-                    <small>Verificar</small>
-                </div>
-                <div class="step">
-                    <span>3</span>
-                    <small>Pronto!</small>
-                </div>
-            </div>
+            <h1 class="gradient-text">Comece a Lucrar Agora!</h1>
+            <p class="subtitle">Crie sua conta em 30 segundos</p>
+        </div>
+        
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+            <div class="step active">1</div>
+            <div class="step-connector"></div>
+            <div class="step">2</div>
+            <div class="step-connector"></div>
+            <div class="step">3</div>
+        </div>
+        
+        <div class="text-center mb-3 small text-muted">
+            <span>Dados</span> &nbsp;&nbsp;&nbsp;
+            <span style="opacity: 0.5">Verificar</span> &nbsp;&nbsp;&nbsp;
+            <span style="opacity: 0.5">Pronto!</span>
         </div>
         
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }}">
+                        <i class="bi bi-{{ 'exclamation-circle' if category == 'error' else 'check-circle' }}"></i>
                         {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
         
-        <form method="POST" class="auth-form" id="registerForm">
-            <div class="form-floating mb-3">
+        <form method="POST" class="auth-form">
+            <div class="form-floating">
                 <input type="text" name="name" class="form-control" id="name" 
                        placeholder="Nome Completo" required autofocus>
                 <label for="name">
@@ -46,98 +45,84 @@
                 </label>
             </div>
             
-            <div class="form-floating mb-3">
+            <div class="form-floating">
                 <input type="email" name="email" class="form-control" id="email" 
-                       placeholder="seu@email.com" required>
+                       placeholder="Email" required>
                 <label for="email">
                     <i class="bi bi-envelope"></i> Email
                 </label>
             </div>
             
-            <div class="form-floating mb-3">
+            <div class="form-floating">
                 <input type="text" name="username" class="form-control" id="username" 
-                       placeholder="seuusername" pattern="[a-z0-9]+" required
+                       placeholder="Username" required pattern="[a-z0-9]+"
                        title="Apenas letras minúsculas e números">
                 <label for="username">
                     <i class="bi bi-at"></i> Username
                 </label>
-                <small class="form-text text-muted">Será usado no link do bot</small>
-            </div>
-            
-            <div class="row g-2">
-                <div class="col-md-6">
-                    <div class="form-floating mb-3">
-                        <input type="password" name="password" class="form-control" id="password" 
-                               placeholder="Senha" required minlength="6">
-                        <label for="password">
-                            <i class="bi bi-lock"></i> Senha
-                        </label>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-floating mb-3">
-                        <input type="password" name="confirm_password" class="form-control" id="confirm_password" 
-                               placeholder="Confirmar Senha" required minlength="6">
-                        <label for="confirm_password">
-                            <i class="bi bi-lock-fill"></i> Confirmar
-                        </label>
-                    </div>
+                <div class="small text-muted mt-1">
+                    Será usado no link do bot: t.me/seu_bot
                 </div>
             </div>
             
-            <div class="password-strength mb-3">
+            <div class="form-floating password-field">
+                <input type="password" name="password" class="form-control" id="password" 
+                       placeholder="Senha" required minlength="6">
+                <label for="password">
+                    <i class="bi bi-lock"></i> Senha
+                </label>
+                <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                    <i class="bi bi-eye" id="password-eye"></i>
+                </button>
+            </div>
+            
+            <div class="password-strength">
                 <div class="strength-bar">
                     <div class="strength-progress"></div>
                 </div>
-                <small class="strength-text text-muted">Força da senha</small>
+                <span class="strength-text">Força da senha</span>
             </div>
             
-            <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" id="terms" required>
+            <div class="form-floating password-field">
+                <input type="password" name="confirm_password" class="form-control" id="confirm_password" 
+                       placeholder="Confirmar Senha" required>
+                <label for="confirm_password">
+                    <i class="bi bi-shield-check"></i> Confirmar Senha
+                </label>
+                <button type="button" class="password-toggle" onclick="togglePassword('confirm_password')">
+                    <i class="bi bi-eye" id="confirm_password-eye"></i>
+                </button>
+            </div>
+            
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="terms" required>
                 <label class="form-check-label" for="terms">
-                    Concordo com os <a href="#" class="text-primary">Termos de Uso</a> 
-                    e <a href="#" class="text-primary">Política de Privacidade</a>
+                    Concordo com os <a href="#" class="auth-link">Termos de Uso</a> e 
+                    <a href="#" class="auth-link">Política de Privacidade</a>
                 </label>
             </div>
             
-            <button type="submit" class="btn btn-primary btn-auth">
-                <i class="bi bi-rocket-takeoff"></i> Criar Conta Grátis
-            </button>
-            
-            <div class="divider">
-                <span>ou</span>
-            </div>
-            
-            <button type="button" class="btn btn-social btn-google">
-                <i class="bi bi-google"></i> Continuar com Google
-            </button>
-            
-            <button type="button" class="btn btn-social btn-telegram">
-                <i class="bi bi-telegram"></i> Continuar com Telegram
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-rocket-takeoff"></i>
+                Criar Conta Grátis
             </button>
         </form>
         
+        <div class="divider">
+            <span>ou</span>
+        </div>
+        
+        <button class="btn btn-secondary" onclick="alert('Login com Google em breve!')">
+            <img src="https://www.google.com/favicon.ico" width="20" height="20">
+            Continuar com Google
+        </button>
+        
         <div class="auth-footer">
             <p>Já tem uma conta? 
-                <a href="{{ url_for('auth.login') }}" class="text-primary fw-bold">
+                <a href="{{ url_for('auth.login') }}" class="auth-link fw-bold">
                     Fazer login
                 </a>
             </p>
-        </div>
-        
-        <!-- Social Proof -->
-        <div class="social-proof mt-4">
-            <div class="d-flex align-items-center justify-content-center gap-3">
-                <div class="avatars">
-                    <img src="https://i.pravatar.cc/40?img=1" alt="User">
-                    <img src="https://i.pravatar.cc/40?img=2" alt="User">
-                    <img src="https://i.pravatar.cc/40?img=3" alt="User">
-                    <img src="https://i.pravatar.cc/40?img=4" alt="User">
-                </div>
-                <small class="text-muted">
-                    <strong>+2.847</strong> criadores já estão lucrando
-                </small>
-            </div>
         </div>
     </div>
     
@@ -150,9 +135,24 @@
 </div>
 
 <script>
-// Password strength checker
+// Toggle password visibility
+function togglePassword(fieldId) {
+    const passwordField = document.getElementById(fieldId);
+    const eyeIcon = document.getElementById(fieldId + '-eye');
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        eyeIcon.classList.remove('bi-eye');
+        eyeIcon.classList.add('bi-eye-slash');
+    } else {
+        passwordField.type = 'password';
+        eyeIcon.classList.remove('bi-eye-slash');
+        eyeIcon.classList.add('bi-eye');
+    }
+}
+
+// Password strength indicator
 const passwordInput = document.getElementById('password');
-const confirmPasswordInput = document.getElementById('confirm_password');
 const strengthBar = document.querySelector('.strength-progress');
 const strengthText = document.querySelector('.strength-text');
 
@@ -187,11 +187,14 @@ passwordInput.addEventListener('input', function() {
 });
 
 // Validate password match
-document.getElementById('registerForm').addEventListener('submit', function(e) {
+const confirmPasswordInput = document.getElementById('confirm_password');
+const form = document.querySelector('form');
+
+form.addEventListener('submit', function(e) {
     if (passwordInput.value !== confirmPasswordInput.value) {
         e.preventDefault();
-        alert('As senhas não coincidem!');
         confirmPasswordInput.classList.add('is-invalid');
+        alert('As senhas não coincidem!');
     }
 });
 

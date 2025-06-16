@@ -4,16 +4,20 @@
 
 {% block content %}
 <div class="auth-container">
-    <div class="auth-card" data-aos="zoom-in">
+    <div class="auth-card">
         <div class="auth-header">
-            <h2 class="gradient-text">Bem-vindo de Volta!</h2>
-            <p class="text-muted">Entre na sua conta para continuar lucrando</p>
+            <div class="auth-logo">
+                <i class="bi bi-tv-fill"></i>
+            </div>
+            <h1 class="gradient-text">Bem-vindo!</h1>
+            <p class="subtitle">Entre na sua conta TeleVIP</p>
         </div>
         
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
                     <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                        <i class="bi bi-{{ 'exclamation-circle' if category == 'error' else 'check-circle' if category == 'success' else 'info-circle' }}"></i>
                         {{ message }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
@@ -22,54 +26,55 @@
         {% endwith %}
         
         <form method="POST" class="auth-form">
-            <div class="form-floating mb-3">
+            <div class="form-floating">
                 <input type="email" name="email" class="form-control" id="email" 
-                       placeholder="seu@email.com" required autofocus>
+                       placeholder="Email" required autofocus>
                 <label for="email">
                     <i class="bi bi-envelope"></i> Email
                 </label>
             </div>
             
-            <div class="form-floating mb-3">
+            <div class="form-floating password-field">
                 <input type="password" name="password" class="form-control" id="password" 
                        placeholder="Senha" required>
                 <label for="password">
                     <i class="bi bi-lock"></i> Senha
                 </label>
+                <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                    <i class="bi bi-eye" id="password-eye"></i>
+                </button>
             </div>
             
-            <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
                 <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="remember" name="remember">
+                    <input type="checkbox" name="remember" class="form-check-input" id="remember">
                     <label class="form-check-label" for="remember">
                         Lembrar de mim
                     </label>
                 </div>
-                <a href="{{ url_for('auth.forgot_password') }}" class="text-primary text-decoration-none">
+                <a href="{{ url_for('auth.forgot_password') }}" class="auth-link small">
                     Esqueceu a senha?
                 </a>
             </div>
             
-            <button type="submit" class="btn btn-primary btn-auth">
-                <i class="bi bi-box-arrow-in-right"></i> Entrar
-            </button>
-            
-            <div class="divider">
-                <span>ou</span>
-            </div>
-            
-            <button type="button" class="btn btn-social btn-google">
-                <i class="bi bi-google"></i> Continuar com Google
-            </button>
-            
-            <button type="button" class="btn btn-social btn-telegram">
-                <i class="bi bi-telegram"></i> Continuar com Telegram
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-box-arrow-in-right"></i>
+                Entrar
             </button>
         </form>
         
+        <div class="divider">
+            <span>ou</span>
+        </div>
+        
+        <button class="btn btn-secondary" onclick="alert('Login com Google em breve!')">
+            <img src="https://www.google.com/favicon.ico" width="20" height="20">
+            Continuar com Google
+        </button>
+        
         <div class="auth-footer">
             <p>Não tem uma conta? 
-                <a href="{{ url_for('auth.register') }}" class="text-primary fw-bold">
+                <a href="{{ url_for('auth.register') }}" class="auth-link fw-bold">
                     Criar conta grátis
                 </a>
             </p>
@@ -80,7 +85,23 @@
     <div class="auth-decoration">
         <div class="shape shape-1"></div>
         <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
     </div>
 </div>
+
+<script>
+function togglePassword(fieldId) {
+    const passwordField = document.getElementById(fieldId);
+    const eyeIcon = document.getElementById(fieldId + '-eye');
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        eyeIcon.classList.remove('bi-eye');
+        eyeIcon.classList.add('bi-eye-slash');
+    } else {
+        passwordField.type = 'password';
+        eyeIcon.classList.remove('bi-eye-slash');
+        eyeIcon.classList.add('bi-eye');
+    }
+}
+</script>
 {% endblock %}
