@@ -4,6 +4,12 @@
 
 {% block content %}
 <div class="auth-container">
+    <!-- Botão Voltar -->
+    <a href="{{ url_for('auth.index') }}" class="btn-back">
+        <i class="bi bi-arrow-left"></i>
+        <span>Voltar</span>
+    </a>
+    
     <div class="auth-card">
         <div class="auth-header">
             <h1 class="gradient-text">Comece a Lucrar Agora!</h1>
@@ -37,40 +43,36 @@
         {% endwith %}
         
         <form method="POST" class="auth-form">
-            <div class="form-floating">
-                <input type="text" name="name" class="form-control" id="name" 
+            <!-- Nome Completo -->
+            <div class="input-group">
+                <i class="bi bi-person input-icon"></i>
+                <input type="text" name="name" class="form-control with-icon" 
                        placeholder="Nome Completo" required autofocus>
-                <label for="name">
-                    <i class="bi bi-person"></i> Nome Completo
-                </label>
             </div>
             
-            <div class="form-floating">
-                <input type="email" name="email" class="form-control" id="email" 
+            <!-- Email -->
+            <div class="input-group">
+                <i class="bi bi-envelope input-icon"></i>
+                <input type="email" name="email" class="form-control with-icon" 
                        placeholder="Email" required>
-                <label for="email">
-                    <i class="bi bi-envelope"></i> Email
-                </label>
             </div>
             
-            <div class="form-floating">
-                <input type="text" name="username" class="form-control" id="username" 
+            <!-- Username -->
+            <div class="input-group">
+                <i class="bi bi-at input-icon"></i>
+                <input type="text" name="username" class="form-control with-icon" 
                        placeholder="Username" required pattern="[a-z0-9]+"
                        title="Apenas letras minúsculas e números">
-                <label for="username">
-                    <i class="bi bi-at"></i> Username
-                </label>
-                <div class="small text-muted mt-1">
+                <small class="form-text text-muted w-100 mt-1">
                     Será usado no link do bot: t.me/seu_bot
-                </div>
+                </small>
             </div>
             
-            <div class="form-floating password-field">
-                <input type="password" name="password" class="form-control" id="password" 
-                       placeholder="Senha" required minlength="6">
-                <label for="password">
-                    <i class="bi bi-lock"></i> Senha
-                </label>
+            <!-- Senha -->
+            <div class="input-group password-field">
+                <i class="bi bi-lock input-icon"></i>
+                <input type="password" name="password" class="form-control with-icon" 
+                       id="password" placeholder="Senha" required minlength="6">
                 <button type="button" class="password-toggle" onclick="togglePassword('password')">
                     <i class="bi bi-eye" id="password-eye"></i>
                 </button>
@@ -83,17 +85,17 @@
                 <span class="strength-text">Força da senha</span>
             </div>
             
-            <div class="form-floating password-field">
-                <input type="password" name="confirm_password" class="form-control" id="confirm_password" 
-                       placeholder="Confirmar Senha" required>
-                <label for="confirm_password">
-                    <i class="bi bi-shield-check"></i> Confirmar Senha
-                </label>
+            <!-- Confirmar Senha -->
+            <div class="input-group password-field">
+                <i class="bi bi-shield-check input-icon"></i>
+                <input type="password" name="confirm_password" class="form-control with-icon" 
+                       id="confirm_password" placeholder="Confirmar Senha" required>
                 <button type="button" class="password-toggle" onclick="togglePassword('confirm_password')">
                     <i class="bi bi-eye" id="confirm_password-eye"></i>
                 </button>
             </div>
             
+            <!-- Termos -->
             <div class="form-check">
                 <input type="checkbox" class="form-check-input" id="terms" required>
                 <label class="form-check-label" for="terms">

@@ -4,6 +4,12 @@
 
 {% block content %}
 <div class="auth-container">
+    <!-- Botão Voltar -->
+    <a href="{{ url_for('auth.index') }}" class="btn-back">
+        <i class="bi bi-arrow-left"></i>
+        <span>Voltar</span>
+    </a>
+    
     <div class="auth-card">
         <div class="auth-header">
             <div class="auth-logo">
@@ -26,20 +32,18 @@
         {% endwith %}
         
         <form method="POST" class="auth-form">
-            <div class="form-floating">
-                <input type="email" name="email" class="form-control" id="email" 
+            <!-- Email -->
+            <div class="input-group">
+                <i class="bi bi-envelope input-icon"></i>
+                <input type="email" name="email" class="form-control with-icon" 
                        placeholder="Email" required autofocus>
-                <label for="email">
-                    <i class="bi bi-envelope"></i> Email
-                </label>
             </div>
             
-            <div class="form-floating password-field">
-                <input type="password" name="password" class="form-control" id="password" 
-                       placeholder="Senha" required>
-                <label for="password">
-                    <i class="bi bi-lock"></i> Senha
-                </label>
+            <!-- Senha -->
+            <div class="input-group password-field">
+                <i class="bi bi-lock input-icon"></i>
+                <input type="password" name="password" class="form-control with-icon" 
+                       id="password" placeholder="Senha" required>
                 <button type="button" class="password-toggle" onclick="togglePassword('password')">
                     <i class="bi bi-eye" id="password-eye"></i>
                 </button>

@@ -29,14 +29,26 @@
     --safe-area-inset-bottom: env(safe-area-inset-bottom);
 }
 
+/* Garantir que o body e html tenham altura total */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
 /* Container Principal - Mobile First */
 .auth-container {
     min-height: 100vh;
     min-height: -webkit-fill-available; /* iOS fix */
+    min-height: 100%; /* Fallback */
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    background-attachment: fixed; /* Fixa o background */
+    background-size: cover;
+    background-position: center;
     padding: 16px;
     padding-top: calc(16px + var(--safe-area-inset-top));
     padding-bottom: calc(16px + var(--safe-area-inset-bottom));
@@ -151,20 +163,36 @@
     gap: 16px;
 }
 
-.form-floating {
+/* Input com ícone */
+.input-group {
     position: relative;
     margin-bottom: 0;
+}
+
+.input-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #718096;
+    font-size: 18px;
+    pointer-events: none;
+    z-index: 1;
 }
 
 .form-control {
     width: 100%;
     padding: 16px;
-    font-size: 16px; /* Evita zoom no iOS */
+    font-size: 16px;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     transition: all 0.3s ease;
     background: #fafafa;
-    -webkit-appearance: none; /* Remove estilos padrão iOS */
+    -webkit-appearance: none;
+}
+
+.form-control.with-icon {
+    padding-left: 48px;
 }
 
 .form-control:focus {
@@ -174,26 +202,23 @@
     background: white;
 }
 
-/* Labels flutuantes */
-.form-floating label {
-    position: absolute;
-    top: 50%;
-    left: 16px;
-    transform: translateY(-50%);
-    transition: all 0.3s ease;
-    color: var(--text-muted);
-    pointer-events: none;
-    font-size: 16px;
+.form-control:focus ~ .input-icon {
+    color: var(--primary-color);
 }
 
-.form-floating .form-control:focus ~ label,
-.form-floating .form-control:not(:placeholder-shown) ~ label {
-    top: -8px;
-    left: 12px;
-    font-size: 12px;
-    background: white;
-    padding: 0 4px;
-    color: var(--primary-color);
+/* Placeholder styling */
+.form-control::placeholder {
+    color: #a0aec0;
+    opacity: 1;
+}
+
+.form-control:focus::placeholder {
+    opacity: 0.7;
+}
+
+/* Remove labels flutuantes */
+.form-floating {
+    display: none;
 }
 
 /* Password Toggle - Touch Friendly */
@@ -201,22 +226,36 @@
     position: relative;
 }
 
-.password-toggle {
+.password-field .password-toggle {
     position: absolute;
     right: 12px;
     top: 50%;
     transform: translateY(-50%);
     background: none;
     border: none;
-    color: var(--text-muted);
+    color: #718096;
     cursor: pointer;
     padding: 8px;
     font-size: 18px;
+    z-index: 2;
     -webkit-tap-highlight-color: transparent;
 }
 
-.password-toggle:active {
+.password-field .password-toggle:hover {
     color: var(--primary-color);
+}
+
+.password-field .form-control {
+    padding-right: 48px;
+}
+
+/* Form text helper */
+.form-text {
+    font-size: 13px;
+    color: #718096;
+    margin-top: 4px;
+    margin-left: 48px;
+    display: block;
 }
 
 /* Botões - Mobile Optimized */
@@ -234,12 +273,19 @@
     justify-content: center;
     gap: 8px;
     -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation; /* Evita delay no toque */
+    touch-action: manipulation;
+    text-decoration: none;
 }
 
 .btn-primary {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: white;
+    margin-top: 8px;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
 }
 
 .btn-primary:active {
@@ -252,8 +298,12 @@
     border: 1px solid var(--border-color);
 }
 
-.btn-secondary:active {
+.btn-secondary:hover {
     background: #f8f9fa;
+}
+
+.btn-secondary:active {
+    background: #e9ecef;
 }
 
 /* Divider */
@@ -281,7 +331,7 @@
 /* Checkbox - Touch Friendly */
 .form-check {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 8px;
     margin: 12px 0;
 }
@@ -293,6 +343,7 @@
     border-radius: 4px;
     cursor: pointer;
     flex-shrink: 0;
+    margin-top: 2px;
 }
 
 .form-check-input:checked {
@@ -305,6 +356,7 @@
     color: var(--text-dark);
     cursor: pointer;
     user-select: none;
+    line-height: 1.4;
 }
 
 /* Links */
@@ -313,6 +365,10 @@
     text-decoration: none;
     font-weight: 500;
     font-size: 14px;
+}
+
+.auth-link:hover {
+    text-decoration: underline;
 }
 
 .auth-link:active {
@@ -359,6 +415,22 @@
     border: 1px solid #bee5eb;
 }
 
+.alert .btn-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    line-height: 1;
+    color: inherit;
+    opacity: 0.5;
+    cursor: pointer;
+    margin-left: auto;
+    padding: 0;
+}
+
+.alert .btn-close:hover {
+    opacity: 1;
+}
+
 /* Loading State */
 .btn-loading {
     position: relative;
@@ -384,28 +456,10 @@
     to { transform: rotate(360deg); }
 }
 
-/* Input com ícone */
-.input-group {
-    position: relative;
-}
-
-.input-icon {
-    position: absolute;
-    left: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-    font-size: 18px;
-    pointer-events: none;
-}
-
-.input-group .form-control {
-    padding-left: 44px;
-}
-
 /* Strength Indicator */
 .password-strength {
-    margin-top: 8px;
+    margin-top: -8px;
+    margin-bottom: 8px;
 }
 
 .strength-bar {
@@ -426,6 +480,49 @@
 .strength-text {
     font-size: 12px;
     color: var(--text-muted);
+}
+
+/* Botão Voltar */
+.btn-back {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 25px;
+    transition: all 0.3s ease;
+    z-index: 100;
+}
+
+.btn-back:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    transform: translateX(-5px);
+}
+
+.btn-back i {
+    font-size: 18px;
+}
+
+/* Mobile adjustments for back button */
+@media (max-width: 768px) {
+    .btn-back {
+        top: 10px;
+        left: 10px;
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+    
+    .btn-back span {
+        display: none; /* Mostra só o ícone no mobile */
+    }
 }
 
 /* Decorações de fundo */
@@ -462,6 +559,72 @@
     left: -75px;
 }
 
+.shape-3 {
+    width: 100px;
+    height: 100px;
+    background: white;
+    top: 50%;
+    left: 10%;
+}
+
+/* Scrollbar customizada */
+.auth-card::-webkit-scrollbar {
+    width: 4px;
+}
+
+.auth-card::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.auth-card::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+}
+
+/* Erro de validação */
+.form-control.is-invalid {
+    border-color: var(--danger-color);
+}
+
+.form-control.is-valid {
+    border-color: var(--success-color);
+}
+
+.invalid-feedback {
+    color: var(--danger-color);
+    font-size: 12px;
+    margin-top: 4px;
+    margin-left: 48px;
+}
+
+.valid-feedback {
+    color: var(--success-color);
+    font-size: 12px;
+    margin-top: 4px;
+    margin-left: 48px;
+}
+
+/* Utilitários */
+.text-center { text-align: center; }
+.text-muted { color: var(--text-muted); }
+.text-dark { color: var(--text-dark); }
+.mt-1 { margin-top: 4px; }
+.mt-2 { margin-top: 8px; }
+.mt-3 { margin-top: 16px; }
+.mt-4 { margin-top: 24px; }
+.mb-1 { margin-bottom: 4px; }
+.mb-2 { margin-bottom: 8px; }
+.mb-3 { margin-bottom: 16px; }
+.mb-4 { margin-bottom: 24px; }
+.fw-bold { font-weight: 700; }
+.small { font-size: 14px; }
+.w-100 { width: 100%; }
+.d-flex { display: flex; }
+.justify-content-between { justify-content: space-between; }
+.align-items-center { align-items: center; }
+.align-items-start { align-items: flex-start; }
+.gap-8 { gap: 8px; }
+
 /* ========================================
    Tablet (768px+)
    ======================================== */
@@ -487,6 +650,10 @@
     
     .form-control {
         padding: 18px;
+    }
+    
+    .form-control.with-icon {
+        padding-left: 52px;
     }
     
     .btn {
@@ -525,7 +692,6 @@
     .shape-3 {
         width: 150px;
         height: 150px;
-        background: white;
         top: 50%;
         left: 10%;
     }
@@ -550,54 +716,4 @@
 .auth-link:focus-visible {
     outline: 2px solid var(--primary-color);
     outline-offset: 2px;
-}
-
-/* ========================================
-   Utilitários
-   ======================================== */
-
-.text-center { text-align: center; }
-.text-muted { color: var(--text-muted); }
-.mt-2 { margin-top: 8px; }
-.mt-3 { margin-top: 16px; }
-.mt-4 { margin-top: 24px; }
-.mb-2 { margin-bottom: 8px; }
-.mb-3 { margin-bottom: 16px; }
-.mb-4 { margin-bottom: 24px; }
-.fw-bold { font-weight: 700; }
-.small { font-size: 14px; }
-
-/* Scrollbar customizada */
-.auth-card::-webkit-scrollbar {
-    width: 4px;
-}
-
-.auth-card::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.auth-card::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 2px;
-}
-
-/* Erro de validação */
-.form-control.is-invalid {
-    border-color: var(--danger-color);
-}
-
-.form-control.is-valid {
-    border-color: var(--success-color);
-}
-
-.invalid-feedback {
-    color: var(--danger-color);
-    font-size: 12px;
-    margin-top: 4px;
-}
-
-.valid-feedback {
-    color: var(--success-color);
-    font-size: 12px;
-    margin-top: 4px;
 }

@@ -60,6 +60,16 @@ body {
     background: rgba(255, 255, 255, 0.98);
 }
 
+.navbar-custom .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.navbar-custom .navbar-collapse {
+    justify-content: flex-end;
+}
+
 .navbar-brand {
     font-size: 24px;
     font-weight: 700;
@@ -111,6 +121,21 @@ body {
     text-decoration: none;
     display: inline-block;
     margin-top: 10px;
+}
+
+@media (min-width: 992px) {
+    .navbar-custom .navbar-nav {
+        align-items: center;
+    }
+    
+    .navbar-custom .nav-item:last-child {
+        margin-left: 20px;
+    }
+    
+    .btn-nav-cta {
+        margin-top: 0;
+        margin-left: 20px;
+    }
 }
 
 /* ========================================
@@ -229,7 +254,7 @@ body {
 }
 
 /* ========================================
-   Mobile First Features Section
+   Mobile First Features Section - CORRIGIDA
    ======================================== */
 .features {
     padding: 60px 0;
@@ -256,44 +281,85 @@ body {
     color: #718096;
 }
 
-.feature-card {
-    background: white;
-    padding: 30px;
-    border-radius: 16px;
-    box-shadow: var(--shadow-md);
-    margin-bottom: 20px;
-    transition: all 0.3s ease;
-    height: 100%;
+/* Reset do grid do Bootstrap para ter controle total */
+.features .row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: -15px;
 }
 
+.features .col-lg-4 {
+    padding: 15px;
+    flex: 0 0 100%;
+    max-width: 100%;
+}
+
+/* Feature cards com altura igual */
+.feature-card {
+    background: white;
+    padding: 40px 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    margin-bottom: 0;
+    transition: all 0.3s ease;
+    height: 100%;
+    position: relative;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* Ícone centralizado */
 .feature-icon {
-    width: 60px;
-    height: 60px;
+    width: 70px;
+    height: 70px;
     background: var(--gradient-primary);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 30px;
     color: white;
-    margin-bottom: 20px;
+    margin: 0 auto 25px;
+    flex-shrink: 0;
 }
 
+/* Título */
 .feature-title {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 700;
-    margin-bottom: 12px;
+    margin-bottom: 15px;
     color: #1a202c;
+    line-height: 1.3;
 }
 
+/* Descrição */
 .feature-description {
     color: #718096;
     font-size: 15px;
-    line-height: 1.6;
+    line-height: 1.7;
+    flex-grow: 1;
+    margin: 0;
+}
+
+/* Remover margens extras */
+.features .container {
+    max-width: 1200px;
+}
+
+/* Fix para garantir que os cards fiquem alinhados */
+.features .row > * {
+    margin-bottom: 40px;
 }
 
 /* ========================================
-   Mobile First Pricing Section
+   Mobile First Pricing Section - APENAS PLANO GRÁTIS
    ======================================== */
 .pricing {
     padding: 60px 0;
@@ -309,11 +375,9 @@ body {
     position: relative;
     overflow: hidden;
     transition: all 0.3s ease;
-}
-
-.pricing-card.featured {
+    max-width: 400px;
+    margin: 0 auto;
     border: 3px solid var(--primary);
-    transform: scale(1.02);
 }
 
 .pricing-badge {
@@ -387,12 +451,6 @@ body {
     background: var(--gradient-primary);
     color: white;
     border: none;
-}
-
-.btn-pricing-secondary {
-    background: transparent;
-    color: var(--primary);
-    border: 2px solid var(--primary);
 }
 
 /* ========================================
@@ -486,15 +544,17 @@ body {
 }
 
 /* ========================================
-   Mobile First Footer
+   Mobile First Footer - CORES CORRIGIDAS
    ======================================== */
 .footer {
     background: #1a202c;
-    color: white;
+    color: #e2e8f0;
     padding: 40px 0 20px;
 }
 
-.footer h5 {
+.footer h5,
+.footer h6 {
+    color: #ffffff;
     font-size: 20px;
     margin-bottom: 16px;
 }
@@ -503,7 +563,11 @@ body {
     font-size: 14px;
     font-weight: 600;
     margin-bottom: 12px;
-    opacity: 0.8;
+    opacity: 0.9;
+}
+
+.footer p {
+    color: #cbd5e0;
 }
 
 .footer ul {
@@ -523,7 +587,11 @@ body {
 }
 
 .footer a:hover {
-    color: white;
+    color: #ffffff;
+}
+
+.footer .text-muted {
+    color: #cbd5e0 !important;
 }
 
 .social-links {
@@ -541,6 +609,7 @@ body {
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
+    color: #ffffff;
 }
 
 .social-links a:hover {
@@ -582,23 +651,53 @@ body {
         display: block;
     }
     
-    /* Features grid */
-    .features .row {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 30px;
+    /* Features - Tablet */
+    .features .col-lg-4 {
+        flex: 0 0 50%;
+        max-width: 50%;
     }
     
-    /* Pricing grid */
-    .pricing .row {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 30px;
+    .feature-card {
+        padding: 35px 25px;
     }
     
     /* Section spacing */
     .features, .pricing, .testimonials {
         padding: 80px 0;
+    }
+}
+
+/* ========================================
+   Desktop (992px+)
+   ======================================== */
+@media (min-width: 992px) {
+    /* Features - Desktop */
+    .features .col-lg-4 {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+    }
+    
+    .features .row {
+        margin: -20px;
+    }
+    
+    .features .col-lg-4 {
+        padding: 20px;
+    }
+    
+    .feature-card {
+        padding: 45px 35px;
+        min-height: 320px;
+    }
+    
+    /* Garantir alinhamento vertical consistente */
+    .features .row {
+        align-items: stretch;
+    }
+    
+    /* Última linha não precisa de margin bottom */
+    .features .row > *:nth-last-child(-n+3) {
+        margin-bottom: 0;
     }
 }
 
@@ -615,20 +714,6 @@ body {
         font-size: 24px;
     }
     
-    /* Features grid */
-    .features .row {
-        grid-template-columns: repeat(3, 1fr);
-    }
-    
-    /* Pricing grid */
-    .pricing .row {
-        grid-template-columns: repeat(3, 1fr);
-    }
-    
-    .pricing-card.featured {
-        transform: scale(1.05);
-    }
-    
     /* Section spacing */
     .features, .pricing, .testimonials, .cta {
         padding: 100px 0;
@@ -639,6 +724,26 @@ body {
     .btn-hero-secondary {
         padding: 18px 40px;
         font-size: 18px;
+    }
+}
+
+/* Desktop grande (1200px+) */
+@media (min-width: 1200px) {
+    .feature-icon {
+        width: 80px;
+        height: 80px;
+        font-size: 35px;
+        margin-bottom: 30px;
+    }
+    
+    .feature-title {
+        font-size: 24px;
+        margin-bottom: 18px;
+    }
+    
+    .feature-description {
+        font-size: 16px;
+        line-height: 1.8;
     }
 }
 
