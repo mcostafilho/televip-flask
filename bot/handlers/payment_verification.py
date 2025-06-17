@@ -54,12 +54,8 @@ async def check_payment_status(update: Update, context: ContextTypes.DEFAULT_TYP
             logger.info(f"Verificando transação pendente {pending_transaction.id}")
             
             # Tentar múltiplos IDs
-            payment_id = (
-                pending_transaction.stripe_session_id or 
-                pending_transaction.payment_id or 
-                pending_transaction.stripe_payment_intent_id
-            )
-            
+            payment_id = pending_transaction.stripe_payment_intent_id
+
             if payment_id:
                 logger.info(f"Verificando no Stripe: {payment_id}")
                 try:
@@ -298,17 +294,9 @@ async def handle_stripe_webhook_payment_complete(payment_intent_id: str, bot):
     
     with get_db_session() as session:
         # Buscar transação por múltiplos campos
-        transaction = (
-            session.query(Transaction).filter_by(
-                stripe_payment_intent_id=payment_intent_id
-            ).first() or
-            session.query(Transaction).filter_by(
-                payment_id=payment_intent_id
-            ).first() or
-            session.query(Transaction).filter_by(
-                stripe_session_id=payment_intent_id
-            ).first()
-        )
+        transaction = session.query(Transaction).filter_by(
+            stripe_payment_intent_id=payment_intent_id
+        ).first()
         
         if not transaction:
             logger.warning(f"Transação não encontrada para payment_intent: {payment_intent_id}")

@@ -53,12 +53,11 @@ async def handle_payment_success(update: Update, context: ContextTypes.DEFAULT_T
             transaction = Transaction(
                 subscription_id=new_subscription.id,
                 amount=checkout_data['amount'],
-                #fee_amount=checkout_data['platform_fee'],
+                fee=checkout_data['platform_fee'],  # Mudou de fee_amount para fee
                 net_amount=checkout_data['creator_amount'],
                 payment_method='stripe',
-                #payment_id=stripe_session_id,  # ADICIONAR: Campo para busca
-                #stripe_session_id=stripe_session_id,  # ADICIONAR: Session ID do Stripe
-                status='pending'  # MUDANÇA: Começa como pending
+                stripe_payment_intent_id=stripe_session_id,  # Usar este campo ao invés de stripe_session_id
+                status='pending'
             )
             session.add(transaction)
             session.commit()
@@ -298,6 +297,7 @@ async def handle_payment_callback(update: Update, context: ContextTypes.DEFAULT_
             ]])
         )
 
+
 async def process_stripe_payment(query, context, checkout_data):
     """Processar pagamento via Stripe"""
     user = query.from_user
@@ -322,8 +322,39 @@ async def process_stripe_payment(query, context, checkout_data):
         )
     
     if result['success']:
-        # Salvar session_id no contexto
+        # IMPORTANTE: Salvar session_id no contexto
         context.user_data['stripe_session_id'] = result['session_id']
+        context.user_data['checkout'] = checkout_data  # Salvar também os dados do checkout
+        
+        # ADICIONAR: Salvar no banco também para não perder
+        with get_db_session() as session:
+            # Criar subscription como pending
+            new_subscription = Subscription(
+                group_id=checkout_data['group_id'],
+                plan_id=checkout_data['plan_id'],
+                telegram_user_id=str(user.id),
+                telegram_username=user.username,
+                status='pending',
+                start_date=datetime.utcnow(),
+                end_date=datetime.utcnow() + timedelta(days=checkout_data['duration_days'])
+            )
+            session.add(new_subscription)
+            session.flush()
+            
+            # Criar transaction com o session_id
+            transaction = Transaction(
+                subscription_id=new_subscription.id,
+                amount=checkout_data['amount'],
+                fee=checkout_data['platform_fee'],
+                net_amount=checkout_data['creator_amount'],
+                payment_method='stripe',
+                stripe_payment_intent_id=result['session_id'],  # Salvar o session_id aqui
+                status='pending'
+            )
+            session.add(transaction)
+            session.commit()
+            
+            logger.info(f"Criada subscription {new_subscription.id} e transaction com session_id: {result['session_id']}")
         
         text = """
 🔐 **Redirecionando para pagamento seguro...**
