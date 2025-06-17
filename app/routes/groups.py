@@ -1,3 +1,4 @@
+# app/routes/groups.py
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, Response, session
 from flask_login import login_required, current_user
 from app import db
@@ -59,7 +60,7 @@ def create():
             print("⚠️ Pulando validação do Telegram...")
         else:
             # Tentar validar
-            bot_token = os.getenv('BOT_TOKEN')
+            bot_token = os.getenv('BOT_TOKEN') or os.getenv('TELEGRAM_BOT_TOKEN')
             print(f"\n🔍 DEBUG - BOT_TOKEN existe: {bool(bot_token)}")
             
             if bot_token and telegram_id:
@@ -186,17 +187,18 @@ def create():
         db.session.commit()
         print(f"✅ Grupo criado com sucesso! ID: {group.id}")
         
-        # Gerar link do bot
-        bot_username = os.getenv('BOT_USERNAME', 'televipbra_bot')
-        bot_link = f"https://t.me/{bot_username}?start=g_{group.telegram_id}"
+        # CORREÇÃO IMPORTANTE: Gerar link do bot usando group.id, não telegram_id
+        bot_username = os.getenv('TELEGRAM_BOT_USERNAME') or os.getenv('BOT_USERNAME', 'televipbra_bot')
+        bot_link = f"https://t.me/{bot_username}?start=g_{group.id}"  # USAR group.id AQUI!
         
-        flash(f'Grupo "{group.name}" criado com sucesso!', 'success')
+        flash(f'Grupo "{group.name}" criado com sucesso! Link: {bot_link}', 'success')
         
         # Renderizar template com modal de sucesso
         return render_template('dashboard/group_form.html', 
                              group=None,
                              show_success_modal=True,
                              new_group_name=group.name,
+                             new_group_id=group.id,  # Passar o ID também
                              new_group_telegram_id=group.telegram_id,
                              bot_link=bot_link)
     
@@ -249,11 +251,9 @@ def edit(id):
         
         db.session.commit()
         flash('Grupo atualizado com sucesso!', 'success')
-        return redirect(url_for('groups.edit', id=group.id))
+        return redirect(url_for('groups.list'))
     
-    return render_template('dashboard/group_form.html', 
-                         group=group,
-                         show_success_modal=False)
+    return render_template('dashboard/group_form.html', group=group)
 
 @bp.route('/<int:id>/delete', methods=['POST'])
 @login_required
@@ -261,24 +261,27 @@ def delete(id):
     """Deletar grupo"""
     group = Group.query.filter_by(id=id, creator_id=current_user.id).first_or_404()
     
-    # Verificar se há assinantes ativos
+    # Verificar se há assinaturas ativas
     active_subs = Subscription.query.filter_by(
         group_id=id,
         status='active'
     ).count()
     
     if active_subs > 0:
-        flash('Não é possível deletar um grupo com assinantes ativos!', 'error')
-    else:
-        db.session.delete(group)
-        db.session.commit()
-        flash('Grupo deletado com sucesso!', 'success')
+        flash(f'Não é possível deletar o grupo. Existem {active_subs} assinaturas ativas.', 'error')
+        return redirect(url_for('groups.list'))
     
+    # Deletar planos e depois o grupo
+    PricingPlan.query.filter_by(group_id=id).delete()
+    db.session.delete(group)
+    db.session.commit()
+    
+    flash('Grupo deletado com sucesso!', 'success')
     return redirect(url_for('groups.list'))
 
-@bp.route('/<int:id>/toggle-status', methods=['POST'])
+@bp.route('/<int:id>/toggle', methods=['POST'])
 @login_required
-def toggle_status(id):
+def toggle(id):
     """Ativar/Desativar grupo"""
     group = Group.query.filter_by(id=id, creator_id=current_user.id).first_or_404()
     
@@ -290,80 +293,111 @@ def toggle_status(id):
     
     return redirect(url_for('groups.list'))
 
+# Adicione esta função no arquivo app/routes/groups.py
+
+@bp.route('/<int:group_id>/broadcast', methods=['GET', 'POST'])
+@login_required
+def broadcast(group_id):
+    """Enviar mensagem para todos os assinantes do grupo"""
+    group = Group.query.filter_by(id=group_id, creator_id=current_user.id).first_or_404()
+    
+    if request.method == 'POST':
+        message = request.form.get('message', '').strip()
+        
+        if not message:
+            flash('Por favor, digite uma mensagem.', 'error')
+            return redirect(url_for('groups.broadcast', group_id=group_id))
+        
+        # Buscar assinantes ativos
+        active_subs = Subscription.query.filter_by(
+            group_id=group_id,
+            status='active'
+        ).all()
+        
+        if not active_subs:
+            flash('Nenhum assinante ativo para enviar mensagem.', 'warning')
+            return redirect(url_for('groups.subscribers', id=group_id))
+        
+        # Aqui você pode implementar o envio via Telegram Bot API
+        # Por enquanto, vamos apenas simular
+        sent_count = 0
+        failed_count = 0
+        
+        bot_token = os.getenv('TELEGRAM_BOT_TOKEN') or os.getenv('BOT_TOKEN')
+        
+        if bot_token:
+            for sub in active_subs:
+                try:
+                    # Enviar mensagem via API do Telegram
+                    response = requests.post(
+                        f'https://api.telegram.org/bot{bot_token}/sendMessage',
+                        json={
+                            'chat_id': sub.telegram_user_id,
+                            'text': f"📢 **Mensagem de {group.name}**\n\n{message}",
+                            'parse_mode': 'Markdown'
+                        }
+                    )
+                    
+                    if response.status_code == 200:
+                        sent_count += 1
+                    else:
+                        failed_count += 1
+                except:
+                    failed_count += 1
+        else:
+            flash('Bot do Telegram não configurado.', 'error')
+            return redirect(url_for('groups.subscribers', id=group_id))
+        
+        flash(f'Mensagem enviada para {sent_count} assinantes. {failed_count} falharam.', 'success')
+        return redirect(url_for('groups.subscribers', id=group_id))
+    
+    # GET - mostrar formulário
+    active_count = Subscription.query.filter_by(
+        group_id=group_id,
+        status='active'
+    ).count()
+    
+    return render_template('dashboard/broadcast.html',
+                         group=group,
+                         active_count=active_count)
+
 @bp.route('/<int:id>/subscribers')
 @login_required
 def subscribers(id):
-    """Ver assinantes do grupo"""
+    """Listar assinantes do grupo"""
     group = Group.query.filter_by(id=id, creator_id=current_user.id).first_or_404()
     
-    # Filtros
-    status = request.args.get('status', '')
-    plan_id = request.args.get('plan_id', type=int)
-    search = request.args.get('search', '')
-    page = request.args.get('page', 1, type=int)
-    per_page = 20
+    # Buscar assinantes ativos
+    active_subs = Subscription.query.filter_by(
+        group_id=id,
+        status='active'
+    ).order_by(Subscription.end_date.desc()).all()
     
-    # Query base
-    query = Subscription.query.filter_by(group_id=id)
-    
-    # Aplicar filtros
-    if status:
-        query = query.filter_by(status=status)
-    if plan_id:
-        query = query.filter_by(plan_id=plan_id)
-    if search:
-        query = query.filter(
-            db.or_(
-                Subscription.telegram_username.contains(search),
-                Subscription.telegram_user_id.contains(search)
-            )
-        )
-    
-    # Ordenar por data de criação
-    query = query.order_by(Subscription.created_at.desc())
-    
-    # Paginar
-    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-    subscribers = pagination.items
-    total_pages = pagination.pages
-    
-    # Estatísticas
-    stats = {
-        'total': Subscription.query.filter_by(group_id=id).count(),
-        'active': Subscription.query.filter_by(group_id=id, status='active').count(),
-        'expired': Subscription.query.filter_by(group_id=id, status='expired').count(),
-        'expiring_soon': 0  # Calcular assinaturas expirando em 7 dias
-    }
-    
-    # Calcular expirados em breve
-    seven_days_later = datetime.utcnow() + timedelta(days=7)
-    stats['expiring_soon'] = Subscription.query.filter(
+    # Buscar assinantes expirados recentes (últimos 30 dias)
+    expired_subs = Subscription.query.filter(
         Subscription.group_id == id,
-        Subscription.status == 'active',
-        Subscription.end_date <= seven_days_later,
-        Subscription.end_date > datetime.utcnow()
-    ).count()
+        Subscription.status == 'expired',
+        Subscription.end_date >= datetime.utcnow() - timedelta(days=30)
+    ).order_by(Subscription.end_date.desc()).all()
+    
+    # ADICIONAR ESTATÍSTICAS QUE ESTÃO FALTANDO
+    stats = {
+        'total': len(active_subs) + len(expired_subs),
+        'active': len(active_subs),
+        'expired': len(expired_subs),
+        'revenue': db.session.query(func.sum(Transaction.amount)).join(
+            Subscription
+        ).filter(
+            Subscription.group_id == id,
+            Transaction.status == 'completed'
+        ).scalar() or 0
+    }
     
     return render_template('dashboard/subscribers.html',
                          group=group,
-                         subscribers=subscribers,
-                         stats=stats,
-                         page=page,
-                         total_pages=total_pages,
-                         now=datetime.utcnow())
-
-@bp.route('/<int:group_id>/subscribers/<int:sub_id>/cancel', methods=['POST'])
-@login_required
-def cancel_subscription(group_id, sub_id):
-    """Cancelar assinatura de um usuário"""
-    group = Group.query.filter_by(id=group_id, creator_id=current_user.id).first_or_404()
-    subscription = Subscription.query.filter_by(id=sub_id, group_id=group_id).first_or_404()
-    
-    subscription.status = 'cancelled'
-    db.session.commit()
-    
-    flash(f'Assinatura de @{subscription.telegram_username} cancelada!', 'success')
-    return redirect(url_for('groups.subscribers', id=group_id))
+                         active_subs=active_subs,
+                         expired_subs=expired_subs,
+                         stats=stats)  # ADICIONAR stats AQUI
 
 @bp.route('/<int:id>/export-subscribers')
 @login_required
@@ -378,70 +412,44 @@ def export_subscribers(id):
     output = StringIO()
     writer = csv.writer(output)
     
-    # Cabeçalho
-    writer.writerow(['Username', 'User ID', 'Plano', 'Status', 'Início', 'Expira em', 'Valor Pago'])
+    # Header
+    writer.writerow([
+        'Username',
+        'Plano',
+        'Status',
+        'Data Início',
+        'Data Fim',
+        'Valor Pago'
+    ])
     
     # Dados
     for sub in subscribers:
+        # Calcular valor total pago
+        total_paid = db.session.query(func.sum(Transaction.amount)).filter_by(
+            subscription_id=sub.id,
+            status='completed'
+        ).scalar() or 0
+        
         writer.writerow([
-            f"@{sub.telegram_username}" if sub.telegram_username else 'Sem username',
-            sub.telegram_user_id,
+            sub.telegram_username or 'N/A',
             sub.plan.name,
             sub.status,
             sub.start_date.strftime('%d/%m/%Y'),
             sub.end_date.strftime('%d/%m/%Y'),
-            f"R$ {sub.plan.price:.2f}"
+            f'R$ {total_paid:.2f}'
         ])
     
     # Preparar resposta
     output.seek(0)
-    return Response(
+    response = Response(
         output.getvalue(),
         mimetype='text/csv',
         headers={
             'Content-Disposition': f'attachment; filename=assinantes_{group.name}_{datetime.now().strftime("%Y%m%d")}.csv'
         }
     )
-
-@bp.route('/<int:group_id>/subscribers/<int:sub_id>/details')
-@login_required
-def subscriber_details(group_id, sub_id):
-    """Ver detalhes de um assinante via AJAX"""
-    group = Group.query.filter_by(id=group_id, creator_id=current_user.id).first_or_404()
-    subscription = Subscription.query.filter_by(id=sub_id, group_id=group_id).first_or_404()
     
-    # Buscar histórico de transações
-    transactions = subscription.transactions.order_by(Transaction.created_at.desc()).all()
-    
-    return render_template('dashboard/subscriber_modal.html',
-                         subscription=subscription,
-                         transactions=transactions)
-
-@bp.route('/<int:group_id>/broadcast', methods=['GET', 'POST'])
-@login_required
-def broadcast(group_id):
-    """Enviar mensagem para todos os assinantes do grupo"""
-    group = Group.query.filter_by(id=group_id, creator_id=current_user.id).first_or_404()
-    
-    if request.method == 'POST':
-        message = request.form.get('message')
-        target = request.form.get('target', 'all')  # all, active, expiring
-        
-        # Aqui você implementaria o envio real via bot
-        # Por enquanto, apenas simular
-        
-        flash(f'Mensagem enviada para os assinantes do grupo {group.name}!', 'success')
-        return redirect(url_for('groups.subscribers', id=group_id))
-    
-    # Contar destinatários
-    active_count = Subscription.query.filter_by(
-        group_id=group_id,
-        status='active'
-    ).count()
-    
-    return render_template('dashboard/broadcast_form.html',
-                         group=group,
-                         active_count=active_count)
+    return response
 
 @bp.route('/<int:id>/stats')
 @login_required
@@ -449,9 +457,106 @@ def stats(id):
     """Estatísticas detalhadas do grupo"""
     group = Group.query.filter_by(id=id, creator_id=current_user.id).first_or_404()
     
-    # Implementar estatísticas detalhadas
-    # Por enquanto, redirecionar para assinantes
-    return redirect(url_for('groups.subscribers', id=id))
+    # Estatísticas gerais
+    stats = {
+        'total_subscribers': Subscription.query.filter_by(group_id=id).count(),
+        'active_subscribers': Subscription.query.filter_by(group_id=id, status='active').count(),
+        'total_revenue': 0,
+        'monthly_revenue': 0,
+        'avg_subscription_value': 0,
+        'churn_rate': 0
+    }
+    
+    # Receita total
+    stats['total_revenue'] = db.session.query(func.sum(Transaction.amount)).join(
+        Subscription
+    ).filter(
+        Subscription.group_id == id,
+        Transaction.status == 'completed'
+    ).scalar() or 0
+    
+    # Receita do mês atual
+    start_of_month = datetime.now().replace(day=1, hour=0, minute=0, second=0)
+    stats['monthly_revenue'] = db.session.query(func.sum(Transaction.amount)).join(
+        Subscription
+    ).filter(
+        Subscription.group_id == id,
+        Transaction.status == 'completed',
+        Transaction.created_at >= start_of_month
+    ).scalar() or 0
+    
+    # Valor médio de assinatura
+    if stats['total_subscribers'] > 0:
+        stats['avg_subscription_value'] = stats['total_revenue'] / stats['total_subscribers']
+    
+    # Taxa de cancelamento (churn)
+    if stats['total_subscribers'] > 0:
+        expired_count = Subscription.query.filter_by(
+            group_id=id,
+            status='expired'
+        ).count()
+        stats['churn_rate'] = (expired_count / stats['total_subscribers']) * 100
+    
+    # Buscar dados para gráficos (últimos 30 dias)
+    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    
+    # Receita por dia
+    daily_revenue = db.session.query(
+        func.date(Transaction.created_at).label('date'),
+        func.sum(Transaction.amount).label('revenue')
+    ).join(
+        Subscription
+    ).filter(
+        Subscription.group_id == id,
+        Transaction.status == 'completed',
+        Transaction.created_at >= thirty_days_ago
+    ).group_by(
+        func.date(Transaction.created_at)
+    ).all()
+    
+    # Novas assinaturas por dia
+    daily_subscriptions = db.session.query(
+        func.date(Subscription.created_at).label('date'),
+        func.count(Subscription.id).label('count')
+    ).filter(
+        Subscription.group_id == id,
+        Subscription.created_at >= thirty_days_ago
+    ).group_by(
+        func.date(Subscription.created_at)
+    ).all()
+    
+    # Distribuição por plano
+    plan_distribution = db.session.query(
+        PricingPlan.name,
+        func.count(Subscription.id).label('count')
+    ).join(
+        Subscription
+    ).filter(
+        Subscription.group_id == id,
+        Subscription.status == 'active'
+    ).group_by(
+        PricingPlan.name
+    ).all()
+    
+    return render_template('dashboard/group_stats.html',
+                         group=group,
+                         stats=stats,
+                         daily_revenue=daily_revenue,
+                         daily_subscriptions=daily_subscriptions,
+                         plan_distribution=plan_distribution)
 
-# Adicionar imports necessários no topo do arquivo
-from sqlalchemy import func
+@bp.route('/<int:id>/link')
+@login_required
+def get_link(id):
+    """Obter link do bot para o grupo"""
+    group = Group.query.filter_by(id=id, creator_id=current_user.id).first_or_404()
+    
+    # CORREÇÃO: Usar group.id ao invés de telegram_id
+    bot_username = os.getenv('TELEGRAM_BOT_USERNAME') or os.getenv('BOT_USERNAME', 'televipbra_bot')
+    bot_link = f"https://t.me/{bot_username}?start=g_{group.id}"
+    
+    return jsonify({
+        'success': True,
+        'link': bot_link,
+        'group_name': group.name
+    })

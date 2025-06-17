@@ -1,7 +1,7 @@
 # bot/handlers/start.py
 """
 Handler do comando /start com suporte multi-criador
-CORREÇÃO: Adicionar verificação de transações pendentes
+CORREÇÃO: Buscar grupo por ID correto
 """
 import logging
 from datetime import datetime, timedelta
@@ -26,6 +26,8 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     args = context.args
     
+    logger.info(f"Start command - User: {user.id}, Args: {args}")
+    
     # Tratar diferentes tipos de argumentos
     if args:
         if args[0].startswith('success_'):
@@ -37,6 +39,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
         elif args[0].startswith('g_'):
             group_id = args[0][2:]
+            logger.info(f"Iniciando fluxo de assinatura para grupo ID: {group_id}")
             await start_subscription_flow(update, context, group_id)
             return
     
@@ -149,9 +152,11 @@ Precisa de ajuda? Use /help ou clique no botão abaixo.
                 days_left = (sub.end_date - datetime.utcnow()).days
                 status_emoji = "🟢" if days_left > 7 else "🟡" if days_left > 3 else "🔴"
                 
-                text += f"{status_emoji} **{sub.group.name}**\n"
-                text += f"   Plano: {sub.plan.name}\n"
-                text += f"   Expira em: {days_left} dias\n\n"
+                # Verificar se group existe antes de acessar
+                if sub.group:
+                    text += f"{status_emoji} **{sub.group.name}**\n"
+                    text += f"   Plano: {sub.plan.name if sub.plan else 'N/A'}\n"
+                    text += f"   Expira em: {days_left} dias\n\n"
             
             if len(subscriptions) > 5:
                 text += f"... e mais {len(subscriptions) - 5} assinaturas\n\n"
@@ -183,21 +188,46 @@ Precisa de ajuda? Use /help ou clique no botão abaixo.
             )
 
 async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_TYPE, group_id: str):
-    """Iniciar fluxo de assinatura para um grupo específico"""
+    """Iniciar fluxo de assinatura para um grupo específico - VERSÃO CORRIGIDA"""
     user = update.effective_user
     
     try:
         group_id = int(group_id)
     except ValueError:
+        logger.error(f"ID de grupo inválido: {group_id}")
         await update.message.reply_text("❌ Link inválido.")
         return
     
     with get_db_session() as session:
-        # Buscar grupo
-        group = session.query(Group).get(group_id)
-        if not group or not group.is_active:
-            await update.message.reply_text("❌ Grupo não encontrado ou inativo.")
+        # CORREÇÃO: Buscar grupo pelo ID do banco de dados
+        group = session.query(Group).filter_by(id=group_id).first()
+        
+        if not group:
+            logger.warning(f"Grupo não encontrado - ID: {group_id}")
+            
+            # Listar grupos disponíveis para debug
+            all_groups = session.query(Group).all()
+            logger.info(f"Grupos no banco: {[(g.id, g.name) for g in all_groups]}")
+            
+            await update.message.reply_text(
+                "❌ Grupo não encontrado.\n\n"
+                "Possíveis causas:\n"
+                "• Link expirado ou inválido\n"
+                "• Grupo foi removido\n\n"
+                "Use /descobrir para ver grupos disponíveis."
+            )
             return
+            
+        if not group.is_active:
+            logger.warning(f"Grupo inativo: {group.name} (ID: {group_id})")
+            await update.message.reply_text(
+                "❌ Este grupo está temporariamente indisponível.\n\n"
+                "Entre em contato com o criador ou use /descobrir para ver outros grupos."
+            )
+            return
+        
+        # Log para debug
+        logger.info(f"Grupo encontrado: {group.name} (ID: {group.id}, Ativo: {group.is_active})")
         
         # Verificar se já tem assinatura ativa
         existing_sub = session.query(Subscription).filter_by(
@@ -212,7 +242,7 @@ async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_
 ✅ **Você já é assinante!**
 
 **Grupo:** {group.name}
-**Plano atual:** {existing_sub.plan.name}
+**Plano atual:** {existing_sub.plan.name if existing_sub.plan else 'N/A'}
 **Dias restantes:** {days_left}
 
 Sua assinatura expira em: {existing_sub.end_date.strftime('%d/%m/%Y')}
@@ -238,7 +268,11 @@ Sua assinatura expira em: {existing_sub.end_date.strftime('%d/%m/%Y')}
         ).order_by(PricingPlan.price).all()
         
         if not plans:
-            await update.message.reply_text("❌ Nenhum plano disponível para este grupo.")
+            logger.warning(f"Nenhum plano ativo para o grupo {group.name}")
+            await update.message.reply_text(
+                "❌ Nenhum plano disponível para este grupo no momento.\n\n"
+                "Entre em contato com o administrador do grupo."
+            )
             return
         
         # Mostrar informações do grupo e planos
@@ -246,9 +280,9 @@ Sua assinatura expira em: {existing_sub.end_date.strftime('%d/%m/%Y')}
         text = f"""
 🎯 **{group.name}**
 
-👤 **Criador:** {creator.name}
-📝 **Descrição:** {group.description}
-👥 **Assinantes:** {group.total_subscribers}
+👤 **Criador:** {creator.name if creator else 'N/A'}
+📝 **Descrição:** {group.description or 'Grupo VIP exclusivo'}
+👥 **Assinantes:** {group.total_subscribers or 0}
 
 💎 **Planos disponíveis:**
 """
@@ -256,8 +290,7 @@ Sua assinatura expira em: {existing_sub.end_date.strftime('%d/%m/%Y')}
         keyboard = []
         for plan in plans:
             text += f"\n📌 **{plan.name}** - R$ {plan.price:.2f}"
-            text += f"\n   ⏱ {plan.duration_days} dias"
-            text += f"\n   {plan.description}\n"
+            text += f"\n   ⏱ {plan.duration_days} dias\n"
             
             keyboard.append([
                 InlineKeyboardButton(
