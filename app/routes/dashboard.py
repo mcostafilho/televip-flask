@@ -2,7 +2,7 @@
 from flask import Blueprint, render_template, jsonify, request, redirect, url_for, flash, session
 from flask_login import login_required, current_user
 from app import db
-from app.models import Group, Transaction, Subscription, Creator
+from app.models import Group, Transaction, Subscription, Creator, PricingPlan
 from app.services.payment_service import PaymentService
 from sqlalchemy import func, and_, desc
 from datetime import datetime, timedelta
@@ -190,59 +190,28 @@ def update_profile():
     """Atualizar informações do perfil"""
     name = request.form.get('name', '').strip()
     email = request.form.get('email', '').strip()
-    telegram_username = request.form.get('telegram_username', '').strip()
-    pix_key = request.form.get('pix_key', '').strip()
     
-    # Validações
-    if not name or len(name) < 3:
-        flash('Nome deve ter pelo menos 3 caracteres', 'error')
+    if not name or not email:
+        flash('Nome e email são obrigatórios.', 'error')
         return redirect(url_for('dashboard.profile'))
     
-    # Verificar se email já existe (se mudou)
+    # Verificar se email já existe
     if email != current_user.email:
         existing = Creator.query.filter_by(email=email).first()
         if existing:
-            flash('Email já está em uso', 'error')
+            flash('Este email já está em uso.', 'error')
             return redirect(url_for('dashboard.profile'))
     
-    # Atualizar dados básicos
+    # Atualizar dados
     current_user.name = name
     current_user.email = email
     
-    # Atualizar campos opcionais se existirem no modelo
-    if hasattr(current_user, 'telegram_username'):
-        current_user.telegram_username = telegram_username
-    if hasattr(current_user, 'pix_key'):
-        current_user.pix_key = pix_key
-    
-    # Verificar se precisa alterar senha
-    current_password = request.form.get('current_password')
-    new_password = request.form.get('new_password')
-    confirm_password = request.form.get('confirm_password')
-    
-    if current_password and new_password:
-        # Verificar senha atual
-        if not current_user.check_password(current_password):
-            flash('Senha atual incorreta', 'error')
-            return redirect(url_for('dashboard.profile'))
-        
-        # Verificar se as novas senhas coincidem
-        if new_password != confirm_password:
-            flash('As novas senhas não coincidem', 'error')
-            return redirect(url_for('dashboard.profile'))
-        
-        # Verificar tamanho mínimo
-        if len(new_password) < 6:
-            flash('A nova senha deve ter pelo menos 6 caracteres', 'error')
-            return redirect(url_for('dashboard.profile'))
-        
-        # Atualizar senha
-        current_user.set_password(new_password)
-        flash('Senha alterada com sucesso!', 'success')
-    
-    # Salvar alterações
-    db.session.commit()
-    flash('Perfil atualizado com sucesso!', 'success')
+    try:
+        db.session.commit()
+        flash('Perfil atualizado com sucesso!', 'success')
+    except:
+        db.session.rollback()
+        flash('Erro ao atualizar perfil.', 'error')
     
     return redirect(url_for('dashboard.profile'))
 
@@ -251,15 +220,13 @@ def update_profile():
 def withdraw():
     """Solicitar saque"""
     amount = float(request.form.get('amount', 0))
-    pix_key = request.form.get('pix_key')
     
-    # Validações
-    if amount < 10:
-        flash('O valor mínimo para saque é R$ 10,00', 'error')
+    if amount <= 0:
+        flash('Valor inválido.', 'error')
         return redirect(url_for('dashboard.index'))
     
     if amount > current_user.balance:
-        flash('Saldo insuficiente para este saque.', 'error')
+        flash('Saldo insuficiente.', 'error')
         return redirect(url_for('dashboard.index'))
     
     # TODO: Criar registro de saque
@@ -301,8 +268,236 @@ def transactions():
 @bp.route('/analytics')
 @login_required
 def analytics():
-    """Página de analytics"""
-    return render_template('dashboard/analytics.html')
+    """Página de analytics com estatísticas detalhadas"""
+    # Obter período selecionado (padrão: 30 dias)
+    period = request.args.get('period', '30')
+    
+    # Converter período para dias
+    days = int(period)
+    end_date = datetime.utcnow()
+    start_date = end_date - timedelta(days=days)
+    
+    # Buscar grupos do criador
+    groups = Group.query.filter_by(creator_id=current_user.id).all()
+    
+    # Estatísticas gerais
+    # Receita total no período
+    total_revenue = db.session.query(func.sum(Transaction.amount)).join(
+        Subscription
+    ).join(
+        Group
+    ).filter(
+        Group.creator_id == current_user.id,
+        Transaction.status == 'completed',
+        Transaction.created_at >= start_date,
+        Transaction.created_at <= end_date
+    ).scalar() or 0
+    
+    # Total de transações no período
+    total_transactions = Transaction.query.join(
+        Subscription
+    ).join(
+        Group
+    ).filter(
+        Group.creator_id == current_user.id,
+        Transaction.status == 'completed',
+        Transaction.created_at >= start_date,
+        Transaction.created_at <= end_date
+    ).count()
+    
+    # Ticket médio
+    average_ticket = total_revenue / total_transactions if total_transactions > 0 else 0
+    
+    # Total de assinantes ativos
+    total_subscribers = db.session.query(func.count(Subscription.id)).join(
+        Group
+    ).filter(
+        Group.creator_id == current_user.id,
+        Subscription.status == 'active'
+    ).scalar() or 0
+    
+    # Novos assinantes no período
+    new_subscribers = db.session.query(func.count(Subscription.id)).join(
+        Group
+    ).filter(
+        Group.creator_id == current_user.id,
+        Subscription.created_at >= start_date,
+        Subscription.created_at <= end_date
+    ).scalar() or 0
+    
+    # Preparar dados para gráficos
+    
+    # 1. Receita por dia
+    revenue_by_day_query = db.session.query(
+        func.date(Transaction.created_at).label('date'),
+        func.sum(Transaction.amount).label('total')
+    ).join(
+        Subscription
+    ).join(
+        Group
+    ).filter(
+        Group.creator_id == current_user.id,
+        Transaction.status == 'completed',
+        Transaction.created_at >= start_date,
+        Transaction.created_at <= end_date
+    ).group_by(
+        func.date(Transaction.created_at)
+    ).order_by('date')
+    
+    # Preparar arrays para o gráfico
+    revenue_labels = []
+    revenue_data = []
+    date_revenue = {row.date: float(row.total) for row in revenue_by_day_query}
+    
+    current_date = start_date.date()
+    while current_date <= end_date.date():
+        revenue_labels.append(current_date.strftime('%d/%m'))
+        revenue_data.append(date_revenue.get(current_date, 0))
+        current_date += timedelta(days=1)
+    
+    # 2. Novos assinantes por dia
+    subscribers_by_day_query = db.session.query(
+        func.date(Subscription.created_at).label('date'),
+        func.count(Subscription.id).label('count')
+    ).join(
+        Group
+    ).filter(
+        Group.creator_id == current_user.id,
+        Subscription.created_at >= start_date,
+        Subscription.created_at <= end_date
+    ).group_by(
+        func.date(Subscription.created_at)
+    ).order_by('date')
+    
+    # Preparar arrays para o gráfico
+    subscribers_labels = []
+    subscribers_data = []
+    date_subscribers = {row.date: row.count for row in subscribers_by_day_query}
+    
+    current_date = start_date.date()
+    while current_date <= end_date.date():
+        subscribers_labels.append(current_date.strftime('%d/%m'))
+        subscribers_data.append(date_subscribers.get(current_date, 0))
+        current_date += timedelta(days=1)
+    
+    # 3. Receita por grupo (top 5)
+    revenue_by_group_query = db.session.query(
+        Group.name,
+        func.sum(Transaction.amount).label('total')
+    ).join(
+        Subscription, Subscription.group_id == Group.id
+    ).join(
+        Transaction, Transaction.subscription_id == Subscription.id
+    ).filter(
+        Group.creator_id == current_user.id,
+        Transaction.status == 'completed',
+        Transaction.created_at >= start_date,
+        Transaction.created_at <= end_date
+    ).group_by(
+        Group.id, Group.name
+    ).order_by(
+        desc('total')
+    ).limit(5)
+    
+    group_labels = []
+    group_data = []
+    for row in revenue_by_group_query:
+        group_labels.append(row.name)
+        group_data.append(float(row.total))
+    
+    # 4. Receita por plano
+    revenue_by_plan_query = db.session.query(
+        PricingPlan.name,
+        func.sum(Transaction.amount).label('total')
+    ).join(
+        Subscription, Subscription.plan_id == PricingPlan.id
+    ).join(
+        Transaction, Transaction.subscription_id == Subscription.id
+    ).join(
+        Group, Group.id == Subscription.group_id
+    ).filter(
+        Group.creator_id == current_user.id,
+        Transaction.status == 'completed',
+        Transaction.created_at >= start_date,
+        Transaction.created_at <= end_date
+    ).group_by(
+        PricingPlan.id, PricingPlan.name
+    ).order_by(
+        desc('total')
+    )
+    
+    plan_labels = []
+    plan_data = []
+    for row in revenue_by_plan_query:
+        plan_labels.append(row.name)
+        plan_data.append(float(row.total))
+    
+    # Atualizar estatísticas dos grupos para a tabela
+    for group in groups:
+        # Receita do grupo no período
+        group.period_revenue = db.session.query(func.sum(Transaction.amount)).join(
+            Subscription
+        ).filter(
+            Subscription.group_id == group.id,
+            Transaction.status == 'completed',
+            Transaction.created_at >= start_date,
+            Transaction.created_at <= end_date
+        ).scalar() or 0
+        
+        # Total de assinantes ativos
+        group.total_subscribers = Subscription.query.filter_by(
+            group_id=group.id,
+            status='active'
+        ).count()
+        
+        # Ticket médio do grupo
+        group_transactions = Transaction.query.join(
+            Subscription
+        ).filter(
+            Subscription.group_id == group.id,
+            Transaction.status == 'completed',
+            Transaction.created_at >= start_date,
+            Transaction.created_at <= end_date
+        ).count()
+        
+        group.average_ticket = group.period_revenue / group_transactions if group_transactions > 0 else 0
+    
+    # Preparar objeto de estatísticas
+    stats = {
+        'total_revenue': total_revenue,
+        'total_transactions': total_transactions,
+        'average_ticket': average_ticket,
+        'total_subscribers': total_subscribers,
+        'new_subscribers': new_subscribers
+    }
+    
+    # Preparar dados dos gráficos
+    charts_data = {
+        'revenue_by_day': {
+            'labels': revenue_labels,
+            'data': revenue_data
+        },
+        'subscribers_by_day': {
+            'labels': subscribers_labels,
+            'data': subscribers_data
+        },
+        'revenue_by_group': {
+            'labels': group_labels,
+            'data': group_data
+        },
+        'revenue_by_plan': {
+            'labels': plan_labels,
+            'data': plan_data
+        }
+    }
+    
+    return render_template(
+        'dashboard/analytics.html',
+        stats=stats,
+        period=period,
+        groups=groups,
+        charts_data=charts_data
+    )
 
 # Adicionar imports necessários
 try:

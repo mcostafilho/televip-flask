@@ -2,116 +2,299 @@
 
 {% block title %}Meus Grupos - TeleVIP{% endblock %}
 
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+<style>
+/* Groups specific styles */
+.groups-page .group-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    height: 100%;
+}
+
+.groups-page .group-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.groups-page .group-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+.groups-page .group-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.groups-page .stat-item {
+    text-align: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.groups-page .stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #495057;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.groups-page .stat-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.groups-page .group-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.groups-page .group-actions .btn {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+}
+
+.groups-page .empty-groups {
+    text-align: center;
+    padding: 5rem 2rem;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+}
+
+.groups-page .empty-groups i {
+    font-size: 5rem;
+    color: #dee2e6;
+    margin-bottom: 1.5rem;
+}
+
+.create-button {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.create-button:hover {
+    background: linear-gradient(135deg, #764ba2, #667eea);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+.create-button i {
+    font-size: 1rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Ajuste específico para o ícone bi-plus-circle */
+.create-button .bi-plus-circle {
+    position: relative;
+    top: -1px;
+}
+
+.create-button .bi-plus-circle::before {
+    vertical-align: middle;
+}
+
+/* Botão grande no estado vazio */
+.empty-groups .create-button {
+    font-size: 1.125rem;
+    padding: 1rem 2rem;
+}
+
+.empty-groups .create-button i {
+    font-size: 1.25rem;
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="bg-light py-4">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col">
-                <h1 class="h3 mb-0">Meus Grupos</h1>
-                <p class="text-muted mb-0">Gerencie seus grupos VIP do Telegram</p>
-            </div>
-            <div class="col-auto">
-                <a href="{{ url_for('groups.create') }}" class="btn btn-primary">
-                    <i class="bi bi-plus-circle"></i> Novo Grupo
-                </a>
+<div class="dashboard-wrapper groups-page">
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="h2 mb-1">Meus Grupos</h1>
+                    <p class="text-muted mb-0">Gerencie seus grupos VIP do Telegram</p>
+                </div>
+                <div class="col-auto">
+                    <a href="{{ url_for('groups.create') }}" class="btn create-button">
+                        <i class="bi bi-plus-circle"></i> Novo Grupo
+                    </a>
+                </div>
             </div>
         </div>
-    </div>
-</div>
 
-<div class="container py-4">
-    {% if groups %}
+        <!-- Groups Grid -->
+        {% if groups %}
         <div class="row g-4">
             {% for group in groups %}
             <div class="col-lg-6">
-                <div class="card group-card h-100">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div>
-                                <h5 class="card-title mb-1">{{ group.name }}</h5>
-                                <p class="text-muted">{{ group.description or 'Sem descrição' }}</p>
-                            </div>
-                            <div>
-                                {% if group.is_active %}
-                                    <span class="badge bg-success">Ativo</span>
-                                {% else %}
-                                    <span class="badge bg-secondary">Inativo</span>
-                                {% endif %}
-                            </div>
+                <div class="group-card">
+                    <!-- Header do Card -->
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="mb-1">
+                                <i class="bi bi-telegram text-primary"></i> {{ group.name }}
+                            </h5>
+                            <p class="text-muted mb-0">{{ group.description or 'Sem descrição' }}</p>
                         </div>
-
-                        <div class="row text-center mb-3">
-                            <div class="col-4">
-                                <div class="fw-bold fs-4">{{ group.total_subscribers }}</div>
-                                <small class="text-muted">Assinantes</small>
-                            </div>
-                            <div class="col-4">
-                                <div class="fw-bold fs-4">{{ group.pricing_plans.count() }}</div>
-                                <small class="text-muted">Planos</small>
-                            </div>
-                            <div class="col-4">
-                                <div class="fw-bold fs-4 text-success">R$ 0</div>
-                                <small class="text-muted">Este Mês</small>
-                            </div>
+                        <div>
+                            {% if group.is_active %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> Ativo
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-x-circle"></i> Inativo
+                                </span>
+                            {% endif %}
                         </div>
+                    </div>
 
-                        <div class="mb-3">
-                            <label class="form-label small text-muted">Link de Assinatura:</label>
-                            <div class="input-group input-group-sm">
-                                <input type="text" class="form-control" 
-                                       value="https://t.me/{{ config.BOT_USERNAME }}?start=g_{{ group.telegram_id }}"
-                                       id="link_{{ group.id }}" readonly>
-                                <button class="btn btn-outline-secondary" type="button"
-                                        onclick="copyLink('link_{{ group.id }}')">
-                                    <i class="bi bi-clipboard"></i>
-                                </button>
-                            </div>
+                    <!-- Estatísticas -->
+                    <div class="group-stats">
+                        <div class="stat-item">
+                            <span class="stat-value">{{ group.total_subscribers or 0 }}</span>
+                            <span class="stat-label">Assinantes</span>
                         </div>
+                        <div class="stat-item">
+                            <span class="stat-value">{{ group.pricing_plans.count() }}</span>
+                            <span class="stat-label">Planos</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value text-success">R$ {{ "%.2f"|format(group.total_revenue or 0) }}</span>
+                            <span class="stat-label">Receita</span>
+                        </div>
+                    </div>
 
-                        <div class="d-flex gap-2">
-                            <a href="{{ url_for('groups.edit', id=group.id) }}" class="btn btn-primary flex-fill">
-                                <i class="bi bi-gear"></i> Gerenciar
-                            </a>
-                            <button class="btn btn-outline-primary" 
-                                    onclick="showStats({{ group.id }})">
-                                <i class="bi bi-bar-chart"></i> Stats
+                    <!-- Link de Compartilhamento -->
+                    <div class="mt-3 mb-3">
+                        <label class="form-label small text-muted mb-1">Link de Assinatura:</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" 
+                                   value="https://t.me/{{ config.BOT_USERNAME or 'televipbra_bot' }}?start=g_{{ group.telegram_id }}"
+                                   id="link_{{ group.id }}" readonly>
+                            <button class="btn btn-outline-secondary" type="button"
+                                    onclick="copyLink('link_{{ group.id }}')">
+                                <i class="bi bi-clipboard"></i> Copiar
                             </button>
+                        </div>
+                    </div>
+
+                    <!-- Ações -->
+                    <div class="group-actions">
+                        <a href="{{ url_for('groups.subscribers', id=group.id) }}" class="btn btn-primary">
+                            <i class="bi bi-people"></i> Assinantes
+                        </a>
+                        <a href="{{ url_for('groups.edit', id=group.id) }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-gear"></i> Configurar
+                        </a>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('groups.broadcast', group_id=group.id) }}">
+                                        <i class="bi bi-broadcast"></i> Enviar Mensagem
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form action="{{ url_for('groups.toggle_status', id=group.id) }}" method="POST" style="margin: 0;">
+                                        <button type="submit" class="dropdown-item">
+                                            {% if group.is_active %}
+                                                <i class="bi bi-pause-circle"></i> Desativar
+                                            {% else %}
+                                                <i class="bi bi-play-circle"></i> Ativar
+                                            {% endif %}
+                                        </button>
+                                    </form>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="#" onclick="confirmDelete({{ group.id }}); return false;">
+                                        <i class="bi bi-trash"></i> Excluir Grupo
+                                    </a>
+                                </li>
+                            </ul>
                         </div>
                     </div>
                 </div>
             </div>
             {% endfor %}
         </div>
-    {% else %}
-        <div class="card">
-            <div class="card-body">
-                <div class="empty-state py-5">
-                    <i class="bi bi-collection"></i>
-                    <h4>Nenhum grupo ainda</h4>
-                    <p>Crie seu primeiro grupo VIP e comece a monetizar!</p>
-                    <a href="{{ url_for('groups.create') }}" class="btn btn-primary">
-                        <i class="bi bi-plus-circle"></i> Criar Primeiro Grupo
-                    </a>
-                </div>
-            </div>
+        {% else %}
+        <!-- Estado Vazio -->
+        <div class="empty-groups">
+            <i class="bi bi-collection"></i>
+            <h3 class="mb-3">Nenhum grupo criado ainda</h3>
+            <p class="text-muted mb-4">
+                Crie seu primeiro grupo VIP e comece a monetizar<br>
+                seu conteúdo exclusivo no Telegram!
+            </p>
+            <a href="{{ url_for('groups.create') }}" class="btn create-button">
+                <i class="bi bi-plus-circle"></i> Criar Primeiro Grupo
+            </a>
         </div>
-    {% endif %}
+        {% endif %}
+    </div>
 </div>
 
-<!-- Modal de Estatísticas -->
-<div class="modal fade" id="statsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">📊 Estatísticas do Grupo</h5>
+                <h5 class="modal-title">Confirmar Exclusão</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Carregando...</span>
-                    </div>
-                </div>
+                <p>Tem certeza que deseja excluir este grupo?</p>
+                <p class="text-danger">
+                    <i class="bi bi-exclamation-triangle"></i> 
+                    Esta ação não pode ser desfeita e todos os assinantes serão removidos.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Excluir
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -120,69 +303,31 @@
 
 {% block extra_js %}
 <script>
+// Copiar link para área de transferência
 function copyLink(inputId) {
     const input = document.getElementById(inputId);
     input.select();
-    document.execCommand('copy');
-    
-    // Feedback visual
-    const btn = input.nextElementSibling;
-    const originalHTML = btn.innerHTML;
-    btn.innerHTML = '<i class="bi bi-check"></i>';
-    btn.classList.add('btn-success');
-    btn.classList.remove('btn-outline-secondary');
-    
-    setTimeout(() => {
-        btn.innerHTML = originalHTML;
-        btn.classList.remove('btn-success');
-        btn.classList.add('btn-outline-secondary');
-    }, 2000);
+    navigator.clipboard.writeText(input.value).then(function() {
+        const btn = input.nextElementSibling;
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check"></i> Copiado!';
+        btn.classList.add('btn-success');
+        btn.classList.remove('btn-outline-secondary');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-secondary');
+        }, 2000);
+    });
 }
 
-function showStats(groupId) {
-    const modal = new bootstrap.Modal(document.getElementById('statsModal'));
+// Confirmar exclusão
+function confirmDelete(groupId) {
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    const form = document.getElementById('deleteForm');
+    form.action = `/groups/${groupId}/delete`;
     modal.show();
-    
-    // Aqui você faria uma requisição AJAX para buscar as estatísticas
-    // Por enquanto, vamos simular
-    setTimeout(() => {
-        document.querySelector('#statsModal .modal-body').innerHTML = `
-            <div class="row g-3">
-                <div class="col-md-4 text-center">
-                    <h3 class="text-primary">152</h3>
-                    <p class="text-muted">Total de Assinantes</p>
-                </div>
-                <div class="col-md-4 text-center">
-                    <h3 class="text-success">R$ 1.520</h3>
-                    <p class="text-muted">Receita Total</p>
-                </div>
-                <div class="col-md-4 text-center">
-                    <h3 class="text-warning">89%</h3>
-                    <p class="text-muted">Taxa de Renovação</p>
-                </div>
-            </div>
-            <hr>
-            <canvas id="groupChart" height="100"></canvas>
-        `;
-        
-        // Criar gráfico
-        const ctx = document.getElementById('groupChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-                datasets: [{
-                    label: 'Novos Assinantes',
-                    data: [12, 19, 23, 25, 22, 30],
-                    backgroundColor: '#0088cc'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
-            }
-        });
-    }, 500);
 }
 </script>
 {% endblock %}

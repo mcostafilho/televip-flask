@@ -1,10 +1,18 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_required, current_user, login_user
 from app import db
-from app.models import Creator, Group, Subscription, Transaction, Withdrawal
+from app.models import Creator, Group, Subscription, Transaction
 from app.utils.decorators import admin_required
 from datetime import datetime
 from sqlalchemy import func
+
+# Tentar importar Withdrawal
+try:
+    from app.models import Withdrawal
+    has_withdrawal_model = True
+except ImportError:
+    has_withdrawal_model = False
+    Withdrawal = None
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -18,16 +26,23 @@ def index():
         'total_creators': Creator.query.count(),
         'total_groups': Group.query.count(),
         'total_subscriptions': Subscription.query.filter_by(status='active').count(),
-        'pending_withdrawals': Withdrawal.query.filter_by(status='pending').count()
+        'pending_withdrawals': 0
     }
     
-    # Saques pendentes
-    pending_withdrawals = Withdrawal.query.filter_by(status='pending').order_by(
-        Withdrawal.requested_at.desc()
-    ).all()
+    # Saques pendentes e total a pagar
+    pending_withdrawals = []
+    total_to_pay = 0
     
-    # Calcular total a pagar
-    total_to_pay = sum(w.amount for w in pending_withdrawals)
+    if has_withdrawal_model and Withdrawal:
+        stats['pending_withdrawals'] = Withdrawal.query.filter_by(status='pending').count()
+        
+        # Buscar saques pendentes ordenados por created_at
+        pending_withdrawals = Withdrawal.query.filter_by(status='pending').order_by(
+            Withdrawal.created_at.desc()
+        ).all()
+        
+        # Calcular total a pagar
+        total_to_pay = sum(w.amount for w in pending_withdrawals)
     
     # Todos os criadores com informações adicionais
     creators = Creator.query.order_by(Creator.created_at.desc()).all()
@@ -43,10 +58,12 @@ def index():
         ).scalar() or 0
         
         # Verificar se tem saque pendente
-        creator.pending_withdrawal = Withdrawal.query.filter_by(
-            creator_id=creator.id,
-            status='pending'
-        ).first() is not None
+        creator.pending_withdrawal = False
+        if has_withdrawal_model and Withdrawal:
+            creator.pending_withdrawal = Withdrawal.query.filter_by(
+                creator_id=creator.id,
+                status='pending'
+            ).first() is not None
     
     return render_template('admin/index.html',
                          stats=stats,
@@ -59,6 +76,10 @@ def index():
 @admin_required
 def process_withdrawal(id):
     """Processar saque"""
+    if not has_withdrawal_model or not Withdrawal:
+        flash('Modelo de saque não disponível!', 'error')
+        return redirect(url_for('admin.index'))
+    
     withdrawal = Withdrawal.query.get_or_404(id)
     
     if withdrawal.status != 'pending':
@@ -104,28 +125,6 @@ def view_creator_dashboard(creator_id):
     
     return redirect(url_for('dashboard.index'))
 
-@bp.route('/exit-creator-view')
-@login_required
-def exit_creator_view():
-    """Sair da visualização do criador e voltar ao admin"""
-    if 'admin_viewing_as' in session:
-        # Limpar sessão
-        session.pop('admin_viewing_as', None)
-        session.pop('admin_mode', None)
-        
-        # Fazer login como admin novamente
-        admin_email = current_user.email  # Salvar email antes
-        admin = Creator.query.filter_by(email='mauro_lcf@example.com').first()
-        if not admin:
-            admin = Creator.query.filter_by(email='admin@televip.com').first()
-        
-        if admin:
-            login_user(admin, force=True)
-        
-        flash('Você voltou ao painel administrativo.', 'success')
-    
-    return redirect(url_for('admin.index'))
-
 @bp.route('/creator/<int:creator_id>/details')
 @login_required
 @admin_required
@@ -153,20 +152,22 @@ def creator_details(creator_id):
             status='active'
         ).count()
     
-    # Receita total
+    # Receita total (usando amount ao invés de net_amount)
     stats['total_revenue'] = db.session.query(
-        func.sum(Transaction.net_amount)
+        func.sum(Transaction.amount)
     ).join(Subscription).join(Group).filter(
         Group.creator_id == creator_id,
         Transaction.status == 'completed'
     ).scalar() or 0
     
     # Saques pendentes
-    pending_withdrawals = Withdrawal.query.filter_by(
-        creator_id=creator_id,
-        status='pending'
-    ).all()
-    stats['pending_withdrawal'] = sum(w.amount for w in pending_withdrawals)
+    pending_withdrawals = []
+    if has_withdrawal_model and Withdrawal:
+        pending_withdrawals = Withdrawal.query.filter_by(
+            creator_id=creator_id,
+            status='pending'
+        ).all()
+        stats['pending_withdrawal'] = sum(w.amount for w in pending_withdrawals)
     
     # Últimas transações
     recent_transactions = Transaction.query.join(
@@ -196,4 +197,26 @@ def send_creator_message(creator_id):
     # Por enquanto, apenas simulamos
     
     flash(f'Mensagem enviada para {creator.name}!', 'success')
+    return redirect(url_for('admin.index'))
+
+@bp.route('/exit-creator-view')
+@login_required
+def exit_creator_view():
+    """Sair da visualização do criador e voltar ao admin"""
+    if 'admin_viewing_as' in session:
+        # Limpar sessão
+        session.pop('admin_viewing_as', None)
+        session.pop('admin_mode', None)
+        
+        # Fazer login como admin novamente
+        admin_email = current_user.email  # Salvar email antes
+        admin = Creator.query.filter_by(email='mauro_lcf@example.com').first()
+        if not admin:
+            admin = Creator.query.filter_by(email='admin@televip.com').first()
+        
+        if admin:
+            login_user(admin, force=True)
+        
+        flash('Você voltou ao painel administrativo.', 'info')
+    
     return redirect(url_for('admin.index'))

@@ -1,0 +1,3 @@
+"""
+Utilitários do Bot TeleVIP
+"""

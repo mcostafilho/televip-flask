@@ -57,7 +57,7 @@
         <div class="col-md-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h3 class="text-success">{{ stats.active_subscribers }}</h3>
+                    <h3 class="text-info">{{ stats.active_subscribers }}</h3>
                     <p class="mb-0">Assinantes Ativos</p>
                 </div>
             </div>
@@ -65,7 +65,7 @@
         <div class="col-md-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h3 class="text-info">R$ {{ "%.2f"|format(stats.total_revenue) }}</h3>
+                    <h3 class="text-success">R$ {{ "%.2f"|format(stats.total_revenue) }}</h3>
                     <p class="mb-0">Receita Total</p>
                 </div>
             </div>
@@ -74,16 +74,16 @@
             <div class="card text-center">
                 <div class="card-body">
                     <h3 class="text-warning">R$ {{ "%.2f"|format(stats.pending_withdrawal) }}</h3>
-                    <p class="mb-0">Saques Pendentes</p>
+                    <p class="mb-0">Saque Pendente</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Grupos do Criador -->
+    <!-- Grupos -->
     <div class="card mb-4">
         <div class="card-header bg-white">
-            <h5 class="mb-0">📱 Grupos</h5>
+            <h5 class="mb-0"><i class="bi bi-telegram"></i> Grupos</h5>
         </div>
         <div class="card-body">
             {% if groups %}
@@ -94,9 +94,8 @@
                             <th>Nome</th>
                             <th>ID Telegram</th>
                             <th>Assinantes</th>
+                            <th>Planos</th>
                             <th>Status</th>
-                            <th>Criado em</th>
-                            <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -104,7 +103,10 @@
                         <tr>
                             <td>{{ group.name }}</td>
                             <td><code>{{ group.telegram_id }}</code></td>
-                            <td>{{ group.total_subscribers }}</td>
+                            <td>
+                                {{ group.subscriptions.filter_by(status='active').count() }}
+                            </td>
+                            <td>{{ group.pricing_plans.count() }}</td>
                             <td>
                                 {% if group.is_active %}
                                     <span class="badge bg-success">Ativo</span>
@@ -112,68 +114,21 @@
                                     <span class="badge bg-secondary">Inativo</span>
                                 {% endif %}
                             </td>
-                            <td>{{ group.created_at.strftime('%d/%m/%Y') }}</td>
-                            <td>
-                                <a href="{{ url_for('groups.subscribers', id=group.id) }}" 
-                                   class="btn btn-sm btn-outline-primary">
-                                    Ver Assinantes
-                                </a>
-                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
             {% else %}
-            <p class="text-center text-muted py-3">Nenhum grupo criado</p>
+            <p class="text-muted text-center py-3">Nenhum grupo criado ainda</p>
             {% endif %}
         </div>
     </div>
 
-    <!-- Saques Pendentes -->
-    {% if pending_withdrawals %}
+    <!-- Transações Recentes -->
     <div class="card mb-4">
-        <div class="card-header bg-warning">
-            <h5 class="mb-0">⚠️ Saques Pendentes</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Valor</th>
-                            <th>Chave PIX</th>
-                            <th>Solicitado em</th>
-                            <th>Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for withdrawal in pending_withdrawals %}
-                        <tr>
-                            <td class="fw-bold">R$ {{ "%.2f"|format(withdrawal.amount) }}</td>
-                            <td><code>{{ withdrawal.pix_key }}</code></td>
-                            <td>{{ withdrawal.requested_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                            <td>
-                                <form method="POST" action="{{ url_for('admin.process_withdrawal', id=withdrawal.id) }}" 
-                                      style="display: inline;">
-                                    <button type="submit" class="btn btn-success btn-sm">
-                                        ✅ Processar
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Últimas Transações -->
-    <div class="card">
         <div class="card-header bg-white">
-            <h5 class="mb-0">💰 Últimas Transações</h5>
+            <h5 class="mb-0"><i class="bi bi-clock-history"></i> Transações Recentes</h5>
         </div>
         <div class="card-body">
             {% if recent_transactions %}
@@ -182,9 +137,8 @@
                     <thead>
                         <tr>
                             <th>Data</th>
-                            <th>Usuário</th>
                             <th>Grupo</th>
-                            <th>Plano</th>
+                            <th>Assinante</th>
                             <th>Valor</th>
                             <th>Status</th>
                         </tr>
@@ -193,10 +147,9 @@
                         {% for transaction in recent_transactions %}
                         <tr>
                             <td>{{ transaction.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                            <td>@{{ transaction.subscription.telegram_username }}</td>
                             <td>{{ transaction.subscription.group.name }}</td>
-                            <td>{{ transaction.subscription.plan.name }}</td>
-                            <td class="fw-bold text-success">R$ {{ "%.2f"|format(transaction.net_amount) }}</td>
+                            <td>@{{ transaction.subscription.telegram_username }}</td>
+                            <td class="text-success">R$ {{ "%.2f"|format(transaction.amount) }}</td>
                             <td>
                                 {% if transaction.status == 'completed' %}
                                     <span class="badge bg-success">Pago</span>
@@ -210,9 +163,48 @@
                 </table>
             </div>
             {% else %}
-            <p class="text-center text-muted py-3">Nenhuma transação encontrada</p>
+            <p class="text-muted text-center py-3">Nenhuma transação ainda</p>
             {% endif %}
         </div>
     </div>
+
+    <!-- Saques Pendentes -->
+    {% if pending_withdrawals %}
+    <div class="card">
+        <div class="card-header bg-warning">
+            <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Saques Pendentes</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Data Solicitação</th>
+                            <th>Valor</th>
+                            <th>Chave PIX</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for withdrawal in pending_withdrawals %}
+                        <tr>
+                            <td>{{ withdrawal.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td class="text-danger fw-bold">R$ {{ "%.2f"|format(withdrawal.amount) }}</td>
+                            <td>{{ withdrawal.pix_key }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin.process_withdrawal', id=withdrawal.id) }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-success">
+                                        <i class="bi bi-check"></i> Processar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

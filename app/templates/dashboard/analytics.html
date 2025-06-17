@@ -2,181 +2,324 @@
 
 {% block title %}Analytics - TeleVIP{% endblock %}
 
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+<style>
+/* Analytics specific styles */
+.analytics-page .stat-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.analytics-page .stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.analytics-page .chart-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.analytics-page .chart-card .card-header {
+    background: transparent;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 1.5rem;
+    font-weight: 600;
+}
+
+.analytics-page .chart-card .card-body {
+    padding: 1.5rem;
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 992px) {
+    .analytics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .analytics-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+.period-selector {
+    background: white;
+    border-radius: 12px;
+    padding: 0.5rem 1rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.period-selector select {
+    background: transparent;
+    border: none;
+    font-weight: 500;
+    color: #495057;
+    cursor: pointer;
+}
+
+.period-selector select:focus {
+    outline: none;
+    box-shadow: none;
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="bg-light py-4">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col">
-                <h1 class="h3 mb-0">Analytics</h1>
-                <p class="text-muted mb-0">Análise detalhada do seu desempenho</p>
-            </div>
-            <div class="col-auto">
-                <!-- Seletor de Período -->
-                <form method="GET" class="d-inline">
-                    <select name="period" class="form-select" onchange="this.form.submit()">
-                        <option value="7" {{ 'selected' if period == '7' }}>Últimos 7 dias</option>
-                        <option value="30" {{ 'selected' if period == '30' }}>Últimos 30 dias</option>
-                        <option value="90" {{ 'selected' if period == '90' }}>Últimos 90 dias</option>
-                    </select>
-                </form>
+<div class="dashboard-wrapper analytics-page">
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="h2 mb-1">Analytics</h1>
+                    <p class="text-muted mb-0">Análise detalhada do seu desempenho</p>
+                </div>
+                <div class="col-auto">
+                    <div class="period-selector">
+                        <form method="GET" class="d-inline-flex align-items-center">
+                            <i class="bi bi-calendar3 me-2 text-muted"></i>
+                            <select name="period" class="form-select border-0" onchange="this.form.submit()">
+                                <option value="7" {{ 'selected' if period == '7' }}>Últimos 7 dias</option>
+                                <option value="30" {{ 'selected' if period == '30' }}>Últimos 30 dias</option>
+                                <option value="90" {{ 'selected' if period == '90' }}>Últimos 90 dias</option>
+                            </select>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-</div>
 
-<div class="container py-4">
-    <!-- Cards de Métricas -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="text-muted mb-2">Receita Total</h6>
-                    <h3 class="mb-0 text-success">R$ {{ "%.2f"|format(stats.total_revenue) }}</h3>
-                    <small class="text-muted">no período selecionado</small>
+        <!-- Cards de Métricas Principais -->
+        <div class="analytics-grid">
+            <!-- Receita Total -->
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="stat-icon success">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <p class="text-muted mb-1 small">Receita Total</p>
+                        <h3 class="mb-0 text-success">R$ {{ "%.2f"|format(stats.total_revenue) }}</h3>
+                        <small class="text-muted">no período selecionado</small>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="text-muted mb-2">Total de Transações</h6>
-                    <h3 class="mb-0">{{ stats.total_transactions }}</h3>
-                    <small class="text-muted">pagamentos processados</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="text-muted mb-2">Ticket Médio</h6>
-                    <h3 class="mb-0 text-primary">R$ {{ "%.2f"|format(stats.average_ticket) }}</h3>
-                    <small class="text-muted">por transação</small>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="text-muted mb-2">Assinantes Ativos</h6>
-                    <h3 class="mb-0">{{ stats.total_subscribers }}</h3>
-                    <small class="text-muted">em todos os grupos</small>
+            <!-- Total de Transações -->
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="stat-icon primary">
+                            <i class="bi bi-receipt"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <p class="text-muted mb-1 small">Total de Transações</p>
+                        <h3 class="mb-0">{{ stats.total_transactions }}</h3>
+                        <small class="text-muted">pagamentos processados</small>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="text-muted mb-2">Novos Assinantes</h6>
-                    <h3 class="mb-0 text-info">{{ stats.new_subscribers }}</h3>
-                    <small class="text-muted">no período</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="text-muted mb-2">Taxa de Conversão</h6>
-                    <h3 class="mb-0">
-                        {% if stats.total_subscribers > 0 %}
-                            {{ "%.1f"|format((stats.new_subscribers / stats.total_subscribers * 100)) }}%
-                        {% else %}
-                            0%
-                        {% endif %}
-                    </h3>
-                    <small class="text-muted">novos/total</small>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Gráficos -->
-    <div class="row mb-4">
-        <!-- Receita por Dia -->
-        <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">📈 Receita por Dia</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="revenueChart" height="100"></canvas>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Receita por Grupo -->
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">📊 Receita por Grupo</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="groupChart" height="200"></canvas>
+            <!-- Ticket Médio -->
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="stat-icon warning">
+                            <i class="bi bi-calculator"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <p class="text-muted mb-1 small">Ticket Médio</p>
+                        <h3 class="mb-0 text-primary">R$ {{ "%.2f"|format(stats.average_ticket) }}</h3>
+                        <small class="text-muted">por transação</small>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div class="row mb-4">
-        <!-- Novos Assinantes -->
-        <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">👥 Novos Assinantes por Dia</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="subscribersChart" height="100"></canvas>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Receita por Plano -->
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">💰 Receita por Plano</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="planChart" height="200"></canvas>
+            <!-- Assinantes Ativos -->
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="stat-icon info">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <p class="text-muted mb-1 small">Assinantes Ativos</p>
+                        <h3 class="mb-0">{{ stats.total_subscribers }}</h3>
+                        <small class="text-muted">em todos os grupos</small>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Tabela de Performance por Grupo -->
-    <div class="card">
-        <div class="card-header bg-white">
-            <h5 class="mb-0">📱 Performance por Grupo</h5>
+            <!-- Novos Assinantes -->
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="stat-icon info">
+                            <i class="bi bi-person-plus-fill"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <p class="text-muted mb-1 small">Novos Assinantes</p>
+                        <h3 class="mb-0 text-info">{{ stats.new_subscribers }}</h3>
+                        <small class="text-muted">no período</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Taxa de Conversão -->
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="stat-icon success">
+                            <i class="bi bi-percent"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <p class="text-muted mb-1 small">Taxa de Conversão</p>
+                        <h3 class="mb-0">
+                            {% if stats.total_subscribers > 0 %}
+                                {{ "%.1f"|format((stats.new_subscribers / stats.total_subscribers * 100)) }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </h3>
+                        <small class="text-muted">novos/total</small>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="card-body">
+
+        <!-- Gráficos -->
+        <div class="row g-4 mb-4">
+            <!-- Receita por Dia -->
+            <div class="col-lg-8">
+                <div class="chart-card">
+                    <div class="card-header">
+                        <i class="bi bi-graph-up text-success"></i> Receita por Dia
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Receita por Grupo -->
+            <div class="col-lg-4">
+                <div class="chart-card">
+                    <div class="card-header">
+                        <i class="bi bi-pie-chart-fill text-primary"></i> Receita por Grupo
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="groupChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <!-- Novos Assinantes -->
+            <div class="col-lg-8">
+                <div class="chart-card">
+                    <div class="card-header">
+                        <i class="bi bi-bar-chart-fill text-info"></i> Novos Assinantes por Dia
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="subscribersChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Receita por Plano -->
+            <div class="col-lg-4">
+                <div class="chart-card">
+                    <div class="card-header">
+                        <i class="bi bi-pie-chart text-warning"></i> Receita por Plano
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="planChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela de Performance por Grupo -->
+        <div class="content-card">
+            <h5 class="mb-4">
+                <i class="bi bi-table"></i> Performance por Grupo
+            </h5>
+            
             {% if groups %}
-            <div class="table-responsive">
-                <table class="table table-hover">
+            <div class="custom-table">
+                <table class="table table-hover align-middle">
                     <thead>
                         <tr>
                             <th>Grupo</th>
-                            <th>Assinantes</th>
-                            <th>Receita (período)</th>
-                            <th>Ticket Médio</th>
-                            <th>Status</th>
+                            <th class="text-center">Assinantes</th>
+                            <th class="text-center">Receita (período)</th>
+                            <th class="text-center">Ticket Médio</th>
+                            <th class="text-center">Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for group in groups %}
                         <tr>
                             <td>
-                                <strong>{{ group.name }}</strong>
+                                <div>
+                                    <strong>{{ group.name }}</strong>
+                                    {% if group.description %}
+                                    <br>
+                                    <small class="text-muted">{{ group.description[:50] }}...</small>
+                                    {% endif %}
+                                </div>
                             </td>
-                            <td>{{ group.total_subscribers or 0 }}</td>
-                            <td class="text-success">R$ 0,00</td>
-                            <td>R$ 0,00</td>
-                            <td>
+                            <td class="text-center">
+                                <span class="badge bg-info">{{ group.total_subscribers or 0 }}</span>
+                            </td>
+                            <td class="text-center">
+                                <strong class="text-success">R$ {{ "%.2f"|format(group.period_revenue or 0) }}</strong>
+                            </td>
+                            <td class="text-center">
+                                R$ {{ "%.2f"|format(group.average_ticket or 0) }}
+                            </td>
+                            <td class="text-center">
                                 {% if group.is_active %}
-                                    <span class="badge bg-success">Ativo</span>
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle"></i> Ativo
+                                    </span>
                                 {% else %}
-                                    <span class="badge bg-secondary">Inativo</span>
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-x-circle"></i> Inativo
+                                    </span>
                                 {% endif %}
                             </td>
                         </tr>
@@ -185,8 +328,9 @@
                 </table>
             </div>
             {% else %}
-            <div class="text-center py-4">
-                <p class="text-muted">Nenhum grupo criado ainda</p>
+            <div class="empty-state py-5">
+                <i class="bi bi-bar-chart-line" style="font-size: 4rem; color: #dee2e6;"></i>
+                <p class="text-muted mt-3">Nenhum grupo criado ainda</p>
                 <a href="{{ url_for('groups.create') }}" class="btn btn-primary">
                     <i class="bi bi-plus-circle"></i> Criar Primeiro Grupo
                 </a>
@@ -198,7 +342,13 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
+// Configuração padrão dos gráficos
+Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+Chart.defaults.font.size = 12;
+Chart.defaults.color = '#6c757d';
+
 // Dados dos gráficos
 const chartsData = {{ charts_data | tojson }};
 
@@ -213,8 +363,14 @@ new Chart(revenueCtx, {
             data: chartsData.revenue_by_day.data,
             borderColor: '#28a745',
             backgroundColor: 'rgba(40, 167, 69, 0.1)',
+            borderWidth: 3,
             tension: 0.4,
-            fill: true
+            fill: true,
+            pointRadius: 4,
+            pointBackgroundColor: '#28a745',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointHoverRadius: 6
         }]
     },
     options: {
@@ -225,16 +381,37 @@ new Chart(revenueCtx, {
                 display: false
             },
             tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                padding: 12,
+                titleFont: {
+                    size: 14
+                },
+                bodyFont: {
+                    size: 13
+                },
                 callbacks: {
                     label: function(context) {
-                        return 'R$ ' + context.parsed.y.toFixed(2);
+                        return 'Receita: R$ ' + context.parsed.y.toFixed(2);
                     }
                 }
             }
         },
         scales: {
+            x: {
+                grid: {
+                    display: false
+                },
+                ticks: {
+                    font: {
+                        size: 11
+                    }
+                }
+            },
             y: {
                 beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                },
                 ticks: {
                     callback: function(value) {
                         return 'R$ ' + value.toFixed(2);
@@ -254,8 +431,11 @@ new Chart(subscribersCtx, {
         datasets: [{
             label: 'Novos Assinantes',
             data: chartsData.subscribers_by_day.data,
-            backgroundColor: '#0088cc',
-            borderRadius: 5
+            backgroundColor: 'rgba(23, 162, 184, 0.8)',
+            borderColor: '#17a2b8',
+            borderWidth: 2,
+            borderRadius: 8,
+            borderSkipped: false,
         }]
     },
     options: {
@@ -264,20 +444,38 @@ new Chart(subscribersCtx, {
         plugins: {
             legend: {
                 display: false
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                padding: 12,
+                callbacks: {
+                    label: function(context) {
+                        return 'Novos assinantes: ' + context.parsed.y;
+                    }
+                }
             }
         },
         scales: {
+            x: {
+                grid: {
+                    display: false
+                }
+            },
             y: {
                 beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                },
                 ticks: {
-                    stepSize: 1
+                    stepSize: 1,
+                    precision: 0
                 }
             }
         }
     }
 });
 
-// Gráfico de Receita por Grupo (Pizza)
+// Gráfico de Receita por Grupo (Donut)
 const groupCtx = document.getElementById('groupChart').getContext('2d');
 new Chart(groupCtx, {
     type: 'doughnut',
@@ -286,25 +484,40 @@ new Chart(groupCtx, {
         datasets: [{
             data: chartsData.revenue_by_group.data.length > 0 ? chartsData.revenue_by_group.data : [1],
             backgroundColor: [
-                '#0088cc',
-                '#28a745',
-                '#ffc107',
-                '#dc3545',
-                '#6c757d'
-            ]
+                'rgba(102, 126, 234, 0.8)',
+                'rgba(40, 167, 69, 0.8)',
+                'rgba(255, 193, 7, 0.8)',
+                'rgba(220, 53, 69, 0.8)',
+                'rgba(108, 117, 125, 0.8)'
+            ],
+            borderColor: '#fff',
+            borderWidth: 2
         }]
     },
     options: {
         responsive: true,
         maintainAspectRatio: false,
+        cutout: '65%',
         plugins: {
             legend: {
-                position: 'bottom'
+                position: 'bottom',
+                labels: {
+                    padding: 15,
+                    usePointStyle: true,
+                    font: {
+                        size: 12
+                    }
+                }
             },
             tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                padding: 12,
                 callbacks: {
                     label: function(context) {
-                        return context.label + ': R$ ' + context.parsed.toFixed(2);
+                        const label = context.label || '';
+                        const value = 'R$ ' + context.parsed.toFixed(2);
+                        const percentage = ((context.parsed / context.dataset.data.reduce((a, b) => a + b, 0)) * 100).toFixed(1);
+                        return label + ': ' + value + ' (' + percentage + '%)';
                     }
                 }
             }
@@ -321,12 +534,14 @@ new Chart(planCtx, {
         datasets: [{
             data: chartsData.revenue_by_plan.data.length > 0 ? chartsData.revenue_by_plan.data : [1],
             backgroundColor: [
-                '#667eea',
-                '#764ba2',
-                '#f093fb',
-                '#f5576c',
-                '#4facfe'
-            ]
+                'rgba(255, 193, 7, 0.8)',
+                'rgba(253, 126, 20, 0.8)',
+                'rgba(102, 16, 242, 0.8)',
+                'rgba(232, 62, 140, 0.8)',
+                'rgba(32, 201, 151, 0.8)'
+            ],
+            borderColor: '#fff',
+            borderWidth: 2
         }]
     },
     options: {
@@ -334,12 +549,24 @@ new Chart(planCtx, {
         maintainAspectRatio: false,
         plugins: {
             legend: {
-                position: 'bottom'
+                position: 'bottom',
+                labels: {
+                    padding: 15,
+                    usePointStyle: true,
+                    font: {
+                        size: 12
+                    }
+                }
             },
             tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                padding: 12,
                 callbacks: {
                     label: function(context) {
-                        return context.label + ': R$ ' + context.parsed.toFixed(2);
+                        const label = context.label || '';
+                        const value = 'R$ ' + context.parsed.toFixed(2);
+                        const percentage = ((context.parsed / context.dataset.data.reduce((a, b) => a + b, 0)) * 100).toFixed(1);
+                        return label + ': ' + value + ' (' + percentage + '%)';
                     }
                 }
             }

@@ -1,1 +1,0 @@
-# Integração Stripe no bot

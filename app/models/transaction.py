@@ -1,86 +1,76 @@
-# app/models/transaction.py
-from app import db
+"""
+Modelo Transaction com cálculo automático de taxas
+"""
 from datetime import datetime
-from app.services.payment_service import PaymentService
+from decimal import Decimal
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, DECIMAL, Boolean
+from sqlalchemy.orm import relationship
+from app.models import db
 
 class Transaction(db.Model):
+    """
+    Modelo de transação com taxas automáticas
+    Taxa fixa: R$ 0,99
+    Taxa percentual: 7,99%
+    """
     __tablename__ = 'transactions'
     
-    id = db.Column(db.Integer, primary_key=True)
-    subscription_id = db.Column(db.Integer, db.ForeignKey('subscriptions.id'), nullable=False)
+    id = Column(Integer, primary_key=True)
+    subscription_id = Column(Integer, ForeignKey('subscriptions.id'), nullable=False)
     
-    # Valores financeiros
-    amount = db.Column(db.Float, nullable=False)  # Valor bruto
-    fixed_fee = db.Column(db.Float, nullable=False, default=0.99)  # Taxa fixa R$ 0,99
-    percentage_fee = db.Column(db.Float, nullable=False)  # Taxa percentual (7,99% do valor)
-    total_fee = db.Column(db.Float, nullable=False)  # Taxa total (fixa + percentual)
-    net_amount = db.Column(db.Float, nullable=False)  # Valor líquido para o criador
+    # Valores
+    amount = Column(DECIMAL(10, 2), nullable=False)  # Valor total pago
+    original_amount = Column(DECIMAL(10, 2))  # Valor original (para descontos)
+    discount_percentage = Column(DECIMAL(5, 2), default=0)  # Desconto aplicado
+    
+    # Taxas calculadas automaticamente
+    fixed_fee = Column(DECIMAL(10, 2), default=Decimal('0.99'))
+    percentage_fee = Column(DECIMAL(10, 2))  # 7.99% do amount
+    total_fee = Column(DECIMAL(10, 2))  # fixed_fee + percentage_fee
+    net_amount = Column(DECIMAL(10, 2))  # amount - total_fee
     
     # Status e método
-    status = db.Column(db.String(20), default='pending')  # pending, completed, failed, refunded
-    payment_method = db.Column(db.String(20), default='pix')  # pix, stripe, credit_card
+    status = Column(String(20), default='pending')  # pending, completed, failed, refunded
+    payment_method = Column(String(20), default='stripe')  # stripe, pix
     
-    # IDs de pagamento externos
-    stripe_payment_intent_id = db.Column(db.String(100))
-    pix_transaction_id = db.Column(db.String(100))
+    # IDs externos
+    stripe_payment_intent_id = Column(String(255))
+    stripe_session_id = Column(String(255))
+    receipt_hash = Column(String(64))  # Hash do comprovante PIX
+    verification_score = Column(DECIMAL(3, 2))  # Score de verificação PIX
     
     # Timestamps
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    paid_at = db.Column(db.DateTime)
-    refunded_at = db.Column(db.DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    paid_at = Column(DateTime)
+    refunded_at = Column(DateTime)
     
-    # Relacionamento com subscription
-    subscription = db.relationship('Subscription', backref='transactions_list')
+    # Relacionamentos
+    subscription = relationship('Subscription', back_populates='transactions')
     
     def __init__(self, **kwargs):
-        """Inicializa transação calculando taxas automaticamente"""
-        super(Transaction, self).__init__(**kwargs)
-        if 'amount' in kwargs and kwargs['amount'] > 0:
-            self.calculate_fees()
+        super().__init__(**kwargs)
+        self.calculate_fees()
     
     def calculate_fees(self):
-        """Calcula e atualiza as taxas da transação"""
-        if not self.amount or self.amount <= 0:
-            self.fixed_fee = 0
-            self.percentage_fee = 0
-            self.total_fee = 0
-            self.net_amount = 0
-            return
-        
-        fees = PaymentService.calculate_fees(self.amount)
-        self.fixed_fee = fees['fixed_fee']
-        self.percentage_fee = fees['percentage_fee']
-        self.total_fee = fees['total_fee']
-        self.net_amount = fees['net_amount']
-        return fees
-    
-    def get_fee_breakdown(self):
-        """Retorna breakdown formatado das taxas"""
-        return {
-            'gross': f"R$ {self.amount:.2f}",
-            'fixed_fee': f"R$ {self.fixed_fee:.2f}",
-            'percentage_fee': f"R$ {self.percentage_fee:.2f} (7,99%)",
-            'total_fee': f"R$ {self.total_fee:.2f}",
-            'net': f"R$ {self.net_amount:.2f}",
-            'effective_rate': f"{(self.total_fee / self.amount * 100):.2f}%" if self.amount > 0 else "0%"
-        }
-    
-    def mark_as_paid(self):
-        """Marca transação como paga"""
-        self.status = 'completed'
-        self.paid_at = datetime.utcnow()
-        
-    def mark_as_failed(self):
-        """Marca transação como falhada"""
-        self.status = 'failed'
-        
-    def process_refund(self):
-        """Processa reembolso da transação"""
-        if self.status == 'completed':
-            self.status = 'refunded'
-            self.refunded_at = datetime.utcnow()
-            return True
-        return False
+        """
+        Calcular taxas automaticamente
+        Taxa fixa: R$ 0,99
+        Taxa percentual: 7,99%
+        """
+        if self.amount:
+            amount = Decimal(str(self.amount))
+            
+            # Taxa fixa
+            self.fixed_fee = Decimal('0.99')
+            
+            # Taxa percentual (7,99%)
+            self.percentage_fee = amount * Decimal('0.0799')
+            
+            # Taxa total
+            self.total_fee = self.fixed_fee + self.percentage_fee
+            
+            # Valor líquido para o criador
+            self.net_amount = amount - self.total_fee
     
     def __repr__(self):
-        return f'<Transaction #{self.id} R${self.amount:.2f} - Fee: R${self.total_fee:.2f} - Net: R${self.net_amount:.2f} - {self.status}>'
+        return f'<Transaction {self.id} - R$ {self.amount} - {self.status}>'

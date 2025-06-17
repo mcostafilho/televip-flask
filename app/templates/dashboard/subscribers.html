@@ -2,73 +2,260 @@
 
 {% block title %}Assinantes - {{ group.name }} - TeleVIP{% endblock %}
 
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+<style>
+/* Subscribers page specific styles */
+.subscribers-page .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 992px) {
+    .subscribers-page .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .subscribers-page .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+.subscribers-page .stat-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.subscribers-page .stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.subscribers-page .stat-card h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.subscribers-page .stat-card.primary h3 {
+    color: #0088cc;
+}
+
+.subscribers-page .stat-card.success h3 {
+    color: #28a745;
+}
+
+.subscribers-page .stat-card.warning h3 {
+    color: #ffc107;
+}
+
+.subscribers-page .stat-card.danger h3 {
+    color: #dc3545;
+}
+
+.subscribers-page .filter-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.subscribers-page .table-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.subscribers-page .table-card .card-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 1.5rem;
+}
+
+.subscribers-page .custom-table {
+    margin: 0;
+}
+
+.subscribers-page .custom-table table {
+    margin-bottom: 0;
+}
+
+.subscribers-page .custom-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+    border: none;
+    padding: 1rem;
+}
+
+.subscribers-page .custom-table td {
+    vertical-align: middle;
+    padding: 1rem;
+    border: none;
+}
+
+.subscribers-page .custom-table tbody tr {
+    border-bottom: 1px solid #f0f0f0;
+    transition: all 0.2s ease;
+}
+
+.subscribers-page .custom-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.subscribers-page .custom-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.subscribers-page .username {
+    font-weight: 500;
+    color: #495057;
+}
+
+.subscribers-page .user-id {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.subscribers-page .pagination {
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.breadcrumb-nav {
+    background: #f8f9fa;
+    padding: 1rem 0;
+    margin-bottom: 2rem;
+}
+
+.breadcrumb {
+    margin-bottom: 0;
+    background: transparent;
+}
+
+.export-btn {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.export-btn:hover {
+    background: linear-gradient(135deg, #20c997, #28a745);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+    color: white;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    color: #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.empty-state h4 {
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: #adb5bd;
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="bg-light py-4">
-    <div class="container">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
-                <li class="breadcrumb-item"><a href="{{ url_for('groups.list') }}">Grupos</a></li>
-                <li class="breadcrumb-item">{{ group.name }}</li>
-                <li class="breadcrumb-item active">Assinantes</li>
-            </ol>
-        </nav>
-    </div>
-</div>
-
-<div class="container py-4">
-    <!-- Cabeçalho -->
-    <div class="row mb-4">
-        <div class="col">
-            <h2>👥 Assinantes de {{ group.name }}</h2>
-            <p class="text-muted">Gerencie os assinantes do seu grupo VIP</p>
-        </div>
-        <div class="col-auto">
-            <button class="btn btn-primary" onclick="exportSubscribers()">
-                <i class="bi bi-download"></i> Exportar Lista
-            </button>
+<div class="dashboard-wrapper subscribers-page">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-nav">
+        <div class="dashboard-container">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('groups.list') }}">Grupos</a></li>
+                    <li class="breadcrumb-item">{{ group.name }}</li>
+                    <li class="breadcrumb-item active">Assinantes</li>
+                </ol>
+            </nav>
         </div>
     </div>
 
-    <!-- Cards de Resumo -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3 class="mb-0 text-primary">{{ stats.total }}</h3>
-                    <small class="text-muted">Total de Assinantes</small>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="h2 mb-1">
+                        <i class="bi bi-people-fill"></i> Assinantes de {{ group.name }}
+                    </h1>
+                    <p class="text-muted mb-0">Gerencie os assinantes do seu grupo VIP</p>
+                </div>
+                <div class="col-auto">
+                    <button class="btn export-btn" onclick="exportSubscribers()">
+                        <i class="bi bi-download"></i> Exportar Lista
+                    </button>
                 </div>
             </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3 class="mb-0 text-success">{{ stats.active }}</h3>
-                    <small class="text-muted">Ativos</small>
+            
+            <!-- Link de Compartilhamento -->
+            <div class="mt-3">
+                <label class="form-label text-muted small">Link de Assinatura:</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" 
+                           value="https://t.me/{{ config.BOT_USERNAME or 'televipbra_bot' }}?start=g_{{ group.telegram_id }}"
+                           id="shareLink" readonly>
+                    <button class="btn btn-primary" type="button" onclick="copyShareLink()">
+                        <i class="bi bi-clipboard"></i> Copiar Link
+                    </button>
                 </div>
+                <small class="text-muted">Compartilhe este link para novos assinantes entrarem no grupo</small>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3 class="mb-0 text-warning">{{ stats.expiring_soon }}</h3>
-                    <small class="text-muted">Expirando (7 dias)</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3 class="mb-0 text-danger">{{ stats.expired }}</h3>
-                    <small class="text-muted">Expirados</small>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Filtros -->
-    <div class="card mb-4">
-        <div class="card-body">
+        <!-- Cards de Estatísticas -->
+        <div class="stats-grid">
+            <div class="stat-card primary">
+                <h3>{{ stats.total }}</h3>
+                <small class="text-muted">Total de Assinantes</small>
+            </div>
+            <div class="stat-card success">
+                <h3>{{ stats.active }}</h3>
+                <small class="text-muted">Ativos</small>
+            </div>
+            <div class="stat-card warning">
+                <h3>{{ stats.expiring_soon }}</h3>
+                <small class="text-muted">Expirando (7 dias)</small>
+            </div>
+            <div class="stat-card danger">
+                <h3>{{ stats.expired }}</h3>
+                <small class="text-muted">Expirados</small>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filter-card">
             <form method="GET" class="row g-3">
                 <div class="col-md-3">
                     <label class="form-label">Status</label>
@@ -103,76 +290,99 @@
                 </div>
             </form>
         </div>
-    </div>
 
-    <!-- Tabela de Assinantes -->
-    <div class="card">
-        <div class="card-body">
+        <!-- Tabela de Assinantes -->
+        <div class="table-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-list"></i> Lista de Assinantes
+                </h5>
+            </div>
+            
             {% if subscribers %}
-            <div class="table-responsive">
-                <table class="table table-hover">
+            <div class="custom-table">
+                <table class="table align-middle">
                     <thead>
                         <tr>
                             <th>Usuário</th>
                             <th>Plano</th>
-                            <th>Início</th>
-                            <th>Expira em</th>
-                            <th>Status</th>
-                            <th>Ações</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Início</th>
+                            <th class="text-center">Expira em</th>
+                            <th class="text-center">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for sub in subscribers %}
                         <tr>
                             <td>
-                                <div>
-                                    <strong>@{{ sub.telegram_username or 'Sem username' }}</strong>
-                                    <br>
-                                    <small class="text-muted">ID: {{ sub.telegram_user_id }}</small>
+                                <div class="username">
+                                    @{{ sub.telegram_username or 'Sem username' }}
+                                </div>
+                                <div class="user-id">
+                                    ID: {{ sub.telegram_user_id }}
                                 </div>
                             </td>
-                            <td>{{ sub.plan.name }}</td>
-                            <td>{{ sub.start_date.strftime('%d/%m/%Y') }}</td>
                             <td>
-                                {{ sub.end_date.strftime('%d/%m/%Y') }}
-                                {% set days_left = (sub.end_date - now).days %}
+                                <span class="badge bg-primary">{{ sub.plan.name }}</span>
+                                <br>
+                                <small class="text-muted">R$ {{ "%.2f"|format(sub.plan.price) }}</small>
+                            </td>
+                            <td class="text-center">
                                 {% if sub.status == 'active' %}
-                                    {% if days_left <= 0 %}
-                                        <br><small class="text-danger">Vencido há {{ -days_left }} dias</small>
-                                    {% elif days_left <= 7 %}
-                                        <br><small class="text-warning">{{ days_left }} dias restantes</small>
+                                    {% if sub.end_date < now %}
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-x-circle"></i> Expirado
+                                        </span>
+                                    {% elif (sub.end_date - now).days <= 7 %}
+                                        <span class="badge bg-warning">
+                                            <i class="bi bi-clock"></i> Expirando
+                                        </span>
                                     {% else %}
-                                        <br><small class="text-muted">{{ days_left }} dias restantes</small>
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle"></i> Ativo
+                                        </span>
                                     {% endif %}
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if sub.status == 'active' %}
-                                    <span class="badge bg-success">Ativo</span>
-                                {% elif sub.status == 'expired' %}
-                                    <span class="badge bg-danger">Expirado</span>
+                                {% elif sub.status == 'cancelled' %}
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-x-circle"></i> Cancelado
+                                    </span>
                                 {% else %}
-                                    <span class="badge bg-secondary">{{ sub.status|title }}</span>
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-x-circle"></i> {{ sub.status }}
+                                    </span>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td class="text-center">
+                                {{ sub.start_date.strftime('%d/%m/%Y') }}
+                            </td>
+                            <td class="text-center">
+                                {{ sub.end_date.strftime('%d/%m/%Y') }}
+                                {% if sub.status == 'active' and sub.end_date > now %}
+                                    <br>
+                                    <small class="text-muted">
+                                        ({{ (sub.end_date - now).days }} dias)
+                                    </small>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
                                 <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-primary" 
-                                            onclick="viewSubscriberDetails({{ sub.id }})"
-                                            title="Ver detalhes">
+                                    <button class="btn btn-outline-info" 
+                                            onclick="viewDetails({{ sub.id }})"
+                                            title="Ver Detalhes">
                                         <i class="bi bi-eye"></i>
                                     </button>
-                                    <button class="btn btn-outline-warning" 
-                                            onclick="sendReminder({{ sub.id }})"
-                                            title="Enviar lembrete">
-                                        <i class="bi bi-bell"></i>
-                                    </button>
                                     {% if sub.status == 'active' %}
-                                    <button class="btn btn-outline-danger" 
-                                            onclick="cancelSubscription({{ sub.id }})"
-                                            title="Cancelar assinatura">
-                                        <i class="bi bi-x-circle"></i>
-                                    </button>
+                                    <form method="POST" 
+                                          action="{{ url_for('groups.cancel_subscription', group_id=group.id, sub_id=sub.id) }}"
+                                          style="display: inline;">
+                                        <button type="submit" 
+                                                class="btn btn-outline-danger"
+                                                onclick="return confirm('Tem certeza que deseja cancelar esta assinatura?')"
+                                                title="Cancelar Assinatura">
+                                            <i class="bi bi-x-circle"></i>
+                                        </button>
+                                    </form>
                                     {% endif %}
                                 </div>
                             </td>
@@ -181,74 +391,87 @@
                     </tbody>
                 </table>
             </div>
-
+            
             <!-- Paginação -->
             {% if total_pages > 1 %}
-            <nav class="mt-3">
-                <ul class="pagination justify-content-center">
-                    {% if page > 1 %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page - 1 }}&{{ request.query_string.decode() }}">
-                            Anterior
-                        </a>
-                    </li>
-                    {% endif %}
-                    
-                    {% for p in range(1, total_pages + 1) %}
-                        {% if p == page %}
-                        <li class="page-item active">
-                            <span class="page-link">{{ p }}</span>
-                        </li>
-                        {% else %}
+            <div class="card-footer bg-white">
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if page > 1 %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ p }}&{{ request.query_string.decode() }}">
-                                {{ p }}
+                            <a class="page-link" href="?page={{ page - 1 }}&{{ request.query_string.decode() }}">
+                                <i class="bi bi-chevron-left"></i>
                             </a>
                         </li>
                         {% endif %}
-                    {% endfor %}
-                    
-                    {% if page < total_pages %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page + 1 }}&{{ request.query_string.decode() }}">
-                            Próximo
-                        </a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </nav>
-            {% endif %}
-            {% else %}
-            <div class="empty-state py-5">
-                <i class="bi bi-people"></i>
-                <h4>Nenhum assinante encontrado</h4>
-                <p>Compartilhe o link do bot para começar a receber assinantes!</p>
-                <div class="mt-3">
-                    <div class="input-group" style="max-width: 500px; margin: 0 auto;">
-                        <input type="text" class="form-control" 
-                               value="https://t.me/televipbra_bot?start=g_{{ group.telegram_id }}"
-                               id="botLink" readonly>
-                        <button class="btn btn-primary" type="button" onclick="copyBotLink()">
-                            <i class="bi bi-clipboard"></i> Copiar Link
-                        </button>
-                    </div>
-                </div>
+                        
+                        {% for p in range(1, total_pages + 1) %}
+                            {% if p == page %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ p }}</span>
+                            </li>
+                            {% elif p == 1 or p == total_pages or (p > page - 3 and p < page + 3) %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ p }}&{{ request.query_string.decode() }}">{{ p }}</a>
+                            </li>
+                            {% elif p == page - 3 or p == page + 3 %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page < total_pages %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page + 1 }}&{{ request.query_string.decode() }}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
             </div>
             {% endif %}
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-people"></i>
+                <h4>Nenhum assinante encontrado</h4>
+                <p>
+                    {% if request.args.get('search') or request.args.get('status') or request.args.get('plan_id') %}
+                        Tente ajustar os filtros de busca
+                    {% else %}
+                        Este grupo ainda não tem assinantes
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Ações Adicionais -->
+        <div class="mt-4 text-center">
+            <a href="{{ url_for('groups.broadcast', group_id=group.id) }}" class="btn btn-primary">
+                <i class="bi bi-broadcast"></i> Enviar Mensagem
+            </a>
+            <a href="{{ url_for('groups.edit', id=group.id) }}" class="btn btn-outline-primary">
+                <i class="bi bi-gear"></i> Configurações do Grupo
+            </a>
+            <a href="{{ url_for('groups.list') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar aos Grupos
+            </a>
         </div>
     </div>
 </div>
 
 <!-- Modal de Detalhes -->
 <div class="modal fade" id="detailsModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Detalhes do Assinante</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="text-center py-4">
+                <div class="text-center">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Carregando...</span>
                     </div>
@@ -261,70 +484,53 @@
 
 {% block extra_js %}
 <script>
-function copyBotLink() {
-    const input = document.getElementById('botLink');
+// Copiar link de compartilhamento
+function copyShareLink() {
+    const input = document.getElementById('shareLink');
     input.select();
-    document.execCommand('copy');
-    
-    // Feedback visual
-    const btn = input.nextElementSibling;
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="bi bi-check"></i> Copiado!';
-    btn.classList.add('btn-success');
-    btn.classList.remove('btn-primary');
-    
-    setTimeout(() => {
-        btn.innerHTML = originalText;
-        btn.classList.remove('btn-success');
-        btn.classList.add('btn-primary');
-    }, 2000);
+    navigator.clipboard.writeText(input.value).then(function() {
+        const btn = event.target.closest('button');
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check"></i> Copiado!';
+        btn.classList.add('btn-success');
+        btn.classList.remove('btn-primary');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-primary');
+        }, 2000);
+    });
 }
 
-function viewSubscriberDetails(subscriptionId) {
+// Exportar assinantes
+function exportSubscribers() {
+    window.location.href = "{{ url_for('groups.export_subscribers', id=group.id) }}";
+}
+
+// Ver detalhes do assinante
+function viewDetails(subId) {
     const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
     modal.show();
     
-    // Simular carregamento de detalhes
-    // Em produção, fazer requisição AJAX
-    setTimeout(() => {
-        document.querySelector('#detailsModal .modal-body').innerHTML = `
-            <div class="mb-3">
-                <label class="form-label fw-bold">Usuário:</label>
-                <p>@username_exemplo</p>
-            </div>
-            <div class="mb-3">
-                <label class="form-label fw-bold">Histórico de Pagamentos:</label>
-                <ul class="list-unstyled">
-                    <li>✅ R$ 29,90 - 14/06/2024</li>
-                    <li>✅ R$ 29,90 - 14/05/2024</li>
-                </ul>
-            </div>
-            <div class="mb-3">
-                <label class="form-label fw-bold">Total Pago:</label>
-                <p class="text-success fw-bold">R$ 59,80</p>
-            </div>
-        `;
-    }, 500);
+    // Carregar detalhes via AJAX
+    fetch(`/groups/{{ group.id }}/subscribers/${subId}/details`)
+        .then(response => response.text())
+        .then(html => {
+            document.querySelector('#detailsModal .modal-body').innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Erro ao carregar detalhes:', error);
+            document.querySelector('#detailsModal .modal-body').innerHTML = 
+                '<div class="alert alert-danger">Erro ao carregar detalhes</div>';
+        });
 }
 
-function sendReminder(subscriptionId) {
-    if (confirm('Enviar lembrete de renovação para este assinante?')) {
-        // Em produção, fazer requisição AJAX
-        alert('Lembrete enviado com sucesso!');
-    }
-}
-
-function cancelSubscription(subscriptionId) {
-    if (confirm('Tem certeza que deseja cancelar esta assinatura? O usuário será removido do grupo.')) {
-        // Em produção, fazer requisição AJAX
-        alert('Assinatura cancelada!');
-        location.reload();
-    }
-}
-
-function exportSubscribers() {
-    // Em produção, fazer download do CSV
-    alert('Exportando lista de assinantes...');
-}
+// Auto-submit do formulário quando mudar os filtros
+document.querySelectorAll('select[name="status"], select[name="plan_id"]').forEach(select => {
+    select.addEventListener('change', function() {
+        this.closest('form').submit();
+    });
+});
 </script>
 {% endblock %}

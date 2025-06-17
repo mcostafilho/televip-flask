@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, Response
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, Response, session
 from flask_login import login_required, current_user
 from app import db
 from app.models import Group, PricingPlan, Subscription, Transaction
-from datetime import datetime
+from datetime import datetime, timedelta
+from sqlalchemy import func
 import requests
 import os
 import csv
@@ -22,6 +23,14 @@ def list():
             group_id=group.id,
             status='active'
         ).count()
+        
+        # Calcular receita total do grupo
+        group.total_revenue = db.session.query(func.sum(Transaction.amount)).join(
+            Subscription
+        ).filter(
+            Subscription.group_id == group.id,
+            Transaction.status == 'completed'
+        ).scalar() or 0
     
     return render_template('dashboard/groups.html', groups=groups)
 
@@ -33,7 +42,7 @@ def create():
         # Dados básicos do grupo
         name = request.form.get('name', '').strip()
         description = request.form.get('description', '').strip()
-        telegram_id = request.form.get('telegram_id', '').strip()  # Remove espaços
+        telegram_id = request.form.get('telegram_id', '').strip()
         invite_link = request.form.get('invite_link', '').strip()
         
         # Debug: imprimir dados recebidos
@@ -144,13 +153,6 @@ def create():
                 else:
                     print("⚠️ Telegram ID não fornecido!")
                     flash('⚠️ ID do Telegram não fornecido.', 'warning')
-                
-                return render_template('dashboard/group_form.html', 
-                                     group=None,
-                                     show_success_modal=False)
-        
-        # Se chegou aqui, pode criar o grupo
-        print("\n✅ Criando grupo no banco de dados...")
         
         # Criar grupo
         group = Group(
@@ -163,17 +165,15 @@ def create():
         )
         
         db.session.add(group)
-        db.session.flush()  # Para obter o ID do grupo
+        db.session.commit()
         
         # Adicionar planos
         plan_names = request.form.getlist('plan_name[]')
         plan_durations = request.form.getlist('plan_duration[]')
         plan_prices = request.form.getlist('plan_price[]')
         
-        print(f"\n📋 Adicionando {len(plan_names)} planos...")
-        
         for i in range(len(plan_names)):
-            if plan_names[i]:  # Verificar se o nome não está vazio
+            if plan_names[i]:
                 plan = PricingPlan(
                     group_id=group.id,
                     name=plan_names[i],
@@ -182,10 +182,15 @@ def create():
                     is_active=True
                 )
                 db.session.add(plan)
-                print(f"   ✅ Plano adicionado: {plan_names[i]}")
         
         db.session.commit()
-        print(f"\n✅ Grupo '{group.name}' criado com sucesso! ID: {group.id}")
+        print(f"✅ Grupo criado com sucesso! ID: {group.id}")
+        
+        # Gerar link do bot
+        bot_username = os.getenv('BOT_USERNAME', 'televipbra_bot')
+        bot_link = f"https://t.me/{bot_username}?start=g_{group.telegram_id}"
+        
+        flash(f'Grupo "{group.name}" criado com sucesso!', 'success')
         
         # Renderizar template com modal de sucesso
         return render_template('dashboard/group_form.html', 
@@ -193,98 +198,22 @@ def create():
                              show_success_modal=True,
                              new_group_name=group.name,
                              new_group_telegram_id=group.telegram_id,
-                             bot_username=os.getenv('BOT_USERNAME', 'televipbra_bot'))
+                             bot_link=bot_link)
     
     return render_template('dashboard/group_form.html', 
                          group=None,
                          show_success_modal=False)
 
-@bp.route('/test-telegram')
+@bp.route('/clear-success-modal', methods=['POST'])
 @login_required
-def test_telegram():
-    """Rota de teste para verificar conexão com Telegram"""
-    import json
-    
-    bot_token = os.getenv('BOT_TOKEN')
-    
-    result = {
-        "bot_token_exists": bool(bot_token),
-        "bot_token_length": len(bot_token) if bot_token else 0,
-        "bot_token_preview": f"{bot_token[:10]}...{bot_token[-5:]}" if bot_token else None,
-        "environment": os.getenv('FLASK_ENV', 'not set'),
-        "tests": []
-    }
-    
-    if not bot_token:
-        result["error"] = "BOT_TOKEN não configurado no .env"
-        return jsonify(result), 500
-    
-    # Teste 1: getMe
-    try:
-        response = requests.get(
-            f"https://api.telegram.org/bot{bot_token}/getMe",
-            timeout=5
-        )
-        
-        test1 = {
-            "test": "getMe",
-            "status_code": response.status_code,
-            "success": response.status_code == 200
-        }
-        
-        if response.status_code == 200:
-            data = response.json()
-            if data.get('ok'):
-                test1["bot_info"] = data.get('result', {})
-        else:
-            test1["error"] = response.text
-            
-        result["tests"].append(test1)
-        
-    except Exception as e:
-        result["tests"].append({
-            "test": "getMe",
-            "success": False,
-            "error": str(e)
-        })
-    
-    # Teste 2: Verificar grupo específico
-    test_group_id = request.args.get('group_id', '-1002896357742')
-    
-    try:
-        response = requests.get(
-            f"https://api.telegram.org/bot{bot_token}/getChat",
-            params={"chat_id": test_group_id},
-            timeout=5
-        )
-        
-        test2 = {
-            "test": f"getChat ({test_group_id})",
-            "status_code": response.status_code,
-            "success": response.status_code == 200
-        }
-        
-        if response.status_code == 200:
-            data = response.json()
-            if data.get('ok'):
-                test2["chat_info"] = data.get('result', {})
-        else:
-            test2["error"] = response.text
-            
-        result["tests"].append(test2)
-        
-    except Exception as e:
-        result["tests"].append({
-            "test": f"getChat ({test_group_id})",
-            "success": False,
-            "error": str(e)
-        })
-    
-    # Determinar status geral
-    all_success = all(test.get('success', False) for test in result["tests"])
-    result["overall_success"] = all_success
-    
-    return jsonify(result), 200 if all_success else 500
+def clear_success_modal():
+    """Limpar flags do modal de sucesso da sessão"""
+    session.pop('show_success_modal', None)
+    session.pop('new_group_name', None)
+    session.pop('new_group_id', None)
+    session.pop('new_group_telegram_id', None)
+    session.pop('bot_link', None)
+    return '', 204
 
 @bp.route('/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -407,7 +336,6 @@ def subscribers(id):
     }
     
     # Calcular expirados em breve
-    from datetime import timedelta
     seven_days_later = datetime.utcnow() + timedelta(days=7)
     stats['expiring_soon'] = Subscription.query.filter(
         Subscription.group_id == id,
@@ -524,3 +452,6 @@ def stats(id):
     # Implementar estatísticas detalhadas
     # Por enquanto, redirecionar para assinantes
     return redirect(url_for('groups.subscribers', id=id))
+
+# Adicionar imports necessários no topo do arquivo
+from sqlalchemy import func

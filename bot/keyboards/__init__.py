@@ -1,0 +1,3 @@
+"""
+Teclados do Bot TeleVIP
+"""
