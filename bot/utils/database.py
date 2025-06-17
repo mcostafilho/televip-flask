@@ -4,7 +4,7 @@ Utilitários para conexão com banco de dados
 import os
 import sys
 from contextlib import contextmanager
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text, text, text
 from sqlalchemy.orm import sessionmaker, Session
 from dotenv import load_dotenv
 
@@ -41,3 +41,19 @@ def get_db_session() -> Session:
         raise
     finally:
         session.close()
+
+# Função helper para executar queries SQL raw
+def execute_sql(session, query_string):
+    """Executar query SQL raw usando text()"""
+    return session.execute(text(query_string))
+
+# Função para testar conexão
+def test_connection():
+    """Testar conexão com o banco de dados"""
+    try:
+        with get_db_session() as session:
+            result = execute_sql(session, "SELECT 1")
+            return True
+    except Exception as e:
+        print(f"Erro ao conectar com banco: {e}")
+        return False
