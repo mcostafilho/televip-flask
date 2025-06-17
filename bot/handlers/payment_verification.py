@@ -1,5 +1,6 @@
+# bot/handlers/payment_verification.py
 """
-Sistema de verificação de status de pagamento
+Sistema de verificação de status de pagamento - VERSÃO CORRIGIDA
 """
 import logging
 from datetime import datetime, timedelta
@@ -14,26 +15,30 @@ from app.models import Group, Subscription, Transaction, Creator
 logger = logging.getLogger(__name__)
 
 async def check_payment_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Verificar status do pagamento e processar se necessário"""
+    """Verificar status do pagamento - VERSÃO CORRIGIDA"""
     query = update.callback_query
     await query.answer("🔄 Verificando pagamento...")
     
     user = query.from_user
+    logger.info(f"Verificando pagamento para usuário {user.id}")
     
     with get_db_session() as session:
-        # Buscar transações recentes do usuário (últimos 30 minutos)
+        # Buscar transações recentes do usuário (últimas 2 horas)
         recent_transactions = session.query(Transaction).join(
             Subscription
         ).filter(
             Subscription.telegram_user_id == str(user.id),
-            Transaction.created_at >= datetime.utcnow() - timedelta(minutes=30)
+            Transaction.created_at >= datetime.utcnow() - timedelta(hours=2)
         ).order_by(Transaction.created_at.desc()).all()
+        
+        logger.info(f"Encontradas {len(recent_transactions)} transações recentes")
         
         # Verificar se alguma transação está completa
         completed_transaction = None
         pending_transaction = None
         
         for transaction in recent_transactions:
+            logger.info(f"Transação {transaction.id}: status={transaction.status}")
             if transaction.status == 'completed':
                 completed_transaction = transaction
                 break
@@ -42,30 +47,56 @@ async def check_payment_status(update: Update, context: ContextTypes.DEFAULT_TYP
         
         if completed_transaction:
             # Pagamento já confirmado
+            logger.info("Pagamento já confirmado, mostrando sucesso")
             await handle_confirmed_payment(query, context, completed_transaction, session)
         elif pending_transaction:
             # Verificar com Stripe se o pagamento foi processado
-            if pending_transaction.payment_id:
-                payment_verified = await verify_payment(pending_transaction.payment_id)
-                if payment_verified:
-                    # Atualizar status
-                    pending_transaction.status = 'completed'
-                    pending_transaction.subscription.status = 'active'
+            logger.info(f"Verificando transação pendente {pending_transaction.id}")
+            
+            # Tentar múltiplos IDs
+            payment_id = (
+                pending_transaction.stripe_session_id or 
+                pending_transaction.payment_id or 
+                pending_transaction.stripe_payment_intent_id
+            )
+            
+            if payment_id:
+                logger.info(f"Verificando no Stripe: {payment_id}")
+                try:
+                    payment_verified = await verify_payment(payment_id)
                     
-                    # Atualizar saldo do criador
-                    group = pending_transaction.subscription.group
-                    creator = group.creator
-                    creator.available_balance += pending_transaction.net_amount
-                    
-                    session.commit()
-                    
-                    await handle_confirmed_payment(query, context, pending_transaction, session)
-                else:
+                    if payment_verified:
+                        logger.info("Pagamento verificado no Stripe! Atualizando...")
+                        
+                        # Atualizar status localmente
+                        pending_transaction.status = 'completed'
+                        pending_transaction.paid_at = datetime.utcnow()
+                        
+                        subscription = pending_transaction.subscription
+                        subscription.status = 'active'
+                        
+                        # Atualizar saldo do criador
+                        group = subscription.group
+                        creator = group.creator
+                        creator.available_balance = creator.available_balance or 0
+                        creator.available_balance += pending_transaction.net_amount
+                        
+                        session.commit()
+                        logger.info("Status atualizado com sucesso")
+                        
+                        await handle_confirmed_payment(query, context, pending_transaction, session)
+                    else:
+                        logger.info("Pagamento ainda não confirmado no Stripe")
+                        await show_still_processing(query, context)
+                except Exception as e:
+                    logger.error(f"Erro ao verificar pagamento: {e}")
                     await show_still_processing(query, context)
             else:
+                logger.warning("Nenhum ID de pagamento encontrado")
                 await show_still_processing(query, context)
         else:
             # Nenhuma transação encontrada
+            logger.info("Nenhuma transação encontrada")
             await show_no_payment_found(query, context)
 
 async def handle_confirmed_payment(query, context, transaction, session):
@@ -73,6 +104,8 @@ async def handle_confirmed_payment(query, context, transaction, session):
     subscription = transaction.subscription
     group = subscription.group
     user = query.from_user
+    
+    logger.info(f"Processando pagamento confirmado para grupo {group.name}")
     
     # Tentar adicionar ao grupo
     added_to_group = False
@@ -101,10 +134,11 @@ async def handle_confirmed_payment(query, context, transaction, session):
             # Salvar link na assinatura
             subscription.invite_link = invite_link
             session.commit()
+            logger.info("Link de convite criado com sucesso")
         except Exception as e:
             logger.error(f"Erro ao criar link de convite: {e}")
     
-    # Preparar mensagem
+    # Preparar mensagem baseada no resultado
     if added_to_group:
         text = f"""
 ✅ **Pagamento Confirmado!**
@@ -115,21 +149,22 @@ async def handle_confirmed_payment(query, context, transaction, session):
 • Plano: {subscription.plan.name}
 • Válida até: {subscription.end_date.strftime('%d/%m/%Y')}
 • Status: Ativa ✅
+• ID: #{subscription.id}
 
 📱 **Como acessar:**
 1. Abra o Telegram
 2. Vá para seus chats
 3. O grupo já deve estar lá!
 
-💡 Dica: Ative as notificações do grupo!
+💡 **Dica:** Fixe o grupo para acesso rápido!
 """
         keyboard = [
             [
                 InlineKeyboardButton("📱 Abrir Telegram", url="tg://"),
-                InlineKeyboardButton("📊 Ver Assinaturas", callback_data="check_status")
+                InlineKeyboardButton("📊 Minhas Assinaturas", callback_data="check_status")
             ],
             [
-                InlineKeyboardButton("🔍 Descobrir Mais", callback_data="discover")
+                InlineKeyboardButton("🔍 Descobrir Mais Grupos", callback_data="discover")
             ]
         ]
     elif invite_link:
@@ -144,21 +179,20 @@ async def handle_confirmed_payment(query, context, transaction, session):
 • ID: #{subscription.id}
 
 🔗 **Seu Link de Acesso Exclusivo:**
-{invite_link}
+`{invite_link}`
 
 ⚠️ **IMPORTANTE:**
-• Link válido por 24 horas
-• Uso único - não compartilhe!
-• Salve o link do grupo após entrar
-
-Clique no botão abaixo para entrar:
+• Este link é válido por 24 horas
+• Pode ser usado apenas 1 vez
+• Clique no botão abaixo ou copie o link
+• Salve o link do grupo após entrar!
 """
         keyboard = [
             [
                 InlineKeyboardButton("🚀 Entrar no Grupo Agora", url=invite_link)
             ],
             [
-                InlineKeyboardButton("📊 Ver Assinaturas", callback_data="check_status"),
+                InlineKeyboardButton("📊 Minhas Assinaturas", callback_data="check_status"),
                 InlineKeyboardButton("🔍 Descobrir Mais", callback_data="discover")
             ]
         ]
@@ -168,18 +202,20 @@ Clique no botão abaixo para entrar:
 
 Sua assinatura para **{group.name}** está ativa!
 
-⚠️ Houve um problema ao gerar o link de acesso.
+⚠️ **Atenção:** Houve um problema ao gerar o link de acesso.
 
-Por favor, entre em contato:
+**Por favor, entre em contato:**
 • Com o criador: @{group.creator.username or group.creator.name}
-• Com nosso suporte
+• Com nosso suporte: @suporte_televip
 
-Sua assinatura está válida até: {subscription.end_date.strftime('%d/%m/%Y')}
+**Informações da assinatura:**
+• ID: #{subscription.id}
+• Válida até: {subscription.end_date.strftime('%d/%m/%Y')}
 """
         keyboard = [
             [
                 InlineKeyboardButton("📞 Suporte", url="https://t.me/suporte_televip"),
-                InlineKeyboardButton("📊 Ver Assinaturas", callback_data="check_status")
+                InlineKeyboardButton("📊 Minhas Assinaturas", callback_data="check_status")
             ]
         ]
     
@@ -196,9 +232,11 @@ async def show_still_processing(query, context):
 
 Seu pagamento ainda está sendo processado pelo sistema.
 
-Isso é normal e geralmente leva alguns segundos.
+**Status:** 🔄 Verificando com o processador...
 
 ⏱️ **Tempo estimado:** 1-2 minutos
+
+💡 **Dica:** Se você acabou de fazer o pagamento, aguarde alguns segundos e clique em "Verificar Novamente".
 
 Se passar de 5 minutos, entre em contato com o suporte.
 """
@@ -208,7 +246,7 @@ Se passar de 5 minutos, entre em contato com o suporte.
         ],
         [
             InlineKeyboardButton("📞 Suporte", url="https://t.me/suporte_televip"),
-            InlineKeyboardButton("📊 Ver Assinaturas", callback_data="check_status")
+            InlineKeyboardButton("🏠 Menu Principal", callback_data="back_to_start")
         ]
     ]
     
@@ -223,19 +261,19 @@ async def show_no_payment_found(query, context):
     text = """
 ❓ **Nenhum Pagamento Recente Encontrado**
 
-Não encontramos nenhum pagamento seu nos últimos 30 minutos.
+Não encontramos nenhum pagamento seu nas últimas 2 horas.
 
 **Possíveis razões:**
-• O pagamento pode ter sido cancelado
-• Houve um erro no processamento
+• O pagamento foi cancelado antes de concluir
 • Você usou outro usuário do Telegram
+• O pagamento ainda não foi registrado
 
 **O que fazer:**
-• Tente realizar o pagamento novamente
-• Verifique seu extrato bancário
-• Entre em contato com o suporte
+• Se acabou de pagar, aguarde 1 minuto e tente novamente
+• Verifique seu extrato bancário/cartão
+• Se foi cobrado, entre em contato com suporte
 
-Use /descobrir para ver grupos disponíveis.
+💡 Use /descobrir para ver grupos disponíveis
 """
     keyboard = [
         [
@@ -243,7 +281,8 @@ Use /descobrir para ver grupos disponíveis.
             InlineKeyboardButton("📞 Suporte", url="https://t.me/suporte_televip")
         ],
         [
-            InlineKeyboardButton("🔄 Verificar Novamente", callback_data="check_payment_status")
+            InlineKeyboardButton("🔄 Verificar Novamente", callback_data="check_payment_status"),
+            InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")
         ]
     ]
     
@@ -255,28 +294,45 @@ Use /descobrir para ver grupos disponíveis.
 
 async def handle_stripe_webhook_payment_complete(payment_intent_id: str, bot):
     """Processar webhook do Stripe quando pagamento é confirmado"""
+    logger.info(f"Processando webhook para payment_intent: {payment_intent_id}")
+    
     with get_db_session() as session:
-        # Buscar transação pelo payment_intent_id
-        transaction = session.query(Transaction).filter_by(
-            payment_id=payment_intent_id,
-            status='pending'
-        ).first()
+        # Buscar transação por múltiplos campos
+        transaction = (
+            session.query(Transaction).filter_by(
+                stripe_payment_intent_id=payment_intent_id
+            ).first() or
+            session.query(Transaction).filter_by(
+                payment_id=payment_intent_id
+            ).first() or
+            session.query(Transaction).filter_by(
+                stripe_session_id=payment_intent_id
+            ).first()
+        )
         
         if not transaction:
             logger.warning(f"Transação não encontrada para payment_intent: {payment_intent_id}")
             return
         
+        if transaction.status == 'completed':
+            logger.info("Transação já processada")
+            return
+        
         # Atualizar status
         transaction.status = 'completed'
+        transaction.paid_at = datetime.utcnow()
+        
         subscription = transaction.subscription
         subscription.status = 'active'
         
         # Atualizar saldo do criador
         group = subscription.group
         creator = group.creator
+        creator.available_balance = creator.available_balance or 0
         creator.available_balance += transaction.net_amount
         
         session.commit()
+        logger.info("Transação atualizada via webhook")
         
         # Tentar notificar usuário via Telegram
         try:
@@ -300,6 +356,8 @@ Você foi adicionado automaticamente ao grupo **{group.name}**!
 Abra o Telegram e procure o grupo nos seus chats.
 
 Sua assinatura está ativa até: {subscription.end_date.strftime('%d/%m/%Y')}
+
+Use /start para ver todas suas assinaturas.
 """,
                     parse_mode=ParseMode.MARKDOWN
                 )
@@ -323,6 +381,8 @@ Sua assinatura para **{group.name}** está ativa!
 {invite_link_obj.invite_link}
 
 ⚠️ Este link expira em 24 horas!
+
+Use /start para ver todas suas assinaturas.
 """,
                         parse_mode=ParseMode.MARKDOWN
                     )
@@ -330,4 +390,4 @@ Sua assinatura para **{group.name}** está ativa!
                     logger.error(f"Erro ao notificar usuário {user_id}")
                     
         except Exception as e:
-            logger.error(f"Erro ao processar webhook: {e}")
+            logger.error(f"Erro ao processar notificação: {e}")

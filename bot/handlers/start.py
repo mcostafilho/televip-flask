@@ -1,15 +1,17 @@
+# bot/handlers/start.py
 """
 Handler do comando /start com suporte multi-criador
+CORREÇÃO: Adicionar verificação de transações pendentes
 """
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
 
 from bot.utils.database import get_db_session
 from bot.keyboards.menus import get_main_menu, get_plans_menu
-from app.models import Group, Creator, PricingPlan, Subscription
+from app.models import Group, Creator, PricingPlan, Subscription, Transaction
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +44,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await show_user_dashboard(update, context)
 
 async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Mostrar dashboard com assinaturas do usuário"""
+    """Mostrar dashboard com assinaturas do usuário - VERSÃO CORRIGIDA"""
     # Detectar se veio de comando ou callback
     if update.callback_query:
         user = update.callback_query.from_user
@@ -54,6 +56,54 @@ async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE
         is_callback = False
     
     with get_db_session() as session:
+        # NOVA VERIFICAÇÃO: Buscar transações pendentes
+        if not context.user_data.get('skip_pending_check'):
+            pending_transactions = session.query(Transaction).join(
+                Subscription
+            ).filter(
+                Subscription.telegram_user_id == str(user.id),
+                Transaction.status == 'pending',
+                Transaction.created_at >= datetime.utcnow() - timedelta(hours=2)
+            ).all()
+            
+            if pending_transactions:
+                logger.info(f"Encontradas {len(pending_transactions)} transações pendentes para usuário {user.id}")
+                
+                # Mostrar botão para verificar pagamento
+                text = f"""
+👋 Olá {user.first_name}!
+
+🔄 **Detectamos um pagamento pendente!**
+
+Parece que você tem um pagamento em processamento. 
+
+💡 Se você acabou de fazer um pagamento, clique no botão abaixo para verificar o status.
+
+Se não fez nenhum pagamento recentemente, pode continuar para o menu principal.
+"""
+                keyboard = [
+                    [
+                        InlineKeyboardButton("🔄 Verificar Pagamento", callback_data="check_payment_status")
+                    ],
+                    [
+                        InlineKeyboardButton("🏠 Continuar para Menu", callback_data="continue_to_menu")
+                    ]
+                ]
+                
+                if is_callback:
+                    await message.edit_text(
+                        text,
+                        parse_mode=ParseMode.MARKDOWN,
+                        reply_markup=InlineKeyboardMarkup(keyboard)
+                    )
+                else:
+                    await message.reply_text(
+                        text,
+                        parse_mode=ParseMode.MARKDOWN,
+                        reply_markup=InlineKeyboardMarkup(keyboard)
+                    )
+                return
+        
         # Buscar todas as assinaturas do usuário
         subscriptions = session.query(Subscription).filter_by(
             telegram_user_id=str(user.id),
@@ -78,7 +128,7 @@ Sou seu assistente para gerenciar assinaturas de grupos VIP no Telegram.
 💡 **Como começar:**
 Use /descobrir para explorar grupos disponíveis ou clique em um link de convite de um criador.
 
-Precisa de ajuda? Use /help
+Precisa de ajuda? Use /help ou clique no botão abaixo.
 """
             keyboard = [
                 [
@@ -86,69 +136,39 @@ Precisa de ajuda? Use /help
                     InlineKeyboardButton("❓ Ajuda", callback_data="help")
                 ]
             ]
-            
         else:
             # Usuário com assinaturas - mostrar dashboard
-            text = f"👋 Olá {user.first_name}!\n\n"
-            text += f"📊 **Suas Assinaturas Ativas ({len(subscriptions)}):**\n\n"
-            
-            total_value = 0
-            need_renewal = []
-            
-            for i, sub in enumerate(subscriptions, 1):
-                group = sub.group
-                creator = group.creator
-                plan = sub.plan
+            text = f"""
+👋 Olá {user.first_name}!
+
+📊 **Suas Assinaturas Ativas:** {len(subscriptions)}
+
+"""
+            # Listar assinaturas ativas
+            for sub in subscriptions[:5]:  # Mostrar até 5
                 days_left = (sub.end_date - datetime.utcnow()).days
+                status_emoji = "🟢" if days_left > 7 else "🟡" if days_left > 3 else "🔴"
                 
-                # Calcular valor total
-                total_value += plan.price
-                
-                # Emoji baseado nos dias restantes
-                if days_left > 7:
-                    emoji = "🟢"
-                elif days_left > 3:
-                    emoji = "🟡"
-                    need_renewal.append(sub)
-                else:
-                    emoji = "🔴"
-                    need_renewal.append(sub)
-                
-                text += f"{i}. {emoji} **{group.name}**\n"
-                text += f"   👤 Criador: @{creator.username or creator.name}\n"
-                text += f"   💰 Plano: {plan.name} (R$ {plan.price:.2f})\n"
-                text += f"   📅 Expira em: {days_left} dias\n"
-                
-                if days_left <= 7:
-                    text += f"   ⚠️ **Renovar em breve!**\n"
-                
-                text += "\n"
+                text += f"{status_emoji} **{sub.group.name}**\n"
+                text += f"   Plano: {sub.plan.name}\n"
+                text += f"   Expira em: {days_left} dias\n\n"
             
-            # Resumo financeiro
-            text += f"💎 **Valor total mensal:** R$ {total_value:.2f}\n"
+            if len(subscriptions) > 5:
+                text += f"... e mais {len(subscriptions) - 5} assinaturas\n\n"
             
-            # Botões de ação
-            keyboard = []
+            text += "Use /status para ver detalhes completos."
             
-            if need_renewal:
-                keyboard.append([
-                    InlineKeyboardButton(
-                        f"🔄 Renovar ({len(need_renewal)})",
-                        callback_data="check_renewals"
-                    ),
-                    InlineKeyboardButton("📊 Ver Detalhes", callback_data="check_status")
-                ])
-            else:
-                keyboard.append([
-                    InlineKeyboardButton("📊 Ver Detalhes", callback_data="check_status")
-                ])
-            
-            keyboard.append([
-                InlineKeyboardButton("🔍 Descobrir Mais", callback_data="discover"),
-                InlineKeyboardButton("⚙️ Configurações", callback_data="settings")
-            ])
+            keyboard = [
+                [
+                    InlineKeyboardButton("📊 Ver Todas", callback_data="check_status"),
+                    InlineKeyboardButton("🔍 Descobrir Mais", callback_data="discover")
+                ],
+                [
+                    InlineKeyboardButton("❓ Ajuda", callback_data="help")
+                ]
+            ]
         
-        # Enviar ou editar mensagem baseado no contexto
+        # Enviar ou editar mensagem
         if is_callback:
             await message.edit_text(
                 text,
@@ -166,60 +186,43 @@ async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_
     """Iniciar fluxo de assinatura para um grupo específico"""
     user = update.effective_user
     
+    try:
+        group_id = int(group_id)
+    except ValueError:
+        await update.message.reply_text("❌ Link inválido.")
+        return
+    
     with get_db_session() as session:
         # Buscar grupo
-        group = session.query(Group).filter_by(telegram_id=group_id).first()
-        
-        if not group:
-            await update.message.reply_text(
-                "❌ Grupo não encontrado.\n\n"
-                "Verifique se o link está correto ou entre em contato com o criador.",
-                parse_mode=ParseMode.MARKDOWN
-            )
-            return
-        
-        if not group.is_active:
-            await update.message.reply_text(
-                "🚫 Este grupo não está aceitando novas assinaturas no momento.\n\n"
-                "Entre em contato com o criador para mais informações.",
-                parse_mode=ParseMode.MARKDOWN
-            )
+        group = session.query(Group).get(group_id)
+        if not group or not group.is_active:
+            await update.message.reply_text("❌ Grupo não encontrado ou inativo.")
             return
         
         # Verificar se já tem assinatura ativa
         existing_sub = session.query(Subscription).filter_by(
-            group_id=group.id,
+            group_id=group_id,
             telegram_user_id=str(user.id),
             status='active'
         ).first()
         
         if existing_sub:
             days_left = (existing_sub.end_date - datetime.utcnow()).days
-            plan = existing_sub.plan
-            
             text = f"""
-✅ **Você já possui uma assinatura ativa!**
+✅ **Você já é assinante!**
 
 **Grupo:** {group.name}
-**Plano:** {plan.name}
-**Valor:** R$ {plan.price:.2f}
+**Plano atual:** {existing_sub.plan.name}
 **Dias restantes:** {days_left}
-**Expira em:** {existing_sub.end_date.strftime('%d/%m/%Y')}
 
-{'⚠️ **Sua assinatura expira em breve!** Considere renovar.' if days_left <= 7 else ''}
+Sua assinatura expira em: {existing_sub.end_date.strftime('%d/%m/%Y')}
 """
-            
-            keyboard = []
-            
-            if days_left <= 7:
-                keyboard.append([
-                    InlineKeyboardButton("🔄 Renovar Agora", callback_data=f"renew_{existing_sub.id}")
-                ])
-            
-            keyboard.extend([
-                [InlineKeyboardButton("📊 Ver Todas Assinaturas", callback_data="check_status")],
-                [InlineKeyboardButton("🔍 Descobrir Outros Grupos", callback_data="discover")]
-            ])
+            keyboard = [
+                [
+                    InlineKeyboardButton("📊 Ver Status", callback_data="check_status"),
+                    InlineKeyboardButton("🏠 Menu Principal", callback_data="back_to_start")
+                ]
+            ]
             
             await update.message.reply_text(
                 text,
@@ -228,100 +231,62 @@ async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_
             )
             return
         
-        # Buscar planos do grupo
+        # Buscar planos disponíveis
         plans = session.query(PricingPlan).filter_by(
-            group_id=group.id,
+            group_id=group_id,
             is_active=True
-        ).order_by(PricingPlan.duration_days).all()
+        ).order_by(PricingPlan.price).all()
         
         if not plans:
-            await update.message.reply_text(
-                "❌ Este grupo ainda não tem planos configurados.\n\n"
-                "Entre em contato com o criador para mais informações.",
-                parse_mode=ParseMode.MARKDOWN
-            )
+            await update.message.reply_text("❌ Nenhum plano disponível para este grupo.")
             return
         
         # Mostrar informações do grupo e planos
         creator = group.creator
-        
-        # Contar assinantes ativos
-        active_subscribers = session.query(Subscription).filter_by(
-            group_id=group.id,
-            status='active'
-        ).count()
-        
         text = f"""
 🎯 **{group.name}**
 
-👤 **Criador:** @{creator.username or creator.name}
-👥 **Assinantes:** {active_subscribers}
-📝 **Descrição:** {group.description or 'Grupo VIP com conteúdo exclusivo'}
+👤 **Criador:** {creator.name}
+📝 **Descrição:** {group.description}
+👥 **Assinantes:** {group.total_subscribers}
 
-💎 **Escolha seu plano:**
+💎 **Planos disponíveis:**
 """
         
-        # Adicionar informações dos planos
+        keyboard = []
         for plan in plans:
-            price_per_day = plan.price / plan.duration_days
+            text += f"\n📌 **{plan.name}** - R$ {plan.price:.2f}"
+            text += f"\n   ⏱ {plan.duration_days} dias"
+            text += f"\n   {plan.description}\n"
             
-            text += f"\n📅 **{plan.name}**\n"
-            text += f"   💵 R$ {plan.price:.2f}"
-            
-            if plan.duration_days == 30:
-                text += " por mês"
-            elif plan.duration_days == 90:
-                text += " por trimestre"
-                monthly_equivalent = plan.price / 3
-                text += f"\n   💰 Equivale a R$ {monthly_equivalent:.2f}/mês"
-            elif plan.duration_days == 365:
-                text += " por ano"
-                monthly_equivalent = plan.price / 12
-                text += f"\n   💰 Equivale a R$ {monthly_equivalent:.2f}/mês"
-            else:
-                text += f" por {plan.duration_days} dias"
-            
-            text += f"\n   📊 R$ {price_per_day:.2f} por dia\n"
+            keyboard.append([
+                InlineKeyboardButton(
+                    f"💳 {plan.name} - R$ {plan.price:.2f}",
+                    callback_data=f"plan_{group_id}_{plan.id}"
+                )
+            ])
         
-        text += "\n✅ Pagamento seguro via Stripe\n"
-        text += "🔄 Cancele quando quiser\n"
-        text += "📱 Acesso imediato após pagamento"
-        
-        # Criar teclado com os planos
-        keyboard = get_plans_menu(plans, group.id)
+        keyboard.append([
+            InlineKeyboardButton("❌ Cancelar", callback_data="cancel")
+        ])
         
         await update.message.reply_text(
             text,
             parse_mode=ParseMode.MARKDOWN,
-            reply_markup=keyboard
+            reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Comando de ajuda detalhado"""
+    """Comando de ajuda"""
     help_text = """
 📋 **Central de Ajuda TeleVIP**
 
-**🔸 Comandos para Assinantes:**
+**🔸 Comandos Disponíveis:**
 
-/start - Painel principal com suas assinaturas
-/status - Status detalhado de todas assinaturas
-/planos - Listar seus planos ativos
-/descobrir - Explorar novos grupos disponíveis
-/help - Mostrar esta mensagem de ajuda
-
-**🔹 Comandos para Criadores:**
-
-/setup - Configurar o bot em seu grupo
-/stats - Ver estatísticas detalhadas
-/broadcast - Enviar mensagem para assinantes
-/saques - Gerenciar saques
-
-**💡 Dicas Úteis:**
-
-• 🔔 Ative as notificações para não perder avisos importantes
-• 💰 Renove com antecedência e ganhe descontos
-• 🔍 Use /descobrir para encontrar conteúdo novo
-• 📱 Salve os links dos grupos para acesso rápido
+/start - Menu principal e suas assinaturas
+/status - Detalhes de todas suas assinaturas
+/descobrir - Explorar grupos disponíveis
+/help - Esta mensagem de ajuda
 
 **❓ Perguntas Frequentes:**
 
@@ -338,7 +303,7 @@ Sim, quando sua assinatura atual expirar
 Sim, usamos Stripe para processar pagamentos
 
 **📞 Suporte:**
-• Problemas com pagamento: suporte@televip.com
+• Problemas com pagamento: @suporte_televip
 • Dúvidas sobre conteúdo: contate o criador do grupo
 
 🔒 Seus dados estão seguros e protegidos.

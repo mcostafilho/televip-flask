@@ -5,8 +5,6 @@ import os
 import logging
 import requests
 from app import db
-from app.services.stripe_service import StripeService
-from app.services.payment_service import PaymentService
 from app.models import Transaction, Subscription, Creator, Group
 from datetime import datetime
 
@@ -59,81 +57,115 @@ def stripe_webhook():
     return jsonify({'status': 'success'}), 200
 
 def handle_checkout_session_completed(session):
-    """Processar sessão de checkout completa com taxas corretas"""
+    """Processar sessão de checkout completa - VERSÃO CORRIGIDA"""
     logger.info(f"=== PROCESSANDO CHECKOUT SESSION ===")
     logger.info(f"Session ID: {session['id']}")
     logger.info(f"Payment status: {session.get('payment_status')}")
     
-    # Extrair metadata
-    metadata = session.get('metadata', {})
-    subscription_id = metadata.get('subscription_id')
-    transaction_id = metadata.get('transaction_id')
+    # Buscar transação usando múltiplas estratégias
+    transaction = None
     
-    if not subscription_id:
-        logger.error("No subscription_id in metadata")
+    # 1. Tentar buscar por stripe_session_id
+    transaction = Transaction.query.filter_by(
+        stripe_session_id=session['id']
+    ).first()
+    
+    if not transaction:
+        # 2. Tentar buscar por payment_id
+        transaction = Transaction.query.filter_by(
+            payment_id=session['id']
+        ).first()
+    
+    if not transaction:
+        # 3. Tentar buscar por payment_intent_id
+        payment_intent_id = session.get('payment_intent')
+        if payment_intent_id:
+            transaction = Transaction.query.filter_by(
+                stripe_payment_intent_id=payment_intent_id
+            ).first()
+    
+    if not transaction:
+        # 4. Última tentativa - buscar transação pendente recente
+        # Pegar metadata do session se disponível
+        metadata = session.get('metadata', {})
+        user_id = metadata.get('user_id')
+        
+        if user_id:
+            # Buscar por usuário e status pendente
+            from sqlalchemy import and_, desc
+            transaction = Transaction.query.join(
+                Subscription
+            ).filter(
+                and_(
+                    Subscription.telegram_user_id == user_id,
+                    Transaction.status == 'pending',
+                    Transaction.created_at >= datetime.utcnow() - timedelta(hours=1)
+                )
+            ).order_by(desc(Transaction.created_at)).first()
+    
+    if not transaction:
+        logger.error(f"Transação não encontrada para session: {session['id']}")
+        logger.error(f"Metadata: {session.get('metadata', {})}")
         return
     
-    # Buscar assinatura
-    subscription = Subscription.query.get(subscription_id)
-    if not subscription:
-        logger.error(f"Subscription {subscription_id} not found")
+    logger.info(f"Transação encontrada: ID={transaction.id}")
+    
+    # Verificar se já foi processada
+    if transaction.status == 'completed':
+        logger.info(f"Transação {transaction.id} já foi processada")
         return
     
     # Valor em centavos para reais
     amount = session.get('amount_total', 0) / 100
     
-    # Buscar ou criar transação
-    if transaction_id:
-        transaction = Transaction.query.get(transaction_id)
-    else:
-        transaction = Transaction.query.filter_by(
-            subscription_id=subscription_id,
-            status='pending'
-        ).first()
+    # Atualizar transação
+    transaction.status = 'completed'
+    transaction.paid_at = datetime.utcnow()
+    transaction.stripe_payment_intent_id = session.get('payment_intent')
+    transaction.amount = amount
     
-    if not transaction:
-        # Criar nova transação com cálculo automático de taxas
-        transaction = Transaction(
-            subscription_id=subscription_id,
-            amount=amount,
-            status='completed',
-            payment_method='stripe',
-            stripe_payment_intent_id=session.get('payment_intent'),
-            paid_at=datetime.utcnow()
-        )
-        db.session.add(transaction)
-    else:
-        # Atualizar transação existente
-        transaction.status = 'completed'
-        transaction.paid_at = datetime.utcnow()
-        transaction.stripe_payment_intent_id = session.get('payment_intent')
-        
-        # Recalcular taxas para garantir precisão
-        if transaction.amount != amount:
-            transaction.amount = amount
-            transaction.calculate_fees()
+    # Recalcular taxas se necessário
+    if hasattr(transaction, 'calculate_fees'):
+        transaction.calculate_fees()
     
     # Ativar assinatura
-    subscription.status = 'active'
-    subscription.stripe_subscription_id = session['id']
-    
-    # Atualizar saldo do criador (valor líquido)
-    group = Group.query.get(subscription.group_id)
-    if group:
-        creator = Creator.query.get(group.creator_id)
-        if creator:
-            creator.balance += transaction.net_amount
-            creator.total_earned += transaction.net_amount
-            
-            logger.info(f"Creator {creator.id} balance updated: +R$ {transaction.net_amount:.2f}")
+    subscription = Subscription.query.get(transaction.subscription_id)
+    if subscription:
+        logger.info(f"Ativando assinatura {subscription.id}")
+        subscription.status = 'active'
+        subscription.stripe_subscription_id = session['id']
+        
+        # Atualizar saldo do criador
+        group = Group.query.get(subscription.group_id)
+        if group:
+            creator = Creator.query.get(group.creator_id)
+            if creator:
+                # Garantir que os valores existem
+                creator.balance = creator.balance or 0
+                creator.available_balance = creator.available_balance or 0
+                creator.total_earned = creator.total_earned or 0
+                
+                # Adicionar valor líquido
+                net_amount = transaction.net_amount or (amount - 0.99 - (amount * 0.0799))
+                creator.balance += net_amount
+                creator.available_balance += net_amount
+                creator.total_earned += net_amount
+                
+                logger.info(f"Creator {creator.id} balance updated: +R$ {net_amount:.2f}")
     
     # Commit das mudanças
-    db.session.commit()
-    
-    # Notificar via Telegram
-    notify_payment_success(subscription, transaction)
-    
-    logger.info(f"Payment processed successfully for subscription {subscription_id}")
+    try:
+        db.session.commit()
+        logger.info(f"✅ Pagamento processado com sucesso para transação {transaction.id}")
+        
+        # Notificar via Telegram
+        if subscription:
+            notify_payment_success(subscription, transaction)
+            
+    except Exception as e:
+        logger.error(f"Erro ao salvar mudanças: {e}")
+        db.session.rollback()
+        raise
 
 def handle_payment_intent_succeeded(payment_intent):
     """Processar payment intent bem-sucedido"""
@@ -143,6 +175,12 @@ def handle_payment_intent_succeeded(payment_intent):
     transaction = Transaction.query.filter_by(
         stripe_payment_intent_id=payment_intent['id']
     ).first()
+    
+    if not transaction:
+        # Tentar buscar por payment_id
+        transaction = Transaction.query.filter_by(
+            payment_id=payment_intent['id']
+        ).first()
     
     if transaction and transaction.status != 'completed':
         transaction.status = 'completed'
@@ -158,11 +196,18 @@ def handle_payment_intent_succeeded(payment_intent):
             if group:
                 creator = Creator.query.get(group.creator_id)
                 if creator:
+                    creator.balance = creator.balance or 0
+                    creator.available_balance = creator.available_balance or 0
+                    creator.total_earned = creator.total_earned or 0
+                    
                     creator.balance += transaction.net_amount
+                    creator.available_balance += transaction.net_amount
                     creator.total_earned += transaction.net_amount
         
         db.session.commit()
-        notify_payment_success(subscription, transaction)
+        
+        if subscription:
+            notify_payment_success(subscription, transaction)
 
 def handle_payment_failed(payment_intent):
     """Processar falha no pagamento"""
@@ -186,6 +231,7 @@ def notify_payment_success(subscription, transaction):
     try:
         bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
         if not bot_token:
+            logger.error("TELEGRAM_BOT_TOKEN não configurado")
             return
         
         # Buscar informações
@@ -204,8 +250,25 @@ def notify_payment_success(subscription, transaction):
             user_data = user_response.json().get('result', {})
             display_username = user_data.get('username', subscription.telegram_username)
         
-        # Mensagem para o criador com breakdown das taxas
-        breakdown = transaction.get_fee_breakdown()
+        # Mensagem para o criador
+        if hasattr(transaction, 'get_fee_breakdown'):
+            breakdown = transaction.get_fee_breakdown()
+            fee_details = f"""
+💵 **Detalhamento:**
+• Valor pago: {breakdown['gross']}
+• Taxa fixa: {breakdown['fixed_fee']}
+• Taxa %: {breakdown['percentage_fee']}
+• Total de taxas: {breakdown['total_fee']}
+• **Você recebe: {breakdown['net']}**
+"""
+        else:
+            fee_details = f"""
+💵 **Detalhamento:**
+• Valor pago: R$ {transaction.amount:.2f}
+• Taxa total: R$ {transaction.total_fee or (transaction.amount * 0.0799 + 0.99):.2f}
+• **Você recebe: R$ {transaction.net_amount:.2f}**
+"""
+        
         message = f"""
 💰 **Novo Pagamento Recebido!**
 
@@ -213,17 +276,13 @@ def notify_payment_success(subscription, transaction):
 📱 Grupo: {group.name}
 📋 Plano: {plan.name}
 
-💵 **Detalhamento:**
-• Valor pago: {breakdown['gross']}
-• Taxa fixa: {breakdown['fixed_fee']}
-• Taxa %: {breakdown['percentage_fee']}
-• Total de taxas: {breakdown['total_fee']}
-• **Você recebe: {breakdown['net']}**
+{fee_details}
 
 📊 Total de assinantes: {group.total_subscribers}
-💰 Saldo disponível: R$ {creator.balance:.2f}
+💰 Saldo disponível: R$ {creator.available_balance or creator.balance:.2f}
 """
         
+        # Enviar mensagem para o criador
         requests.post(
             f"https://api.telegram.org/bot{bot_token}/sendMessage",
             json={
@@ -233,50 +292,29 @@ def notify_payment_success(subscription, transaction):
             }
         )
         
-        # Enviar botão para o usuário entrar no grupo
+        # Notificar usuário também
         user_message = f"""
 ✅ **Pagamento Confirmado!**
 
-Valor pago: R$ {transaction.amount:.2f}
-Taxa de processamento: R$ {transaction.total_fee:.2f}
+Sua assinatura para o grupo **{group.name}** está ativa!
 
-Clique no botão abaixo para entrar no grupo VIP:
+📋 Plano: {plan.name}
+📅 Válido até: {subscription.end_date.strftime('%d/%m/%Y')}
+
+Use /start para ver o link de acesso ao grupo.
 """
-        
-        keyboard = {
-            "inline_keyboard": [[{
-                "text": "🚀 ENTRAR NO GRUPO VIP",
-                "url": f"https://t.me/{os.getenv('BOT_USERNAME')}?start=success_{subscription.id}"
-            }]]
-        }
         
         requests.post(
             f"https://api.telegram.org/bot{bot_token}/sendMessage",
             json={
                 "chat_id": subscription.telegram_user_id,
                 "text": user_message,
-                "parse_mode": "Markdown",
-                "reply_markup": keyboard
+                "parse_mode": "Markdown"
             }
         )
         
     except Exception as e:
-        logger.error(f"Error notifying: {e}")
+        logger.error(f"Erro ao notificar pagamento: {e}")
 
-@bp.route('/pix', methods=['POST'])
-def pix_webhook():
-    """Webhook para processar notificações de pagamento PIX"""
-    # Implementar quando integrar com provedor de PIX real
-    # Por enquanto, retornar sucesso
-    data = request.get_json()
-    
-    logger.info(f"PIX webhook received: {data}")
-    
-    # Exemplo de processamento PIX
-    # transaction_id = data.get('transaction_id')
-    # status = data.get('status')
-    
-    # if status == 'confirmed':
-    #     process_pix_payment_confirmed(transaction_id)
-    
-    return jsonify({'status': 'ok'}), 200
+# Importar timedelta se necessário
+from datetime import timedelta

@@ -1,53 +1,44 @@
-"""
-Modelo Transaction com cálculo automático de taxas
-"""
+# app/models/transaction.py
+from app import db
 from datetime import datetime
-from decimal import Decimal
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, DECIMAL, Boolean
-from sqlalchemy.orm import relationship
-from app.models import db
 
 class Transaction(db.Model):
-    """
-    Modelo de transação com taxas automáticas
-    Taxa fixa: R$ 0,99
-    Taxa percentual: 7,99%
-    """
     __tablename__ = 'transactions'
     
-    id = Column(Integer, primary_key=True)
-    subscription_id = Column(Integer, ForeignKey('subscriptions.id'), nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    subscription_id = db.Column(db.Integer, db.ForeignKey('subscriptions.id'), nullable=False)
+    group_id = db.Column(db.Integer, db.ForeignKey('groups.id'))
     
-    # Valores
-    amount = Column(DECIMAL(10, 2), nullable=False)  # Valor total pago
-    original_amount = Column(DECIMAL(10, 2))  # Valor original (para descontos)
-    discount_percentage = Column(DECIMAL(5, 2), default=0)  # Desconto aplicado
+    # Valores financeiros
+    amount = db.Column(db.Float, nullable=False)
+    fee = db.Column(db.Float, nullable=False, default=0)  # Compatibilidade
+    net_amount = db.Column(db.Float, nullable=False, default=0)
     
-    # Taxas calculadas automaticamente
-    fixed_fee = Column(DECIMAL(10, 2), default=Decimal('0.99'))
-    percentage_fee = Column(DECIMAL(10, 2))  # 7.99% do amount
-    total_fee = Column(DECIMAL(10, 2))  # fixed_fee + percentage_fee
-    net_amount = Column(DECIMAL(10, 2))  # amount - total_fee
+    # Taxas detalhadas
+    fixed_fee = db.Column(db.Float, nullable=False, default=0.99)
+    percentage_fee = db.Column(db.Float, nullable=False, default=0)
+    total_fee = db.Column(db.Float, nullable=False, default=0)
+    fee_amount = db.Column(db.Float, default=0)  # Alias para compatibilidade
+    
+    # IDs de pagamento - CAMPOS IMPORTANTES
+    stripe_session_id = db.Column(db.String(255))
+    payment_id = db.Column(db.String(255))
+    stripe_payment_intent_id = db.Column(db.String(100))
+    pix_transaction_id = db.Column(db.String(100))
     
     # Status e método
-    status = Column(String(20), default='pending')  # pending, completed, failed, refunded
-    payment_method = Column(String(20), default='stripe')  # stripe, pix
-    
-    # IDs externos
-    stripe_payment_intent_id = Column(String(255))
-    stripe_session_id = Column(String(255))
-    receipt_hash = Column(String(64))  # Hash do comprovante PIX
-    verification_score = Column(DECIMAL(3, 2))  # Score de verificação PIX
+    status = db.Column(db.String(20), default='pending')
+    payment_method = db.Column(db.String(20), default='stripe')
     
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    paid_at = Column(DateTime)
-    refunded_at = Column(DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    paid_at = db.Column(db.DateTime)
     
     # Relacionamentos
-    subscription = relationship('Subscription', back_populates='transactions')
+    subscription = db.relationship('Subscription', backref='transactions')
     
     def __init__(self, **kwargs):
+        """Inicializar transação com cálculo automático de taxas"""
         super().__init__(**kwargs)
         self.calculate_fees()
     
@@ -58,19 +49,31 @@ class Transaction(db.Model):
         Taxa percentual: 7,99%
         """
         if self.amount:
-            amount = Decimal(str(self.amount))
-            
             # Taxa fixa
-            self.fixed_fee = Decimal('0.99')
+            self.fixed_fee = 0.99
             
             # Taxa percentual (7,99%)
-            self.percentage_fee = amount * Decimal('0.0799')
+            self.percentage_fee = float(self.amount) * 0.0799
             
             # Taxa total
             self.total_fee = self.fixed_fee + self.percentage_fee
             
+            # Compatibilidade com campos antigos
+            self.fee = self.total_fee
+            self.fee_amount = self.total_fee
+            
             # Valor líquido para o criador
-            self.net_amount = amount - self.total_fee
+            self.net_amount = float(self.amount) - self.total_fee
+    
+    def get_fee_breakdown(self):
+        """Retornar breakdown das taxas para exibição"""
+        return {
+            'gross': f"R$ {self.amount:.2f}",
+            'fixed_fee': f"R$ {self.fixed_fee:.2f}",
+            'percentage_fee': f"R$ {self.percentage_fee:.2f}",
+            'total_fee': f"R$ {self.total_fee:.2f}",
+            'net': f"R$ {self.net_amount:.2f}"
+        }
     
     def __repr__(self):
         return f'<Transaction {self.id} - R$ {self.amount} - {self.status}>'
