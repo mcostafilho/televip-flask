@@ -234,7 +234,7 @@
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
-                                    <form action="{{ url_for('groups.toggle_status', id=group.id) }}" method="POST" style="margin: 0;">
+                                    <form action="{{ url_for('groups.toggle', id=group.id) }}" method="POST" style="margin: 0;">
                                         <button type="submit" class="dropdown-item">
                                             {% if group.is_active %}
                                                 <i class="bi bi-pause-circle"></i> Desativar

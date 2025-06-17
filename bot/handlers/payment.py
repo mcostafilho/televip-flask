@@ -44,9 +44,7 @@ async def handle_payment_success(update: Update, context: ContextTypes.DEFAULT_T
                 telegram_username=user.username,
                 status='pending',  # MUDANÇA: Começa como pending até confirmar pagamento
                 start_date=datetime.utcnow(),
-                end_date=datetime.utcnow() + timedelta(days=checkout_data['duration_days']),
-                auto_renew=False,
-                payment_method='stripe'
+                end_date=datetime.utcnow() + timedelta(days=checkout_data['duration_days'])
             )
             session.add(new_subscription)
             session.flush()  # Para obter o ID
@@ -54,13 +52,12 @@ async def handle_payment_success(update: Update, context: ContextTypes.DEFAULT_T
             # Criar transação com IDs corretos - PARTE CRÍTICA
             transaction = Transaction(
                 subscription_id=new_subscription.id,
-                group_id=checkout_data['group_id'],
                 amount=checkout_data['amount'],
-                fee_amount=checkout_data['platform_fee'],
+                #fee_amount=checkout_data['platform_fee'],
                 net_amount=checkout_data['creator_amount'],
                 payment_method='stripe',
-                payment_id=stripe_session_id,  # ADICIONAR: Campo para busca
-                stripe_session_id=stripe_session_id,  # ADICIONAR: Session ID do Stripe
+                #payment_id=stripe_session_id,  # ADICIONAR: Campo para busca
+                #stripe_session_id=stripe_session_id,  # ADICIONAR: Session ID do Stripe
                 status='pending'  # MUDANÇA: Começa como pending
             )
             session.add(transaction)
@@ -255,7 +252,7 @@ Use /status para ver todas suas assinaturas.
 • Criador recebe: R$ {creator_amount:.2f}
 
 **Descrição do plano:**
-{plan.description}
+{getattr(plan, 'description', f'Acesso completo ao grupo por {plan.duration_days} dias')}
 
 Escolha sua forma de pagamento:
 """

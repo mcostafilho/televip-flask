@@ -1,7 +1,7 @@
 # bot/handlers/start.py
 """
 Handler do comando /start com suporte multi-criador
-CORREÇÃO: Buscar grupo por ID correto
+VERSÃO CORRIGIDA - Sem referências a plan.description
 """
 import logging
 from datetime import datetime, timedelta
@@ -47,7 +47,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await show_user_dashboard(update, context)
 
 async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Mostrar dashboard com assinaturas do usuário - VERSÃO CORRIGIDA"""
+    """Mostrar dashboard com assinaturas do usuário"""
     # Detectar se veio de comando ou callback
     if update.callback_query:
         user = update.callback_query.from_user
@@ -59,7 +59,7 @@ async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE
         is_callback = False
     
     with get_db_session() as session:
-        # NOVA VERIFICAÇÃO: Buscar transações pendentes
+        # Verificar transações pendentes
         if not context.user_data.get('skip_pending_check'):
             pending_transactions = session.query(Transaction).join(
                 Subscription
@@ -188,7 +188,7 @@ Precisa de ajuda? Use /help ou clique no botão abaixo.
             )
 
 async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_TYPE, group_id: str):
-    """Iniciar fluxo de assinatura para um grupo específico - VERSÃO CORRIGIDA"""
+    """Iniciar fluxo de assinatura para um grupo específico"""
     user = update.effective_user
     
     try:
@@ -199,7 +199,7 @@ async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_
         return
     
     with get_db_session() as session:
-        # CORREÇÃO: Buscar grupo pelo ID do banco de dados
+        # Buscar grupo pelo ID do banco de dados
         group = session.query(Group).filter_by(id=group_id).first()
         
         if not group:
