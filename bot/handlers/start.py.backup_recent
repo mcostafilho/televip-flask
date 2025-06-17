@@ -70,13 +70,13 @@ async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE
             ).order_by(Transaction.created_at.desc()).first()
             
             if pending_transactions:
-                # Pegar apenas a transação mais recente
-                if isinstance(pending_transactions, list) and len(pending_transactions) > 1:
-                    pending_transactions = [pending_transactions[0]]
-                    logger.info(f"Encontradas {len(pending_transactions)} transações pendentes para usuário {user.id}")
-                # CORRIGIDO: Pegar apenas a mais recente
-                if pending_transactions and isinstance(pending_transactions, list):
-                    pending_transactions = pending_transactions[:1]
+            # Pegar apenas a transação mais recente
+            if isinstance(pending_transactions, list) and len(pending_transactions) > 1:
+                pending_transactions = [pending_transactions[0]]
+                logger.info(f"Encontradas {len(pending_transactions)} transações pendentes para usuário {user.id}")
+            # CORRIGIDO: Pegar apenas a mais recente
+            if pending_transactions and isinstance(pending_transactions, list):
+                pending_transactions = pending_transactions[:1]
                 
                 # Mostrar botão para verificar pagamento
                 text = f"""

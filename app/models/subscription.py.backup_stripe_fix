@@ -48,7 +48,6 @@ class Transaction(db.Model):
     status = db.Column(db.String(20), default='pending')
     payment_method = db.Column(db.String(20), default='stripe')
     stripe_payment_intent_id = db.Column(db.String(100))
-    stripe_session_id = db.Column(db.String(200), index=True)
     
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

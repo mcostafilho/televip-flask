@@ -120,20 +120,7 @@ def handle_checkout_session_completed(session):
     if hasattr(creator, 'available_balance'):
         # Atualizar saldo do criador
     if hasattr(creator, 'available_balance'):
-        # Atualizar saldo do criador
-    try:
-        if hasattr(creator, 'available_balance'):
-            creator.available_balance = (creator.available_balance or 0) + transaction.net_amount
-        else:
-            # Se não tem o campo, adicionar diretamente no banco
-            from sqlalchemy import text
-            db.session.execute(
-                text("UPDATE creators SET available_balance = COALESCE(available_balance, 0) + :amount WHERE id = :creator_id"),
-                {"amount": float(transaction.net_amount), "creator_id": creator.id}
-            )
-    except Exception as e:
-        logger.error(f"Erro ao atualizar saldo: {e}")
-        # Continuar mesmo com erro no saldo
+        creator.available_balance = (creator.available_balance or 0) + transaction.net_amount
     else:
         # Adicionar campo se não existir
         db.session.execute(f"UPDATE creators SET available_balance = COALESCE(available_balance, 0) + {transaction.net_amount} WHERE id = {creator.id}")
@@ -186,20 +173,7 @@ def handle_payment_intent_succeeded(payment_intent):
     if hasattr(creator, 'available_balance'):
         # Atualizar saldo do criador
     if hasattr(creator, 'available_balance'):
-        # Atualizar saldo do criador
-    try:
-        if hasattr(creator, 'available_balance'):
-            creator.available_balance = (creator.available_balance or 0) + transaction.net_amount
-        else:
-            # Se não tem o campo, adicionar diretamente no banco
-            from sqlalchemy import text
-            db.session.execute(
-                text("UPDATE creators SET available_balance = COALESCE(available_balance, 0) + :amount WHERE id = :creator_id"),
-                {"amount": float(transaction.net_amount), "creator_id": creator.id}
-            )
-    except Exception as e:
-        logger.error(f"Erro ao atualizar saldo: {e}")
-        # Continuar mesmo com erro no saldo
+        creator.available_balance = (creator.available_balance or 0) + transaction.net_amount
     else:
         # Adicionar campo se não existir
         db.session.execute(f"UPDATE creators SET available_balance = COALESCE(available_balance, 0) + {transaction.net_amount} WHERE id = {creator.id}")
