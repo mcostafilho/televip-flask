@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
 """
 Bot principal do TeleVIP - Sistema Multi-Criador
-CORREÇÃO: Adicionar handlers faltantes e organizar ordem correta
+CORREÇÃO: Problema de weak reference com Application
 """
 import os
 import sys
+import io
 import asyncio
 import logging
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
+
+# CORREÇÃO DE ENCODING
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 # Adicionar o diretório raiz ao path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -16,7 +22,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler, 
-    MessageHandler, filters, ContextTypes
+    MessageHandler, filters, ContextTypes, JobQueue
 )
 
 # Importar handlers
@@ -43,7 +49,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ADICIONAR ESTAS FUNÇÕES ANTES DO main()
+# HANDLERS ADICIONAIS QUE ESTAVAM FALTANDO
 
 async def handle_continue_to_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler para continuar para o menu principal"""
@@ -69,69 +75,36 @@ Houve um erro ao processar sua solicitação.
 Por favor, tente novamente ou entre em contato com o suporte.
 """
     
-    keyboard = [
-        [
-            InlineKeyboardButton("🏠 Menu Principal", callback_data="back_to_start"),
-            InlineKeyboardButton("❓ Ajuda", callback_data="help")
-        ]
-    ]
+    keyboard = [[
+        InlineKeyboardButton("🔄 Tentar Novamente", callback_data="back_to_start"),
+        InlineKeyboardButton("📞 Suporte", url="https://t.me/suporte_televip")
+    ]]
     
     await query.edit_message_text(
         text,
-        parse_mode=ParseMode.MARKDOWN,
+        parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
 async def handle_check_status_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handler para callback check_status"""
-    from bot.handlers.subscription import status_command
-    query = update.callback_query
-    await query.answer()
-    
-    # Simular comando /status
+    """Handler para verificar status via callback"""
     await status_command(update, context)
 
 async def handle_back_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handler para voltar ao início"""
-    from bot.handlers.start import show_user_dashboard
-    query = update.callback_query
-    await query.answer()
-    
-    # Atualizar context para callback
+    """Handler para voltar ao menu principal"""
     await show_user_dashboard(update, context)
 
 async def handle_help_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handler para callback help"""
+    """Handler para mostrar ajuda via callback"""
     query = update.callback_query
     await query.answer()
     
-    # Mostrar ajuda
-    text = """📋 **Central de Ajuda TeleVIP**
-
-**🔸 Comandos para Assinantes:**
-
-/start - Painel principal com suas assinaturas
-/status - Status detalhado de todas assinaturas
-/planos - Listar seus planos ativos
-/descobrir - Explorar novos grupos disponíveis
-/help - Mostrar esta mensagem de ajuda
-
-**🔹 Comandos para Criadores:**
-
-/setup - Configurar o bot em seu grupo
-/stats - Ver estatísticas detalhadas
-/broadcast - Enviar mensagem para assinantes
-
-**💡 Dicas Úteis:**
-
-• 🔔 Ative as notificações para não perder avisos importantes
-• 💰 Renove com antecedência e ganhe descontos
-• 🔍 Use /descobrir para encontrar conteúdo novo
-• 📱 Salve os links dos grupos para acesso rápido
+    text = """
+📚 **Central de Ajuda**
 
 **❓ Perguntas Frequentes:**
 
-**Como assino um grupo?**
+**Como faço para assinar um grupo?**
 Clique no link fornecido pelo criador ou use /descobrir
 
 **Como cancelo uma assinatura?**
@@ -147,7 +120,8 @@ Sim, usamos Stripe para processar pagamentos
 • Problemas com pagamento: @suporte_televip
 • Dúvidas sobre conteúdo: contate o criador do grupo
 
-🔒 Seus dados estão seguros e protegidos."""
+🔒 Seus dados estão seguros e protegidos.
+"""
     
     keyboard = [
         [
@@ -172,23 +146,18 @@ async def handle_cancel_callback(update: Update, context: ContextTypes.DEFAULT_T
 
 async def handle_categories_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler para callback de categorias"""
-    from bot.handlers.discovery import handle_discover_callback
-    # Redirecionar para o handler de discovery que já trata categorias
     await handle_discover_callback(update, context)
 
 async def handle_premium_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler para grupos premium"""
-    from bot.handlers.discovery import handle_discover_callback
     await handle_discover_callback(update, context)
 
 async def handle_new_groups_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler para grupos novos"""
-    from bot.handlers.discovery import handle_discover_callback
     await handle_discover_callback(update, context)
 
 async def handle_cheap_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler para grupos baratos"""
-    from bot.handlers.discovery import handle_discover_callback
     await handle_discover_callback(update, context)
 
 async def handle_retry_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -219,128 +188,99 @@ async def post_init(application: Application) -> None:
     except Exception as e:
         logger.error(f"Erro ao obter informações do bot: {e}")
 
-def main():
-    """Função principal"""
-    # Token do bot
-    token = os.getenv('BOT_TOKEN')
-    if not token:
-        logger.error("BOT_TOKEN não configurado!")
-        logger.error("Configure o arquivo .env com BOT_TOKEN=seu_token_aqui")
-        sys.exit(1)
-    
-    # Criar aplicação - sem job_queue para evitar erro de weak reference
-    application = (
-        Application.builder()
-        .token(token)
-        .job_queue(None)  # Desabilitar job_queue temporariamente
-        .build()
-    )
-    
-    # Registrar handlers
-    setup_handlers(application)
-    
-    # Callback de inicialização
-    application.post_init = post_init
-    
-    # Iniciar bot
-    logger.info("🤖 Bot TeleVIP iniciando...")
-    logger.info("Pressione Ctrl+C para parar")
-    
-    try:
-        application.run_polling(
-            allowed_updates=Update.ALL_TYPES,
-            drop_pending_updates=True  # Ignorar mensagens antigas
-        )
-    except KeyboardInterrupt:
-        logger.info("⏹️  Bot interrompido pelo usuário")
-    except Exception as e:
-        logger.error(f"❌ Erro fatal: {e}")
-        import traceback
-        traceback.print_exc()
-
-def setup_handlers(application):
-    """Configurar todos os handlers do bot - ORDEM CORRIGIDA"""
+def setup_handlers(application: Application) -> None:
+    """Configurar todos os handlers do bot"""
     logger.info("📋 Configurando handlers...")
     
-    # Registrar comandos para usuários
+    # Comandos principais
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("status", status_command))
     application.add_handler(CommandHandler("planos", planos_command))
     application.add_handler(CommandHandler("descobrir", descobrir_command))
     
-    # Registrar comandos admin
+    # Comandos administrativos
     application.add_handler(CommandHandler("setup", setup_command))
     application.add_handler(CommandHandler("stats", stats_command))
     application.add_handler(CommandHandler("broadcast", broadcast_command))
     
-    # Registrar callbacks específicos - ORDEM IMPORTANTE!
-    # Handlers mais específicos primeiro
-    application.add_handler(CallbackQueryHandler(
-        handle_plan_selection, pattern="^plan_"
-    ))
-    application.add_handler(CallbackQueryHandler(
-        handle_payment_callback, pattern="^pay_"
-    ))
-    application.add_handler(CallbackQueryHandler(
-        handle_renewal, pattern="^renew"
-    ))
+    # Callbacks de pagamento
+    application.add_handler(CallbackQueryHandler(handle_plan_selection, pattern=r"^select_plan_\d+$"))
+    application.add_handler(CallbackQueryHandler(handle_payment_callback, pattern=r"^pay_\d+$"))
+    application.add_handler(CallbackQueryHandler(check_payment_status, pattern="^check_payment_status$"))
+    application.add_handler(CallbackQueryHandler(handle_payment_error, pattern="^payment_error$"))
+    application.add_handler(CallbackQueryHandler(handle_retry_payment, pattern="^retry_payment$"))
     
-    # Handlers exatos (sem regex)
-    application.add_handler(CallbackQueryHandler(
-        handle_check_status_callback, pattern="^check_status$"
-    ))
-    application.add_handler(CallbackQueryHandler(
-        check_payment_status, pattern="^check_payment_status$"
-    ))
-    application.add_handler(CallbackQueryHandler(
-        handle_continue_to_menu, pattern="^continue_to_menu$"
-    ))
-    application.add_handler(CallbackQueryHandler(
-        handle_back_callback, pattern="^back_to_start$"
-    ))
-    application.add_handler(CallbackQueryHandler(
-        handle_help_callback, pattern="^help$"
-    ))
-    application.add_handler(CallbackQueryHandler(
-        handle_cancel_callback, pattern="^cancel$"
-    ))
-    application.add_handler(CallbackQueryHandler(
-        handle_retry_payment, pattern="^retry_payment$"
-    ))
+    # Callbacks de descoberta
+    application.add_handler(CallbackQueryHandler(handle_discover_callback, pattern=r"^discover.*$"))
+    application.add_handler(CallbackQueryHandler(handle_categories_callback, pattern="^categories$"))
+    application.add_handler(CallbackQueryHandler(handle_premium_callback, pattern="^premium$"))
+    application.add_handler(CallbackQueryHandler(handle_new_groups_callback, pattern="^new_groups$"))
+    application.add_handler(CallbackQueryHandler(handle_cheap_callback, pattern="^cheap$"))
     
-    # Handlers de descoberta
-    application.add_handler(CallbackQueryHandler(
-        handle_discover_callback, pattern="^discover"
-    ))
-    application.add_handler(CallbackQueryHandler(
-        handle_categories_callback, pattern="^categor"
-    ))
-    application.add_handler(CallbackQueryHandler(
-        handle_premium_callback, pattern="^premium_groups$"
-    ))
-    application.add_handler(CallbackQueryHandler(
-        handle_new_groups_callback, pattern="^new_groups$"
-    ))
-    application.add_handler(CallbackQueryHandler(
-        handle_cheap_callback, pattern="^cheapest_groups$"
-    ))
+    # Callbacks de navegação
+    application.add_handler(CallbackQueryHandler(handle_back_callback, pattern="^back_to_start$"))
+    application.add_handler(CallbackQueryHandler(handle_help_callback, pattern="^help$"))
+    application.add_handler(CallbackQueryHandler(handle_cancel_callback, pattern="^cancel$"))
+    application.add_handler(CallbackQueryHandler(handle_check_status_callback, pattern="^check_status$"))
+    application.add_handler(CallbackQueryHandler(handle_continue_to_menu, pattern="^continue_to_menu$"))
     
-    # Handler para erros de pagamento
-    application.add_handler(CallbackQueryHandler(
-        handle_payment_error, pattern="^payment_error"
-    ))
+    # Callbacks de renovação
+    application.add_handler(CallbackQueryHandler(handle_renewal, pattern=r"^renew_\d+$"))
     
-    # Handlers para gerenciar membros do grupo
+    # Handlers de grupo
     application.add_handler(MessageHandler(
         filters.StatusUpdate.NEW_CHAT_MEMBERS,
         handle_new_chat_members
     ))
+    application.add_handler(MessageHandler(
+        filters.ChatType.GROUPS & filters.StatusUpdate.CHAT_CREATED,
+        handle_join_request
+    ))
     
-    # IMPORTANTE: Handler geral DEVE ser o ÚLTIMO!
+    # Handler genérico para callbacks não reconhecidos (deve ser o último)
     application.add_handler(CallbackQueryHandler(handle_unknown_callback))
     
     logger.info("✅ Handlers configurados com sucesso!")
+
+def main():
+    """Função principal do bot"""
+    # Token do bot
+    bot_token = os.getenv('BOT_TOKEN') or os.getenv('TELEGRAM_BOT_TOKEN')
+    
+    if not bot_token:
+        logger.error("❌ BOT_TOKEN não configurado!")
+        return
+    
+    try:
+        # CORREÇÃO: Criar aplicação sem job_queue se houver problema
+        try:
+            # Tentar criar normalmente
+            application = Application.builder().token(bot_token).build()
+        except TypeError as e:
+            # Se falhar, criar sem job_queue
+            logger.warning("Criando aplicação sem job_queue devido a erro de weak reference")
+            application = Application.builder().token(bot_token).job_queue(None).build()
+        
+        # Configurar handlers
+        setup_handlers(application)
+        
+        # Adicionar callback de inicialização
+        application.post_init = post_init
+        
+        # Iniciar bot
+        logger.info("🤖 Bot TeleVIP iniciando...")
+        logger.info("Pressione Ctrl+C para parar")
+        
+        # Executar bot
+        application.run_polling(
+            drop_pending_updates=True,
+            allowed_updates=Update.ALL_TYPES
+        )
+        
+    except Exception as e:
+        logger.error(f"Erro ao iniciar bot: {e}", exc_info=True)
+        raise
 
 if __name__ == '__main__':
     main()

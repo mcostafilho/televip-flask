@@ -83,324 +83,184 @@ def handle_checkout_session_completed(session):
         logger.warning(f"Pagamento não está pago. Status: {session.get('payment_status')}")
         return
     
-    # Buscar transação pelo session_id
-    transaction = Transaction.query.filter_by(
-        stripe_session_id=session['id']
-    ).first()
-    
-    if not transaction:
-        logger.error(f"Transação não encontrada para session: {session['id']}")
-        # Tentar recuperar pelo metadata se disponível
-        if session.get('metadata', {}).get('user_id'):
-            logger.info("Tentando recuperar transação por metadata...")
-            # Implementar busca alternativa se necessário
-        return
-    
-    if transaction.status == 'completed':
-        logger.info("Transação já foi processada anteriormente")
-        return
-    
-    logger.info(f"Processando transação ID: {transaction.id}")
-    
-    # Atualizar transação
-    transaction.status = 'completed'
-    transaction.paid_at = datetime.utcnow()
-    transaction.stripe_payment_intent_id = session.get('payment_intent')
-    
-    # Ativar assinatura
-    subscription = transaction.subscription
-    subscription.status = 'active'
-    
-    logger.info(f"Ativando assinatura ID: {subscription.id}")
-    
-    # Atualizar saldo do criador
-    group = subscription.group
-    creator = group.creator
-    # Atualizar saldo do criador
-    if hasattr(creator, 'available_balance'):
-        # Atualizar saldo do criador
-    if hasattr(creator, 'available_balance'):
-        # Atualizar saldo do criador
     try:
-        if hasattr(creator, 'available_balance'):
-            creator.available_balance = (creator.available_balance or 0) + transaction.net_amount
-        else:
-            # Se não tem o campo, adicionar diretamente no banco
-            from sqlalchemy import text
-            db.session.execute(
-                text("UPDATE creators SET available_balance = COALESCE(available_balance, 0) + :amount WHERE id = :creator_id"),
-                {"amount": float(transaction.net_amount), "creator_id": creator.id}
+        # Buscar metadados
+        metadata = session.get('metadata', {})
+        if not metadata:
+            logger.error("Metadata vazio no checkout session")
+            return
+            
+        transaction_id = metadata.get('transaction_id')
+        subscription_id = metadata.get('subscription_id')
+        
+        logger.info(f"Transaction ID: {transaction_id}")
+        logger.info(f"Subscription ID: {subscription_id}")
+        
+        if not transaction_id:
+            logger.error("Transaction ID não encontrado nos metadados")
+            return
+        
+        # Buscar a transação
+        transaction = Transaction.query.filter_by(
+            id=int(transaction_id),
+            status='pending'
+        ).first()
+        
+        if not transaction:
+            logger.error(f"Transação {transaction_id} não encontrada ou já processada")
+            return
+        
+        # Atualizar transação
+        transaction.status = 'completed'
+        transaction.stripe_payment_intent_id = session.get('payment_intent')
+        transaction.paid_at = datetime.utcnow()
+        
+        # Buscar assinatura
+        subscription = transaction.subscription
+        if not subscription:
+            logger.error("Assinatura não encontrada para a transação")
+            return
+        
+        # Ativar assinatura
+        subscription.status = 'active'
+        subscription.start_date = datetime.utcnow()
+        
+        # Calcular data de expiração
+        if subscription.pricing_plan.duration_type == 'days':
+            subscription.end_date = subscription.start_date + timedelta(
+                days=subscription.pricing_plan.duration_value
             )
-    except Exception as e:
-        logger.error(f"Erro ao atualizar saldo: {e}")
-        # Continuar mesmo com erro no saldo
-    else:
-        # Adicionar campo se não existir
-        db.session.execute(f"UPDATE creators SET available_balance = COALESCE(available_balance, 0) + {transaction.net_amount} WHERE id = {creator.id}")
-    else:
-        # Adicionar campo se não existir
-        db.session.execute(f"UPDATE creators SET available_balance = COALESCE(available_balance, 0) + {transaction.net_amount} WHERE id = {creator.id}")
-    
-    logger.info(f"Atualizando saldo do criador {creator.id}: +{transaction.net_amount}")
-    
-    # Commit das alterações
-    try:
+        elif subscription.pricing_plan.duration_type == 'months':
+            # Aproximar 30 dias por mês
+            subscription.end_date = subscription.start_date + timedelta(
+                days=subscription.pricing_plan.duration_value * 30
+            )
+        
+        # Atualizar saldo do criador
+        group = subscription.group
+        creator = group.creator
+        
+        # CORREÇÃO: Adicionar indentação correta aqui (linha 120-122)
+        if creator:
+            # Garantir que available_balance não seja None
+            if hasattr(creator, 'available_balance'):
+                if creator.available_balance is None:
+                    creator.available_balance = 0
+                creator.available_balance += transaction.net_amount
+            else:
+                creator.available_balance = transaction.net_amount
+                
+            # Atualizar total ganho
+            if hasattr(creator, 'total_earned'):
+                if creator.total_earned is None:
+                    creator.total_earned = 0
+                creator.total_earned += transaction.net_amount
+            else:
+                creator.total_earned = transaction.net_amount
+        
+        # Salvar todas as alterações
         db.session.commit()
-        logger.info("✅ Transação processada com sucesso!")
         
-        # Notificar o bot sobre o pagamento completo
-        notify_bot_payment_completed(
-            user_id=subscription.telegram_user_id,
-            group_id=group.telegram_id,
-            group_name=group.name,
-            subscription_id=subscription.id
-        )
+        logger.info(f"✅ Assinatura {subscription.id} ativada com sucesso!")
+        logger.info(f"✅ Saldo do criador atualizado: R$ {creator.available_balance}")
+        
+        # Notificar bot via webhook interno
+        notify_bot_payment_complete(subscription, transaction)
         
     except Exception as e:
+        logger.error(f"Erro ao processar checkout session: {str(e)}")
         db.session.rollback()
-        logger.error(f"Erro ao processar transação: {e}")
         raise
 
 
 def handle_payment_intent_succeeded(payment_intent):
     """Processar payment intent bem-sucedido"""
-    logger.info(f"=== PAYMENT INTENT SUCCEEDED ===")
-    logger.info(f"Payment Intent ID: {payment_intent['id']}")
-    logger.info(f"Amount: {payment_intent['amount']/100} {payment_intent['currency']}")
-    
-    # Buscar transação por payment_intent_id
-    transaction = Transaction.query.filter_by(
-        stripe_payment_intent_id=payment_intent['id']
-    ).first()
-    
-    if transaction and transaction.status != 'completed':
-        transaction.status = 'completed'
-        transaction.paid_at = datetime.utcnow()
-        
-        subscription = transaction.subscription
-        subscription.status = 'active'
-        
-        group = subscription.group
-        creator = group.creator
-        # Atualizar saldo do criador
-    if hasattr(creator, 'available_balance'):
-        # Atualizar saldo do criador
-    if hasattr(creator, 'available_balance'):
-        # Atualizar saldo do criador
-    try:
-        if hasattr(creator, 'available_balance'):
-            creator.available_balance = (creator.available_balance or 0) + transaction.net_amount
-        else:
-            # Se não tem o campo, adicionar diretamente no banco
-            from sqlalchemy import text
-            db.session.execute(
-                text("UPDATE creators SET available_balance = COALESCE(available_balance, 0) + :amount WHERE id = :creator_id"),
-                {"amount": float(transaction.net_amount), "creator_id": creator.id}
-            )
-    except Exception as e:
-        logger.error(f"Erro ao atualizar saldo: {e}")
-        # Continuar mesmo com erro no saldo
-    else:
-        # Adicionar campo se não existir
-        db.session.execute(f"UPDATE creators SET available_balance = COALESCE(available_balance, 0) + {transaction.net_amount} WHERE id = {creator.id}")
-    else:
-        # Adicionar campo se não existir
-        db.session.execute(f"UPDATE creators SET available_balance = COALESCE(available_balance, 0) + {transaction.net_amount} WHERE id = {creator.id}")
-        
-        db.session.commit()
-        logger.info("✅ Payment intent processado com sucesso!")
+    logger.info(f"Payment Intent succeeded: {payment_intent['id']}")
+    # O processamento principal é feito no checkout.session.completed
+    # Este evento é apenas para log
 
 
 def handle_payment_failed(payment_intent):
-    """Processar falha no pagamento"""
-    logger.info(f"=== PAYMENT FAILED ===")
-    logger.info(f"Payment Intent ID: {payment_intent['id']}")
-    logger.info(f"Error: {payment_intent.get('last_payment_error')}")
+    """Processar falha de pagamento"""
+    logger.error(f"Payment Intent failed: {payment_intent['id']}")
     
-    # Buscar transação
-    transaction = Transaction.query.filter_by(
-        stripe_payment_intent_id=payment_intent['id']
-    ).first()
+    metadata = payment_intent.get('metadata', {})
+    transaction_id = metadata.get('transaction_id')
     
-    if transaction:
-        transaction.status = 'failed'
-        
-        subscription = transaction.subscription
-        subscription.status = 'failed'
-        
-        db.session.commit()
-        
-        # Notificar usuário sobre falha
-        notify_bot_payment_failed(
-            user_id=subscription.telegram_user_id,
-            group_name=subscription.group.name,
-            error=payment_intent.get('last_payment_error', {}).get('message', 'Erro desconhecido')
-        )
+    if transaction_id:
+        transaction = Transaction.query.get(int(transaction_id))
+        if transaction and transaction.status == 'pending':
+            transaction.status = 'failed'
+            transaction.failure_reason = payment_intent.get('last_payment_error', {}).get('message')
+            db.session.commit()
 
 
 def handle_dispute_created(dispute):
-    """Processar disputa (chargeback)"""
-    logger.warning(f"=== DISPUTA CRIADA ===")
-    logger.warning(f"Dispute ID: {dispute['id']}")
-    logger.warning(f"Amount: {dispute['amount']/100}")
-    logger.warning(f"Reason: {dispute['reason']}")
+    """Processar criação de disputa"""
+    logger.warning(f"Disputa criada: {dispute['id']}")
     
-    # Implementar lógica para lidar com chargebacks
-    # Por exemplo: suspender assinatura, notificar admin, etc.
-
-
-def notify_bot_payment_completed(user_id, group_id, group_name, subscription_id):
-    """Notificar o bot sobre pagamento completo e adicionar usuário ao grupo"""
-    bot_token = os.getenv('BOT_TOKEN')
-    
-    if not bot_token:
-        logger.error("BOT_TOKEN não configurado!")
-        return
-    
-    try:
-        # 1. Enviar mensagem de confirmação para o usuário
-        message_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    # Buscar transação pelo payment intent
+    payment_intent = dispute.get('payment_intent')
+    if payment_intent:
+        transaction = Transaction.query.filter_by(
+            stripe_payment_intent_id=payment_intent
+        ).first()
         
-        message_text = f"""
-✅ **Pagamento Confirmado!**
-
-Seu pagamento foi processado com sucesso!
-
-📱 **Grupo:** {group_name}
-🎫 **ID da Assinatura:** #{subscription_id}
-
-🔄 Estamos adicionando você ao grupo...
-
-💡 Se não for adicionado automaticamente em 1 minuto:
-1. Clique em /start
-2. Vá em "Minhas Assinaturas"
-3. Clique no grupo desejado
-
-Obrigado pela sua confiança! 🙏
-"""
-        
-        # Adicionar botões inline
-        keyboard = {
-            "inline_keyboard": [
-                [
-                    {"text": "📱 Minhas Assinaturas", "callback_data": "my_subscriptions"},
-                    {"text": "🏠 Menu", "callback_data": "back_to_start"}
-                ]
-            ]
-        }
-        
-        message_data = {
-            'chat_id': user_id,
-            'text': message_text,
-            'parse_mode': 'Markdown',
-            'reply_markup': keyboard
-        }
-        
-        response = requests.post(message_url, json=message_data)
-        logger.info(f"Mensagem enviada: {response.status_code} - {response.text}")
-        
-        # 2. Tentar adicionar o usuário ao grupo
-        add_member_url = f"https://api.telegram.org/bot{bot_token}/addChatMember"
-        
-        add_data = {
-            'chat_id': group_id,
-            'user_id': int(user_id)
-        }
-        
-        add_response = requests.post(add_member_url, json=add_data)
-        logger.info(f"Tentativa de adicionar ao grupo: {add_response.status_code}")
-        
-        if add_response.status_code == 200:
-            logger.info(f"✅ Usuário {user_id} adicionado ao grupo {group_id}")
-        else:
-            error_data = add_response.json()
-            logger.warning(f"Não foi possível adicionar ao grupo: {error_data}")
+        if transaction:
+            transaction.status = 'disputed'
             
-            # Se não conseguiu adicionar, enviar link de convite
-            if 'user not found' in str(error_data).lower():
-                # Gerar link de convite
-                export_link_url = f"https://api.telegram.org/bot{bot_token}/exportChatInviteLink"
-                link_data = {'chat_id': group_id}
-                
-                link_response = requests.post(export_link_url, json=link_data)
-                if link_response.status_code == 200:
-                    invite_link = link_response.json().get('result')
-                    
-                    # Enviar link para o usuário
-                    invite_message = f"""
-🔗 **Link de Acesso ao Grupo**
-
-Como não conseguimos adicionar você automaticamente, aqui está o link de convite:
-
-{invite_link}
-
-⚠️ Este link é válido apenas para você e expira em 24 horas.
-"""
-                    
-                    requests.post(message_url, json={
-                        'chat_id': user_id,
-                        'text': invite_message,
-                        'parse_mode': 'Markdown'
-                    })
-        
-    except Exception as e:
-        logger.error(f"Erro ao notificar bot: {e}")
+            # Suspender assinatura
+            if transaction.subscription:
+                transaction.subscription.status = 'suspended'
+            
+            db.session.commit()
 
 
-def notify_bot_payment_failed(user_id, group_name, error):
-    """Notificar usuário sobre falha no pagamento"""
-    bot_token = os.getenv('BOT_TOKEN')
+def notify_bot_payment_complete(subscription, transaction):
+    """Notificar o bot que o pagamento foi completado"""
+    bot_token = os.getenv('BOT_TOKEN') or os.getenv('TELEGRAM_BOT_TOKEN')
     
     if not bot_token:
+        logger.error("Bot token não configurado")
         return
     
     try:
-        message_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        # URL da API do Telegram
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
         
-        message_text = f"""
-❌ **Pagamento Falhou**
+        # Mensagem para o usuário
+        text = f"""
+✅ **Pagamento Aprovado!**
 
-Houve um problema ao processar seu pagamento para o grupo **{group_name}**.
+Sua assinatura do grupo **{subscription.group.name}** foi ativada com sucesso!
 
-**Erro:** {error}
+📅 Válida até: {subscription.end_date.strftime('%d/%m/%Y')}
+💰 Valor pago: R$ {transaction.amount:.2f}
 
-Por favor, tente novamente ou use outro cartão.
+Use o link abaixo para acessar o grupo:
+{subscription.group.invite_link}
 
-Se o problema persistir, entre em contato com o suporte.
+_Obrigado por assinar!_
 """
         
-        keyboard = {
-            "inline_keyboard": [
-                [
-                    {"text": "🔄 Tentar Novamente", "callback_data": "discover"},
-                    {"text": "📞 Suporte", "url": "https://t.me/suporte_televip"}
-                ]
-            ]
-        }
+        # Enviar mensagem
+        response = requests.post(url, json={
+            'chat_id': subscription.telegram_user_id,
+            'text': text,
+            'parse_mode': 'Markdown'
+        })
         
-        message_data = {
-            'chat_id': user_id,
-            'text': message_text,
-            'parse_mode': 'Markdown',
-            'reply_markup': keyboard
-        }
-        
-        requests.post(message_url, json=message_data)
-        
+        if response.status_code == 200:
+            logger.info(f"Usuário {subscription.telegram_user_id} notificado do pagamento")
+        else:
+            logger.error(f"Erro ao notificar usuário: {response.text}")
+            
     except Exception as e:
-        logger.error(f"Erro ao notificar falha: {e}")
+        logger.error(f"Erro ao notificar bot: {str(e)}")
 
 
-# Função auxiliar para verificar assinatura do webhook (segurança extra)
-def verify_webhook_signature(payload, signature, secret):
-    """Verificar assinatura do webhook manualmente"""
-    import hmac
-    import hashlib
-    
-    expected_sig = hmac.new(
-        secret.encode('utf-8'),
-        payload,
-        hashlib.sha256
-    ).hexdigest()
-    
-    return hmac.compare_digest(expected_sig, signature)
+@bp.route('/telegram', methods=['POST'])
+def telegram_webhook():
+    """Webhook para receber atualizações do Telegram"""
+    # Este webhook pode ser usado futuramente para receber updates do bot
+    return jsonify({'status': 'ok'}), 200

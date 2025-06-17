@@ -113,12 +113,12 @@ Precisa de ajuda? Use /help
                 text += f"   ⏳ Restam: {days_left} dias\n"
                 
                 # Avisos especiais
-                if sub.auto_renew:
-                    text += f"   🔄 Renovação automática ativada\n"
-                elif days_left <= 3:
-                    text += f"   🚨 **EXPIRA EM BREVE! Renove agora!**\n"
-                elif days_left <= 7:
-                    text += f"   ⚠️ **Renovar em breve**\n"
+                if getattr(sub, 'auto_renew', False):  # False é o valor padrão
+                    status_emoji = "🔄"
+                    auto_renew_text = "\n🔄 Renovação automática: **Ativada**"
+                else:
+                    status_emoji = "📅"
+                    auto_renew_text = "\n📅 Renovação automática: **Desativada**"
                 
                 # Estatísticas da assinatura
                 duration = (datetime.utcnow() - sub.start_date).days
