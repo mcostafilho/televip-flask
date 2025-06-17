@@ -308,6 +308,20 @@ Use /start para voltar ao menu principal.
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
+async def add_user_to_group(bot, group_telegram_id: str, user_id: int):
+    """Adicionar usuário ao grupo após pagamento"""
+    try:
+        # Tentar adicionar usuário ao grupo
+        await bot.add_chat_member(
+            chat_id=group_telegram_id,
+            user_id=user_id
+        )
+        logger.info(f"Usuário {user_id} adicionado ao grupo {group_telegram_id}")
+        return True
+    except Exception as e:
+        logger.error(f"Erro ao adicionar usuário ao grupo: {e}")
+        return False
+
 async def handle_payment_success(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Processar retorno de pagamento bem-sucedido"""
     user = update.effective_user
@@ -362,23 +376,39 @@ async def handle_payment_success(update: Update, context: ContextTypes.DEFAULT_T
             # Buscar grupo para gerar link
             group = session.query(Group).get(checkout_data['group_id'])
             
-            # Gerar link de convite único
-            try:
-                # Criar link de convite que expira em 24h
-                invite_link_obj = await context.bot.create_chat_invite_link(
-                    chat_id=group.telegram_id,
-                    member_limit=1,  # Apenas 1 uso
-                    expire_date=datetime.utcnow() + timedelta(hours=24)
-                )
-                invite_link = invite_link_obj.invite_link
-            except:
-                # Fallback se não conseguir criar link
-                invite_link = f"https://t.me/{group.telegram_id}"
+            # Tentar adicionar usuário ao grupo automaticamente
+            added_to_group = await add_user_to_group(
+                context.bot,
+                group.telegram_id,
+                int(user.id)
+            )
             
-            text = f"""
+            # Gerar link de convite único se não conseguiu adicionar
+            invite_link = None
+            if not added_to_group:
+                try:
+                    # Criar link de convite que expira em 24h e só pode ser usado 1 vez
+                    invite_link_obj = await context.bot.create_chat_invite_link(
+                        chat_id=group.telegram_id,
+                        member_limit=1,  # Apenas 1 uso
+                        expire_date=datetime.utcnow() + timedelta(hours=24),
+                        creates_join_request=False  # Entrada direta sem aprovação
+                    )
+                    invite_link = invite_link_obj.invite_link
+                    
+                    # Salvar link na assinatura para validação futura
+                    new_subscription.invite_link = invite_link
+                    session.commit()
+                except Exception as e:
+                    logger.error(f"Erro ao criar link de convite: {e}")
+                    invite_link = None
+            
+            # Preparar mensagem baseada no resultado
+            if added_to_group:
+                text = f"""
 ✅ **Pagamento Confirmado!**
 
-🎉 Parabéns! Sua assinatura foi ativada com sucesso.
+🎉 Você foi adicionado automaticamente ao grupo!
 
 **📋 Detalhes da Assinatura:**
 • Grupo: {checkout_data['group_name']}
@@ -392,42 +422,146 @@ async def handle_payment_success(update: Update, context: ContextTypes.DEFAULT_T
 • Taxa plataforma: R$ {checkout_data['platform_fee']:.2f}
 • Criador recebeu: R$ {checkout_data['creator_amount']:.2f}
 
-**🔗 Acesso ao Grupo:**
-{invite_link}
-
-**⚠️ IMPORTANTE:**
-• Este link é válido por 24 horas
-• Use o link apenas uma vez
-• Salve o link do grupo após entrar
-
-**📧 Comprovante:**
-Um email com o comprovante foi enviado.
+**✅ Próximos Passos:**
+1. Abra o Telegram
+2. Vá para seus chats
+3. O grupo já deve aparecer lá!
 
 **💡 Dicas:**
 • Ative as notificações do grupo
 • Leia as regras ao entrar
 • Aproveite o conteúdo exclusivo!
 
-Bem-vindo à comunidade! 🚀
+Se não encontrar o grupo, use o botão abaixo.
 """
-            
-            keyboard = [
-                [
-                    InlineKeyboardButton("🔗 Entrar no Grupo", url=invite_link)
-                ],
-                [
-                    InlineKeyboardButton("📊 Ver Minhas Assinaturas", callback_data="check_status")
-                ],
-                [
-                    InlineKeyboardButton("🔍 Descobrir Mais Grupos", callback_data="discover")
+                keyboard = [
+                    [
+                        InlineKeyboardButton("📱 Abrir Telegram", url="tg://"),
+                        InlineKeyboardButton("📊 Ver Assinaturas", callback_data="check_status")
+                    ],
+                    [
+                        InlineKeyboardButton("🔍 Descobrir Mais", callback_data="discover")
+                    ]
                 ]
-            ]
+            elif invite_link:
+                text = f"""
+✅ **Pagamento Confirmado!**
+
+🎉 Sua assinatura foi ativada com sucesso!
+
+**📋 Detalhes da Assinatura:**
+• Grupo: {checkout_data['group_name']}
+• Plano: {checkout_data['plan_name']}
+• Duração: {checkout_data['duration_days']} dias
+• Válida até: {new_subscription.end_date.strftime('%d/%m/%Y')}
+• ID da assinatura: #{new_subscription.id}
+
+**💰 Valores:**
+• Pago: R$ {checkout_data['amount']:.2f}
+• Taxa plataforma: R$ {checkout_data['platform_fee']:.2f}
+• Criador recebeu: R$ {checkout_data['creator_amount']:.2f}
+
+**🔗 Link de Acesso Exclusivo:**
+{invite_link}
+
+**⚠️ IMPORTANTE:**
+• Este link é pessoal e intransferível
+• Válido por 24 horas
+• Uso único (não compartilhe!)
+• Salve o link do grupo após entrar
+
+**💡 Dicas:**
+• Ative as notificações do grupo
+• Leia as regras ao entrar
+• Aproveite o conteúdo exclusivo!
+
+Clique no botão abaixo para entrar:
+"""
+                keyboard = [
+                    [
+                        InlineKeyboardButton("🚀 Entrar no Grupo", url=invite_link)
+                    ],
+                    [
+                        InlineKeyboardButton("📊 Ver Assinaturas", callback_data="check_status"),
+                        InlineKeyboardButton("🔍 Descobrir Mais", callback_data="discover")
+                    ]
+                ]
+            else:
+                # Fallback se não conseguiu adicionar nem criar link
+                text = f"""
+✅ **Pagamento Confirmado!**
+
+🎉 Sua assinatura foi ativada com sucesso!
+
+**📋 Detalhes da Assinatura:**
+• Grupo: {checkout_data['group_name']}
+• Plano: {checkout_data['plan_name']}
+• Duração: {checkout_data['duration_days']} dias
+• Válida até: {new_subscription.end_date.strftime('%d/%m/%Y')}
+
+⚠️ **Atenção:**
+Houve um problema ao gerar o link de acesso.
+Entre em contato com o criador do grupo ou com nosso suporte.
+
+**💰 Valores:**
+• Pago: R$ {checkout_data['amount']:.2f}
+• Taxa plataforma: R$ {checkout_data['platform_fee']:.2f}
+
+Não se preocupe, seu pagamento foi processado e sua assinatura está ativa!
+"""
+                keyboard = [
+                    [
+                        InlineKeyboardButton("📞 Suporte", url="https://t.me/suporte_televip"),
+                        InlineKeyboardButton("📊 Ver Assinaturas", callback_data="check_status")
+                    ]
+                ]
             
             # Limpar dados temporários
             context.user_data.clear()
             
+
+
         except Exception as e:
             logger.error(f"Erro ao processar pagamento: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            
+            # Tentar criar assinatura básica mesmo com erro
+            try:
+                # Verificar se temos pelo menos os dados mínimos
+                if checkout_data and 'group_id' in checkout_data and 'plan_id' in checkout_data:
+                    # Criar assinatura de emergência
+                    emergency_sub = Subscription(
+                        group_id=checkout_data['group_id'],
+                        plan_id=checkout_data['plan_id'],
+                        telegram_user_id=str(user.id),
+                        telegram_username=user.username or user.first_name,
+                        status='pending',  # Marcar como pendente
+                        start_date=datetime.utcnow(),
+                        end_date=datetime.utcnow() + timedelta(days=checkout_data.get('duration_days', 30)),
+                        auto_renew=False,
+                        payment_method='stripe'
+                    )
+                    session.add(emergency_sub)
+                    
+                    # Criar transação pendente
+                    emergency_transaction = Transaction(
+                        subscription_id=emergency_sub.id,
+                        group_id=checkout_data['group_id'],
+                        amount=checkout_data.get('amount', 0),
+                        fee_amount=checkout_data.get('platform_fee', 0),
+                        net_amount=checkout_data.get('creator_amount', 0),
+                        payment_method='stripe',
+                        payment_id=context.user_data.get('stripe_session_id'),
+                        status='pending'  # Marcar como pendente
+                    )
+                    session.add(emergency_transaction)
+                    
+                    session.commit()
+                    logger.info(f"Assinatura de emergência criada para usuário {user.id}")
+            except Exception as emergency_error:
+                logger.error(f"Erro ao criar assinatura de emergência: {emergency_error}")
+            
             text = """
 ⚠️ **Processando Pagamento**
 
@@ -439,10 +573,11 @@ Se não receber o acesso em 5 minutos, entre em contato com o suporte.
 """
             keyboard = [
                 [
-                    InlineKeyboardButton("📞 Suporte", url="https://t.me/suporte_televip")
+                    InlineKeyboardButton("🔄 Verificar Status", callback_data="check_payment_status")
                 ],
                 [
-                    InlineKeyboardButton("🔄 Verificar Novamente", callback_data="check_payment_status")
+                    InlineKeyboardButton("📞 Suporte", url="https://t.me/suporte_televip"),
+                    InlineKeyboardButton("📊 Ver Assinaturas", callback_data="check_status")
                 ]
             ]
     

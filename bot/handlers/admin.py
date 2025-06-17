@@ -584,3 +584,124 @@ async def confirm_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE, 
         "🚧 Sistema de broadcast em desenvolvimento...\n\n"
         "Em breve você poderá enviar mensagens para todos os assinantes!"
     )
+
+# ==================== FUNÇÕES EXTRAS ADICIONADAS ====================
+
+async def handle_join_request(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handler quando usuário tenta entrar no grupo"""
+    chat = update.effective_chat
+    user = update.effective_user
+    
+    # Verificar se é um grupo
+    if chat.type not in ['group', 'supergroup']:
+        return
+    
+    with get_db_session() as session:
+        # Verificar se o usuário tem assinatura ativa
+        group = session.query(Group).filter_by(
+            telegram_id=str(chat.id)
+        ).first()
+        
+        if not group:
+            return
+        
+        subscription = session.query(Subscription).filter_by(
+            group_id=group.id,
+            telegram_user_id=str(user.id),
+            status='active'
+        ).first()
+        
+        if not subscription or subscription.end_date < datetime.utcnow():
+            # Remover usuário não autorizado
+            try:
+                await context.bot.ban_chat_member(
+                    chat_id=chat.id,
+                    user_id=user.id
+                )
+                await context.bot.unban_chat_member(
+                    chat_id=chat.id,
+                    user_id=user.id
+                )
+                logger.warning(f"Usuário {user.id} removido do grupo {chat.id} - sem assinatura")
+                
+                # Enviar mensagem privada ao usuário
+                try:
+                    await context.bot.send_message(
+                        chat_id=user.id,
+                        text=f"""
+❌ **Acesso Negado**
+
+Você foi removido do grupo **{group.name}** porque não possui uma assinatura ativa.
+
+Para acessar o grupo, você precisa:
+1. Assinar um plano
+2. Aguardar a confirmação do pagamento
+3. Usar o link de acesso fornecido
+
+🔗 Link para assinar:
+https://t.me/{context.bot.username}?start=g_{group.telegram_id}
+
+Se você já pagou, aguarde a confirmação ou entre em contato com o suporte.
+""",
+                        parse_mode=ParseMode.MARKDOWN
+                    )
+                except:
+                    pass  # Usuário pode ter bloqueado o bot
+                    
+            except Exception as e:
+                logger.error(f"Erro ao remover usuário do grupo: {e}")
+        else:
+            # Usuário autorizado - enviar mensagem de boas-vindas
+            logger.info(f"Usuário {user.id} autorizado no grupo {chat.id}")
+            
+            # Mensagem de boas-vindas personalizada
+            days_left = (subscription.end_date - datetime.utcnow()).days
+            
+            try:
+                welcome_text = f"""
+🎉 Bem-vindo(a) ao grupo **{group.name}**, {user.first_name}!
+
+✅ Sua assinatura está ativa
+📅 Plano: {subscription.plan.name}
+⏳ Dias restantes: {days_left}
+📆 Expira em: {subscription.end_date.strftime('%d/%m/%Y')}
+
+📌 **Regras do Grupo:**
+• Respeite todos os membros
+• Não compartilhe conteúdo do grupo
+• Proibido spam ou divulgação
+• Mantenha o foco no tema do grupo
+
+💡 Aproveite o conteúdo exclusivo!
+"""
+                
+                # Enviar como mensagem privada para não poluir o grupo
+                await context.bot.send_message(
+                    chat_id=user.id,
+                    text=welcome_text,
+                    parse_mode=ParseMode.MARKDOWN
+                )
+            except:
+                pass  # Não é crítico se falhar
+
+async def handle_new_chat_members(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handler para novos membros no chat"""
+    message = update.message
+    
+    if not message or not message.new_chat_members:
+        return
+    
+    for new_member in message.new_chat_members:
+        # Ignorar se for o próprio bot
+        if new_member.id == context.bot.id:
+            continue
+        
+        # Criar um update fake para reusar handle_join_request
+        fake_update = Update(
+            update_id=update.update_id,
+            message=message,
+            effective_user=new_member,
+            effective_chat=message.chat
+        )
+        
+        await handle_join_request(fake_update, context)

@@ -27,6 +27,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Tratar diferentes tipos de argumentos
     if args:
         if args[0].startswith('success_'):
+            from bot.handlers.payment import handle_payment_success
             await handle_payment_success(update, context)
             return
         elif args[0] == 'cancel':
@@ -42,7 +43,15 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Mostrar dashboard com assinaturas do usuário"""
-    user = update.effective_user
+    # Detectar se veio de comando ou callback
+    if update.callback_query:
+        user = update.callback_query.from_user
+        message = update.callback_query.message
+        is_callback = True
+    else:
+        user = update.effective_user
+        message = update.message
+        is_callback = False
     
     with get_db_session() as session:
         # Buscar todas as assinaturas do usuário
@@ -78,11 +87,6 @@ Precisa de ajuda? Use /help
                 ]
             ]
             
-            await update.message.reply_text(
-                text,
-                parse_mode=ParseMode.MARKDOWN,
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
         else:
             # Usuário com assinaturas - mostrar dashboard
             text = f"👋 Olá {user.first_name}!\n\n"
@@ -143,8 +147,16 @@ Precisa de ajuda? Use /help
                 InlineKeyboardButton("🔍 Descobrir Mais", callback_data="discover"),
                 InlineKeyboardButton("⚙️ Configurações", callback_data="settings")
             ])
-            
-            await update.message.reply_text(
+        
+        # Enviar ou editar mensagem baseado no contexto
+        if is_callback:
+            await message.edit_text(
+                text,
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+        else:
+            await message.reply_text(
                 text,
                 parse_mode=ParseMode.MARKDOWN,
                 reply_markup=InlineKeyboardMarkup(keyboard)
@@ -335,36 +347,6 @@ Sim, usamos Stripe para processar pagamentos
     await update.message.reply_text(
         help_text,
         parse_mode=ParseMode.MARKDOWN
-    )
-
-async def handle_payment_success(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handler para retorno bem-sucedido do pagamento"""
-    user = update.effective_user
-    
-    # Mostrar mensagem de sucesso
-    text = """
-✅ **Pagamento Processado com Sucesso!**
-
-Estamos verificando seu pagamento e em breve você receberá:
-
-1. 🎫 Link de acesso ao grupo
-2. 📧 Comprovante por email
-3. 📱 Notificação de boas-vindas
-
-⏱️ Isso geralmente leva menos de 1 minuto.
-
-Se não receber o acesso em 5 minutos, entre em contato com o suporte.
-"""
-    
-    keyboard = [
-        [InlineKeyboardButton("📊 Ver Minhas Assinaturas", callback_data="check_status")],
-        [InlineKeyboardButton("❓ Ajuda", callback_data="help")]
-    ]
-    
-    await update.message.reply_text(
-        text,
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
 async def handle_payment_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):

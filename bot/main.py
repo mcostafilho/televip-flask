@@ -6,30 +6,31 @@ import os
 import sys
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
 # Adicionar o diretório raiz ao path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler, 
     MessageHandler, filters, ContextTypes
 )
 
 # Importar handlers
-from bot.handlers.start import start_command, help_command
-from bot.handlers.payment import handle_plan_selection, handle_payment_callback
+from bot.handlers.start import start_command, help_command, show_user_dashboard
+from bot.handlers.payment import handle_plan_selection, handle_payment_callback, handle_payment_success
 from bot.handlers.subscription import (
     status_command, planos_command, handle_renewal
 )
 from bot.handlers.admin import (
-    setup_command, stats_command, broadcast_command
+    setup_command, stats_command, broadcast_command,
+    handle_join_request, handle_new_chat_members
 )
 from bot.handlers.discovery import descobrir_command, handle_discover_callback
-# Comentado temporariamente até implementar o sistema de jobs
-# from bot.jobs.scheduled_tasks import setup_jobs
+from bot.handlers.payment_verification import check_payment_status
+from bot.utils.database import get_db_session
 
 # Carregar variáveis de ambiente
 load_dotenv()
@@ -96,7 +97,7 @@ def setup_handlers(application):
     application.add_handler(CommandHandler("stats", stats_command))
     application.add_handler(CommandHandler("broadcast", broadcast_command))
     
-    # Registrar callbacks
+    # Registrar callbacks específicos
     application.add_handler(CallbackQueryHandler(
         handle_plan_selection, pattern="^plan_"
     ))
@@ -104,16 +105,158 @@ def setup_handlers(application):
         handle_payment_callback, pattern="^pay_"
     ))
     application.add_handler(CallbackQueryHandler(
-        handle_renewal, pattern="^renew_"
+        handle_renewal, pattern="^renew"
     ))
     application.add_handler(CallbackQueryHandler(
-        handle_discover_callback, pattern="^discover$"
+        handle_check_status_callback, pattern="^check_status$"
+    ))
+    application.add_handler(CallbackQueryHandler(
+        check_payment_status, pattern="^check_payment_status$"
+    ))
+    application.add_handler(CallbackQueryHandler(
+        handle_discover_callback, pattern="^discover"
+    ))
+    application.add_handler(CallbackQueryHandler(
+        handle_back_callback, pattern="^back_to_start$"
+    ))
+    application.add_handler(CallbackQueryHandler(
+        handle_help_callback, pattern="^help$"
+    ))
+    application.add_handler(CallbackQueryHandler(
+        handle_cancel_callback, pattern="^cancel$"
+    ))
+    application.add_handler(CallbackQueryHandler(
+        handle_categories_callback, pattern="^categor"
+    ))
+    application.add_handler(CallbackQueryHandler(
+        handle_premium_callback, pattern="^premium_groups$"
+    ))
+    application.add_handler(CallbackQueryHandler(
+        handle_new_groups_callback, pattern="^new_groups$"
+    ))
+    application.add_handler(CallbackQueryHandler(
+        handle_cheap_callback, pattern="^cheapest_groups$"
+    ))
+    
+    # Handlers para gerenciar membros do grupo
+    application.add_handler(MessageHandler(
+        filters.StatusUpdate.NEW_CHAT_MEMBERS,
+        handle_new_chat_members
     ))
     
     # Handler geral para callbacks não tratados
     application.add_handler(CallbackQueryHandler(handle_unknown_callback))
     
     logger.info("✅ Handlers configurados com sucesso!")
+
+async def handle_check_status_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handler para callback check_status"""
+    from bot.handlers.subscription import status_command
+    query = update.callback_query
+    await query.answer()
+    
+    # Simular comando /status
+    await status_command(update, context)
+
+async def handle_back_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handler para voltar ao início"""
+    from bot.handlers.start import show_user_dashboard
+    query = update.callback_query
+    await query.answer()
+    
+    # Atualizar context para callback
+    await show_user_dashboard(update, context)
+
+async def handle_help_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handler para callback help"""
+    query = update.callback_query
+    await query.answer()
+    
+    # Mostrar ajuda
+    text = """📋 **Central de Ajuda TeleVIP**
+
+**🔸 Comandos para Assinantes:**
+
+/start - Painel principal com suas assinaturas
+/status - Status detalhado de todas assinaturas
+/planos - Listar seus planos ativos
+/descobrir - Explorar novos grupos disponíveis
+/help - Mostrar esta mensagem de ajuda
+
+**🔹 Comandos para Criadores:**
+
+/setup - Configurar o bot em seu grupo
+/stats - Ver estatísticas detalhadas
+/broadcast - Enviar mensagem para assinantes
+
+**💡 Dicas Úteis:**
+
+• 🔔 Ative as notificações para não perder avisos importantes
+• 💰 Renove com antecedência e ganhe descontos
+• 🔍 Use /descobrir para encontrar conteúdo novo
+• 📱 Salve os links dos grupos para acesso rápido
+
+**❓ Perguntas Frequentes:**
+
+**Como assino um grupo?**
+Clique no link fornecido pelo criador ou use /descobrir
+
+**Como cancelo uma assinatura?**
+As assinaturas não renovam automaticamente
+
+**Posso mudar de plano?**
+Sim, quando sua assinatura atual expirar
+
+**É seguro?**
+Sim, usamos Stripe para processar pagamentos
+
+**📞 Suporte:**
+• Problemas com pagamento: suporte@televip.com
+• Dúvidas sobre conteúdo: contate o criador do grupo
+
+🔒 Seus dados estão seguros e protegidos."""
+    
+    keyboard = [
+        [
+            InlineKeyboardButton("⬅️ Voltar", callback_data="back_to_start"),
+            InlineKeyboardButton("📞 Suporte", url="https://t.me/suporte_televip")
+        ]
+    ]
+    
+    await query.edit_message_text(
+        text,
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+
+async def handle_cancel_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handler para cancelar operação"""
+    query = update.callback_query
+    await query.answer("❌ Operação cancelada")
+    
+    # Voltar ao dashboard
+    await handle_back_callback(update, context)
+
+async def handle_categories_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handler para callback de categorias"""
+    from bot.handlers.discovery import handle_discover_callback
+    # Redirecionar para o handler de discovery que já trata categorias
+    await handle_discover_callback(update, context)
+
+async def handle_premium_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handler para grupos premium"""
+    from bot.handlers.discovery import handle_discover_callback
+    await handle_discover_callback(update, context)
+
+async def handle_new_groups_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handler para grupos novos"""
+    from bot.handlers.discovery import handle_discover_callback
+    await handle_discover_callback(update, context)
+
+async def handle_cheap_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handler para grupos baratos"""
+    from bot.handlers.discovery import handle_discover_callback
+    await handle_discover_callback(update, context)
 
 async def handle_unknown_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler para callbacks não reconhecidos"""
@@ -134,7 +277,7 @@ async def post_init(application: Application) -> None:
             ("start", "Ver suas assinaturas ou assinar novo grupo"),
             ("status", "Status detalhado de todas assinaturas"),
             ("planos", "Ver todos seus planos ativos"),
-            ("descobrir", "Descobrir novos grupos"),
+            ("descobrir", "Explorar novos grupos disponíveis"),
             ("help", "Obter ajuda"),
             ("setup", "Configurar bot no grupo (admin)"),
             ("stats", "Ver estatísticas (admin)")

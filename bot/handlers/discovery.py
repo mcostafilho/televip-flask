@@ -2,6 +2,7 @@
 Sistema de descoberta de grupos
 """
 import logging
+from datetime import datetime, timedelta
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
