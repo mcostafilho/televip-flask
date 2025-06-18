@@ -1,218 +1,225 @@
 #!/usr/bin/env python3
 """
-Script para ativar e verificar o sistema de pagamentos
-Execute: python fix_payment_system.py
+Script para corrigir o erro de joins ambíguos no analytics
+Execute: python fix_analytics_joins.py
 """
 import os
-import sys
-from dotenv import load_dotenv
+import shutil
+from datetime import datetime
 
-# Carregar variáveis de ambiente
-load_dotenv()
-
-def check_stripe_config():
-    """Verificar configuração do Stripe"""
-    print("🔍 Verificando configuração do Stripe...")
+def fix_analytics_route():
+    """Corrigir joins ambíguos na rota analytics"""
+    print("🔧 Corrigindo joins ambíguos no analytics...")
     print("=" * 50)
     
-    # Verificar chaves do Stripe
-    stripe_secret = os.getenv('STRIPE_SECRET_KEY')
-    stripe_webhook = os.getenv('STRIPE_WEBHOOK_SECRET')
+    dashboard_file = "app/routes/dashboard.py"
     
-    issues = []
-    
-    if not stripe_secret:
-        issues.append("❌ STRIPE_SECRET_KEY não configurada")
-    else:
-        if stripe_secret.startswith('sk_test_'):
-            print("✅ STRIPE_SECRET_KEY configurada (modo TESTE)")
-        elif stripe_secret.startswith('sk_live_'):
-            print("✅ STRIPE_SECRET_KEY configurada (modo PRODUÇÃO)")
-        else:
-            issues.append("⚠️  STRIPE_SECRET_KEY com formato inválido")
-    
-    if not stripe_webhook:
-        issues.append("⚠️  STRIPE_WEBHOOK_SECRET não configurada (opcional mas recomendada)")
-    else:
-        print("✅ STRIPE_WEBHOOK_SECRET configurada")
-    
-    # Verificar outras configs necessárias
-    bot_token = os.getenv('BOT_TOKEN') or os.getenv('TELEGRAM_BOT_TOKEN')
-    bot_username = os.getenv('TELEGRAM_BOT_USERNAME') or os.getenv('BOT_USERNAME')
-    
-    if not bot_token:
-        issues.append("❌ BOT_TOKEN não configurado")
-    else:
-        print("✅ BOT_TOKEN configurado")
-    
-    if not bot_username:
-        issues.append("⚠️  TELEGRAM_BOT_USERNAME não configurado (recomendado)")
-    else:
-        print(f"✅ TELEGRAM_BOT_USERNAME: @{bot_username}")
-    
-    return issues
-
-def update_payment_handler():
-    """Atualizar o handler de pagamento para funcionar corretamente"""
-    print("\n📝 Verificando handler de pagamento...")
-    
-    handler_path = "bot/handlers/payment.py"
-    
-    if not os.path.exists(handler_path):
-        print(f"❌ Arquivo {handler_path} não encontrado!")
+    if not os.path.exists(dashboard_file):
+        print(f"❌ Arquivo {dashboard_file} não encontrado!")
         return False
     
-    # Ler o arquivo atual
-    with open(handler_path, 'r', encoding='utf-8') as f:
+    # Fazer backup
+    backup_file = f"{dashboard_file}.backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    print(f"📋 Criando backup: {backup_file}")
+    shutil.copy2(dashboard_file, backup_file)
+    
+    # Ler conteúdo
+    with open(dashboard_file, 'r', encoding='utf-8') as f:
         content = f.read()
     
-    # Verificar se está mostrando "em desenvolvimento"
-    if '"🚧 Sistema de pagamento em desenvolvimento"' in content:
-        print("❌ Handler ainda mostra 'em desenvolvimento'")
-        print("✅ O código correto já existe no arquivo!")
-        print("\n⚠️  AÇÃO NECESSÁRIA:")
-        print("1. Abra o arquivo: bot/handlers/payment.py")
-        print("2. Procure a função 'handle_payment_method'")
-        print("3. Verifique se está chamando 'process_stripe_payment' corretamente")
-        return False
-    else:
-        print("✅ Handler de pagamento parece estar correto")
-        return True
-
-def create_env_example():
-    """Criar arquivo .env.example atualizado"""
-    print("\n📄 Criando .env.example atualizado...")
+    print("📝 Aplicando correções nos joins...")
     
-    env_example = """# Configurações do Bot Telegram
-BOT_TOKEN=seu_bot_token_aqui
-TELEGRAM_BOT_USERNAME=seu_bot_username_aqui
-
-# Configurações do Stripe
-STRIPE_SECRET_KEY=sk_test_... # Obtenha em https://dashboard.stripe.com/apikeys
-STRIPE_WEBHOOK_SECRET=whsec_... # Opcional, configure webhook em https://dashboard.stripe.com/webhooks
-
-# Banco de Dados
-DATABASE_URL=sqlite:///instance/televip.db
-
-# Flask
-SECRET_KEY=sua-chave-secreta-aqui
-FLASK_ENV=development
-
-# URLs da aplicação
-APP_URL=http://localhost:5000
-"""
+    # Correção 1: Query de receita por plano (mais problemática)
+    old_plan_revenue = '''plan_revenue = db.session.query(
+        PricingPlan.name,
+        func.sum(Transaction.amount).label('total')
+    ).join(
+        Subscription, PricingPlan.id == Subscription.plan_id
+    ).join(
+        Transaction
+    ).join(
+        Group
+    ).filter('''
     
-    with open('.env.example', 'w', encoding='utf-8') as f:
-        f.write(env_example)
+    new_plan_revenue = '''plan_revenue = db.session.query(
+        PricingPlan.name,
+        func.sum(Transaction.amount).label('total')
+    ).select_from(
+        PricingPlan
+    ).join(
+        Subscription, PricingPlan.id == Subscription.plan_id
+    ).join(
+        Transaction, Transaction.subscription_id == Subscription.id
+    ).join(
+        Group, Group.id == Subscription.group_id
+    ).filter('''
     
-    print("✅ Arquivo .env.example criado/atualizado")
+    if old_plan_revenue in content:
+        content = content.replace(old_plan_revenue, new_plan_revenue)
+        print("✅ Corrigido: Query de receita por plano")
+    
+    # Correção 2: Query de receita por grupo
+    old_group_revenue = '''group_revenue = db.session.query(
+        Group.name,
+        func.sum(Transaction.amount).label('total')
+    ).join(
+        Subscription, Group.id == Subscription.group_id
+    ).join(
+        Transaction
+    ).filter('''
+    
+    new_group_revenue = '''group_revenue = db.session.query(
+        Group.name,
+        func.sum(Transaction.amount).label('total')
+    ).select_from(
+        Group
+    ).join(
+        Subscription, Group.id == Subscription.group_id
+    ).join(
+        Transaction, Transaction.subscription_id == Subscription.id
+    ).filter('''
+    
+    if old_group_revenue in content:
+        content = content.replace(old_group_revenue, new_group_revenue)
+        print("✅ Corrigido: Query de receita por grupo")
+    
+    # Correção 3: Garantir que todas as queries tenham joins explícitos
+    # Procurar por joins sem condição explícita
+    content = content.replace(
+        ').join(\n        Transaction\n    )',
+        ').join(\n        Transaction, Transaction.subscription_id == Subscription.id\n    )'
+    )
+    
+    # Salvar arquivo corrigido
+    with open(dashboard_file, 'w', encoding='utf-8') as f:
+        f.write(content)
+    
+    print("✅ Dashboard.py corrigido!")
+    return True
 
-def show_stripe_setup_guide():
-    """Mostrar guia de configuração do Stripe"""
-    print("\n📚 GUIA DE CONFIGURAÇÃO DO STRIPE")
+def create_analytics_fix_alternative():
+    """Criar versão alternativa usando SQL direto"""
+    print("\n📝 Criando versão alternativa com SQL direto...")
+    
+    alternative_code = '''# Alternativa para a query de receita por plano (SQL direto)
+    plan_revenue_sql = text("""
+        SELECT p.name, SUM(t.amount) as total
+        FROM pricing_plans p
+        JOIN subscriptions s ON p.id = s.plan_id
+        JOIN transactions t ON t.subscription_id = s.id
+        JOIN groups g ON g.id = s.group_id
+        WHERE g.creator_id = :creator_id
+          AND t.status = 'completed'
+          AND t.created_at >= :start_date
+        GROUP BY p.id, p.name
+    """)
+    
+    plan_revenue_result = db.session.execute(plan_revenue_sql, {
+        'creator_id': current_user.id,
+        'start_date': start_date
+    })
+    
+    plan_labels = []
+    plan_data = []
+    for row in plan_revenue_result:
+        plan_labels.append(row.name)
+        plan_data.append(float(row.total))'''
+    
+    with open('analytics_alternative.py', 'w', encoding='utf-8') as f:
+        f.write(alternative_code)
+    
+    print("✅ Código alternativo salvo em: analytics_alternative.py")
+
+def create_test_analytics():
+    """Criar script de teste do analytics"""
+    print("\n📝 Criando script de teste...")
+    
+    test_script = '''#!/usr/bin/env python3
+"""Testar se o analytics está funcionando"""
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from app import create_app
+
+app = create_app()
+
+with app.app_context():
+    with app.test_client() as client:
+        # Simular login (ajuste conforme necessário)
+        # client.post('/login', data={'email': 'admin@example.com', 'password': 'senha'})
+        
+        # Tentar acessar analytics
+        response = client.get('/dashboard/analytics')
+        
+        if response.status_code == 200:
+            print("✅ Analytics funcionando!")
+        else:
+            print(f"❌ Erro no analytics: {response.status_code}")
+            if response.data:
+                print("Detalhes:", response.data.decode('utf-8')[:500])
+'''
+    
+    with open('test_analytics.py', 'w', encoding='utf-8') as f:
+        f.write(test_script)
+    
+    print("✅ Script de teste criado: test_analytics.py")
+
+def show_join_explanation():
+    """Mostrar explicação sobre o problema"""
+    print("\n📚 EXPLICAÇÃO DO PROBLEMA:")
     print("=" * 50)
     print("""
-1. CRIAR CONTA NO STRIPE:
-   - Acesse: https://dashboard.stripe.com/register
-   - Complete o cadastro
+O erro ocorre porque o SQLAlchemy não consegue determinar automaticamente
+como fazer o JOIN entre as tabelas quando há múltiplas relações possíveis.
 
-2. OBTER CHAVES API:
-   - Acesse: https://dashboard.stripe.com/test/apikeys
-   - Copie a "Secret key" (começa com sk_test_...)
-   - Cole no .env como STRIPE_SECRET_KEY
+Por exemplo:
+- Transaction tem subscription_id (FK para Subscription)
+- Subscription tem group_id (FK para Group) e plan_id (FK para PricingPlan)
+- Group tem creator_id (FK para Creator)
 
-3. CONFIGURAR WEBHOOK (Opcional mas recomendado):
-   - Acesse: https://dashboard.stripe.com/test/webhooks
-   - Clique em "Add endpoint"
-   - URL: http://seu-dominio.com/webhooks/stripe
-   - Eventos: checkout.session.completed, payment_intent.succeeded
-   - Copie o "Signing secret" (começa com whsec_...)
-   - Cole no .env como STRIPE_WEBHOOK_SECRET
+Quando você faz .join(Transaction).join(Group), o SQLAlchemy não sabe
+se deve usar:
+1. Transaction -> Subscription -> Group
+2. Alguma outra rota de relacionamento
 
-4. TESTAR LOCALMENTE:
-   - Use o Stripe CLI: https://stripe.com/docs/stripe-cli
-   - Comando: stripe listen --forward-to localhost:5000/webhooks/stripe
+SOLUÇÃO:
+Especificar explicitamente as condições de JOIN:
+- .join(Transaction, Transaction.subscription_id == Subscription.id)
+- .join(Group, Group.id == Subscription.group_id)
 
-5. MODO PRODUÇÃO:
-   - Troque sk_test_ por sk_live_ quando estiver pronto
-   - Configure webhook com URL real do servidor
+Ou usar select_from() para definir a tabela inicial:
+- .select_from(PricingPlan).join(Subscription, ...).join(Transaction, ...)
 """)
-
-def test_stripe_connection():
-    """Testar conexão com Stripe"""
-    print("\n🧪 Testando conexão com Stripe...")
-    
-    try:
-        import stripe
-        stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
-        
-        if not stripe.api_key:
-            print("❌ Não foi possível testar - STRIPE_SECRET_KEY não configurada")
-            return False
-        
-        # Tentar listar produtos (teste simples)
-        stripe.Product.list(limit=1)
-        print("✅ Conexão com Stripe funcionando!")
-        return True
-        
-    except ImportError:
-        print("❌ Biblioteca stripe não instalada. Execute: pip install stripe")
-        return False
-    except stripe.error.AuthenticationError:
-        print("❌ Chave do Stripe inválida. Verifique STRIPE_SECRET_KEY")
-        return False
-    except Exception as e:
-        print(f"❌ Erro ao conectar com Stripe: {e}")
-        return False
 
 def main():
     """Função principal"""
-    print("🚀 ATIVAÇÃO DO SISTEMA DE PAGAMENTOS TELEVIP")
+    print("🚀 CORREÇÃO DE JOINS AMBÍGUOS NO ANALYTICS")
     print("=" * 50)
     
-    # 1. Verificar configuração
-    issues = check_stripe_config()
+    # 1. Aplicar correção
+    success = fix_analytics_route()
     
-    # 2. Verificar handler
-    handler_ok = update_payment_handler()
-    
-    # 3. Criar .env.example
-    create_env_example()
-    
-    # 4. Testar conexão
-    if not issues or (len(issues) == 1 and 'WEBHOOK' in issues[0]):
-        stripe_ok = test_stripe_connection()
-    else:
-        stripe_ok = False
-    
-    # 5. Resumo final
-    print("\n📊 RESUMO FINAL")
-    print("=" * 50)
-    
-    if issues:
-        print("\n⚠️  PROBLEMAS ENCONTRADOS:")
-        for issue in issues:
-            print(f"  {issue}")
+    if success:
+        # 2. Criar arquivos auxiliares
+        create_analytics_fix_alternative()
+        create_test_analytics()
         
-        print("\n💡 SOLUÇÕES:")
-        if any('STRIPE_SECRET_KEY' in i for i in issues):
-            print("  1. Configure STRIPE_SECRET_KEY no arquivo .env")
-            show_stripe_setup_guide()
+        # 3. Mostrar explicação
+        show_join_explanation()
+        
+        print("\n✅ CORREÇÃO APLICADA!")
+        print("\n📋 PRÓXIMOS PASSOS:")
+        print("1. Reinicie o Flask")
+        print("2. Acesse /dashboard/analytics")
+        print("3. Deve funcionar sem erros")
+        
+        print("\n💡 Se ainda der erro:")
+        print("- Use o código SQL direto de 'analytics_alternative.py'")
+        print("- Execute 'test_analytics.py' para testar")
     else:
-        print("✅ Todas as configurações essenciais estão OK!")
-    
-    if handler_ok and stripe_ok and not any('STRIPE_SECRET_KEY' in i for i in issues):
-        print("\n🎉 SISTEMA DE PAGAMENTOS PRONTO PARA USO!")
-        print("\nPRÓXIMOS PASSOS:")
-        print("1. Reinicie o bot: python bot.py")
-        print("2. Teste um pagamento no bot")
-        print("3. Verifique no dashboard do Stripe")
-    else:
-        print("\n❌ Sistema ainda precisa de configuração")
-        print("\nACÕES NECESSÁRIAS:")
-        print("1. Configure as variáveis faltantes no .env")
-        print("2. Execute este script novamente")
-        print("3. Reinicie o bot quando tudo estiver OK")
+        print("\n❌ Correção falhou!")
+        print("Aplique manualmente as correções")
 
 if __name__ == "__main__":
     main()

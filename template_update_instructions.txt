@@ -1,0 +1,32 @@
+
+INSTRUÇÕES PARA ATUALIZAR O TEMPLATE
+====================================
+
+1. ADICIONAR O MODAL (antes do </div> final):
+   - Abra app/templates/dashboard/index.html
+   - Cole o conteúdo de balance_details_modal.html antes do {% endblock %}
+
+2. SUBSTITUIR O CARD DE SALDO:
+   - Encontre o card que tem "Saldo Disponível"
+   - Substitua TODO o <div class="stat-card"> pelo conteúdo de new_balance_card.html
+
+3. ADICIONAR NO <HEAD> (para os estilos):
+   - Os estilos já estão incluídos no modal
+   - Ou adicione em static/css/dashboard.css
+
+4. TESTAR:
+   - Reinicie o Flask
+   - Acesse o dashboard
+   - Você verá o saldo bloqueado se houver transações recentes
+   - Clique no ℹ️ para ver os detalhes
+
+VISUAL ESPERADO:
+================
+Saldo Disponível: R$ 0,00
+🔒 R$ 26,52 bloqueado ℹ️
+Taxa: R$ 0,99 + 7,99%
+
+Ao clicar no ℹ️, abre modal mostrando:
+- Quanto está disponível
+- Quanto está bloqueado
+- Timeline dia a dia de liberação

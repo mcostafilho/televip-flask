@@ -455,12 +455,10 @@ def analytics():
     group_revenue = db.session.query(
         Group.name,
         func.sum(Transaction.amount).label('total')
-    ).select_from(
-        Group
     ).join(
         Subscription, Group.id == Subscription.group_id
     ).join(
-        Transaction, Transaction.subscription_id == Subscription.id
+        Transaction
     ).filter(
         Group.creator_id == current_user.id,
         Transaction.status == 'completed',
@@ -476,14 +474,12 @@ def analytics():
     plan_revenue = db.session.query(
         PricingPlan.name,
         func.sum(Transaction.amount).label('total')
-    ).select_from(
-        PricingPlan
     ).join(
         Subscription, PricingPlan.id == Subscription.plan_id
     ).join(
-        Transaction, Transaction.subscription_id == Subscription.id
+        Transaction
     ).join(
-        Group, Group.id == Subscription.group_id
+        Group
     ).filter(
         Group.creator_id == current_user.id,
         Transaction.status == 'completed',

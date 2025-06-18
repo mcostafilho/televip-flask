@@ -1,0 +1,36 @@
+VERIFICAÇÃO MANUAL DO GRÁFICO
+==============================
+
+1. REINICIE O FLASK
+   Ctrl+C e execute: python run.py
+
+2. ACESSE O DASHBOARD
+   http://localhost:5000/dashboard
+
+3. VERIFIQUE O CONSOLE DO FLASK
+   Você deve ver algo como:
+   🔍 GRÁFICO DEBUG - Receitas por data: {'2025-06-17': 29.9}
+   🔍 GRÁFICO DEBUG - Labels: ['12/06', '13/06', ..., '18/06']
+   🔍 GRÁFICO DEBUG - Dados: [0.0, 0.0, 0.0, 0.0, 0.0, 29.9, 0.0]
+
+4. INSPECIONE NO NAVEGADOR
+   - Aperte F12 para abrir o DevTools
+   - Vá na aba Console
+   - Digite: revenueChart.data.datasets[0].data
+   - Deve mostrar: [0, 0, 0, 0, 0, 29.9, 0]
+
+5. SE AINDA NÃO FUNCIONAR
+   - Verifique se há erros no console do navegador
+   - Verifique se o Chart.js está carregando
+   - Tente: revenueChart.update() no console
+
+SOLUÇÃO ALTERNATIVA
+===================
+Se o gráfico continuar vazio, adicione isto no template
+logo após criar o gráfico:
+
+// Forçar atualização dos dados
+setTimeout(() => {
+    revenueChart.data.datasets[0].data = {{ chart_data | tojson }};
+    revenueChart.update();
+}, 100);

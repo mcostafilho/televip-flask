@@ -1,0 +1,146 @@
+<!-- Modal de Detalhes do Saldo -->
+<div class="modal fade" id="balanceDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-info-circle"></i> Detalhes do Saldo
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Resumo -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h6 class="text-success">Disponível</h6>
+                                <h4>R$ {{ "%.2f"|format(available_balance|default(0)) }}</h4>
+                                <small class="text-muted">Para saque imediato</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h6 class="text-warning">Bloqueado</h6>
+                                <h4>R$ {{ "%.2f"|format(blocked_balance|default(0)) }}</h4>
+                                <small class="text-muted">Em retenção (7 dias)</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h6 class="text-primary">Total</h6>
+                                <h4>R$ {{ "%.2f"|format(total_balance|default(0)) }}</h4>
+                                <small class="text-muted">Disponível + Bloqueado</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Detalhes do Bloqueio -->
+                {% if blocked_by_days %}
+                <h6 class="mb-3">
+                    <i class="bi bi-clock-history"></i> Liberação Programada
+                </h6>
+                <div class="timeline-container">
+                    {% for days, info in blocked_by_days.items() %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker {% if days == 0 %}bg-success{% elif days <= 3 %}bg-warning{% else %}bg-danger{% endif %}"></div>
+                        <div class="timeline-content">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    {% if days == 0 %}
+                                        <strong class="text-success">Liberando hoje!</strong>
+                                    {% elif days == 1 %}
+                                        <strong>Libera amanhã</strong>
+                                    {% else %}
+                                        <strong>Libera em {{ days }} dias</strong>
+                                    {% endif %}
+                                    <br>
+                                    <small class="text-muted">{{ info.count }} transação(ões)</small>
+                                </div>
+                                <div class="text-end">
+                                    <h5 class="mb-0 {% if days == 0 %}text-success{% endif %}">
+                                        R$ {{ "%.2f"|format(info.amount) }}
+                                    </h5>
+                                </div>
+                            </div>
+                            <div class="progress mt-2" style="height: 6px;">
+                                <div class="progress-bar {% if days == 0 %}bg-success{% elif days <= 3 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                     style="width: {{ ((7 - days) / 7 * 100)|int }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    Nenhum valor em retenção no momento.
+                </div>
+                {% endif %}
+                
+                <!-- Explicação -->
+                <div class="alert alert-warning mt-4">
+                    <h6 class="alert-heading">
+                        <i class="bi bi-shield-check"></i> Por que 7 dias?
+                    </h6>
+                    <p class="mb-0">
+                        Para sua segurança, retemos os valores por 7 dias para garantir que não haverá 
+                        contestações ou chargebacks. Após esse período, o valor é liberado automaticamente 
+                        para saque.
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos para timeline -->
+<style>
+.timeline-container {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 20px;
+}
+
+.timeline-item:not(:last-child):after {
+    content: '';
+    position: absolute;
+    left: -21px;
+    top: 24px;
+    width: 2px;
+    height: calc(100% - 4px);
+    background: #e9ecef;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -25px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid #dee2e6;
+}
+
+.timeline-item:hover .timeline-content {
+    background: #e9ecef;
+}
+</style>

@@ -153,68 +153,43 @@ def index():
         Transaction.created_at.desc()
     ).limit(10).all()
     
-            # Dados para gráfico (últimos 7 dias) - CORREÇÃO DEFINITIVA
+    # Dados para gráfico (últimos 7 dias) - RECEITA BRUTA
     end_date = datetime.utcnow()
-    start_date = end_date - timedelta(days=6)
+    start_date = end_date - timedelta(days=6)  # 6 dias atrás + hoje = 7 dias
     
-    # Query usando SQL direto para evitar problemas de timezone
-    from sqlalchemy import text
-    
-    daily_revenue_query = text("""
-        SELECT DATE(t.created_at) as date, 
-               CAST(SUM(t.amount) AS FLOAT) as total
-        FROM transactions t
-        JOIN subscriptions s ON t.subscription_id = s.id
-        JOIN groups g ON s.group_id = g.id
-        WHERE g.creator_id = :creator_id
-          AND t.status = 'completed'
-          AND DATE(t.created_at) >= :start_date
-          AND DATE(t.created_at) <= :end_date
-        GROUP BY DATE(t.created_at)
-    """)
-    
-    daily_revenue_result = db.session.execute(daily_revenue_query, {
-        'creator_id': current_user.id,
-        'start_date': start_date.strftime('%Y-%m-%d'),
-        'end_date': end_date.strftime('%Y-%m-%d')
-    })
-    
-    # Converter resultado para dicionário
-    revenue_by_date = {}
-    for row in daily_revenue_result:
-        # Garantir que a data seja string no formato correto
-        date_str = row.date
-        if hasattr(row.date, 'strftime'):
-            date_str = row.date.strftime('%Y-%m-%d')
-        revenue_by_date[date_str] = float(row.total)
-    
-    # DEBUG - Imprimir no console do Flask
-    print(f"\n🔍 GRÁFICO DEBUG - Receitas por data: {revenue_by_date}")
+    # Query para receita diária (valor bruto)
+    daily_revenue = db.session.query(
+        func.date(Transaction.created_at).label('date'),
+        func.sum(Transaction.amount).label('total')
+    ).join(
+        Subscription
+    ).join(
+        Group
+    ).filter(
+        Group.creator_id == current_user.id,
+        Transaction.status == 'completed',
+        Transaction.created_at >= start_date
+    ).group_by(
+        func.date(Transaction.created_at)
+    ).all()
     
     # Preparar dados do gráfico
     chart_labels = []
     chart_data = []
     
-    current_date = start_date
-    while current_date <= end_date:
-        # Label no formato dd/mm
-        label = current_date.strftime('%d/%m')
-        chart_labels.append(label)
-        
-        # Buscar valor usando string da data
-        date_key = current_date.strftime('%Y-%m-%d')
-        value = revenue_by_date.get(date_key, 0.0)
-        
-        # Garantir que é float
-        chart_data.append(float(value))
-        
-        # DEBUG
-        print(f"  {label} ({date_key}): R$ {value}")
-        
-        current_date += timedelta(days=1)
+    # Criar dicionário com os valores por data
+    revenue_dict = {}
+    for r in daily_revenue:
+        revenue_dict[r.date] = float(r.total)
     
-    print(f"\n🔍 GRÁFICO DEBUG - Labels: {chart_labels}")
-    print(f"🔍 GRÁFICO DEBUG - Dados: {chart_data}")
+    # Preencher todos os dias (incluindo zeros)
+    current_date = start_date.date()
+    while current_date <= end_date.date():
+        # Formato da label: "12/06"
+        chart_labels.append(current_date.strftime('%d/%m'))
+        # Valor do dia ou 0 se não houver
+        chart_data.append(revenue_dict.get(current_date, 0))
+        current_date += timedelta(days=1)
     
     return render_template('dashboard/index.html',
         # Saldo e taxas
@@ -455,12 +430,10 @@ def analytics():
     group_revenue = db.session.query(
         Group.name,
         func.sum(Transaction.amount).label('total')
-    ).select_from(
-        Group
     ).join(
         Subscription, Group.id == Subscription.group_id
     ).join(
-        Transaction, Transaction.subscription_id == Subscription.id
+        Transaction
     ).filter(
         Group.creator_id == current_user.id,
         Transaction.status == 'completed',
@@ -476,14 +449,12 @@ def analytics():
     plan_revenue = db.session.query(
         PricingPlan.name,
         func.sum(Transaction.amount).label('total')
-    ).select_from(
-        PricingPlan
     ).join(
         Subscription, PricingPlan.id == Subscription.plan_id
     ).join(
-        Transaction, Transaction.subscription_id == Subscription.id
+        Transaction
     ).join(
-        Group, Group.id == Subscription.group_id
+        Group
     ).filter(
         Group.creator_id == current_user.id,
         Transaction.status == 'completed',

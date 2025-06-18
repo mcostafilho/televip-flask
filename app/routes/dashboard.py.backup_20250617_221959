@@ -10,12 +10,8 @@ from datetime import datetime, timedelta
 bp = Blueprint('dashboard', __name__, url_prefix='/dashboard')
 
 def calculate_balance(creator_id):
-    """Calcular saldo disponível e bloqueado (7 dias de retenção)"""
+    """Calcular saldo disponível considerando taxas de R$ 0,99 + 7,99%"""
     from app.models import Transaction, Subscription, Group
-    from datetime import datetime, timedelta
-    
-    # Data limite para saldo disponível (7 dias atrás)
-    available_date = datetime.utcnow() - timedelta(days=7)
     
     # Buscar todas as transações completas
     transactions = Transaction.query.join(
@@ -27,14 +23,8 @@ def calculate_balance(creator_id):
         Transaction.status == 'completed'
     ).all()
     
-    # Separar transações disponíveis e bloqueadas
-    available_transactions = []
-    blocked_transactions = []
-    
     total_received = 0
     total_fees = 0
-    available_balance = 0
-    blocked_balance = 0
     
     for transaction in transactions:
         # Valor bruto da transação
@@ -44,62 +34,21 @@ def calculate_balance(creator_id):
         fixed_fee = 0.99  # Taxa fixa
         percentage_fee = amount * 0.0799  # 7,99%
         total_fee = fixed_fee + percentage_fee
+        
+        # Valor líquido
         net_amount = amount - total_fee
         
         total_received += amount
         total_fees += total_fee
-        
-        # Usar created_at se paid_at não existir
-        payment_date = getattr(transaction, 'paid_at', None) or transaction.created_at
-        
-        # Verificar se está disponível (mais de 7 dias)
-        if payment_date and payment_date <= available_date:
-            available_balance += net_amount
-            available_transactions.append({
-                'transaction': transaction,
-                'net_amount': net_amount,
-                'status': 'available'
-            })
-        else:
-            blocked_balance += net_amount
-            # Calcular dias restantes
-            if payment_date:
-                days_passed = (datetime.utcnow() - payment_date).days
-                days_remaining = max(0, 7 - days_passed)
-            else:
-                days_remaining = 7
-                
-            blocked_transactions.append({
-                'transaction': transaction,
-                'net_amount': net_amount,
-                'days_remaining': days_remaining,
-                'status': 'blocked'
-            })
     
-    # Organizar transações bloqueadas por dias restantes
-    blocked_by_days = {}
-    for bt in blocked_transactions:
-        days = bt['days_remaining']
-        if days not in blocked_by_days:
-            blocked_by_days[days] = {
-                'amount': 0,
-                'count': 0,
-                'transactions': []
-            }
-        blocked_by_days[days]['amount'] += bt['net_amount']
-        blocked_by_days[days]['count'] += 1
-        blocked_by_days[days]['transactions'].append(bt)
+    # Saldo disponível
+    available_balance = total_received - total_fees
     
     return {
         'total_received': total_received,
         'total_fees': total_fees,
         'available_balance': available_balance,
-        'blocked_balance': blocked_balance,
-        'total_balance': available_balance + blocked_balance,
-        'transaction_count': len(transactions),
-        'available_transactions': available_transactions,
-        'blocked_transactions': blocked_transactions,
-        'blocked_by_days': blocked_by_days
+        'transaction_count': len(transactions)
     }
 
 @bp.route('/')
@@ -118,7 +67,7 @@ def index():
     total_subscribers = 0
     
     for group in groups:
-        # Receita do grupo (valor bruto)
+        # Receita do grupo
         group_revenue = db.session.query(func.sum(Transaction.amount)).join(
             Subscription
         ).filter(
@@ -126,7 +75,7 @@ def index():
             Transaction.status == 'completed'
         ).scalar() or 0
         
-        group.total_revenue = float(group_revenue)
+        group.total_revenue = group_revenue
         
         # Assinantes ativos
         active_subs = Subscription.query.filter_by(
@@ -153,75 +102,40 @@ def index():
         Transaction.created_at.desc()
     ).limit(10).all()
     
-            # Dados para gráfico (últimos 7 dias) - CORREÇÃO DEFINITIVA
+    # Dados para gráfico (últimos 7 dias)
     end_date = datetime.utcnow()
-    start_date = end_date - timedelta(days=6)
+    start_date = end_date - timedelta(days=7)
     
-    # Query usando SQL direto para evitar problemas de timezone
-    from sqlalchemy import text
-    
-    daily_revenue_query = text("""
-        SELECT DATE(t.created_at) as date, 
-               CAST(SUM(t.amount) AS FLOAT) as total
-        FROM transactions t
-        JOIN subscriptions s ON t.subscription_id = s.id
-        JOIN groups g ON s.group_id = g.id
-        WHERE g.creator_id = :creator_id
-          AND t.status = 'completed'
-          AND DATE(t.created_at) >= :start_date
-          AND DATE(t.created_at) <= :end_date
-        GROUP BY DATE(t.created_at)
-    """)
-    
-    daily_revenue_result = db.session.execute(daily_revenue_query, {
-        'creator_id': current_user.id,
-        'start_date': start_date.strftime('%Y-%m-%d'),
-        'end_date': end_date.strftime('%Y-%m-%d')
-    })
-    
-    # Converter resultado para dicionário
-    revenue_by_date = {}
-    for row in daily_revenue_result:
-        # Garantir que a data seja string no formato correto
-        date_str = row.date
-        if hasattr(row.date, 'strftime'):
-            date_str = row.date.strftime('%Y-%m-%d')
-        revenue_by_date[date_str] = float(row.total)
-    
-    # DEBUG - Imprimir no console do Flask
-    print(f"\n🔍 GRÁFICO DEBUG - Receitas por data: {revenue_by_date}")
+    daily_revenue = db.session.query(
+        func.date(Transaction.created_at).label('date'),
+        func.sum(Transaction.amount).label('total')
+    ).join(
+        Subscription
+    ).join(
+        Group
+    ).filter(
+        Group.creator_id == current_user.id,
+        Transaction.status == 'completed',
+        Transaction.created_at >= start_date
+    ).group_by(
+        func.date(Transaction.created_at)
+    ).all()
     
     # Preparar dados do gráfico
     chart_labels = []
     chart_data = []
+    current_date = start_date.date()
     
-    current_date = start_date
-    while current_date <= end_date:
-        # Label no formato dd/mm
-        label = current_date.strftime('%d/%m')
-        chart_labels.append(label)
-        
-        # Buscar valor usando string da data
-        date_key = current_date.strftime('%Y-%m-%d')
-        value = revenue_by_date.get(date_key, 0.0)
-        
-        # Garantir que é float
-        chart_data.append(float(value))
-        
-        # DEBUG
-        print(f"  {label} ({date_key}): R$ {value}")
-        
+    revenue_dict = {r.date: float(r.total) for r in daily_revenue}
+    
+    while current_date <= end_date.date():
+        chart_labels.append(current_date.strftime('%d/%m'))
+        chart_data.append(revenue_dict.get(current_date, 0))
         current_date += timedelta(days=1)
-    
-    print(f"\n🔍 GRÁFICO DEBUG - Labels: {chart_labels}")
-    print(f"🔍 GRÁFICO DEBUG - Dados: {chart_data}")
     
     return render_template('dashboard/index.html',
         # Saldo e taxas
         available_balance=balance_info['available_balance'],
-        blocked_balance=balance_info['blocked_balance'],
-        blocked_by_days=balance_info['blocked_by_days'],
-        total_balance=balance_info['total_balance'],
         balance=balance_info['available_balance'],  # Compatibilidade
         total_fees=balance_info['total_fees'],
         transaction_count=balance_info['transaction_count'],
@@ -229,7 +143,7 @@ def index():
         # Estatísticas gerais
         total_groups=total_groups,
         active_groups=active_groups,
-        total_revenue=balance_info['total_received'],  # Receita bruta
+        total_revenue=balance_info['total_received'],
         total_subscribers=total_subscribers,
         groups=groups,
         recent_transactions=recent_transactions,
@@ -381,7 +295,7 @@ def analytics():
     ).count()
     
     # Ticket médio
-    average_ticket = float(total_revenue) / total_transactions if total_transactions > 0 else 0
+    average_ticket = total_revenue / total_transactions if total_transactions > 0 else 0
     
     # Assinantes
     total_subscribers = Subscription.query.join(
@@ -455,12 +369,10 @@ def analytics():
     group_revenue = db.session.query(
         Group.name,
         func.sum(Transaction.amount).label('total')
-    ).select_from(
-        Group
     ).join(
         Subscription, Group.id == Subscription.group_id
     ).join(
-        Transaction, Transaction.subscription_id == Subscription.id
+        Transaction
     ).filter(
         Group.creator_id == current_user.id,
         Transaction.status == 'completed',
@@ -476,14 +388,12 @@ def analytics():
     plan_revenue = db.session.query(
         PricingPlan.name,
         func.sum(Transaction.amount).label('total')
-    ).select_from(
-        PricingPlan
     ).join(
         Subscription, PricingPlan.id == Subscription.plan_id
     ).join(
-        Transaction, Transaction.subscription_id == Subscription.id
+        Transaction
     ).join(
-        Group, Group.id == Subscription.group_id
+        Group
     ).filter(
         Group.creator_id == current_user.id,
         Transaction.status == 'completed',
@@ -497,7 +407,7 @@ def analytics():
     
     # Preparar dados para o template
     stats = {
-        'total_revenue': float(total_revenue),
+        'total_revenue': total_revenue,
         'total_transactions': total_transactions,
         'average_ticket': average_ticket,
         'total_subscribers': total_subscribers,
