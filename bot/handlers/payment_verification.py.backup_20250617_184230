@@ -95,7 +95,7 @@ async def check_payment_status(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def handle_payment_confirmed(query, context, transaction, db_session):
-    """Processar pagamento confirmado - COM CRIAÇÃO AUTOMÁTICA DE LINK"""
+    """Processar pagamento confirmado"""
     logger.info(f"Pagamento confirmado para transação {transaction.id}")
     
     # Atualizar transação
@@ -110,127 +110,33 @@ async def handle_payment_confirmed(query, context, transaction, db_session):
     
     # Obter informações do grupo
     group = subscription.group
-    user = query.from_user
     
-    # Tentar adicionar usuário ao grupo diretamente (se bot for admin)
-    user_added = False
-    invite_link = None
+    # Gerar link de convite se não existir
+    invite_link = group.invite_link
+    if not invite_link and hasattr(group, 'telegram_username') and group.telegram_username:
+        invite_link = f"https://t.me/{group.telegram_username}"
+    elif not invite_link:
+        invite_link = "Link será enviado pelo administrador"
     
-    try:
-        # Primeiro tentar adicionar o usuário diretamente
-        if group.telegram_id:
-            try:
-                # Adicionar usuário ao grupo
-                await context.bot.add_chat_member(
-                    chat_id=group.telegram_id,
-                    user_id=user.id
-                )
-                user_added = True
-                logger.info(f"Usuário {user.id} adicionado diretamente ao grupo {group.telegram_id}")
-            except Exception as e:
-                logger.info(f"Não foi possível adicionar diretamente: {e}")
-                # Continuar para tentar criar link
-    except Exception as e:
-        logger.error(f"Erro ao tentar adicionar usuário: {e}")
-    
-    # Se não conseguiu adicionar diretamente, criar link de convite
-    if not user_added and group.telegram_id:
-        try:
-            # Criar link de convite único
-            invite_link_obj = await context.bot.create_chat_invite_link(
-                chat_id=group.telegram_id,
-                member_limit=1,  # Limite de 1 uso
-                expire_date=datetime.utcnow() + timedelta(days=7),  # Expira em 7 dias
-                creates_join_request=False  # Entrada direta
-            )
-            invite_link = invite_link_obj.invite_link
-            logger.info(f"Link de convite criado: {invite_link}")
-            
-            # Salvar link na subscription para referência
-            subscription.invite_link_used = invite_link
-            db_session.commit()
-            
-        except Exception as e:
-            logger.error(f"Erro ao criar link de convite: {e}")
-            # Usar link fixo se existir
-            if group.invite_link:
-                invite_link = group.invite_link
-            elif group.telegram_username:
-                invite_link = f"https://t.me/{group.telegram_username}"
-    
-    # Preparar mensagem baseada no resultado
-    if user_added:
-        text = f"""
-✅ **PAGAMENTO CONFIRMADO!**
-
-🎉 Você foi adicionado automaticamente ao grupo **{group.name}**!
-
-📱 **Como acessar:**
-1. Abra o Telegram
-2. Vá para seus chats
-3. O grupo **{group.name}** já está lá!
-
-📅 Sua assinatura está ativa até: {subscription.end_date.strftime('%d/%m/%Y')}
-
-💡 **Dica:** Fixe o grupo para não perder!
-"""
-        keyboard = [[
-            InlineKeyboardButton("📱 Abrir Telegram", url="tg://resolve"),
-            InlineKeyboardButton("📊 Minhas Assinaturas", callback_data="my_subscriptions")
-        ]]
-    
-    elif invite_link:
-        text = f"""
+    text = f"""
 ✅ **PAGAMENTO CONFIRMADO!**
 
 Bem-vindo ao grupo **{group.name}**!
 
-🔗 **Seu link de acesso exclusivo:**
-`{invite_link}`
+🔗 **Link de acesso:** `{invite_link}`
 
-📱 **Como entrar:**
-1. Clique no botão abaixo ou
-2. Copie o link acima (toque nele)
-3. Cole no Telegram
+📅 Sua assinatura está ativa até {subscription.end_date.strftime('%d/%m/%Y')}.
 
-📅 Assinatura ativa até: {subscription.end_date.strftime('%d/%m/%Y')}
+💡 **Dica:** Clique no link acima para copiar e entrar no grupo!
 
-⚠️ **IMPORTANTE:** 
-- Este link é pessoal e pode ser usado apenas 1 vez
-- Válido por 7 dias
-- Após entrar, salve o grupo!
+⚠️ **Importante:** Este link é pessoal. Não compartilhe com outras pessoas.
 """
-        keyboard = [[
-            InlineKeyboardButton("🚀 ENTRAR NO GRUPO AGORA", url=invite_link)
-        ], [
-            InlineKeyboardButton("📊 Minhas Assinaturas", callback_data="my_subscriptions")
-        ]]
     
-    else:
-        # Fallback - nenhum método funcionou
-        text = f"""
-✅ **PAGAMENTO CONFIRMADO!**
-
-Sua assinatura para **{group.name}** está ativa!
-
-⚠️ **Atenção:** Não foi possível gerar o link automaticamente.
-
-📨 **O que fazer:**
-1. Entre em contato com o suporte
-2. Informe o ID da sua assinatura: #{subscription.id}
-3. Ou aguarde o administrador enviar o link
-
-📅 Assinatura válida até: {subscription.end_date.strftime('%d/%m/%Y')}
-
-💬 Suporte: @suporte_televip
-"""
-        keyboard = [[
-            InlineKeyboardButton("💬 Contactar Suporte", url="https://t.me/suporte_televip")
-        ], [
-            InlineKeyboardButton("📊 Minhas Assinaturas", callback_data="my_subscriptions")
-        ]]
+    keyboard = [[
+        InlineKeyboardButton("📱 Minhas Assinaturas", callback_data="my_subscriptions"),
+        InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")
+    ]]
     
-    # Enviar mensagem
     await query.edit_message_text(
         text,
         parse_mode=ParseMode.MARKDOWN,
@@ -241,13 +147,8 @@ Sua assinatura para **{group.name}** está ativa!
     context.user_data.pop('stripe_session_id', None)
     context.user_data.pop('checkout', None)
     
-    # Log final
-    if user_added:
-        logger.info(f"✅ Usuário {user.id} adicionado ao grupo com sucesso!")
-    elif invite_link:
-        logger.info(f"✅ Link de convite enviado para usuário {user.id}")
-    else:
-        logger.warning(f"⚠️ Não foi possível enviar acesso para usuário {user.id}")
+    logger.info(f"Usuário {subscription.telegram_user_id} adicionado ao grupo {group.name}")
+
 
 async def handle_payment_pending(query, context):
     """Processar pagamento pendente"""

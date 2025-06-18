@@ -1,0 +1,30 @@
+CONFIGURAÇÃO DO WEBHOOK DO STRIPE
+=================================
+
+Para que o sistema detecte pagamentos automaticamente, configure o webhook:
+
+1. DESENVOLVIMENTO LOCAL (com Stripe CLI):
+   - Instale o Stripe CLI: https://stripe.com/docs/stripe-cli
+   - Execute: stripe login
+   - Execute: stripe listen --forward-to localhost:5000/webhooks/stripe
+   - Copie o webhook secret (começa com whsec_) para o .env
+
+2. PRODUÇÃO:
+   - Acesse: https://dashboard.stripe.com/webhooks
+   - Clique em "Add endpoint"
+   - URL: https://seu-dominio.com/webhooks/stripe
+   - Eventos: 
+     ✓ checkout.session.completed
+     ✓ payment_intent.succeeded
+   - Copie o Signing secret para o .env
+
+3. NO ARQUIVO .env:
+   STRIPE_WEBHOOK_SECRET=whsec_...
+
+4. VERIFICAR LOGS:
+   - Os webhooks aparecem em: https://dashboard.stripe.com/test/webhooks
+   - Verifique se estão chegando com status 200
+
+SEM WEBHOOK:
+- O usuário precisa clicar em "Verificar Pagamento" após pagar
+- O sistema vai consultar o Stripe para confirmar

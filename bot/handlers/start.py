@@ -12,6 +12,7 @@ from telegram.constants import ParseMode
 from bot.utils.database import get_db_session
 from bot.keyboards.menus import get_main_menu, get_plans_menu
 from app.models import Group, Creator, PricingPlan, Subscription, Transaction
+from bot.handlers.payment_verification import check_payment_from_start
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +31,8 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # Tratar diferentes tipos de argumentos
     if args:
-        if args[0].startswith('success_'):
-            from bot.handlers.payment import handle_payment_success
-            await handle_payment_success(update, context)
+        if args[0].startswith('success_') or args[0] == 'payment_success':
+            await check_payment_from_start(update, context)
             return
         elif args[0] == 'cancel':
             await handle_payment_cancel(update, context)

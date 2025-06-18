@@ -1,0 +1,69 @@
+CONFIGURAÇÃO DO BOT COMO ADMINISTRADOR
+======================================
+
+Para o bot criar links automaticamente, ele PRECISA ser administrador do grupo.
+
+1. ADICIONAR O BOT COMO ADMIN:
+   ✅ Abra o grupo no Telegram
+   ✅ Toque no nome do grupo (no topo)
+   ✅ Toque em "Administradores" ou "Admins"
+   ✅ Toque em "Adicionar Administrador"
+   ✅ Procure por: @televipbra_bot
+   ✅ Adicione o bot
+
+2. PERMISSÕES NECESSÁRIAS (marque estas):
+   ✅ Adicionar novos membros (OBRIGATÓRIA)
+   ✅ Convidar usuários via link (OBRIGATÓRIA)
+   ✅ Excluir mensagens (opcional)
+   ✅ Banir usuários (opcional)
+
+3. TESTAR SE FUNCIONOU:
+   No grupo, envie: /setup
+   O bot deve responder com as informações do grupo
+
+4. FLUXO APÓS PAGAMENTO:
+   
+   Quando alguém pagar, o bot vai:
+   
+   a) Tentar adicionar a pessoa diretamente ao grupo
+      - Funciona se a pessoa já iniciou conversa com o bot
+      - É instantâneo
+   
+   b) Se não conseguir, criar um link único:
+      - Válido para 1 pessoa apenas
+      - Expira em 7 dias
+      - Uso único (mais seguro)
+
+5. VANTAGENS DO BOT COMO ADMIN:
+   ✅ Links únicos por pessoa (mais seguro)
+   ✅ Controle de quem entra
+   ✅ Pode remover automaticamente quem não pagou
+   ✅ Estatísticas de membros
+   ✅ Adiciona pessoas instantaneamente
+
+6. SE O BOT NÃO FOR ADMIN:
+   ❌ Não consegue criar links
+   ❌ Não consegue adicionar pessoas
+   ❌ Você terá que enviar links manualmente
+
+PROBLEMAS COMUNS:
+================
+
+"Bot can't initiate conversation with a user"
+- Normal, o bot cria um link ao invés de adicionar direto
+
+"Not enough rights to invite users"
+- Bot não tem permissão de admin
+- Verifique as permissões
+
+"Chat not found"
+- ID do grupo está errado
+- Use /setup no grupo para pegar o ID correto
+
+COMANDO /setup:
+==============
+Envie /setup no seu grupo para o bot mostrar:
+- ID do grupo
+- Se ele é admin
+- Quantos membros tem
+- Se está tudo configurado
