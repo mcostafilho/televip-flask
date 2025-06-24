@@ -308,11 +308,69 @@ def withdraw():
     
     return redirect(url_for('dashboard.index'))
 
+# Substitua a função profile() no arquivo app/routes/dashboard.py por esta versão:
+
 @bp.route('/profile')
 @login_required
 def profile():
     """Perfil do criador"""
-    return render_template('dashboard/profile.html')
+    # Calcular estatísticas do usuário
+    total_earned = db.session.query(func.sum(Transaction.amount)).join(
+        Subscription
+    ).join(
+        Group
+    ).filter(
+        Group.creator_id == current_user.id,
+        Transaction.status == 'completed'
+    ).scalar() or 0
+    
+    # Total de assinantes ativos
+    total_subscribers = db.session.query(func.count(Subscription.id)).join(
+        Group
+    ).filter(
+        Group.creator_id == current_user.id,
+        Subscription.status == 'active'
+    ).scalar() or 0
+    
+    # Total de grupos
+    total_groups = Group.query.filter_by(creator_id=current_user.id).count()
+    
+    # Total sacado (assumindo que não há modelo Withdrawal ainda)
+    total_withdrawn = 0
+    
+    # Calcular saldo disponível
+    balance = total_earned - total_withdrawn
+    
+    # Data de cadastro formatada
+    member_since = current_user.created_at.strftime('%d/%m/%Y') if current_user.created_at else 'N/A'
+    
+    # Buscar transações recentes
+    recent_transactions = Transaction.query.join(
+        Subscription
+    ).join(
+        Group
+    ).filter(
+        Group.creator_id == current_user.id
+    ).order_by(
+        Transaction.created_at.desc()
+    ).limit(10).all()
+    
+    # Preparar dados das estatísticas
+    stats = {
+        'total_earned': total_earned,
+        'balance': balance,
+        'total_withdrawn': total_withdrawn,
+        'total_groups': total_groups,
+        'total_subscribers': total_subscribers,
+        'member_since': member_since
+    }
+    
+    return render_template('dashboard/profile.html',
+        user=current_user,
+        stats=stats,
+        recent_transactions=recent_transactions
+    )
+
 
 @bp.route('/profile/update', methods=['POST'])
 @login_required
