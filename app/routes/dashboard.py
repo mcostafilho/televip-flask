@@ -400,19 +400,22 @@ def update_profile():
 @bp.route('/analytics')
 @login_required
 def analytics():
-    """Analytics avançado"""
+    """Analytics avançado - versão corrigida"""
+    from datetime import datetime, timedelta, date
+    from sqlalchemy import func, desc
+    
     # Período selecionado
     period = request.args.get('period', '30')
-    if period == '7':
-        days = 7
-    elif period == '30':
-        days = 30
-    elif period == '90':
-        days = 90
-    else:
-        days = 30
+    days = int(period) if period in ['7', '30', '90'] else 30
     
-    start_date = datetime.utcnow() - timedelta(days=days)
+    # Usar datetime.now() sem timezone para consistência
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=days)
+    
+    print(f"\n=== ANALYTICS DEBUG ===")
+    print(f"Período: {days} dias")
+    print(f"Data início: {start_date.date()}")
+    print(f"Data fim: {end_date.date()}")
     
     # Buscar grupos
     groups = Group.query.filter_by(creator_id=current_user.id).all()
@@ -425,7 +428,8 @@ def analytics():
     ).filter(
         Group.creator_id == current_user.id,
         Transaction.status == 'completed',
-        Transaction.created_at >= start_date
+        Transaction.created_at >= start_date,
+        Transaction.created_at <= end_date
     ).scalar() or 0
     
     total_transactions = Transaction.query.join(
@@ -435,13 +439,12 @@ def analytics():
     ).filter(
         Group.creator_id == current_user.id,
         Transaction.status == 'completed',
-        Transaction.created_at >= start_date
+        Transaction.created_at >= start_date,
+        Transaction.created_at <= end_date
     ).count()
     
-    # Ticket médio
     average_ticket = float(total_revenue) / total_transactions if total_transactions > 0 else 0
     
-    # Assinantes
     total_subscribers = Subscription.query.join(
         Group
     ).filter(
@@ -453,11 +456,27 @@ def analytics():
         Group
     ).filter(
         Group.creator_id == current_user.id,
-        Subscription.created_at >= start_date
+        Subscription.created_at >= start_date,
+        Subscription.created_at <= end_date
     ).count()
     
-    # Dados para gráficos
-    # Receita por dia
+    # Preparar labels
+    revenue_labels = []
+    revenue_data = []
+    subscribers_labels = []
+    subscribers_data = []
+    
+    # Gerar lista de datas
+    date_list = []
+    current_date = start_date.date()
+    while current_date <= end_date.date():
+        date_list.append(current_date)
+        revenue_labels.append(current_date.strftime('%d/%m'))
+        current_date += timedelta(days=1)
+    
+    subscribers_labels = revenue_labels.copy()
+    
+    # 1. Buscar receita por dia - CORREÇÃO AQUI
     daily_revenue = db.session.query(
         func.date(Transaction.created_at).label('date'),
         func.sum(Transaction.amount).label('total')
@@ -468,48 +487,62 @@ def analytics():
     ).filter(
         Group.creator_id == current_user.id,
         Transaction.status == 'completed',
-        Transaction.created_at >= start_date
+        func.date(Transaction.created_at) >= start_date.date(),  # Comparar apenas datas
+        func.date(Transaction.created_at) <= end_date.date()     # Comparar apenas datas
     ).group_by(
         func.date(Transaction.created_at)
     ).all()
     
-    # Preparar dados do gráfico de receita
-    revenue_labels = []
-    revenue_data = []
-    current_date = start_date.date()
-    end_date = datetime.utcnow().date()
+    print(f"\nReceitas encontradas: {len(daily_revenue)}")
     
-    revenue_dict = {r.date: float(r.total) for r in daily_revenue}
+    # Converter para dicionário - CORREÇÃO AQUI
+    revenue_dict = {}
+    for r in daily_revenue:
+        # Garantir que estamos comparando objetos date
+        if isinstance(r.date, str):
+            date_obj = datetime.strptime(r.date, '%Y-%m-%d').date()
+        else:
+            date_obj = r.date
+        
+        revenue_dict[date_obj] = float(r.total)
+        print(f"  {date_obj}: R$ {r.total}")
     
-    while current_date <= end_date:
-        revenue_labels.append(current_date.strftime('%d/%m'))
-        revenue_data.append(revenue_dict.get(current_date, 0))
-        current_date += timedelta(days=1)
+    # Preencher dados
+    for date_obj in date_list:
+        value = revenue_dict.get(date_obj, 0.0)
+        revenue_data.append(value)
+        if value > 0:
+            idx = date_list.index(date_obj)
+            print(f"Valor encontrado no índice {idx} ({revenue_labels[idx]}): R$ {value}")
     
-    # Assinantes por dia
+    # 2. Buscar assinantes por dia
     daily_subscribers = db.session.query(
         func.date(Subscription.created_at).label('date'),
-        func.count(Subscription.id).label('total')
+        func.count(Subscription.id).label('count')
     ).join(
         Group
     ).filter(
         Group.creator_id == current_user.id,
-        Subscription.created_at >= start_date
+        func.date(Subscription.created_at) >= start_date.date(),
+        func.date(Subscription.created_at) <= end_date.date()
     ).group_by(
         func.date(Subscription.created_at)
     ).all()
     
-    # Preparar dados do gráfico de assinantes
-    subscribers_labels = revenue_labels  # Mesmas datas
-    subscribers_data = []
-    subscribers_dict = {s.date: s.total for s in daily_subscribers}
+    # Converter para dicionário
+    subscribers_dict = {}
+    for s in daily_subscribers:
+        if isinstance(s.date, str):
+            date_obj = datetime.strptime(s.date, '%Y-%m-%d').date()
+        else:
+            date_obj = s.date
+        subscribers_dict[date_obj] = s.count
     
-    current_date = start_date.date()
-    while current_date <= end_date:
-        subscribers_data.append(subscribers_dict.get(current_date, 0))
-        current_date += timedelta(days=1)
+    # Preencher dados
+    for date_obj in date_list:
+        subscribers_data.append(subscribers_dict.get(date_obj, 0))
     
-    # Receita por grupo
+    # 3. Receita por grupo
     group_revenue = db.session.query(
         Group.name,
         func.sum(Transaction.amount).label('total')
@@ -522,15 +555,21 @@ def analytics():
     ).filter(
         Group.creator_id == current_user.id,
         Transaction.status == 'completed',
-        Transaction.created_at >= start_date
+        Transaction.created_at >= start_date,
+        Transaction.created_at <= end_date
     ).group_by(
         Group.id, Group.name
-    ).all()
+    ).order_by(
+        desc('total')
+    ).limit(5).all()
     
-    group_labels = [g.name for g in group_revenue]
-    group_data = [float(g.total) for g in group_revenue]
+    group_labels = []
+    group_data = []
+    for g in group_revenue:
+        group_labels.append(g.name)
+        group_data.append(float(g.total))
     
-    # Receita por plano
+    # 4. Receita por plano
     plan_revenue = db.session.query(
         PricingPlan.name,
         func.sum(Transaction.amount).label('total')
@@ -545,15 +584,50 @@ def analytics():
     ).filter(
         Group.creator_id == current_user.id,
         Transaction.status == 'completed',
-        Transaction.created_at >= start_date
+        Transaction.created_at >= start_date,
+        Transaction.created_at <= end_date
     ).group_by(
         PricingPlan.id, PricingPlan.name
     ).all()
     
-    plan_labels = [p.name for p in plan_revenue]
-    plan_data = [float(p.total) for p in plan_revenue]
+    plan_labels = []
+    plan_data = []
+    for p in plan_revenue:
+        plan_labels.append(p.name)
+        plan_data.append(float(p.total))
     
-    # Preparar dados para o template
+    # 5. Performance por grupo
+    for group in groups:
+        group.total_subscribers = Subscription.query.filter_by(
+            group_id=group.id,
+            status='active'
+        ).count()
+        
+        group_period_revenue = db.session.query(
+            func.sum(Transaction.amount)
+        ).join(
+            Subscription
+        ).filter(
+            Subscription.group_id == group.id,
+            Transaction.status == 'completed',
+            Transaction.created_at >= start_date,
+            Transaction.created_at <= end_date
+        ).scalar() or 0
+        
+        group.period_revenue = float(group_period_revenue)
+        
+        group_transactions = Transaction.query.join(
+            Subscription
+        ).filter(
+            Subscription.group_id == group.id,
+            Transaction.status == 'completed',
+            Transaction.created_at >= start_date,
+            Transaction.created_at <= end_date
+        ).count()
+        
+        group.average_ticket = float(group_period_revenue) / group_transactions if group_transactions > 0 else 0
+    
+    # Preparar dados finais
     stats = {
         'total_revenue': float(total_revenue),
         'total_transactions': total_transactions,
@@ -562,7 +636,6 @@ def analytics():
         'new_subscribers': new_subscribers
     }
     
-    # Preparar dados dos gráficos
     charts_data = {
         'revenue_by_day': {
             'labels': revenue_labels,
@@ -573,14 +646,20 @@ def analytics():
             'data': subscribers_data
         },
         'revenue_by_group': {
-            'labels': group_labels,
-            'data': group_data
+            'labels': group_labels if group_labels else ['Sem dados'],
+            'data': group_data if group_data else [0]
         },
         'revenue_by_plan': {
-            'labels': plan_labels,
-            'data': plan_data
+            'labels': plan_labels if plan_labels else ['Sem dados'],
+            'data': plan_data if plan_data else [0]
         }
     }
+    
+    print(f"\n=== RESUMO FINAL ===")
+    print(f"Total de dias: {len(revenue_labels)}")
+    print(f"Dias com receita: {sum(1 for v in revenue_data if v > 0)}")
+    print(f"Receita total no período: R$ {sum(revenue_data)}")
+    print("====================\n")
     
     return render_template(
         'dashboard/analytics.html',
