@@ -77,7 +77,7 @@
                                 </td>
                                 <td><strong>R$ {{ "%.2f"|format(withdrawal.amount) }}</strong></td>
                                 <td><code>{{ withdrawal.pix_key }}</code></td>
-                                <td>{{ withdrawal.requested_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>{{ withdrawal.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
                                 <td>
                                     <form method="POST" action="{{ url_for('admin.process_withdrawal', id=withdrawal.id) }}" style="display: inline;">
                                         <button type="submit" class="btn btn-success btn-sm" 
@@ -136,8 +136,8 @@
                             <td>@{{ creator.username }}</td>
                             <td>{{ creator.groups.count() }}</td>
                             <td>{{ creator.total_subscribers }}</td>
-                            <td class="fw-bold">R$ {{ "%.2f"|format(creator.balance) }}</td>
-                            <td>R$ {{ "%.2f"|format(creator.total_earned or 0) }}</td>
+                            <td class="fw-bold">R$ {{ "%.2f"|format(creator.display_balance) }}</td>
+                            <td>R$ {{ "%.2f"|format(creator.display_total_earned or 0) }}</td>
                             <td>{{ creator.created_at.strftime('%d/%m/%Y') }}</td>
                             <td>
                                 <div class="btn-group btn-group-sm">

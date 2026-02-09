@@ -340,25 +340,52 @@ def broadcast(group_id):
 def subscribers(id):
     """Listar assinantes do grupo"""
     group = Group.query.filter_by(id=id, creator_id=current_user.id).first_or_404()
-    
-    # Buscar assinantes ativos
-    active_subs = Subscription.query.filter_by(
-        group_id=id,
-        status='active'
-    ).order_by(Subscription.end_date.desc()).all()
-    
-    # Buscar assinantes expirados recentes (últimos 30 dias)
-    expired_subs = Subscription.query.filter(
+
+    now = datetime.utcnow()
+
+    # Query base com filtros opcionais
+    query = Subscription.query.filter_by(group_id=id)
+
+    status_filter = request.args.get('status')
+    if status_filter:
+        query = query.filter_by(status=status_filter)
+
+    plan_filter = request.args.get('plan_id')
+    if plan_filter:
+        query = query.filter_by(plan_id=int(plan_filter))
+
+    search = request.args.get('search', '').strip()
+    if search:
+        query = query.filter(
+            (Subscription.telegram_username.ilike(f'%{search}%')) |
+            (Subscription.telegram_user_id.ilike(f'%{search}%'))
+        )
+
+    # Paginacao
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    total = query.count()
+    total_pages = max(1, (total + per_page - 1) // per_page)
+
+    all_subs = query.order_by(Subscription.end_date.desc()).offset(
+        (page - 1) * per_page
+    ).limit(per_page).all()
+
+    # Estatisticas
+    active_count = Subscription.query.filter_by(group_id=id, status='active').count()
+    expired_count = Subscription.query.filter_by(group_id=id, status='expired').count()
+    expiring_soon = Subscription.query.filter(
         Subscription.group_id == id,
-        Subscription.status == 'expired',
-        Subscription.end_date >= datetime.utcnow() - timedelta(days=30)
-    ).order_by(Subscription.end_date.desc()).all()
-    
-    # ADICIONAR ESTATÍSTICAS QUE ESTÃO FALTANDO
+        Subscription.status == 'active',
+        Subscription.end_date <= now + timedelta(days=7),
+        Subscription.end_date > now
+    ).count()
+
     stats = {
-        'total': len(active_subs) + len(expired_subs),
-        'active': len(active_subs),
-        'expired': len(expired_subs),
+        'total': active_count + expired_count,
+        'active': active_count,
+        'expired': expired_count,
+        'expiring_soon': expiring_soon,
         'revenue': db.session.query(func.sum(Transaction.amount)).join(
             Subscription
         ).filter(
@@ -366,12 +393,14 @@ def subscribers(id):
             Transaction.status == 'completed'
         ).scalar() or 0
     }
-    
+
     return render_template('dashboard/subscribers.html',
                          group=group,
-                         active_subs=active_subs,
-                         expired_subs=expired_subs,
-                         stats=stats)  # ADICIONAR stats AQUI
+                         subscribers=all_subs,
+                         stats=stats,
+                         now=now,
+                         page=page,
+                         total_pages=total_pages)
 
 @bp.route('/<int:id>/export-subscribers')
 @login_required

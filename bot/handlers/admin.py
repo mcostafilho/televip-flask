@@ -78,24 +78,27 @@ Após promover, use /setup novamente.
         creator = session.query(Creator).filter_by(
             telegram_id=str(user.id)
         ).first()
-        
+
         if not creator:
-            text = """
-❌ **Você Não é um Criador Cadastrado!**
+            # Mesmo sem conta vinculada, mostrar o ID do grupo
+            text = f"""
+📋 **Informacoes do Grupo**
 
-Para usar o bot, você precisa:
+• Nome: {chat.title}
+• ID do grupo: `{chat.id}`
 
-1. Se cadastrar em: https://televip.com/cadastro
-2. Verificar seu Telegram
-3. Criar seus planos de assinatura
-4. Voltar aqui e usar /setup
+Copie o ID acima e cole no formulario de criacao de grupo no site.
 
-💡 O cadastro é rápido e gratuito!
-Taxa de apenas 1% sobre as vendas.
+⚠️ **Conta Telegram nao vinculada**
+
+Seu Telegram ID: `{user.id}`
+
+Para vincular, acesse seu perfil no site e adicione seu Telegram ID,
+ou use /setup novamente apos vincular.
 """
             await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
             return
-        
+
         # Buscar ou criar grupo
         group = session.query(Group).filter_by(
             telegram_id=str(chat.id)

@@ -30,6 +30,17 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
+
+        {% if unverified_email %}
+        <div class="alert alert-info">
+            <form method="POST" action="{{ url_for('auth.resend_confirmation') }}" class="d-inline">
+                <input type="hidden" name="email" value="{{ unverified_email }}">
+                <button type="submit" class="btn btn-link p-0 text-decoration-underline">
+                    Reenviar email de confirmacao
+                </button>
+            </form>
+        </div>
+        {% endif %}
         
         <form method="POST" class="auth-form">
             <!-- Email -->

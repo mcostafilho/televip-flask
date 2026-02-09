@@ -64,7 +64,7 @@ class StripeService:
             
             # Criar sessão usando stripe.checkout.Session
             session = stripe.checkout.Session.create(
-                payment_method_types=['card'],
+                payment_method_types=['card', 'boleto'],
                 line_items=[{
                     'price_data': {
                         'currency': 'brl',

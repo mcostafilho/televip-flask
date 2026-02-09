@@ -7,42 +7,43 @@ from typing import Optional
 
 def send_email(to_email: str, subject: str, html_body: str, text_body: Optional[str] = None):
     """Enviar email usando SMTP"""
-    # Configurações de email
-    smtp_server = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
-    smtp_port = int(os.getenv('SMTP_PORT', '587'))
+    smtp_server = os.getenv('SMTP_SERVER', 'smtp.hostinger.com')
+    smtp_port = int(os.getenv('SMTP_PORT', '465'))
     smtp_username = os.getenv('SMTP_USERNAME', 'contato@webflag.com.br')
     smtp_password = os.getenv('SMTP_PASSWORD', '')
     from_email = os.getenv('MAIL_FROM', 'TeleVIP <contato@webflag.com.br>')
-    
+
     if not smtp_password:
-        print(f"⚠️ SMTP_PASSWORD não configurado. Email para {to_email} não enviado.")
+        print(f"[AVISO] SMTP_PASSWORD nao configurado. Email para {to_email} nao enviado.")
         return False
-    
+
     try:
-        # Criar mensagem
         msg = MIMEMultipart('alternative')
         msg['Subject'] = subject
         msg['From'] = from_email
         msg['To'] = to_email
-        
-        # Adicionar versão texto se fornecida
+
         if text_body:
             msg.attach(MIMEText(text_body, 'plain'))
-        
-        # Adicionar versão HTML
+
         msg.attach(MIMEText(html_body, 'html'))
-        
-        # Conectar e enviar
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.starttls()
-            server.login(smtp_username, smtp_password)
-            server.send_message(msg)
-        
-        print(f"✅ Email enviado para {to_email}")
+
+        # Porta 465 = SSL direto, porta 587 = STARTTLS
+        if smtp_port == 465:
+            with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
+                server.login(smtp_username, smtp_password)
+                server.send_message(msg)
+        else:
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                server.starttls()
+                server.login(smtp_username, smtp_password)
+                server.send_message(msg)
+
+        print(f"[OK] Email enviado para {to_email}")
         return True
-        
+
     except Exception as e:
-        print(f"❌ Erro ao enviar email para {to_email}: {e}")
+        print(f"[ERRO] Erro ao enviar email para {to_email}: {e}")
         return False
 
 def send_password_reset_email(user, token: str):
@@ -120,6 +121,79 @@ def send_password_reset_email(user, token: str):
     """
     
     return send_email(user.email, subject, html_body, text_body)
+
+
+def send_confirmation_email(user, token: str):
+    """Enviar email de confirmacao de conta"""
+    confirm_url = url_for('auth.confirm_email', token=token, _external=True)
+
+    subject = "Confirme seu email - TeleVIP"
+
+    html_body = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: 'Arial', sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+            .content {{ background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }}
+            .button {{ display: inline-block; padding: 15px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 25px; margin: 20px 0; }}
+            .footer {{ text-align: center; margin-top: 30px; color: #666; font-size: 12px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Confirme seu Email</h1>
+            </div>
+            <div class="content">
+                <p>Ola <strong>{user.name}</strong>,</p>
+
+                <p>Obrigado por se cadastrar no TeleVIP! Para ativar sua conta, confirme seu email clicando no botao abaixo:</p>
+
+                <div style="text-align: center;">
+                    <a href="{confirm_url}" class="button">Confirmar Meu Email</a>
+                </div>
+
+                <p>Ou copie e cole este link no seu navegador:</p>
+                <p style="background: #e9ecef; padding: 10px; border-radius: 5px; word-break: break-all;">
+                    {confirm_url}
+                </p>
+
+                <p><strong>Importante:</strong></p>
+                <ul>
+                    <li>Este link expira em 24 horas</li>
+                    <li>Se voce nao criou esta conta, ignore este email</li>
+                </ul>
+            </div>
+            <div class="footer">
+                <p>TeleVIP - Transforme seu Telegram em uma maquina de lucros</p>
+                <p>Este e um email automatico, por favor nao responda.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    text_body = f"""
+    Confirme seu Email - TeleVIP
+
+    Ola {user.name},
+
+    Obrigado por se cadastrar no TeleVIP! Para ativar sua conta, acesse o link abaixo:
+    {confirm_url}
+
+    Este link expira em 24 horas.
+
+    Se voce nao criou esta conta, ignore este email.
+
+    Atenciosamente,
+    Equipe TeleVIP
+    """
+
+    return send_email(user.email, subject, html_body, text_body)
+
 
 def send_welcome_email(user):
     """Enviar email de boas-vindas"""

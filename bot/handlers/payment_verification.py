@@ -10,7 +10,7 @@ from telegram.constants import ParseMode
 
 from bot.utils.database import get_db_session
 from bot.utils.stripe_integration import verify_payment
-from app.models import Transaction, Subscription, Group
+from app.models import Transaction, Subscription, Group, Creator
 
 logger = logging.getLogger(__name__)
 
@@ -101,11 +101,24 @@ async def handle_payment_confirmed(query, context, transaction, db_session):
     # Atualizar transação
     transaction.status = 'completed'
     transaction.paid_at = datetime.utcnow()
-    
+
     # Ativar assinatura
     subscription = transaction.subscription
     subscription.status = 'active'
-    
+
+    # Atualizar saldo e total ganho do criador
+    group = subscription.group
+    if group and group.creator:
+        creator = group.creator
+        net = transaction.net_amount or transaction.amount or 0
+        if creator.balance is None:
+            creator.balance = 0
+        creator.balance += net
+        if creator.total_earned is None:
+            creator.total_earned = 0
+        creator.total_earned += net
+        logger.info(f"Saldo do criador {creator.id} atualizado: +R${net} = R${creator.balance}")
+
     db_session.commit()
     
     # Obter informações do grupo

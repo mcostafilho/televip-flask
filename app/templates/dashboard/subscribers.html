@@ -224,7 +224,7 @@
                 <label class="form-label text-muted small">Link de Assinatura:</label>
                 <div class="input-group">
                     <input type="text" class="form-control" 
-                           value="https://t.me/{{ config.BOT_USERNAME or 'televipbra_bot' }}?start=g_{{ group.telegram_id }}"
+                           value="https://t.me/{{ config.BOT_USERNAME or 'televipbra_bot' }}?start=g_{{ group.id }}"
                            id="shareLink" readonly>
                     <button class="btn btn-primary" type="button" onclick="copyShareLink()">
                         <i class="bi bi-clipboard"></i> Copiar Link
@@ -373,8 +373,8 @@
                                         <i class="bi bi-eye"></i>
                                     </button>
                                     {% if sub.status == 'active' %}
-                                    <form method="POST" 
-                                          action="{{ url_for('groups.cancel_subscription', group_id=group.id, sub_id=sub.id) }}"
+                                    <form method="POST"
+                                          action="{{ url_for('groups.subscribers', id=group.id) }}"
                                           style="display: inline;">
                                         <button type="submit" 
                                                 class="btn btn-outline-danger"

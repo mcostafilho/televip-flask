@@ -2,8 +2,8 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, current_user, login_required
 from app import db, limiter
 from app.models import Creator
-from app.utils.email import send_password_reset_email, send_welcome_email
-from app.utils.security import generate_reset_token, verify_reset_token, is_safe_url
+from app.utils.email import send_password_reset_email, send_welcome_email, send_confirmation_email
+from app.utils.security import generate_reset_token, verify_reset_token, generate_confirmation_token, verify_confirmation_token, is_safe_url
 import re
 
 bp = Blueprint('auth', __name__)
@@ -28,6 +28,9 @@ def login():
 
         user = Creator.query.filter_by(email=email).first()
         if user and user.check_password(password):
+            if not user.is_verified:
+                flash('Confirme seu email antes de fazer login. Verifique sua caixa de entrada.', 'warning')
+                return render_template('auth/login.html', unverified_email=email)
             login_user(user, remember=bool(remember))
             next_page = request.args.get('next')
             if next_page and not is_safe_url(next_page):
@@ -100,15 +103,15 @@ def register():
             db.session.add(user)
             db.session.commit()
 
-            # Enviar email de boas-vindas (opcional)
+            # Enviar email de confirmacao
             try:
-                send_welcome_email(user)
+                token = generate_confirmation_token(user.email)
+                send_confirmation_email(user, token)
             except:
-                pass  # Não bloquear registro se email falhar
+                pass
 
-            login_user(user)
-            flash('🎉 Conta criada com sucesso! Bem-vindo ao TeleVIP!', 'success')
-            return redirect(url_for('dashboard.index'))
+            flash('Conta criada! Verifique seu email para confirmar sua conta.', 'success')
+            return redirect(url_for('auth.login'))
 
     return render_template('auth/register.html')
 
@@ -177,6 +180,54 @@ def reset_password(token):
             return redirect(url_for('auth.login'))
 
     return render_template('auth/reset_password.html', token=token)
+
+@bp.route('/confirm-email/<token>')
+def confirm_email(token):
+    """Confirmar email via token"""
+    email = verify_confirmation_token(token)
+    if not email:
+        flash('Link de confirmacao invalido ou expirado.', 'error')
+        return redirect(url_for('auth.login'))
+
+    user = Creator.query.filter_by(email=email).first()
+    if not user:
+        flash('Usuario nao encontrado.', 'error')
+        return redirect(url_for('auth.login'))
+
+    if user.is_verified:
+        flash('Email ja confirmado! Faca login.', 'info')
+        return redirect(url_for('auth.login'))
+
+    user.is_verified = True
+    db.session.commit()
+
+    # Enviar email de boas-vindas agora que confirmou
+    try:
+        send_welcome_email(user)
+    except:
+        pass
+
+    flash('Email confirmado com sucesso! Faca login para comecar.', 'success')
+    return redirect(url_for('auth.login'))
+
+
+@bp.route('/resend-confirmation', methods=['POST'])
+@limiter.limit("3 per minute")
+def resend_confirmation():
+    """Reenviar email de confirmacao"""
+    email = request.form.get('email', '').strip().lower()
+
+    user = Creator.query.filter_by(email=email).first()
+    if user and not user.is_verified:
+        try:
+            token = generate_confirmation_token(user.email)
+            send_confirmation_email(user, token)
+        except:
+            pass
+
+    flash('Se o email estiver cadastrado, voce recebera um novo link de confirmacao.', 'info')
+    return redirect(url_for('auth.login'))
+
 
 @bp.route('/logout')
 @login_required

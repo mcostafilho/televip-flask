@@ -56,7 +56,29 @@ def index():
             Group.creator_id == creator.id,
             Subscription.status == 'active'
         ).scalar() or 0
-        
+
+        # Calcular total ganho real a partir das transações completadas
+        real_total_earned = db.session.query(
+            func.coalesce(func.sum(Transaction.net_amount), 0)
+        ).join(Subscription).join(Group).filter(
+            Group.creator_id == creator.id,
+            Transaction.status == 'completed'
+        ).scalar() or 0
+
+        # Calcular total já sacado
+        total_withdrawn = 0
+        if has_withdrawal_model and Withdrawal:
+            total_withdrawn = db.session.query(
+                func.coalesce(func.sum(Withdrawal.amount), 0)
+            ).filter(
+                Withdrawal.creator_id == creator.id,
+                Withdrawal.status == 'completed'
+            ).scalar() or 0
+
+        # Usar atributos temporários para exibição (não persistem no DB)
+        creator.display_total_earned = real_total_earned
+        creator.display_balance = real_total_earned - total_withdrawn
+
         # Verificar se tem saque pendente
         creator.pending_withdrawal = False
         if has_withdrawal_model and Withdrawal:

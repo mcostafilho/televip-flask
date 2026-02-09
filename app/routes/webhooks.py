@@ -6,7 +6,7 @@ import stripe
 import os
 import logging
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from app import db
 from app.models import Transaction, Subscription, Creator, Group
 
@@ -125,44 +125,33 @@ def handle_checkout_session_completed(session):
         subscription.status = 'active'
         subscription.start_date = datetime.utcnow()
         
-        # Calcular data de expiração
-        if subscription.pricing_plan.duration_type == 'days':
+        # Calcular data de expiração baseado no plano
+        plan = subscription.plan
+        if plan and plan.duration_days:
             subscription.end_date = subscription.start_date + timedelta(
-                days=subscription.pricing_plan.duration_value
-            )
-        elif subscription.pricing_plan.duration_type == 'months':
-            # Aproximar 30 dias por mês
-            subscription.end_date = subscription.start_date + timedelta(
-                days=subscription.pricing_plan.duration_value * 30
+                days=plan.duration_days
             )
         
         # Atualizar saldo do criador
         group = subscription.group
         creator = group.creator
         
-        # CORREÇÃO: Adicionar indentação correta aqui (linha 120-122)
         if creator:
-            # Garantir que available_balance não seja None
-            if hasattr(creator, 'available_balance'):
-                if creator.available_balance is None:
-                    creator.available_balance = 0
-                creator.available_balance += transaction.net_amount
-            else:
-                creator.available_balance = transaction.net_amount
-                
+            # Atualizar saldo do criador
+            if creator.balance is None:
+                creator.balance = 0
+            creator.balance += transaction.net_amount
+
             # Atualizar total ganho
-            if hasattr(creator, 'total_earned'):
-                if creator.total_earned is None:
-                    creator.total_earned = 0
-                creator.total_earned += transaction.net_amount
-            else:
-                creator.total_earned = transaction.net_amount
+            if creator.total_earned is None:
+                creator.total_earned = 0
+            creator.total_earned += transaction.net_amount
         
         # Salvar todas as alterações
         db.session.commit()
         
         logger.info(f"✅ Assinatura {subscription.id} ativada com sucesso!")
-        logger.info(f"✅ Saldo do criador atualizado: R$ {creator.available_balance}")
+        logger.info(f"✅ Saldo do criador atualizado: R$ {creator.balance}")
         
         # Notificar bot via webhook interno
         notify_bot_payment_complete(subscription, transaction)

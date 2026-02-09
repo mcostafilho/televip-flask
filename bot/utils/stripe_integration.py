@@ -55,7 +55,7 @@ async def create_checkout_session(
         
         # Criar sessão de checkout
         session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
+            payment_method_types=['card', 'boleto'],
             line_items=[{
                 'price_data': {
                     'currency': 'brl',

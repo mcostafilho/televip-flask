@@ -11,6 +11,9 @@ import logging
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
+# Carregar variáveis de ambiente ANTES de qualquer import que use env vars
+load_dotenv()
+
 # CORREÇÃO DE ENCODING
 if sys.platform == 'win32':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
@@ -21,14 +24,14 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
-    Application, CommandHandler, CallbackQueryHandler, 
+    Application, CommandHandler, CallbackQueryHandler,
     MessageHandler, filters, ContextTypes, JobQueue
 )
 
 # Importar handlers
 from bot.handlers.start import start_command, help_command, show_user_dashboard
 from bot.handlers.payment import (
-    start_payment, handle_payment_method, 
+    start_payment, handle_payment_method,
     list_user_subscriptions, handle_payment_success,
     check_payment_status, handle_payment_error
 )
@@ -42,9 +45,6 @@ from bot.handlers.admin import (
 from bot.handlers.discovery import descobrir_command, handle_discover_callback
 from bot.handlers.payment_verification import check_payment_status
 from bot.utils.database import get_db_session
-
-# Carregar variáveis de ambiente
-load_dotenv()
 
 # Configurar logging
 logging.basicConfig(
@@ -189,6 +189,11 @@ async def post_init(application: Application) -> None:
         logger.info(f"✅ Bot @{bot_info.username} iniciado com sucesso!")
         logger.info(f"Bot ID: {bot_info.id}")
         logger.info(f"Nome: {bot_info.first_name}")
+
+        # Iniciar tarefas agendadas (controle de assinaturas)
+        from bot.jobs.scheduled_tasks import setup_jobs
+        setup_jobs(application)
+
     except Exception as e:
         logger.error(f"Erro ao obter informações do bot: {e}")
 

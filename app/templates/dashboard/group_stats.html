@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Estatísticas - {{ group.name }} - TeleVIP{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Estatísticas: {{ group.name }}</h2>
+        <a href="{{ url_for('groups.list') }}" class="btn btn-outline-secondary">Voltar</a>
+    </div>
+
+    <!-- Cards de estatísticas -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Total Assinantes</h6>
+                    <h3>{{ stats.total_subscribers }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Ativos</h6>
+                    <h3 class="text-success">{{ stats.active_subscribers }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Receita Total</h6>
+                    <h3>R$ {{ "%.2f"|format(stats.total_revenue) }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Taxa de Churn</h6>
+                    <h3>{{ "%.1f"|format(stats.churn_rate) }}%</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Receita Diária (30 dias)</div>
+                <div class="card-body">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Novas Assinaturas (30 dias)</div>
+                <div class="card-body">
+                    <canvas id="subsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const revenueData = {{ daily_revenue | tojson }};
+const subsData = {{ daily_subscriptions | tojson }};
+
+if (document.getElementById('revenueChart')) {
+    new Chart(document.getElementById('revenueChart'), {
+        type: 'line',
+        data: {
+            labels: revenueData.map(d => d.date),
+            datasets: [{
+                label: 'Receita (R$)',
+                data: revenueData.map(d => d.revenue),
+                borderColor: '#198754',
+                tension: 0.3
+            }]
+        }
+    });
+}
+
+if (document.getElementById('subsChart')) {
+    new Chart(document.getElementById('subsChart'), {
+        type: 'bar',
+        data: {
+            labels: subsData.map(d => d.date),
+            datasets: [{
+                label: 'Novas Assinaturas',
+                data: subsData.map(d => d.count),
+                backgroundColor: '#0d6efd'
+            }]
+        }
+    });
+}
+</script>
+{% endblock %}

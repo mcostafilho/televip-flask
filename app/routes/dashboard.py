@@ -399,8 +399,8 @@ def analytics():
     period = request.args.get('period', '30')
     days = int(period) if period in ['7', '30', '90'] else 30
     
-    # Usar datetime.now() sem timezone para consistência
-    end_date = datetime.now()
+    # Usar utcnow() pois created_at no banco usa UTC
+    end_date = datetime.utcnow()
     start_date = end_date - timedelta(days=days)
     
     # Buscar grupos

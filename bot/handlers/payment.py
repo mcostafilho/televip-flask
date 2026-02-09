@@ -78,22 +78,15 @@ async def start_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ⏱ **Duração:** {plan.duration_days} dias
 
 💰 **Valor:** {format_currency(amount)}
-📊 **Taxa da plataforma:** {format_currency(platform_fee)}
-👤 **Criador recebe:** {format_currency(creator_amount)}
 
-Escolha a forma de pagamento:
+Clique abaixo para pagar com cartao, boleto ou Apple/Google Pay:
 """
-        
+
         keyboard = [
-            [
-                InlineKeyboardButton("💳 Cartão (Stripe)", callback_data="pay_stripe"),
-                InlineKeyboardButton("📱 PIX", callback_data="pay_pix")
-            ],
-            [
-                InlineKeyboardButton("❌ Cancelar", callback_data=f"group_{group_id}")
-            ]
+            [InlineKeyboardButton("💳 Pagar Agora", callback_data="pay_stripe")],
+            [InlineKeyboardButton("❌ Cancelar", callback_data=f"group_{group_id}")]
         ]
-        
+
         await query.edit_message_text(
             text,
             parse_mode=ParseMode.MARKDOWN,
@@ -117,15 +110,8 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
         )
         return
     
-    if query.data == "pay_stripe":
+    if query.data in ("pay_stripe", "pay_pix"):
         await process_stripe_payment(query, context, checkout_data)
-    elif query.data == "pay_pix":
-        await query.edit_message_text(
-            "📱 PIX em breve! Por enquanto, use cartão de crédito.",
-            reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton("⬅️ Voltar", callback_data=f"plan_{checkout_data['group_id']}_{checkout_data['plan_id']}")
-            ]])
-        )
 
 
 async def process_stripe_payment(query, context, checkout_data):
@@ -185,16 +171,16 @@ async def process_stripe_payment(query, context, checkout_data):
         text = """
 🔐 **Pagamento Seguro via Stripe**
 
-Clique no botão abaixo para ser redirecionado para a página de pagamento segura do Stripe.
+Clique no botao abaixo para ser redirecionado para a pagina de pagamento segura.
 
-💳 **Aceita:** Cartões de crédito e débito
+💳 **Aceita:** Cartao, Boleto, Apple Pay, Google Pay
 
-Após concluir o pagamento:
-1. Você será redirecionado de volta ao Telegram
+Apos concluir o pagamento:
+1. Voce sera redirecionado de volta ao Telegram
 2. Clique em "Verificar Pagamento" para confirmar
-3. Será adicionado ao grupo automaticamente
+3. Sera adicionado ao grupo automaticamente
 
-⚠️ **Importante:** Não feche esta conversa durante o pagamento!
+⚠️ **Importante:** Nao feche esta conversa durante o pagamento!
 """
         
         keyboard = [
@@ -408,28 +394,55 @@ async def check_payment_status(update: Update, context: ContextTypes.DEFAULT_TYP
                 
                 session.commit()
                 
-                # Enviar link do grupo
+                # Gerar link de convite unico via Bot API
                 group = subscription.group
-                invite_link = f"https://t.me/{group.telegram_username}" if group.telegram_username else group.invite_link
-                
-                text = f"""
+                invite_link = None
+
+                if group.telegram_id:
+                    try:
+                        link_obj = await context.bot.create_chat_invite_link(
+                            chat_id=int(group.telegram_id),
+                            member_limit=1,
+                            name=f"sub_{subscription.id}"
+                        )
+                        invite_link = link_obj.invite_link
+                    except Exception as e:
+                        logger.error(f"Erro ao gerar invite link: {e}")
+
+                # Fallback para link salvo no banco
+                if not invite_link:
+                    invite_link = group.invite_link
+
+                if invite_link:
+                    text = f"""
 ✅ **PAGAMENTO CONFIRMADO!**
 
 Bem-vindo ao grupo **{group.name}**!
 
 🔗 **Link de acesso:** {invite_link}
 
-Sua assinatura está ativa até {subscription.end_date.strftime('%d/%m/%Y')}.
+Sua assinatura esta ativa ate {subscription.end_date.strftime('%d/%m/%Y')}.
 
-💡 Salve este link para acesso futuro!
+💡 Salve este link! Ele so pode ser usado uma vez.
 """
-                
+                    keyboard = [[InlineKeyboardButton("📱 Entrar no Grupo", url=invite_link)]]
+                else:
+                    text = f"""
+✅ **PAGAMENTO CONFIRMADO!**
+
+Sua assinatura do grupo **{group.name}** esta ativa ate {subscription.end_date.strftime('%d/%m/%Y')}.
+
+⚠️ Nao foi possivel gerar o link automaticamente.
+Entre em contato com o criador do grupo para acesso.
+"""
+                    keyboard = []
+
+                keyboard.append([InlineKeyboardButton("📱 Minhas Assinaturas", callback_data="my_subscriptions")])
+
                 await query.edit_message_text(
                     text,
                     parse_mode=ParseMode.MARKDOWN,
-                    reply_markup=InlineKeyboardMarkup([[
-                        InlineKeyboardButton("📱 Minhas Assinaturas", callback_data="my_subscriptions")
-                    ]])
+                    reply_markup=InlineKeyboardMarkup(keyboard)
                 )
                 
                 # Limpar dados da sessão
