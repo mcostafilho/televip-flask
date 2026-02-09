@@ -10,15 +10,15 @@ class Transaction(db.Model):
     group_id = db.Column(db.Integer, db.ForeignKey('groups.id'))
     
     # Valores financeiros
-    amount = db.Column(db.Float, nullable=False)
-    fee = db.Column(db.Float, nullable=False, default=0)  # Compatibilidade
-    net_amount = db.Column(db.Float, nullable=False, default=0)
-    
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    fee = db.Column(db.Numeric(10, 2), nullable=False, default=0)  # Compatibilidade
+    net_amount = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+
     # Taxas detalhadas
-    fixed_fee = db.Column(db.Float, nullable=False, default=0.99)
-    percentage_fee = db.Column(db.Float, nullable=False, default=0)
-    total_fee = db.Column(db.Float, nullable=False, default=0)
-    fee_amount = db.Column(db.Float, default=0)  # Alias para compatibilidade
+    fixed_fee = db.Column(db.Numeric(10, 2), nullable=False, default=0.99)
+    percentage_fee = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+    total_fee = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+    fee_amount = db.Column(db.Numeric(10, 2), default=0)  # Alias para compatibilidade
     
     # IDs de pagamento - CAMPOS IMPORTANTES
     stripe_session_id = db.Column(db.String(255))

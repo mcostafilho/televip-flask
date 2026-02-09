@@ -18,11 +18,11 @@ if __name__ == '__main__':
         os.makedirs('instance', exist_ok=True)
         
         # Mostrar configuração do banco
-        print(f"📍 Banco de dados: {app.config['SQLALCHEMY_DATABASE_URI']}")
-        
+        print(f"Banco de dados: {app.config['SQLALCHEMY_DATABASE_URI']}")
+
         # Criar tabelas
         db.create_all()
-        print("✅ Banco de dados criado/atualizado")
-    
-    print("🚀 TeleVIP rodando em http://localhost:5000")
+        print("Banco de dados criado/atualizado")
+
+    print("TeleVIP rodando em http://localhost:5000")
     app.run(debug=True, host='0.0.0.0', port=5000)

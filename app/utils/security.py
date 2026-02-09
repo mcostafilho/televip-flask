@@ -1,11 +1,31 @@
 import os
 import jwt
+import hmac
 import secrets
 import hashlib
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from flask import current_app, request
 from functools import wraps
+
+
+def _get_secret_key() -> str:
+    """
+    Obter SECRET_KEY do contexto da aplicação Flask ou do ambiente.
+    Raises RuntimeError se nenhuma chave estiver disponível.
+    """
+    try:
+        key = current_app.config['SECRET_KEY']
+        if key:
+            return key
+    except RuntimeError:
+        pass  # Fora do contexto Flask (ex: bot)
+
+    key = os.getenv('SECRET_KEY')
+    if key:
+        return key
+
+    raise RuntimeError('SECRET_KEY não configurada. Defina a variável de ambiente SECRET_KEY.')
 
 def generate_reset_token(user_id: int, expires_in: int = 86400) -> str:
     """
@@ -18,7 +38,7 @@ def generate_reset_token(user_id: int, expires_in: int = 86400) -> str:
     Returns:
         Token JWT
     """
-    secret_key = os.getenv('SECRET_KEY', 'dev-key-change-in-production')
+    secret_key = _get_secret_key()
     
     payload = {
         'user_id': user_id,
@@ -45,7 +65,7 @@ def verify_reset_token(token: str) -> Optional[int]:
     Returns:
         user_id se válido, None se inválido/expirado
     """
-    secret_key = os.getenv('SECRET_KEY', 'dev-key-change-in-production')
+    secret_key = _get_secret_key()
     
     try:
         payload = jwt.decode(
@@ -81,7 +101,7 @@ def generate_confirmation_token(email: str, expires_in: int = 86400) -> str:
     Returns:
         Token JWT
     """
-    secret_key = os.getenv('SECRET_KEY', 'dev-key-change-in-production')
+    secret_key = _get_secret_key()
     
     payload = {
         'email': email,
@@ -108,7 +128,7 @@ def verify_confirmation_token(token: str) -> Optional[str]:
     Returns:
         email se válido, None se inválido/expirado
     """
-    secret_key = os.getenv('SECRET_KEY', 'dev-key-change-in-production')
+    secret_key = _get_secret_key()
     
     try:
         payload = jwt.decode(
@@ -141,7 +161,7 @@ def generate_api_token(user_id: int, expires_in: int = 2592000) -> str:
     Returns:
         Token JWT
     """
-    secret_key = os.getenv('SECRET_KEY', 'dev-key-change-in-production')
+    secret_key = _get_secret_key()
     
     payload = {
         'user_id': user_id,
@@ -168,7 +188,7 @@ def verify_api_token(token: str) -> Optional[int]:
     Returns:
         user_id se válido, None se inválido/expirado
     """
-    secret_key = os.getenv('SECRET_KEY', 'dev-key-change-in-production')
+    secret_key = _get_secret_key()
     
     try:
         payload = jwt.decode(
@@ -213,9 +233,7 @@ def generate_webhook_signature(payload: bytes, secret: str) -> str:
     Returns:
         Assinatura HMAC
     """
-    return hashlib.sha256(
-        f"{secret}{payload.decode('utf-8')}".encode('utf-8')
-    ).hexdigest()
+    return hmac.new(secret.encode('utf-8'), payload, hashlib.sha256).hexdigest()
 
 def verify_webhook_signature(payload: bytes, signature: str, secret: str) -> bool:
     """
@@ -329,7 +347,7 @@ def encrypt_data(data: str, key: Optional[str] = None) -> str:
     import base64
     
     if not key:
-        key = os.getenv('SECRET_KEY', 'dev-key-change-in-production')
+        key = _get_secret_key()
     
     # Gerar chave Fernet a partir da secret key
     key_bytes = key.encode('utf-8')[:32].ljust(32, b'0')
@@ -355,7 +373,7 @@ def decrypt_data(encrypted_data: str, key: Optional[str] = None) -> Optional[str
     import base64
     
     if not key:
-        key = os.getenv('SECRET_KEY', 'dev-key-change-in-production')
+        key = _get_secret_key()
     
     try:
         # Gerar chave Fernet a partir da secret key
@@ -436,7 +454,7 @@ def decode_token(token: str, purpose: str = None) -> Optional[Dict[Any, Any]]:
     Returns:
         Payload se válido, None caso contrário
     """
-    secret_key = os.getenv('SECRET_KEY', 'dev-key-change-in-production')
+    secret_key = _get_secret_key()
     
     try:
         payload = jwt.decode(
@@ -465,7 +483,7 @@ def create_token(payload: Dict[Any, Any], expires_in: int = 3600) -> str:
     Returns:
         Token JWT
     """
-    secret_key = os.getenv('SECRET_KEY', 'dev-key-change-in-production')
+    secret_key = _get_secret_key()
     
     # Adicionar timestamps
     payload['iat'] = datetime.utcnow()

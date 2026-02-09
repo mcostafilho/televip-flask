@@ -34,14 +34,14 @@ class Transaction(db.Model):
     subscription_id = db.Column(db.Integer, db.ForeignKey('subscriptions.id'), nullable=False)
     
     # Valores financeiros
-    amount = db.Column(db.Float, nullable=False)
-    fee = db.Column(db.Float, nullable=False, default=0)  # Compatibilidade
-    net_amount = db.Column(db.Float, nullable=False, default=0)
-    
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    fee = db.Column(db.Numeric(10, 2), nullable=False, default=0)  # Compatibilidade
+    net_amount = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+
     # Novas colunas de taxa detalhada
-    fixed_fee = db.Column(db.Float, nullable=False, default=0.99)
-    percentage_fee = db.Column(db.Float, nullable=False, default=0)
-    total_fee = db.Column(db.Float, nullable=False, default=0)
+    fixed_fee = db.Column(db.Numeric(10, 2), nullable=False, default=0.99)
+    percentage_fee = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+    total_fee = db.Column(db.Numeric(10, 2), nullable=False, default=0)
     pix_transaction_id = db.Column(db.String(100))
     
     # Status e método

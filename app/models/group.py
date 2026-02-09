@@ -28,7 +28,7 @@ class PricingPlan(db.Model):
     group_id = db.Column(db.Integer, db.ForeignKey('groups.id'), nullable=False)
     name = db.Column(db.String(50), nullable=False)
     duration_days = db.Column(db.Integer, nullable=False)
-    price = db.Column(db.Float, nullable=False)
+    price = db.Column(db.Numeric(10, 2), nullable=False)
     stripe_price_id = db.Column(db.String(100))  # ID do preço no Stripe
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

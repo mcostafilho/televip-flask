@@ -99,11 +99,24 @@ class DevelopmentConfig(Config):
 class ProductionConfig(Config):
     """Configurações de produção"""
     DEBUG = False
-    
+
+    # Cookies seguros em produção
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+
     @classmethod
     def init_app(cls, app):
         Config.init_app(app)
-        
+
+        # Verificar SECRET_KEY em produção
+        secret = app.config.get('SECRET_KEY')
+        if not secret or secret == 'dev-secret-key-change-in-production':
+            raise ValueError(
+                'SECRET_KEY não configurada para produção. '
+                'Defina a variável de ambiente SECRET_KEY com um valor seguro.'
+            )
+
         # Log para stderr
         import logging
         from logging import StreamHandler

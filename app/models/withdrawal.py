@@ -7,7 +7,7 @@ class Withdrawal(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     creator_id = db.Column(db.Integer, db.ForeignKey('creators.id'), nullable=False)
-    amount = db.Column(db.Float, nullable=False)
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
     pix_key = db.Column(db.String(200), nullable=False)
     status = db.Column(db.String(20), default='pending')  # pending, processing, completed, failed
     
