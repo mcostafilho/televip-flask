@@ -75,10 +75,14 @@ def register():
             errors.append('Username já em uso!')
 
         # Validar senha
-        if len(password) < 6:
-            errors.append('A senha deve ter pelo menos 6 caracteres')
+        if len(password) < 8:
+            errors.append('A senha deve ter pelo menos 8 caracteres')
+        elif not any(c.isupper() for c in password):
+            errors.append('A senha deve conter pelo menos uma letra maiuscula')
+        elif not any(c.isdigit() for c in password):
+            errors.append('A senha deve conter pelo menos um numero')
         elif password != confirm_password:
-            errors.append('As senhas não coincidem')
+            errors.append('As senhas nao coincidem')
 
         # Se houver erros, mostrar
         if errors:
@@ -158,10 +162,12 @@ def reset_password(token):
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
 
-        if len(password) < 6:
-            flash('A senha deve ter pelo menos 6 caracteres', 'error')
+        if len(password) < 8:
+            flash('A senha deve ter pelo menos 8 caracteres', 'error')
+        elif not any(c.isupper() for c in password) or not any(c.isdigit() for c in password):
+            flash('A senha deve conter pelo menos uma letra maiuscula e um numero', 'error')
         elif password != confirm_password:
-            flash('As senhas não coincidem', 'error')
+            flash('As senhas nao coincidem', 'error')
         else:
             # Atualizar senha
             user.set_password(password)

@@ -24,5 +24,6 @@ if __name__ == '__main__':
         db.create_all()
         print("Banco de dados criado/atualizado")
 
-    print("TeleVIP rodando em http://localhost:5000")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    debug = os.environ.get('FLASK_DEBUG', 'False').lower() in ['true', '1', 'on']
+    print(f"TeleVIP rodando em http://localhost:5000 (debug={debug})")
+    app.run(debug=debug, host='0.0.0.0', port=5000)

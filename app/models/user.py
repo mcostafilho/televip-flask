@@ -18,7 +18,7 @@ class Creator(UserMixin, db.Model):
     # Campos financeiros
     balance = db.Column(db.Numeric(10, 2), default=0)
     total_earned = db.Column(db.Numeric(10, 2), default=0)
-    pix_key = db.Column(db.String(200))
+    _pix_key_encrypted = db.Column('pix_key', db.String(500))
     
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -27,11 +27,35 @@ class Creator(UserMixin, db.Model):
     # Status
     is_active = db.Column(db.Boolean, default=True)
     is_verified = db.Column(db.Boolean, default=False)
+    is_admin = db.Column(db.Boolean, default=False)
     
     # Relacionamentos
     groups = db.relationship('Group', backref='creator', lazy='dynamic')
     withdrawals = db.relationship('Withdrawal', backref='creator', lazy='dynamic')
     
+    @property
+    def pix_key(self):
+        """Descriptografa a PIX key ao acessar"""
+        if not self._pix_key_encrypted:
+            return None
+        try:
+            from app.utils.security import decrypt_data
+            return decrypt_data(self._pix_key_encrypted)
+        except Exception:
+            return self._pix_key_encrypted  # Fallback para dados antigos nao encriptados
+
+    @pix_key.setter
+    def pix_key(self, value):
+        """Encripta a PIX key ao salvar"""
+        if value:
+            try:
+                from app.utils.security import encrypt_data
+                self._pix_key_encrypted = encrypt_data(value)
+            except Exception:
+                self._pix_key_encrypted = value
+        else:
+            self._pix_key_encrypted = None
+
     def set_password(self, password):
         """Define a senha do usuário"""
         self.password_hash = generate_password_hash(password)

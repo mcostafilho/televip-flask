@@ -46,30 +46,20 @@ def create():
         telegram_id = request.form.get('telegram_id', '').strip()
         invite_link = request.form.get('invite_link', '').strip()
         
-        # Debug: imprimir dados recebidos
-        print(f"\n🔍 DEBUG - Dados recebidos:")
-        print(f"   Nome: {name}")
-        print(f"   Telegram ID: {telegram_id}")
-        print(f"   Skip validation: {request.form.get('skip_validation')}")
-        
         # Verificar se deve validar no Telegram
         skip_validation = request.form.get('skip_validation') == 'on'
         
         # Se marcar para pular validação, criar direto
         if skip_validation:
-            print("⚠️ Pulando validação do Telegram...")
+            pass
         else:
             # Tentar validar
             bot_token = os.getenv('BOT_TOKEN') or os.getenv('TELEGRAM_BOT_TOKEN')
-            print(f"\n🔍 DEBUG - BOT_TOKEN existe: {bool(bot_token)}")
             
             if bot_token and telegram_id:
                 try:
-                    print(f"📡 Tentando verificar grupo {telegram_id}...")
-                    
                     # URL da API
                     url = f"https://api.telegram.org/bot{bot_token}/getChat"
-                    print(f"📡 URL: {url[:50]}...")
                     
                     # Fazer requisição
                     response = requests.get(
@@ -78,10 +68,7 @@ def create():
                         timeout=10
                     )
                     
-                    print(f"📡 Status Code: {response.status_code}")
-                    
                     if response.status_code != 200:
-                        print(f"❌ Resposta não-200: {response.text}")
                         flash('❌ Erro ao conectar com o Telegram. Use "Pular validação" para continuar.', 'error')
                         return render_template('dashboard/group_form.html', 
                                              group=None,
@@ -90,9 +77,7 @@ def create():
                     # Processar resposta
                     try:
                         data = response.json()
-                        print(f"📡 Resposta JSON: {data}")
                     except Exception as json_error:
-                        print(f"❌ Erro ao decodificar JSON: {json_error}")
                         flash('❌ Resposta inválida do Telegram. Use "Pular validação".', 'error')
                         return render_template('dashboard/group_form.html', 
                                              group=None,
@@ -100,7 +85,6 @@ def create():
                     
                     if not data.get('ok'):
                         error_msg = data.get('description', 'Erro desconhecido')
-                        print(f"❌ API retornou erro: {error_msg}")
                         flash(f'❌ Telegram: {error_msg}', 'error')
                         return render_template('dashboard/group_form.html', 
                                              group=None,
@@ -108,7 +92,6 @@ def create():
                     
                     # Grupo encontrado!
                     chat = data.get('result', {})
-                    print(f"✅ Grupo encontrado: {chat.get('title')}")
                     
                     # Verificar se o bot é admin
                     bot_id = bot_token.split(':')[0]
@@ -132,27 +115,19 @@ def create():
                                                      show_success_modal=False)
                     
                 except requests.exceptions.RequestException as req_error:
-                    print(f"❌ Erro de requisição: {type(req_error).__name__}: {req_error}")
                     flash(f'❌ Erro de conexão: {req_error}. Use "Pular validação".', 'error')
                     return render_template('dashboard/group_form.html', 
                                          group=None,
                                          show_success_modal=False)
                 except Exception as e:
-                    import traceback
-                    print(f"❌ Erro inesperado: {type(e).__name__}: {e}")
-                    print("Traceback completo:")
-                    traceback.print_exc()
-                    
-                    flash(f'❌ Erro: {e}. Use "Pular validação".', 'error')
+                    flash(f'Erro: {e}. Use "Pular validacao".', 'error')
                     return render_template('dashboard/group_form.html', 
                                          group=None,
                                          show_success_modal=False)
             else:
                 if not bot_token:
-                    print("⚠️ BOT_TOKEN não configurado!")
-                    flash('⚠️ Bot não configurado. Use "Pular validação".', 'warning')
+                    flash('Bot nao configurado. Use "Pular validacao".', 'warning')
                 else:
-                    print("⚠️ Telegram ID não fornecido!")
                     flash('⚠️ ID do Telegram não fornecido.', 'warning')
         
         # Criar grupo
@@ -185,7 +160,6 @@ def create():
                 db.session.add(plan)
         
         db.session.commit()
-        print(f"✅ Grupo criado com sucesso! ID: {group.id}")
         
         # CORREÇÃO IMPORTANTE: Gerar link do bot usando group.id, não telegram_id
         bot_username = os.getenv('TELEGRAM_BOT_USERNAME') or os.getenv('BOT_USERNAME', 'televipbra_bot')

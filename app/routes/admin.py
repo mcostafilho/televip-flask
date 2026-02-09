@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
-from flask_login import login_required, current_user, login_user
+from flask_login import login_required, current_user
 from app import db
 from app.models import Creator, Group, Subscription, Transaction
 from app.utils.decorators import admin_required
@@ -111,19 +111,8 @@ def users():
 @login_required
 @admin_required
 def view_creator_dashboard(creator_id):
-    """Admin visualiza o dashboard de um criador específico"""
-    creator = Creator.query.get_or_404(creator_id)
-    
-    # Salvar o ID do criador atual e o modo admin na sessão
-    session['admin_viewing_as'] = creator_id
-    session['admin_mode'] = True
-    
-    # Fazer login temporário como o criador (sem senha)
-    login_user(creator, force=True)
-    
-    flash(f'Você está visualizando o dashboard de {creator.name}. Para voltar ao admin, use o botão no topo.', 'info')
-    
-    return redirect(url_for('dashboard.index'))
+    """Admin visualiza dados do criador (sem impersonation)"""
+    return redirect(url_for('admin.creator_details', creator_id=creator_id))
 
 @bp.route('/creator/<int:creator_id>/details')
 @login_required
@@ -201,22 +190,7 @@ def send_creator_message(creator_id):
 
 @bp.route('/exit-creator-view')
 @login_required
+@admin_required
 def exit_creator_view():
-    """Sair da visualização do criador e voltar ao admin"""
-    if 'admin_viewing_as' in session:
-        # Limpar sessão
-        session.pop('admin_viewing_as', None)
-        session.pop('admin_mode', None)
-        
-        # Fazer login como admin novamente
-        admin_email = current_user.email  # Salvar email antes
-        admin = Creator.query.filter_by(email='mauro_lcf@example.com').first()
-        if not admin:
-            admin = Creator.query.filter_by(email='admin@televip.com').first()
-        
-        if admin:
-            login_user(admin, force=True)
-        
-        flash('Você voltou ao painel administrativo.', 'info')
-    
+    """Voltar ao painel admin"""
     return redirect(url_for('admin.index'))

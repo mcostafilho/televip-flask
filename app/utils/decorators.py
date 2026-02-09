@@ -7,10 +7,10 @@ def admin_required(f):
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated:
             return redirect(url_for('auth.login'))
-        
-        if current_user.email not in ['mauro_lcf@example.com', 'admin@televip.com']:
+
+        if not current_user.is_admin:
             flash('Acesso negado. Apenas administradores.', 'error')
             return redirect(url_for('dashboard.index'))
-        
+
         return f(*args, **kwargs)
     return decorated_function

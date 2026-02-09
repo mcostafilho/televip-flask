@@ -188,9 +188,6 @@ def index():
             date_str = row.date.strftime('%Y-%m-%d')
         revenue_by_date[date_str] = float(row.total)
     
-    # DEBUG - Imprimir no console do Flask
-    print(f"\n🔍 GRÁFICO DEBUG - Receitas por data: {revenue_by_date}")
-    
     # Preparar dados do gráfico
     chart_labels = []
     chart_data = []
@@ -207,14 +204,8 @@ def index():
         
         # Garantir que é float
         chart_data.append(float(value))
-        
-        # DEBUG
-        print(f"  {label} ({date_key}): R$ {value}")
-        
+
         current_date += timedelta(days=1)
-    
-    print(f"\n🔍 GRÁFICO DEBUG - Labels: {chart_labels}")
-    print(f"🔍 GRÁFICO DEBUG - Dados: {chart_data}")
     
     return render_template('dashboard/index.html',
         # Saldo e taxas
@@ -412,11 +403,6 @@ def analytics():
     end_date = datetime.now()
     start_date = end_date - timedelta(days=days)
     
-    print(f"\n=== ANALYTICS DEBUG ===")
-    print(f"Período: {days} dias")
-    print(f"Data início: {start_date.date()}")
-    print(f"Data fim: {end_date.date()}")
-    
     # Buscar grupos
     groups = Group.query.filter_by(creator_id=current_user.id).all()
     
@@ -493,9 +479,7 @@ def analytics():
         func.date(Transaction.created_at)
     ).all()
     
-    print(f"\nReceitas encontradas: {len(daily_revenue)}")
-    
-    # Converter para dicionário - CORREÇÃO AQUI
+    # Converter para dicionário
     revenue_dict = {}
     for r in daily_revenue:
         # Garantir que estamos comparando objetos date
@@ -505,15 +489,11 @@ def analytics():
             date_obj = r.date
         
         revenue_dict[date_obj] = float(r.total)
-        print(f"  {date_obj}: R$ {r.total}")
     
     # Preencher dados
     for date_obj in date_list:
         value = revenue_dict.get(date_obj, 0.0)
         revenue_data.append(value)
-        if value > 0:
-            idx = date_list.index(date_obj)
-            print(f"Valor encontrado no índice {idx} ({revenue_labels[idx]}): R$ {value}")
     
     # 2. Buscar assinantes por dia
     daily_subscribers = db.session.query(
@@ -654,12 +634,6 @@ def analytics():
             'data': plan_data if plan_data else [0]
         }
     }
-    
-    print(f"\n=== RESUMO FINAL ===")
-    print(f"Total de dias: {len(revenue_labels)}")
-    print(f"Dias com receita: {sum(1 for v in revenue_data if v > 0)}")
-    print(f"Receita total no período: R$ {sum(revenue_data)}")
-    print("====================\n")
     
     return render_template(
         'dashboard/analytics.html',
