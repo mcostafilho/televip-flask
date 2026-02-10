@@ -101,48 +101,6 @@ async def handle_back_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     """Handler para voltar ao menu principal"""
     await show_user_dashboard(update, context)
 
-async def handle_help_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handler para mostrar ajuda via callback"""
-    query = update.callback_query
-    await query.answer()
-    
-    text = """
-📚 **Central de Ajuda**
-
-**❓ Perguntas Frequentes:**
-
-**Como faço para assinar um grupo?**
-Clique no link fornecido pelo criador ou use /descobrir
-
-**Como cancelo uma assinatura?**
-Use /status e clique no botão "Cancelar" da assinatura desejada
-
-**Posso mudar de plano?**
-Sim, quando sua assinatura atual expirar
-
-**É seguro?**
-Sim, usamos Stripe para processar pagamentos
-
-**📞 Suporte:**
-• Problemas com pagamento: @suporte_televip
-• Dúvidas sobre conteúdo: contate o criador do grupo
-
-🔒 Seus dados estão seguros e protegidos.
-"""
-    
-    keyboard = [
-        [
-            InlineKeyboardButton("⬅️ Voltar", callback_data="back_to_start"),
-            InlineKeyboardButton("📞 Suporte", url="https://t.me/suporte_televip")
-        ]
-    ]
-    
-    await query.edit_message_text(
-        text,
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(keyboard)
-    )
-
 async def handle_cancel_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler para cancelar operação"""
     query = update.callback_query
@@ -151,21 +109,6 @@ async def handle_cancel_callback(update: Update, context: ContextTypes.DEFAULT_T
     # Voltar ao dashboard
     await handle_back_callback(update, context)
 
-async def handle_categories_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handler para callback de categorias"""
-    await handle_discover_callback(update, context)
-
-async def handle_premium_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handler para grupos premium"""
-    await handle_discover_callback(update, context)
-
-async def handle_new_groups_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handler para grupos novos"""
-    await handle_discover_callback(update, context)
-
-async def handle_cheap_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handler para grupos baratos"""
-    await handle_discover_callback(update, context)
 
 async def handle_retry_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler para tentar pagamento novamente"""
@@ -225,14 +168,13 @@ def setup_handlers(application: Application) -> None:
     
 # Callbacks de descoberta
     application.add_handler(CallbackQueryHandler(handle_discover_callback, pattern=r"^discover.*$"))
-    application.add_handler(CallbackQueryHandler(handle_categories_callback, pattern="^categories$"))
-    application.add_handler(CallbackQueryHandler(handle_premium_callback, pattern="^premium$"))
-    application.add_handler(CallbackQueryHandler(handle_new_groups_callback, pattern="^new_groups$"))
-    application.add_handler(CallbackQueryHandler(handle_cheap_callback, pattern="^cheap$"))
-    
+    application.add_handler(CallbackQueryHandler(handle_discover_callback, pattern="^categories$"))
+    application.add_handler(CallbackQueryHandler(handle_discover_callback, pattern="^premium_groups$"))
+    application.add_handler(CallbackQueryHandler(handle_discover_callback, pattern="^new_groups$"))
+    application.add_handler(CallbackQueryHandler(handle_discover_callback, pattern="^cheapest_groups$"))
+
     # Callbacks de navegação
     application.add_handler(CallbackQueryHandler(handle_back_callback, pattern="^back_to_start$"))
-    application.add_handler(CallbackQueryHandler(handle_help_callback, pattern="^help$"))
     application.add_handler(CallbackQueryHandler(handle_cancel_callback, pattern="^cancel$"))
     application.add_handler(CallbackQueryHandler(handle_check_status_callback, pattern="^check_status$"))
     application.add_handler(CallbackQueryHandler(handle_continue_to_menu, pattern="^continue_to_menu$"))

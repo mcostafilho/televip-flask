@@ -10,7 +10,7 @@ from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
 
 from bot.utils.database import get_db_session
-from bot.keyboards.menus import get_main_menu, get_plans_menu
+from bot.keyboards.menus import get_plans_menu
 from app.models import Group, Creator, PricingPlan, Subscription, Transaction
 from bot.handlers.payment_verification import check_payment_from_start
 
@@ -141,8 +141,7 @@ Precisa de ajuda? Use /help ou clique no botão abaixo.
 """
             keyboard = [
                 [
-                    InlineKeyboardButton("🔍 Descobrir Grupos", callback_data="discover"),
-                    InlineKeyboardButton("❓ Ajuda", callback_data="help")
+                    InlineKeyboardButton("🔍 Descobrir Grupos", callback_data="discover")
                 ]
             ]
         else:
@@ -172,10 +171,7 @@ Precisa de ajuda? Use /help ou clique no botão abaixo.
             keyboard = [
                 [
                     InlineKeyboardButton("📊 Ver Todas", callback_data="check_status"),
-                    InlineKeyboardButton("🔍 Descobrir Mais", callback_data="discover")
-                ],
-                [
-                    InlineKeyboardButton("❓ Ajuda", callback_data="help")
+                    InlineKeyboardButton("🔍 Descobrir", callback_data="discover")
                 ]
             ]
         
