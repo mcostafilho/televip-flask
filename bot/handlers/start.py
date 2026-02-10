@@ -120,58 +120,32 @@ Se não fez nenhum pagamento recentemente, pode continuar para o menu principal.
         ).order_by(Subscription.end_date).all()
         
         if not subscriptions:
-            # Usuário novo - mostrar mensagem de boas-vindas
             text = f"""
 👋 Olá {user.first_name}!
 
-Bem-vindo ao **TeleVIP Bot** 🤖
+Você ainda não possui assinaturas ativas.
 
-Sou seu assistente para gerenciar assinaturas de grupos VIP no Telegram.
-
-🎯 **O que você pode fazer:**
-• Assinar grupos exclusivos
-• Gerenciar suas assinaturas
-• Descobrir novos conteúdos
-• Renovar com desconto
-
-💡 **Como começar:**
-Use /descobrir para explorar grupos disponíveis ou clique em um link de convite de um criador.
-
-Precisa de ajuda? Use /help ou clique no botão abaixo.
+Para assinar um grupo, use o link de convite fornecido pelo criador.
 """
-            keyboard = [
-                [
-                    InlineKeyboardButton("🔍 Descobrir Grupos", callback_data="discover")
-                ]
-            ]
+            keyboard = []
         else:
-            # Usuário com assinaturas - mostrar dashboard
-            text = f"""
-👋 Olá {user.first_name}!
+            text = f"👋 Olá {user.first_name}!\n\n"
 
-📊 **Suas Assinaturas Ativas:** {len(subscriptions)}
-
-"""
-            # Listar assinaturas ativas
-            for sub in subscriptions[:5]:  # Mostrar até 5
+            for sub in subscriptions[:5]:
                 days_left = (sub.end_date - datetime.utcnow()).days
                 status_emoji = "🟢" if days_left > 7 else "🟡" if days_left > 3 else "🔴"
-                
-                # Verificar se group existe antes de acessar
+
                 if sub.group:
                     text += f"{status_emoji} **{sub.group.name}**\n"
                     text += f"   Plano: {sub.plan.name if sub.plan else 'N/A'}\n"
                     text += f"   Expira em: {days_left} dias\n\n"
-            
+
             if len(subscriptions) > 5:
                 text += f"... e mais {len(subscriptions) - 5} assinaturas\n\n"
-            
-            text += "Use /status para ver detalhes completos."
-            
+
             keyboard = [
                 [
-                    InlineKeyboardButton("📊 Ver Todas", callback_data="check_status"),
-                    InlineKeyboardButton("🔍 Descobrir", callback_data="discover")
+                    InlineKeyboardButton("📊 Ver Detalhes", callback_data="check_status")
                 ]
             ]
         
@@ -319,36 +293,21 @@ Sua assinatura expira em: {existing_sub.end_date.strftime('%d/%m/%Y')}
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Comando de ajuda"""
     help_text = """
-📋 **Central de Ajuda TeleVIP**
-
-**🔸 Comandos Disponíveis:**
-
-/start - Menu principal e suas assinaturas
-/status - Detalhes de todas suas assinaturas
-/descobrir - Explorar grupos disponíveis
-/help - Esta mensagem de ajuda
-
-**❓ Perguntas Frequentes:**
+**Comandos:**
+/start - Suas assinaturas
+/status - Detalhes das assinaturas
+/planos - Resumo dos seus planos
+/help - Ajuda
 
 **Como assino um grupo?**
-Clique no link fornecido pelo criador ou use /descobrir
+Use o link de convite fornecido pelo criador.
 
-**Como cancelo uma assinatura?**
-Use /status e clique no botão "Cancelar" da assinatura desejada
+**Como cancelo?**
+Use /status e clique em "Cancelar".
 
-**Posso mudar de plano?**
-Sim, quando sua assinatura atual expirar
-
-**É seguro?**
-Sim, usamos Stripe para processar pagamentos
-
-**📞 Suporte:**
-• Problemas com pagamento: @suporte_televip
-• Dúvidas sobre conteúdo: contate o criador do grupo
-
-🔒 Seus dados estão seguros e protegidos.
+**Suporte:** @suporte_televip
 """
-    
+
     await update.message.reply_text(
         help_text,
         parse_mode=ParseMode.MARKDOWN
@@ -359,16 +318,9 @@ async def handle_payment_cancel(update: Update, context: ContextTypes.DEFAULT_TY
     text = """
 ❌ **Pagamento Cancelado**
 
-Seu pagamento foi cancelado e nenhuma cobrança foi realizada.
-
-Se mudou de ideia, você pode:
-• Usar o link original do grupo
-• Explorar outros grupos com /descobrir
-• Ver suas assinaturas atuais com /start
-
-Precisando de ajuda? Use /help
+Nenhuma cobrança foi realizada. Para tentar novamente, use o link de convite do grupo.
 """
-    
+
     keyboard = [
         [
             InlineKeyboardButton("🏠 Menu Principal", callback_data="back_to_start")

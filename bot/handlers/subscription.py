@@ -40,29 +40,9 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ).all()
         
         if not all_subs:
-            text = """
-📭 **Nenhuma Assinatura Encontrada**
+            text = "Você ainda não possui nenhuma assinatura.\n\nPara assinar um grupo, use o link de convite fornecido pelo criador."
 
-Você ainda não possui nenhuma assinatura.
-
-💡 **Como começar:**
-• Use /descobrir para explorar grupos
-• Clique em links de convite dos criadores
-• Escolha um plano que combina com você
-
-Precisa de ajuda? Use /help
-"""
-            keyboard = [
-                [
-                    InlineKeyboardButton("🔍 Descobrir Grupos", callback_data="discover")
-                ]
-            ]
-            
-            await message.reply_text(
-                text,
-                parse_mode=ParseMode.MARKDOWN,
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
+            await message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
             return
         
         # Separar por status
@@ -224,55 +204,30 @@ async def planos_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ).order_by(Subscription.end_date).all()
         
         if not active_subs:
-            text = """
-📋 **Seus Planos**
-
-Você não possui planos ativos no momento.
-
-Use /descobrir para explorar grupos disponíveis!
-"""
-            keyboard = [[
-                InlineKeyboardButton("🔍 Descobrir Grupos", callback_data="discover")
-            ]]
+            text = "Você não possui planos ativos no momento.\n\nPara assinar um grupo, use o link de convite fornecido pelo criador."
+            keyboard = []
         else:
             text = f"📋 **Seus {len(active_subs)} Planos Ativos**\n\n"
-            
-            total_monthly = 0
-            
+
             for i, sub in enumerate(active_subs, 1):
                 group = sub.group
                 plan = sub.plan
-                creator = group.creator
                 is_lifetime = getattr(plan, 'is_lifetime', False) or plan.duration_days == 0
 
                 text += f"**{i}. {group.name}**\n"
-                text += f"👤 @{creator.username or creator.name}\n"
-                text += f"📦 Plano: {plan.name}\n"
+                text += f"   Plano: {plan.name} - R$ {plan.price:.2f}\n"
 
                 if is_lifetime:
-                    text += f"💰 Valor: R$ {plan.price:.2f} (pagamento unico)\n"
-                    text += f"♾️ **Acesso Vitalicio**\n"
+                    text += f"   Acesso vitalicio\n"
                 else:
                     days_left = (sub.end_date - datetime.utcnow()).days
-                    monthly_value = float(plan.price) * (30 / plan.duration_days)
-                    total_monthly += monthly_value
-
-                    text += f"💰 Valor: R$ {plan.price:.2f} ({plan.duration_days} dias)\n"
-                    text += f"📊 Equivale a R$ {monthly_value:.2f}/mês\n"
-                    text += f"⏳ Expira em {days_left} dias\n"
-
-                text += f"✅ Acesso completo ao grupo\n"
-                text += f"✅ Suporte prioritário\n"
-                text += f"✅ Conteúdo exclusivo\n"
+                    text += f"   Expira em: {days_left} dias ({sub.end_date.strftime('%d/%m/%Y')})\n"
 
                 text += "\n"
 
-            text += f"💎 **Total mensal:** R$ {total_monthly:.2f}\n"
-            
             keyboard = [
                 [
-                    InlineKeyboardButton("📊 Ver Detalhes", callback_data="check_status"),
-                    InlineKeyboardButton("🔄 Renovar", callback_data="check_renewals")
+                    InlineKeyboardButton("📊 Ver Detalhes", callback_data="check_status")
                 ]
             ]
         
@@ -484,8 +439,7 @@ async def process_renewal(update: Update, context: ContextTypes.DEFAULT_TYPE, su
         
         keyboard = [
             [
-                InlineKeyboardButton("💳 Pagar com Cartão", callback_data="pay_renewal_stripe"),
-                InlineKeyboardButton("💰 Pagar com PIX", callback_data="pay_renewal_pix")
+                InlineKeyboardButton("💳 Pagar com Cartão", callback_data="pay_renewal_stripe")
             ],
             [
                 InlineKeyboardButton("❌ Cancelar", callback_data="check_renewals")

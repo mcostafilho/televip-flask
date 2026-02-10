@@ -45,7 +45,6 @@ from bot.handlers.admin import (
     handle_join_request, handle_new_chat_members,
     handle_broadcast_to_group, handle_broadcast_confirm, handle_cancel_broadcast
 )
-from bot.handlers.discovery import descobrir_command, handle_discover_callback
 from bot.handlers.payment_verification import check_payment_status
 from bot.utils.database import get_db_session
 
@@ -152,8 +151,6 @@ def setup_handlers(application: Application) -> None:
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("status", status_command))
     application.add_handler(CommandHandler("planos", planos_command))
-    application.add_handler(CommandHandler("descobrir", descobrir_command))
-    
     # Comandos administrativos
     application.add_handler(CommandHandler("setup", setup_command))
     application.add_handler(CommandHandler("stats", stats_command))
@@ -165,11 +162,7 @@ def setup_handlers(application: Application) -> None:
     application.add_handler(CallbackQueryHandler(check_payment_status, pattern="^check_payment_status$"))
     application.add_handler(CallbackQueryHandler(handle_payment_error, pattern="^payment_error$"))
     application.add_handler(CallbackQueryHandler(handle_retry_payment, pattern="^retry_payment$"))
-    
-# Callbacks de descoberta
-    application.add_handler(CallbackQueryHandler(handle_discover_callback, pattern=r"^discover.*$"))
-
-    # Callbacks de navegação
+        # Callbacks de navegação
     application.add_handler(CallbackQueryHandler(handle_back_callback, pattern="^back_to_start$"))
     application.add_handler(CallbackQueryHandler(handle_cancel_callback, pattern="^cancel$"))
     application.add_handler(CallbackQueryHandler(handle_check_status_callback, pattern="^check_status$"))

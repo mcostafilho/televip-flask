@@ -344,8 +344,7 @@ class TestStartCommand:
 
         update.message.reply_text.assert_called_once()
         text = update.message.reply_text.call_args[0][0]
-        assert 'Bem-vindo' in text
-        assert 'TeleVIP Bot' in text
+        assert 'não possui assinaturas' in text
 
     def test_start_no_args_with_active_subs(self, app_ctx, group_a, plan_a_monthly):
         """Usuario com assinatura ativa ve dashboard"""
@@ -373,7 +372,7 @@ class TestStartCommand:
         asyncio.get_event_loop().run_until_complete(start_command(update, ctx))
 
         text = update.message.reply_text.call_args[0][0]
-        assert 'Assinaturas Ativas' in text or 'Bem-vindo' in text
+        assert 'Alpha Premium' in text or 'Olá' in text
 
     def test_start_with_group_slug(self, app_ctx, group_a, plan_a_monthly):
         """start com g_SLUG inicia fluxo de assinatura"""
@@ -1457,7 +1456,7 @@ class TestStatusCommand:
         asyncio.get_event_loop().run_until_complete(status_command(update, ctx))
 
         text = update.message.reply_text.call_args[0][0]
-        assert 'Nenhuma' in text
+        assert 'nenhuma assinatura' in text
 
     def test_status_active_shows_days_left(self, app_ctx, group_a, plan_a_monthly):
         """Status ativo mostra dias restantes e emoji correto"""
@@ -2071,7 +2070,6 @@ class TestHelpCommand:
         text = update.message.reply_text.call_args[0][0]
         assert '/start' in text
         assert '/status' in text
-        assert '/descobrir' in text
         assert '/help' in text
 
 
