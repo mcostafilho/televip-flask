@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, Response
 from flask_login import login_user, logout_user, current_user, login_required
 from app import db, limiter
 from app.models import Creator, Report
@@ -259,6 +259,32 @@ def logout():
     logout_user()
     flash('Você saiu da sua conta.', 'info')
     return redirect(url_for('auth.index'))
+
+
+@bp.route('/sitemap.xml')
+def sitemap():
+    """Sitemap XML para motores de busca"""
+    urls = [
+        'https://televip.com/',
+        'https://televip.com/recursos',
+        'https://televip.com/precos',
+        'https://televip.com/termos',
+        'https://televip.com/privacidade',
+        'https://televip.com/denuncia',
+    ]
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    for url in urls:
+        xml += f'  <url><loc>{url}</loc></url>\n'
+    xml += '</urlset>\n'
+    return Response(xml, content_type='application/xml')
+
+
+@bp.route('/robots.txt')
+def robots():
+    """Robots.txt para motores de busca"""
+    txt = "User-agent: *\nAllow: /\n\nSitemap: https://televip.com/sitemap.xml\n"
+    return Response(txt, content_type='text/plain')
 
 
 @bp.route('/recursos')
