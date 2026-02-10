@@ -1,9 +1,14 @@
 # app/routes/dashboard.py
+import logging
 from flask import Blueprint, render_template, jsonify, request, redirect, url_for, flash, session
 from flask_login import login_required, current_user
 from app import db, limiter
 from app.models import Group, Transaction, Subscription, Creator, PricingPlan
 from app.services.payment_service import PaymentService
+from app.utils.security import generate_reset_token
+from app.utils.email import send_password_reset_email
+
+logger = logging.getLogger(__name__)
 from sqlalchemy import func, and_, desc
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -398,6 +403,26 @@ def profile():
         recent_transactions=recent_transactions,
         has_password=bool(current_user.password_hash)
     )
+
+
+@bp.route('/profile/reset-password', methods=['POST'])
+@login_required
+@limiter.limit("3 per hour")
+def profile_reset_password():
+    """Enviar email de redefinição de senha para o usuário logado"""
+    if not current_user.password_hash:
+        flash('Sua conta não possui senha. Use o formulário acima para definir uma.', 'info')
+        return redirect(url_for('dashboard.profile'))
+
+    token = generate_reset_token(current_user.id, password_hash=current_user.password_hash)
+    try:
+        send_password_reset_email(current_user, token)
+        flash('Email de redefinição de senha enviado! Verifique sua caixa de entrada.', 'success')
+    except Exception:
+        logger.error("Failed to send password reset email from profile", exc_info=True)
+        flash('Erro ao enviar email. Tente novamente mais tarde.', 'error')
+
+    return redirect(url_for('dashboard.profile'))
 
 
 @bp.route('/profile/update', methods=['POST'])
