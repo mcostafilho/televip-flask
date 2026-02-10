@@ -497,6 +497,64 @@ def subscribers(id):
                          page=page,
                          total_pages=total_pages)
 
+@bp.route('/<int:id>/subscribers/<int:sub_id>/details')
+@login_required
+def subscriber_details(id, sub_id):
+    """Retornar HTML parcial com detalhes de um assinante (para modal AJAX)"""
+    group = Group.query.filter_by(id=id, creator_id=current_user.id).first_or_404()
+    sub = Subscription.query.filter_by(id=sub_id, group_id=group.id).first_or_404()
+
+    now = datetime.utcnow()
+    days_left = (sub.end_date - now).days if sub.end_date > now else 0
+
+    transactions = sub.transactions.order_by(Transaction.created_at.desc()).limit(10).all()
+
+    html = f'''
+    <div class="row">
+        <div class="col-md-6">
+            <h6 class="text-muted mb-3">Informações do Assinante</h6>
+            <p><strong>Username:</strong> @{sub.telegram_username or "Sem username"}</p>
+            <p><strong>Telegram ID:</strong> {sub.telegram_user_id}</p>
+            <p><strong>Status:</strong>
+                <span class="badge bg-{"success" if sub.status == "active" and sub.end_date > now else "danger"}">
+                    {sub.status.capitalize()}
+                </span>
+            </p>
+        </div>
+        <div class="col-md-6">
+            <h6 class="text-muted mb-3">Assinatura</h6>
+            <p><strong>Plano:</strong> {sub.plan.name} - R$ {sub.plan.price:.2f}</p>
+            <p><strong>Início:</strong> {sub.start_date.strftime("%d/%m/%Y")}</p>
+            <p><strong>Expira:</strong> {sub.end_date.strftime("%d/%m/%Y")}
+                {f" ({days_left} dias)" if sub.status == "active" and days_left > 0 else ""}
+            </p>
+            <p><strong>Renovação auto:</strong> {"Sim" if sub.auto_renew else "Não"}</p>
+        </div>
+    </div>
+    '''
+
+    if transactions:
+        html += '''
+        <hr>
+        <h6 class="text-muted mb-3">Histórico de Pagamentos</h6>
+        <table class="table table-sm">
+            <thead><tr><th>Data</th><th>Valor</th><th>Status</th></tr></thead>
+            <tbody>
+        '''
+        for t in transactions:
+            status_class = "success" if t.status == "completed" else "warning" if t.status == "pending" else "danger"
+            html += f'''
+            <tr>
+                <td>{t.created_at.strftime("%d/%m/%Y %H:%M")}</td>
+                <td>R$ {t.amount:.2f}</td>
+                <td><span class="badge bg-{status_class}">{t.status.capitalize()}</span></td>
+            </tr>
+            '''
+        html += '</tbody></table>'
+
+    return html
+
+
 @bp.route('/<int:id>/export-subscribers')
 @login_required
 @limiter.limit("30 per hour")
