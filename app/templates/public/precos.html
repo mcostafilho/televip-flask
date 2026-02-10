@@ -866,49 +866,32 @@
         }
 
         // Fee Calculator
-        const saleInput = document.getElementById('saleValue');
-        const calcSale = document.getElementById('calcSale');
-        const calcFixed = document.getElementById('calcFixed');
-        const calcPercent = document.getElementById('calcPercent');
-        const calcTotalFee = document.getElementById('calcTotalFee');
-        const calcNet = document.getElementById('calcNet');
-
-        function formatBRL(value) {
-            return 'R$ ' + value.toFixed(2).replace('.', ',');
-        }
-
-        function parseInputValue(str) {
-            if (!str) return 0;
-            // Remove spaces and R$
-            str = str.replace(/\s/g, '').replace('R$', '');
-            // If has both comma and dot, figure out which is decimal
-            if (str.indexOf(',') > -1 && str.indexOf('.') > -1) {
-                // 1.000,50 format -> remove dots, replace comma
-                str = str.replace(/\./g, '').replace(',', '.');
-            } else if (str.indexOf(',') > -1) {
-                // 100,50 format -> replace comma with dot
-                str = str.replace(',', '.');
-            }
-            var val = parseFloat(str);
-            return isNaN(val) ? 0 : val;
-        }
-
         function calculate() {
-            const sale = parseInputValue(saleInput.value);
-            const fixedFee = 0.99;
-            const percentFee = sale * 0.0999;
-            const totalFee = fixedFee + percentFee;
-            const net = Math.max(sale - totalFee, 0);
+            var raw = document.getElementById('saleValue').value || '0';
+            // Remove spaces, R$, dots as thousand sep, then comma to dot
+            raw = raw.replace(/\s/g, '').replace('R$', '');
+            if (raw.indexOf(',') > -1 && raw.indexOf('.') > -1) {
+                raw = raw.replace(/\./g, '').replace(',', '.');
+            } else if (raw.indexOf(',') > -1) {
+                raw = raw.replace(',', '.');
+            }
+            var sale = parseFloat(raw);
+            if (isNaN(sale) || sale < 0) sale = 0;
 
-            calcSale.textContent = formatBRL(sale);
-            calcFixed.textContent = '- ' + formatBRL(fixedFee);
-            calcPercent.textContent = '- ' + formatBRL(percentFee);
-            calcTotalFee.textContent = '- ' + formatBRL(totalFee);
-            calcNet.textContent = formatBRL(net);
+            var fixedFee = 0.99;
+            var percentFee = sale * 0.0999;
+            var totalFee = fixedFee + percentFee;
+            var net = sale - totalFee;
+            if (net < 0) net = 0;
+
+            function fmt(v) { return 'R$ ' + v.toFixed(2).replace('.', ','); }
+
+            document.getElementById('calcSale').innerText = fmt(sale);
+            document.getElementById('calcFixed').innerText = '- ' + fmt(fixedFee);
+            document.getElementById('calcPercent').innerText = '- ' + fmt(percentFee);
+            document.getElementById('calcTotalFee').innerText = '- ' + fmt(totalFee);
+            document.getElementById('calcNet').innerText = fmt(net);
         }
-
-        saleInput.addEventListener('input', calculate);
-        saleInput.addEventListener('change', calculate);
         calculate();
     </script>
 
