@@ -277,12 +277,13 @@ class TestResetPassword:
         }, follow_redirects=True)
         assert 'coincidem' in resp.data.decode('utf-8').lower()
 
-    def test_reset_password_redirects_when_authenticated(self, client, creator):
+    def test_reset_password_logs_out_when_authenticated(self, client, creator):
+        """Usuário autenticado é deslogado e vê o formulário de reset"""
         from app.utils.security import generate_reset_token
         login(client, 'creator@test.com', 'TestPass123')
-        token = generate_reset_token(creator.id)
+        token = generate_reset_token(creator.id, password_hash=creator.password_hash)
         resp = client.get(f'/reset-password/{token}')
-        assert resp.status_code == 302
+        assert resp.status_code == 200
 
 
 class TestIndex:
