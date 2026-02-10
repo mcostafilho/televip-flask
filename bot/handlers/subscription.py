@@ -99,31 +99,40 @@ Precisa de ajuda? Use /help
                 group = sub.group
                 creator = group.creator
                 plan = sub.plan
-                days_left = (sub.end_date - datetime.utcnow()).days
-                
-                # Classificar urgência
-                if days_left <= 3:
-                    emoji = "🔴"
-                    need_renewal_urgent.append(sub)
-                elif days_left <= 7:
-                    emoji = "🟡"
-                    need_renewal_soon.append(sub)
+                is_lifetime = getattr(plan, 'is_lifetime', False) or plan.duration_days == 0
+
+                if is_lifetime:
+                    emoji = "♾️"
                 else:
-                    emoji = "🟢"
-                
+                    days_left = (sub.end_date - datetime.utcnow()).days
+
+                    # Classificar urgência
+                    if days_left <= 3:
+                        emoji = "🔴"
+                        need_renewal_urgent.append(sub)
+                    elif days_left <= 7:
+                        emoji = "🟡"
+                        need_renewal_soon.append(sub)
+                    else:
+                        emoji = "🟢"
+
                 text += f"{i}. {emoji} **{group.name}**\n"
                 text += f"   👤 Criador: @{creator.username or creator.name}\n"
                 text += f"   💰 Plano: {plan.name} (R$ {plan.price:.2f})\n"
-                text += f"   📅 Expira: {sub.end_date.strftime('%d/%m/%Y')}\n"
-                text += f"   ⏳ Restam: {days_left} dias\n"
-                
-                # Subscription status info
-                if getattr(sub, 'cancel_at_period_end', False):
-                    text += f"   🚫 Cancelamento agendado - acesso ate {sub.end_date.strftime('%d/%m/%Y')}\n"
-                elif getattr(sub, 'auto_renew', False) and sub.stripe_subscription_id and not getattr(sub, 'is_legacy', False):
-                    text += f"   🔄 Renovacao automatica ativa\n"
-                elif getattr(sub, 'is_legacy', False) or not sub.stripe_subscription_id:
-                    text += f"   📅 Assinatura avulsa (sem renovacao automatica)\n"
+
+                if is_lifetime:
+                    text += f"   ♾️ **Acesso Vitalicio**\n"
+                else:
+                    text += f"   📅 Expira: {sub.end_date.strftime('%d/%m/%Y')}\n"
+                    text += f"   ⏳ Restam: {days_left} dias\n"
+
+                    # Subscription status info
+                    if getattr(sub, 'cancel_at_period_end', False):
+                        text += f"   🚫 Cancelamento agendado - acesso ate {sub.end_date.strftime('%d/%m/%Y')}\n"
+                    elif getattr(sub, 'auto_renew', False) and sub.stripe_subscription_id and not getattr(sub, 'is_legacy', False):
+                        text += f"   🔄 Renovacao automatica ativa\n"
+                    elif getattr(sub, 'is_legacy', False) or not sub.stripe_subscription_id:
+                        text += f"   📅 Assinatura avulsa (sem renovacao automatica)\n"
 
                 # Estatísticas da assinatura
                 duration = (datetime.utcnow() - sub.start_date).days
@@ -248,26 +257,30 @@ Use /descobrir para explorar grupos disponíveis!
                 group = sub.group
                 plan = sub.plan
                 creator = group.creator
-                days_left = (sub.end_date - datetime.utcnow()).days
-                
-                # Calcular valor mensal equivalente
-                monthly_value = plan.price * (30 / plan.duration_days)
-                total_monthly += monthly_value
-                
+                is_lifetime = getattr(plan, 'is_lifetime', False) or plan.duration_days == 0
+
                 text += f"**{i}. {group.name}**\n"
                 text += f"👤 @{creator.username or creator.name}\n"
                 text += f"📦 Plano: {plan.name}\n"
-                text += f"💰 Valor: R$ {plan.price:.2f} ({plan.duration_days} dias)\n"
-                text += f"📊 Equivale a R$ {monthly_value:.2f}/mês\n"
-                text += f"⏳ Expira em {days_left} dias\n"
-                
-                # Benefícios do plano (futuro: adicionar campo no banco)
+
+                if is_lifetime:
+                    text += f"💰 Valor: R$ {plan.price:.2f} (pagamento unico)\n"
+                    text += f"♾️ **Acesso Vitalicio**\n"
+                else:
+                    days_left = (sub.end_date - datetime.utcnow()).days
+                    monthly_value = plan.price * (30 / plan.duration_days)
+                    total_monthly += monthly_value
+
+                    text += f"💰 Valor: R$ {plan.price:.2f} ({plan.duration_days} dias)\n"
+                    text += f"📊 Equivale a R$ {monthly_value:.2f}/mês\n"
+                    text += f"⏳ Expira em {days_left} dias\n"
+
                 text += f"✅ Acesso completo ao grupo\n"
                 text += f"✅ Suporte prioritário\n"
                 text += f"✅ Conteúdo exclusivo\n"
-                
+
                 text += "\n"
-            
+
             text += f"💎 **Total mensal:** R$ {total_monthly:.2f}\n"
             
             keyboard = [

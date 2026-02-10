@@ -32,6 +32,7 @@ class PricingPlan(db.Model):
     price = db.Column(db.Numeric(10, 2), nullable=False)
     stripe_price_id = db.Column(db.String(100))  # ID do preço no Stripe
     stripe_product_id = db.Column(db.String(100))
+    is_lifetime = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     

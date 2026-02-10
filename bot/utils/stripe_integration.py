@@ -89,39 +89,49 @@ def get_or_create_stripe_price(plan, group) -> str:
             product_id = product.id
             logger.info(f"Created Stripe product {product_id}")
 
-        # Map duration_days to Stripe recurring interval
-        days = plan.duration_days
-        if days == 7:
-            interval = 'week'
-            interval_count = 1
-        elif days == 30:
-            interval = 'month'
-            interval_count = 1
-        elif days == 90:
-            interval = 'month'
-            interval_count = 3
-        elif days == 180:
-            interval = 'month'
-            interval_count = 6
-        elif days == 365:
-            interval = 'year'
-            interval_count = 1
+        is_lifetime = getattr(plan, 'is_lifetime', False) or plan.duration_days == 0
+
+        if is_lifetime:
+            # One-time price for lifetime plans (no recurring)
+            price = stripe.Price.create(
+                product=product_id,
+                unit_amount=int(float(plan.price) * 100),
+                currency='brl'
+            )
+            logger.info(f"Created one-time Stripe price {price.id} for lifetime plan {plan.id}")
         else:
-            interval = 'day'
-            interval_count = days
+            # Map duration_days to Stripe recurring interval
+            days = plan.duration_days
+            if days == 7:
+                interval = 'week'
+                interval_count = 1
+            elif days == 30:
+                interval = 'month'
+                interval_count = 1
+            elif days == 90:
+                interval = 'month'
+                interval_count = 3
+            elif days == 180:
+                interval = 'month'
+                interval_count = 6
+            elif days == 365:
+                interval = 'year'
+                interval_count = 1
+            else:
+                interval = 'day'
+                interval_count = days
 
-        # Create recurring Price
-        price = stripe.Price.create(
-            product=product_id,
-            unit_amount=int(float(plan.price) * 100),  # cents
-            currency='brl',
-            recurring={
-                'interval': interval,
-                'interval_count': interval_count
-            }
-        )
-
-        logger.info(f"Created Stripe price {price.id} for plan {plan.id}")
+            # Create recurring Price
+            price = stripe.Price.create(
+                product=product_id,
+                unit_amount=int(float(plan.price) * 100),  # cents
+                currency='brl',
+                recurring={
+                    'interval': interval,
+                    'interval_count': interval_count
+                }
+            )
+            logger.info(f"Created Stripe price {price.id} for plan {plan.id}")
 
         # Store IDs on plan (caller must commit)
         from bot.utils.database import get_db_session

@@ -16,7 +16,7 @@ bp = Blueprint('groups', __name__, url_prefix='/groups')
 logger = logging.getLogger(__name__)
 
 
-def _validate_plan_input(name, price_str, duration_str, description=None):
+def _validate_plan_input(name, price_str, duration_str, description=None, is_lifetime=False):
     """Validate plan input fields. Returns (errors list, price float, duration int)."""
     errors = []
     price = None
@@ -34,12 +34,15 @@ def _validate_plan_input(name, price_str, duration_str, description=None):
     except (ValueError, TypeError):
         errors.append('Preço inválido')
 
-    try:
-        duration = int(duration_str)
-        if duration <= 0 or duration > 365:
-            errors.append('Duração deve ser entre 1 e 365 dias')
-    except (ValueError, TypeError):
-        errors.append('Duração inválida')
+    if is_lifetime:
+        duration = 0
+    else:
+        try:
+            duration = int(duration_str)
+            if duration <= 0 or duration > 365:
+                errors.append('Duração deve ser entre 1 e 365 dias')
+        except (ValueError, TypeError):
+            errors.append('Duração inválida')
 
     if description and len(description) > 500:
         errors.append('Descrição do plano deve ter no máximo 500 caracteres')
@@ -189,13 +192,16 @@ def create():
         plan_names = request.form.getlist('plan_name[]')
         plan_durations = request.form.getlist('plan_duration[]')
         plan_prices = request.form.getlist('plan_price[]')
+        plan_lifetimes = request.form.getlist('plan_lifetime[]')
 
         for i in range(len(plan_names)):
             if plan_names[i]:
+                lifetime = (plan_lifetimes[i] == '1') if i < len(plan_lifetimes) else False
                 errs, price, duration = _validate_plan_input(
                     plan_names[i],
                     plan_prices[i] if i < len(plan_prices) else '0',
-                    plan_durations[i] if i < len(plan_durations) else '0'
+                    plan_durations[i] if i < len(plan_durations) else '0',
+                    is_lifetime=lifetime
                 )
                 if errs:
                     for e in errs:
@@ -206,6 +212,7 @@ def create():
                     name=plan_names[i][:100],
                     duration_days=duration,
                     price=price,
+                    is_lifetime=lifetime,
                     is_active=True
                 )
                 db.session.add(plan)
@@ -271,13 +278,16 @@ def edit(id):
         plan_names = request.form.getlist('plan_name[]')
         plan_durations = request.form.getlist('plan_duration[]')
         plan_prices = request.form.getlist('plan_price[]')
+        plan_lifetimes = request.form.getlist('plan_lifetime[]')
 
         for i in range(len(plan_names)):
             if plan_names[i]:
+                lifetime = (plan_lifetimes[i] == '1') if i < len(plan_lifetimes) else False
                 errs, price, duration = _validate_plan_input(
                     plan_names[i],
                     plan_prices[i] if i < len(plan_prices) else '0',
-                    plan_durations[i] if i < len(plan_durations) else '0'
+                    plan_durations[i] if i < len(plan_durations) else '0',
+                    is_lifetime=lifetime
                 )
                 if errs:
                     for e in errs:
@@ -288,6 +298,7 @@ def edit(id):
                     name=plan_names[i][:100],
                     duration_days=duration,
                     price=price,
+                    is_lifetime=lifetime,
                     is_active=True
                 )
                 db.session.add(plan)

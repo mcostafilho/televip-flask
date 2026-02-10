@@ -59,6 +59,7 @@ async def start_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         creator_amount = amount - platform_fee
         
         # Preparar dados do checkout
+        is_lifetime = getattr(plan, 'is_lifetime', False) or plan.duration_days == 0
         checkout_data = {
             'group_id': group_id,
             'plan_id': plan_id,
@@ -66,21 +67,29 @@ async def start_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             'platform_fee': platform_fee,
             'creator_amount': creator_amount,
             'duration_days': plan.duration_days,
+            'is_lifetime': is_lifetime,
             'group_name': group.name,
             'plan_name': plan.name
         }
-        
+
         # Salvar no contexto
         context.user_data['checkout'] = checkout_data
-        
+
         # Mostrar resumo do pedido
+        if is_lifetime:
+            duration_text = "Acesso Vitalicio"
+            renewal_text = "Pagamento unico (sem renovacao)"
+        else:
+            duration_text = f"{plan.duration_days} dias"
+            renewal_text = "Automatica (cartao) ou novo boleto a cada ciclo"
+
         text = f"""
 💳 **RESUMO DO PEDIDO**
 
 📱 **Grupo:** {group.name}
 📅 **Plano:** {plan.name}
-⏱ **Duração:** {plan.duration_days} dias
-🔄 **Renovacao:** Automatica (cartao) ou novo boleto a cada ciclo
+⏱ **Duração:** {duration_text}
+🔄 **Renovacao:** {renewal_text}
 
 💰 **Valor:** {format_currency(amount)}
 
@@ -128,6 +137,8 @@ async def process_stripe_payment(query, context, checkout_data):
     success_url = f"https://t.me/{bot_username}?start=payment_success"
     cancel_url = f"https://t.me/{bot_username}?start=payment_cancel"
 
+    is_lifetime = checkout_data.get('is_lifetime', False)
+
     try:
         # 1. Get or create Stripe Customer
         customer_id = get_or_create_stripe_customer(
@@ -151,7 +162,7 @@ async def process_stripe_payment(query, context, checkout_data):
 
             price_id = get_or_create_stripe_price(plan, group)
 
-        # 3. Create subscription checkout session
+        # 3. Create checkout session
         metadata = {
             'user_id': str(user.id),
             'username': user.username or '',
@@ -161,20 +172,44 @@ async def process_stripe_payment(query, context, checkout_data):
             'plan_name': checkout_data['plan_name']
         }
 
-        result = await create_subscription_checkout(
-            customer_id=customer_id,
-            price_id=price_id,
-            metadata=metadata,
-            success_url=success_url,
-            cancel_url=cancel_url
-        )
+        if is_lifetime:
+            # One-time payment for lifetime plans
+            result = await create_checkout_session(
+                amount=checkout_data['amount'],
+                group_name=checkout_data['group_name'],
+                plan_name=checkout_data['plan_name'],
+                user_id=str(user.id),
+                success_url=success_url,
+                cancel_url=cancel_url,
+                metadata=metadata
+            )
+        else:
+            # Recurring subscription
+            result = await create_subscription_checkout(
+                customer_id=customer_id,
+                price_id=price_id,
+                metadata=metadata,
+                success_url=success_url,
+                cancel_url=cancel_url
+            )
 
         if result['success']:
             # Salvar dados do checkout
             context.user_data['stripe_session_id'] = result['session_id']
 
             with get_db_session() as session:
-                # Criar subscription como pending (ativação via webhook invoice.paid)
+                if is_lifetime:
+                    # Lifetime: far-future end date, no auto-renew, legacy mode
+                    end_date = datetime(2099, 12, 31)
+                    auto_renew = False
+                    is_legacy = True
+                    billing_reason = 'lifetime_purchase'
+                else:
+                    end_date = datetime.utcnow() + timedelta(days=checkout_data['duration_days'])
+                    auto_renew = True
+                    is_legacy = False
+                    billing_reason = 'subscription_create'
+
                 new_subscription = Subscription(
                     group_id=checkout_data['group_id'],
                     plan_id=checkout_data['plan_id'],
@@ -182,15 +217,14 @@ async def process_stripe_payment(query, context, checkout_data):
                     telegram_username=user.username,
                     stripe_customer_id=customer_id,
                     status='pending',
-                    auto_renew=True,
-                    is_legacy=False,
+                    auto_renew=auto_renew,
+                    is_legacy=is_legacy,
                     start_date=datetime.utcnow(),
-                    end_date=datetime.utcnow() + timedelta(days=checkout_data['duration_days'])
+                    end_date=end_date
                 )
                 session.add(new_subscription)
                 session.flush()
 
-                # Criar transaction pending (completada via webhook)
                 transaction = Transaction(
                     subscription_id=new_subscription.id,
                     amount=checkout_data['amount'],
@@ -198,22 +232,28 @@ async def process_stripe_payment(query, context, checkout_data):
                     net_amount=checkout_data['creator_amount'],
                     payment_method='stripe',
                     stripe_session_id=result['session_id'],
-                    billing_reason='subscription_create',
+                    billing_reason=billing_reason,
                     status='pending'
                 )
                 session.add(transaction)
                 session.commit()
 
-                logger.info(f"Criada subscription {new_subscription.id} (recurring) com session_id: {result['session_id']}")
+                mode_label = "lifetime" if is_lifetime else "recurring"
+                logger.info(f"Criada subscription {new_subscription.id} ({mode_label}) com session_id: {result['session_id']}")
 
             # Mostrar instruções e botão de pagamento
-            text = """
+            if is_lifetime:
+                renewal_line = "♾️ **Pagamento unico** - acesso vitalicio"
+            else:
+                renewal_line = "🔄 **Renovacao automatica** a cada ciclo"
+
+            text = f"""
 🔐 **Pagamento Seguro via Stripe**
 
 Clique no botao abaixo para ser redirecionado para a pagina de pagamento segura.
 
 💳 **Aceita:** Cartao e Boleto
-🔄 **Renovacao automatica** a cada ciclo
+{renewal_line}
 
 Apos concluir o pagamento:
 1. Voce sera redirecionado de volta ao Telegram
@@ -245,7 +285,7 @@ Apos concluir o pagamento:
                 ]])
             )
     except Exception as e:
-        logger.error(f"Erro ao processar pagamento recorrente: {e}")
+        logger.error(f"Erro ao processar pagamento: {e}")
         await query.edit_message_text(
             "❌ Erro ao processar pagamento. Tente novamente.\n\n"
             "Se o problema persistir, entre em contato com o suporte.",
@@ -343,12 +383,19 @@ Explore nossos grupos exclusivos e comece sua jornada!
             
             for sub in subscriptions:
                 group = sub.group
-                days_left = (sub.end_date - datetime.utcnow()).days
-                
+                plan = sub.plan
+                is_lifetime = getattr(plan, 'is_lifetime', False) or plan.duration_days == 0
+
+                if is_lifetime:
+                    expiry_text = "♾️ Acesso Vitalicio"
+                else:
+                    days_left = (sub.end_date - datetime.utcnow()).days
+                    expiry_text = f"Expira em: {days_left} dias ({sub.end_date.strftime('%d/%m/%Y')})"
+
                 text += f"""
 📌 **{group.name}**
-⏱ Expira em: {days_left} dias ({sub.end_date.strftime('%d/%m/%Y')})
-💰 Plano: {sub.plan.name}
+⏱ {expiry_text}
+💰 Plano: {plan.name}
 
 """
             

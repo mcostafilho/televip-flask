@@ -96,6 +96,32 @@
     border-style: solid;
 }
 
+.group-form-page .lifetime-toggle {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1.5px solid #6c757d;
+    color: #6c757d;
+    background: transparent;
+    transition: all 0.2s ease;
+    vertical-align: middle;
+    margin-left: 0.4rem;
+}
+
+.group-form-page .lifetime-toggle:hover {
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.group-form-page .lifetime-toggle.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-color: transparent;
+}
+
 .group-form-page .guide-card {
     background: white;
     border-radius: 16px;
@@ -263,24 +289,30 @@
                                     {% if group and group.pricing_plans.filter_by(is_active=True).count() > 0 %}
                                         {% for plan in group.pricing_plans.filter_by(is_active=True) %}
                                         <div class="plan-item">
+                                            <input type="hidden" name="plan_lifetime[]" class="lifetime-hidden" value="{{ '1' if plan.is_lifetime else '0' }}">
                                             <div class="row g-3">
                                                 <div class="col-md-4">
                                                     <label class="form-label">Nome do Plano</label>
-                                                    <input type="text" name="plan_name[]" class="form-control" 
+                                                    <input type="text" name="plan_name[]" class="form-control"
                                                            value="{{ plan.name }}" required>
                                                 </div>
                                                 <div class="col-md-3">
-                                                    <label class="form-label">Duração (dias)</label>
-                                                    <input type="number" name="plan_duration[]" class="form-control" 
-                                                           value="{{ plan.duration_days }}" min="1" required>
+                                                    <label class="form-label">
+                                                        Duração (dias)
+                                                        <button type="button" class="lifetime-toggle {{ 'active' if plan.is_lifetime else '' }}" onclick="toggleLifetime(this)" title="Plano Vitalício">&#8734; Vitalício</button>
+                                                    </label>
+                                                    <input type="number" name="plan_duration[]" class="form-control duration-input"
+                                                           value="{{ plan.duration_days }}" min="1" required
+                                                           {{ 'disabled' if plan.is_lifetime else '' }}
+                                                           {{ 'placeholder=∞' if plan.is_lifetime else '' }}>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <label class="form-label">Preço (R$)</label>
-                                                    <input type="number" name="plan_price[]" class="form-control" 
+                                                    <input type="number" name="plan_price[]" class="form-control"
                                                            value="{{ plan.price }}" min="1" step="0.01" required>
                                                 </div>
                                                 <div class="col-md-2 d-flex align-items-end">
-                                                    <button type="button" class="btn btn-outline-danger w-100" 
+                                                    <button type="button" class="btn btn-outline-danger w-100"
                                                             onclick="removePlan(this)">
                                                         <i class="bi bi-trash"></i>
                                                     </button>
@@ -291,24 +323,28 @@
                                     {% else %}
                                         <!-- Plano padrão -->
                                         <div class="plan-item">
+                                            <input type="hidden" name="plan_lifetime[]" class="lifetime-hidden" value="0">
                                             <div class="row g-3">
                                                 <div class="col-md-4">
                                                     <label class="form-label">Nome do Plano</label>
-                                                    <input type="text" name="plan_name[]" class="form-control" 
+                                                    <input type="text" name="plan_name[]" class="form-control"
                                                            value="Mensal" required>
                                                 </div>
                                                 <div class="col-md-3">
-                                                    <label class="form-label">Duração (dias)</label>
-                                                    <input type="number" name="plan_duration[]" class="form-control" 
+                                                    <label class="form-label">
+                                                        Duração (dias)
+                                                        <button type="button" class="lifetime-toggle" onclick="toggleLifetime(this)" title="Plano Vitalício">&#8734; Vitalício</button>
+                                                    </label>
+                                                    <input type="number" name="plan_duration[]" class="form-control duration-input"
                                                            value="30" min="1" required>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <label class="form-label">Preço (R$)</label>
-                                                    <input type="number" name="plan_price[]" class="form-control" 
+                                                    <input type="number" name="plan_price[]" class="form-control"
                                                            value="29.90" min="1" step="0.01" required>
                                                 </div>
                                                 <div class="col-md-2 d-flex align-items-end">
-                                                    <button type="button" class="btn btn-outline-danger w-100" 
+                                                    <button type="button" class="btn btn-outline-danger w-100"
                                                             onclick="removePlan(this)" disabled>
                                                         <i class="bi bi-trash"></i>
                                                     </button>
@@ -489,14 +525,18 @@ function addPlan() {
     const newPlan = document.createElement('div');
     newPlan.className = 'plan-item';
     newPlan.innerHTML = `
+        <input type="hidden" name="plan_lifetime[]" class="lifetime-hidden" value="0">
         <div class="row g-3">
             <div class="col-md-4">
                 <label class="form-label">Nome do Plano</label>
                 <input type="text" name="plan_name[]" class="form-control" required>
             </div>
             <div class="col-md-3">
-                <label class="form-label">Duração (dias)</label>
-                <input type="number" name="plan_duration[]" class="form-control" min="1" required>
+                <label class="form-label">
+                    Duração (dias)
+                    <button type="button" class="lifetime-toggle" onclick="toggleLifetime(this)" title="Plano Vitalício">&#8734; Vitalício</button>
+                </label>
+                <input type="number" name="plan_duration[]" class="form-control duration-input" min="1" required>
             </div>
             <div class="col-md-3">
                 <label class="form-label">Preço (R$)</label>
@@ -532,6 +572,29 @@ function removePlan(button) {
         if (container.querySelectorAll('.plan-item').length === 1) {
             container.querySelector('.btn-outline-danger').disabled = true;
         }
+    }
+}
+
+// Toggle plano vitalício
+function toggleLifetime(btn) {
+    const planItem = btn.closest('.plan-item');
+    const durationInput = planItem.querySelector('.duration-input');
+    const hiddenInput = planItem.querySelector('.lifetime-hidden');
+    const isActive = btn.classList.toggle('active');
+
+    if (isActive) {
+        durationInput.dataset.prevValue = durationInput.value;
+        durationInput.value = '';
+        durationInput.placeholder = '\u221E';
+        durationInput.disabled = true;
+        durationInput.required = false;
+        hiddenInput.value = '1';
+    } else {
+        durationInput.value = durationInput.dataset.prevValue || '30';
+        durationInput.placeholder = '';
+        durationInput.disabled = false;
+        durationInput.required = true;
+        hiddenInput.value = '0';
     }
 }
 
