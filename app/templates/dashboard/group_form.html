@@ -259,8 +259,8 @@
                                 <p class="text-muted">Configure os planos e preços para seu grupo</p>
                                 
                                 <div id="plansContainer">
-                                    {% if group and group.pricing_plans.count() > 0 %}
-                                        {% for plan in group.pricing_plans %}
+                                    {% if group and group.pricing_plans.filter_by(is_active=True).count() > 0 %}
+                                        {% for plan in group.pricing_plans.filter_by(is_active=True) %}
                                         <div class="plan-item">
                                             <div class="row g-3">
                                                 <div class="col-md-4">
