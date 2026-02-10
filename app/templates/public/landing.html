@@ -638,5 +638,19 @@
             observer.observe(counter);
         });
     </script>
+
+    <!-- Cookie Banner -->
+    <div id="cookieBanner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:10000;
+        background:rgba(33,37,41,.95); backdrop-filter:blur(6px); padding:14px 20px;
+        font-size:14px; color:#ccc; text-align:center; font-family:'Poppins',sans-serif;">
+        Usamos cookies essenciais para o funcionamento do site.
+        <a href="{{ url_for('auth.privacy') }}" style="color:#7c8dff; text-decoration:underline;">Saiba mais</a>
+        <button onclick="acceptCookies()" style="margin-left:12px; background:#667eea; color:#fff;
+            border:none; border-radius:6px; padding:6px 18px; cursor:pointer; font-size:14px;">OK</button>
+    </div>
+    <script>
+    if(!localStorage.getItem('cookies_ok')){document.getElementById('cookieBanner').style.display='block'}
+    function acceptCookies(){localStorage.setItem('cookies_ok','1');document.getElementById('cookieBanner').style.display='none'}
+    </script>
 </body>
 </html>
