@@ -1,5 +1,5 @@
 # app/__init__.py
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
@@ -53,6 +53,11 @@ def create_app():
 
     # Exempt webhooks from CSRF (uses Stripe signature verification)
     csrf.exempt(webhooks.bp)
+
+    # Custom error pages
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return render_template('errors/404.html'), 404
 
     # Criar diretórios necessários
     import os

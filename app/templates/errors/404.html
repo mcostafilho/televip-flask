@@ -1,0 +1,38 @@
+{% extends "auth_base.html" %}
+
+{% block title %}Página não encontrada - TeleVIP{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card text-center" style="max-width: 480px;">
+        <div class="auth-header">
+            <div style="font-size: 6rem; line-height: 1; margin-bottom: 0.5rem; opacity: 0.9;">
+                <i class="bi bi-emoji-dizzy"></i>
+            </div>
+            <h1 class="gradient-text" style="font-size: 4rem; margin-bottom: 0.25rem;">404</h1>
+            <p class="subtitle" style="font-size: 1.1rem;">Ops! Página não encontrada</p>
+        </div>
+
+        <p class="text-muted mb-4">
+            A página que você procura não existe ou foi movida.
+        </p>
+
+        <div class="d-flex flex-column gap-2">
+            <a href="/" class="btn btn-primary">
+                <i class="bi bi-house-door"></i> Voltar ao Início
+            </a>
+            {% if current_user and current_user.is_authenticated %}
+            <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">
+                <i class="bi bi-speedometer2"></i> Ir para o Dashboard
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Decorative Elements -->
+    <div class="auth-decoration">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+    </div>
+</div>
+{% endblock %}
