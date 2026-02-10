@@ -1,16 +1,55 @@
 # app/routes/groups.py
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, Response, session
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, Response, session, current_app
 from flask_login import login_required, current_user
-from app import db
+from app import db, limiter
 from app.models import Group, PricingPlan, Subscription, Transaction
 from datetime import datetime, timedelta
 from sqlalchemy import func
 import requests
 import os
+import re
 import csv
+import logging
 from io import StringIO
 
 bp = Blueprint('groups', __name__, url_prefix='/groups')
+logger = logging.getLogger(__name__)
+
+
+def _validate_plan_input(name, price_str, duration_str, description=None):
+    """Validate plan input fields. Returns (errors list, price float, duration int)."""
+    errors = []
+    price = None
+    duration = None
+
+    if not name or len(name.strip()) == 0:
+        errors.append('Nome do plano é obrigatório')
+    elif len(name) > 100:
+        errors.append('Nome do plano deve ter no máximo 100 caracteres')
+
+    try:
+        price = float(price_str)
+        if price <= 0 or price > 10000:
+            errors.append('Preço deve ser entre R$ 0,01 e R$ 10.000,00')
+    except (ValueError, TypeError):
+        errors.append('Preço inválido')
+
+    try:
+        duration = int(duration_str)
+        if duration <= 0 or duration > 365:
+            errors.append('Duração deve ser entre 1 e 365 dias')
+    except (ValueError, TypeError):
+        errors.append('Duração inválida')
+
+    if description and len(description) > 500:
+        errors.append('Descrição do plano deve ter no máximo 500 caracteres')
+
+    return errors, price, duration
+
+
+def _escape_ilike(search_term):
+    """Escape SQL ILIKE wildcard characters in user input."""
+    return search_term.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
 
 @bp.route('/')
 @login_required
@@ -37,6 +76,7 @@ def list():
 
 @bp.route('/create', methods=['GET', 'POST'])
 @login_required
+@limiter.limit("20 per hour", methods=["POST"])
 def create():
     """Criar novo grupo"""
     if request.method == 'POST':
@@ -115,13 +155,15 @@ def create():
                                                      show_success_modal=False)
                     
                 except requests.exceptions.RequestException as req_error:
-                    flash(f'❌ Erro de conexão: {req_error}. Use "Pular validação".', 'error')
+                    logger.error(f"Telegram connection error: {req_error}")
+                    flash('Erro de conexão com o Telegram. Use "Pular validação".', 'error')
                     return render_template('dashboard/group_form.html', 
                                          group=None,
                                          show_success_modal=False)
                 except Exception as e:
-                    flash(f'Erro: {e}. Use "Pular validacao".', 'error')
-                    return render_template('dashboard/group_form.html', 
+                    logger.error(f"Erro na validação do grupo Telegram: {e}")
+                    flash('Erro ao validar grupo. Use "Pular validação".', 'error')
+                    return render_template('dashboard/group_form.html',
                                          group=None,
                                          show_success_modal=False)
             else:
@@ -143,22 +185,31 @@ def create():
         db.session.add(group)
         db.session.commit()
         
-        # Adicionar planos
+        # Adicionar planos com validação
         plan_names = request.form.getlist('plan_name[]')
         plan_durations = request.form.getlist('plan_duration[]')
         plan_prices = request.form.getlist('plan_price[]')
-        
+
         for i in range(len(plan_names)):
             if plan_names[i]:
+                errs, price, duration = _validate_plan_input(
+                    plan_names[i],
+                    plan_prices[i] if i < len(plan_prices) else '0',
+                    plan_durations[i] if i < len(plan_durations) else '0'
+                )
+                if errs:
+                    for e in errs:
+                        flash(e, 'error')
+                    continue
                 plan = PricingPlan(
                     group_id=group.id,
-                    name=plan_names[i],
-                    duration_days=int(plan_durations[i]),
-                    price=float(plan_prices[i]),
+                    name=plan_names[i][:100],
+                    duration_days=duration,
+                    price=price,
                     is_active=True
                 )
                 db.session.add(plan)
-        
+
         db.session.commit()
         
         # CORREÇÃO IMPORTANTE: Gerar link do bot usando group.id, não telegram_id
@@ -216,18 +267,27 @@ def edit(id):
             else:
                 db.session.delete(plan)
 
-        # Add new plans from form
+        # Add new plans from form with validation
         plan_names = request.form.getlist('plan_name[]')
         plan_durations = request.form.getlist('plan_duration[]')
         plan_prices = request.form.getlist('plan_price[]')
 
         for i in range(len(plan_names)):
             if plan_names[i]:
+                errs, price, duration = _validate_plan_input(
+                    plan_names[i],
+                    plan_prices[i] if i < len(plan_prices) else '0',
+                    plan_durations[i] if i < len(plan_durations) else '0'
+                )
+                if errs:
+                    for e in errs:
+                        flash(e, 'error')
+                    continue
                 plan = PricingPlan(
                     group_id=group.id,
-                    name=plan_names[i],
-                    duration_days=int(plan_durations[i]),
-                    price=float(plan_prices[i]),
+                    name=plan_names[i][:100],
+                    duration_days=duration,
+                    price=price,
                     is_active=True
                 )
                 db.session.add(plan)
@@ -280,38 +340,49 @@ def toggle(id):
 
 @bp.route('/<int:group_id>/broadcast', methods=['GET', 'POST'])
 @login_required
+@limiter.limit("10 per hour")
 def broadcast(group_id):
     """Enviar mensagem para todos os assinantes do grupo"""
     group = Group.query.filter_by(id=group_id, creator_id=current_user.id).first_or_404()
-    
+
     if request.method == 'POST':
         message = request.form.get('message', '').strip()
-        
+
         if not message:
             flash('Por favor, digite uma mensagem.', 'error')
             return redirect(url_for('groups.broadcast', group_id=group_id))
-        
+
+        # Fix #17: Message length cap (Telegram limit)
+        if len(message) > 4000:
+            flash('Mensagem muito longa. Máximo de 4000 caracteres.', 'error')
+            return redirect(url_for('groups.broadcast', group_id=group_id))
+
+        # Fix #17: Broadcast cooldown — 5 minutes between broadcasts
+        if group.last_broadcast_at:
+            cooldown_remaining = (group.last_broadcast_at + timedelta(minutes=5)) - datetime.utcnow()
+            if cooldown_remaining.total_seconds() > 0:
+                minutes_left = int(cooldown_remaining.total_seconds() // 60) + 1
+                flash(f'Aguarde {minutes_left} minuto(s) entre broadcasts.', 'warning')
+                return redirect(url_for('groups.broadcast', group_id=group_id))
+
         # Buscar assinantes ativos
         active_subs = Subscription.query.filter_by(
             group_id=group_id,
             status='active'
         ).all()
-        
+
         if not active_subs:
             flash('Nenhum assinante ativo para enviar mensagem.', 'warning')
             return redirect(url_for('groups.subscribers', id=group_id))
-        
-        # Aqui você pode implementar o envio via Telegram Bot API
-        # Por enquanto, vamos apenas simular
+
         sent_count = 0
         failed_count = 0
-        
+
         bot_token = os.getenv('TELEGRAM_BOT_TOKEN') or os.getenv('BOT_TOKEN')
-        
+
         if bot_token:
             for sub in active_subs:
                 try:
-                    # Enviar mensagem via API do Telegram
                     response = requests.post(
                         f'https://api.telegram.org/bot{bot_token}/sendMessage',
                         json={
@@ -320,26 +391,29 @@ def broadcast(group_id):
                             'parse_mode': 'Markdown'
                         }
                     )
-                    
                     if response.status_code == 200:
                         sent_count += 1
                     else:
                         failed_count += 1
-                except:
+                except Exception:
                     failed_count += 1
         else:
             flash('Bot do Telegram não configurado.', 'error')
             return redirect(url_for('groups.subscribers', id=group_id))
-        
+
+        # Update broadcast cooldown timestamp
+        group.last_broadcast_at = datetime.utcnow()
+        db.session.commit()
+
         flash(f'Mensagem enviada para {sent_count} assinantes. {failed_count} falharam.', 'success')
         return redirect(url_for('groups.subscribers', id=group_id))
-    
+
     # GET - mostrar formulário
     active_count = Subscription.query.filter_by(
         group_id=group_id,
         status='active'
     ).count()
-    
+
     return render_template('dashboard/broadcast.html',
                          group=group,
                          active_count=active_count)
@@ -365,9 +439,10 @@ def subscribers(id):
 
     search = request.args.get('search', '').strip()
     if search:
+        escaped = _escape_ilike(search)
         query = query.filter(
-            (Subscription.telegram_username.ilike(f'%{search}%')) |
-            (Subscription.telegram_user_id.ilike(f'%{search}%'))
+            (Subscription.telegram_username.ilike(f'%{escaped}%', escape='\\')) |
+            (Subscription.telegram_user_id.ilike(f'%{escaped}%', escape='\\'))
         )
 
     # Paginacao
@@ -413,17 +488,18 @@ def subscribers(id):
 
 @bp.route('/<int:id>/export-subscribers')
 @login_required
+@limiter.limit("30 per hour")
 def export_subscribers(id):
     """Exportar lista de assinantes em CSV"""
     group = Group.query.filter_by(id=id, creator_id=current_user.id).first_or_404()
-    
+
     # Buscar todos os assinantes
     subscribers = Subscription.query.filter_by(group_id=id).all()
-    
+
     # Criar CSV
     output = StringIO()
     writer = csv.writer(output)
-    
+
     # Header
     writer.writerow([
         'Username',
@@ -433,7 +509,7 @@ def export_subscribers(id):
         'Data Fim',
         'Valor Pago'
     ])
-    
+
     # Dados
     for sub in subscribers:
         # Calcular valor total pago
@@ -441,26 +517,29 @@ def export_subscribers(id):
             subscription_id=sub.id,
             status='completed'
         ).scalar() or 0
-        
+
         writer.writerow([
             sub.telegram_username or 'N/A',
-            sub.plan.name,
+            sub.plan.name if sub.plan else 'N/A',
             sub.status,
-            sub.start_date.strftime('%d/%m/%Y'),
-            sub.end_date.strftime('%d/%m/%Y'),
+            sub.start_date.strftime('%d/%m/%Y') if sub.start_date else '',
+            sub.end_date.strftime('%d/%m/%Y') if sub.end_date else '',
             f'R$ {total_paid:.2f}'
         ])
-    
+
+    # Sanitize filename: remove special chars, limit length
+    safe_name = re.sub(r'[^\w\s-]', '', group.name)[:50].strip() or 'grupo'
+
     # Preparar resposta
     output.seek(0)
     response = Response(
         output.getvalue(),
         mimetype='text/csv',
         headers={
-            'Content-Disposition': f'attachment; filename=assinantes_{group.name}_{datetime.now().strftime("%Y%m%d")}.csv'
+            'Content-Disposition': f'attachment; filename="assinantes_{safe_name}_{datetime.now().strftime("%Y%m%d")}.csv"'
         }
     )
-    
+
     return response
 
 @bp.route('/<int:id>/stats')

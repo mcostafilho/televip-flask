@@ -30,7 +30,7 @@ async def start_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         _, group_id, plan_id = query.data.split('_')
         group_id = int(group_id)
         plan_id = int(plan_id)
-    except:
+    except Exception:
         await query.edit_message_text(
             "❌ Erro ao processar seleção. Tente novamente.",
             reply_markup=InlineKeyboardMarkup([[

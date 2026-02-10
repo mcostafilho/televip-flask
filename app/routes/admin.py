@@ -97,28 +97,35 @@ def index():
 @login_required
 @admin_required
 def process_withdrawal(id):
-    """Processar saque"""
+    """Processar saque com row locking para evitar race condition"""
     if not has_withdrawal_model or not Withdrawal:
         flash('Modelo de saque não disponível!', 'error')
         return redirect(url_for('admin.index'))
-    
-    withdrawal = Withdrawal.query.get_or_404(id)
-    
-    if withdrawal.status != 'pending':
-        flash('Este saque já foi processado!', 'warning')
-        return redirect(url_for('admin.index'))
-    
-    # Marcar como processado
-    withdrawal.status = 'completed'
-    withdrawal.processed_at = datetime.utcnow()
-    
-    # Atualizar saldo do criador
-    creator = withdrawal.creator
-    creator.balance -= withdrawal.amount
-    
-    db.session.commit()
-    
-    flash(f'Saque de R$ {withdrawal.amount:.2f} processado com sucesso!', 'success')
+
+    try:
+        # Row lock: SELECT ... FOR UPDATE to prevent concurrent processing
+        withdrawal = Withdrawal.query.filter_by(id=id).with_for_update().first_or_404()
+
+        # Re-verify status after acquiring lock
+        if withdrawal.status != 'pending':
+            flash('Este saque já foi processado!', 'warning')
+            return redirect(url_for('admin.index'))
+
+        # Marcar como processado
+        withdrawal.status = 'completed'
+        withdrawal.processed_at = datetime.utcnow()
+
+        # Atualizar saldo do criador
+        creator = withdrawal.creator
+        creator.balance -= withdrawal.amount
+
+        db.session.commit()
+
+        flash(f'Saque de R$ {withdrawal.amount:.2f} processado com sucesso!', 'success')
+    except Exception:
+        db.session.rollback()
+        flash('Erro ao processar saque. Tente novamente.', 'error')
+
     return redirect(url_for('admin.index'))
 
 @bp.route('/users')

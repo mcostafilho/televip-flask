@@ -5,9 +5,11 @@ from app.models import Creator
 from app.utils.email import send_password_reset_email, send_welcome_email, send_confirmation_email
 from app.utils.security import generate_reset_token, verify_reset_token, generate_confirmation_token, verify_confirmation_token, is_safe_url
 import re
+import logging
 from datetime import datetime
 
 bp = Blueprint('auth', __name__)
+logger = logging.getLogger(__name__)
 
 @bp.route('/')
 def index():
@@ -73,7 +75,7 @@ def register():
         if not re.match(email_regex, email):
             errors.append('Email inválido')
         elif Creator.query.filter_by(email=email).first():
-            errors.append('Email já cadastrado!')
+            errors.append('Email ou username já em uso.')
 
         # Validar username
         if not re.match(r'^[a-z0-9]+$', username):
@@ -81,7 +83,7 @@ def register():
         elif len(username) < 3:
             errors.append('Username deve ter pelo menos 3 caracteres')
         elif Creator.query.filter_by(username=username).first():
-            errors.append('Username já em uso!')
+            errors.append('Email ou username já em uso.')
 
         # Validar senha
         if len(password) < 8:
@@ -116,8 +118,8 @@ def register():
             try:
                 token = generate_confirmation_token(user.email)
                 send_confirmation_email(user, token)
-            except:
-                pass
+            except Exception:
+                logger.error("Failed to send confirmation email", exc_info=True)
 
             flash('Conta criada! Verifique seu email para confirmar sua conta.', 'success')
             return redirect(url_for('auth.login'))
@@ -135,8 +137,8 @@ def forgot_password():
 
         user = Creator.query.filter_by(email=email).first()
         if user:
-            # Gerar token de reset
-            token = generate_reset_token(user.id)
+            # Gerar token de reset (includes password hash prefix for single-use)
+            token = generate_reset_token(user.id, password_hash=user.password_hash)
 
             # Enviar email
             try:
@@ -159,7 +161,7 @@ def reset_password(token):
     if current_user.is_authenticated:
         return redirect(url_for('dashboard.index'))
 
-    # Verificar token
+    # First decode without hash check to get user_id
     user_id = verify_reset_token(token)
     if not user_id:
         flash('Link inválido ou expirado. Solicite um novo.', 'error')
@@ -169,6 +171,12 @@ def reset_password(token):
     if not user:
         flash('Usuário não encontrado.', 'error')
         return redirect(url_for('auth.login'))
+
+    # Verify token hasn't been used (password hash still matches)
+    user_id = verify_reset_token(token, current_password_hash=user.password_hash)
+    if not user_id:
+        flash('Este link já foi utilizado. Solicite um novo.', 'error')
+        return redirect(url_for('auth.forgot_password'))
 
     if request.method == 'POST':
         password = request.form.get('password')
@@ -213,8 +221,8 @@ def confirm_email(token):
     # Enviar email de boas-vindas agora que confirmou
     try:
         send_welcome_email(user)
-    except:
-        pass
+    except Exception:
+        logger.error("Failed to send welcome email", exc_info=True)
 
     flash('Email confirmado com sucesso! Faca login para comecar.', 'success')
     return redirect(url_for('auth.login'))
@@ -231,8 +239,8 @@ def resend_confirmation():
         try:
             token = generate_confirmation_token(user.email)
             send_confirmation_email(user, token)
-        except:
-            pass
+        except Exception:
+            logger.error("Failed to resend confirmation email", exc_info=True)
 
     flash('Se o email estiver cadastrado, voce recebera um novo link de confirmacao.', 'info')
     return redirect(url_for('auth.login'))

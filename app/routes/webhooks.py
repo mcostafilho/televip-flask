@@ -606,5 +606,16 @@ def notify_user_via_bot(telegram_user_id, text, keyboard=None):
 @bp.route('/telegram', methods=['POST'])
 def telegram_webhook():
     """Webhook para receber atualizações do Telegram"""
+    # Verify X-Telegram-Bot-Api-Secret-Token header
+    webhook_secret = os.getenv('TELEGRAM_WEBHOOK_SECRET')
+    if webhook_secret:
+        token_header = request.headers.get('X-Telegram-Bot-Api-Secret-Token', '')
+        if not token_header or token_header != webhook_secret:
+            logger.warning("Telegram webhook: invalid or missing secret token")
+            return jsonify({'error': 'Forbidden'}), 403
+    else:
+        logger.warning("TELEGRAM_WEBHOOK_SECRET not configured — rejecting request")
+        return jsonify({'error': 'Webhook secret not configured'}), 403
+
     # Este webhook pode ser usado futuramente para receber updates do bot
     return jsonify({'status': 'ok'}), 200

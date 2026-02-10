@@ -27,67 +27,79 @@ def _get_secret_key() -> str:
 
     raise RuntimeError('SECRET_KEY não configurada. Defina a variável de ambiente SECRET_KEY.')
 
-def generate_reset_token(user_id: int, expires_in: int = 86400) -> str:
+def generate_reset_token(user_id: int, password_hash: str = None, expires_in: int = 86400) -> str:
     """
-    Gerar token JWT para reset de senha
-    
+    Gerar token JWT para reset de senha.
+    Includes password_hash prefix so token auto-invalidates when password changes.
+
     Args:
         user_id: ID do usuário
+        password_hash: Current password hash (first 8 chars embedded in token)
         expires_in: Tempo de expiração em segundos (padrão: 24 horas)
-    
+
     Returns:
         Token JWT
     """
     secret_key = _get_secret_key()
-    
+
     payload = {
         'user_id': user_id,
         'exp': datetime.utcnow() + timedelta(seconds=expires_in),
         'iat': datetime.utcnow(),
         'purpose': 'password_reset'
     }
-    
+
+    # Embed password hash prefix for single-use enforcement
+    if password_hash:
+        payload['phash'] = password_hash[:8]
+
     token = jwt.encode(
         payload,
         secret_key,
         algorithm='HS256'
     )
-    
+
     return token
 
-def verify_reset_token(token: str) -> Optional[int]:
+def verify_reset_token(token: str, current_password_hash: str = None) -> Optional[int]:
     """
-    Verificar e decodificar token de reset
-    
+    Verificar e decodificar token de reset.
+    If current_password_hash is provided, verifies token hasn't been used
+    (password hasn't changed since token was issued).
+
     Args:
         token: Token JWT
-    
+        current_password_hash: Current password hash to verify against
+
     Returns:
         user_id se válido, None se inválido/expirado
     """
     secret_key = _get_secret_key()
-    
+
     try:
         payload = jwt.decode(
             token,
             secret_key,
             algorithms=['HS256']
         )
-        
+
         # Verificar se é token de reset
         if payload.get('purpose') != 'password_reset':
             return None
-            
+
+        # Verify password hash hasn't changed (token reuse prevention)
+        token_phash = payload.get('phash')
+        if token_phash and current_password_hash:
+            if current_password_hash[:8] != token_phash:
+                return None
+
         return payload.get('user_id')
-        
+
     except jwt.ExpiredSignatureError:
-        # Token expirado
         return None
     except jwt.InvalidTokenError:
-        # Token inválido
         return None
     except Exception:
-        # Qualquer outro erro
         return None
 
 def generate_confirmation_token(email: str, expires_in: int = 86400) -> str:
@@ -332,57 +344,58 @@ def verify_csrf_token(token: str, session_token: str) -> bool:
     """
     return secrets.compare_digest(token, session_token)
 
+def _derive_fernet_key(secret: str) -> bytes:
+    """Derive a proper Fernet key from a secret using PBKDF2."""
+    import base64
+    key_bytes = hashlib.pbkdf2_hmac(
+        'sha256', secret.encode('utf-8'), b'televip-salt', 100000
+    )
+    return base64.urlsafe_b64encode(key_bytes)
+
+
 def encrypt_data(data: str, key: Optional[str] = None) -> str:
     """
     Criptografar dados sensíveis
-    
+
     Args:
         data: Dados para criptografar
         key: Chave de criptografia (usa SECRET_KEY se não fornecida)
-    
+
     Returns:
         Dados criptografados em base64
     """
     from cryptography.fernet import Fernet
-    import base64
-    
+
     if not key:
         key = _get_secret_key()
-    
-    # Gerar chave Fernet a partir da secret key
-    key_bytes = key.encode('utf-8')[:32].ljust(32, b'0')
-    fernet_key = base64.urlsafe_b64encode(key_bytes)
-    
+
+    fernet_key = _derive_fernet_key(key)
     fernet = Fernet(fernet_key)
     encrypted = fernet.encrypt(data.encode('utf-8'))
-    
+
     return encrypted.decode('utf-8')
 
 def decrypt_data(encrypted_data: str, key: Optional[str] = None) -> Optional[str]:
     """
     Descriptografar dados
-    
+
     Args:
         encrypted_data: Dados criptografados
         key: Chave de descriptografia
-    
+
     Returns:
         Dados descriptografados ou None se falhar
     """
     from cryptography.fernet import Fernet, InvalidToken
-    import base64
-    
+
     if not key:
         key = _get_secret_key()
-    
+
     try:
-        # Gerar chave Fernet a partir da secret key
-        key_bytes = key.encode('utf-8')[:32].ljust(32, b'0')
-        fernet_key = base64.urlsafe_b64encode(key_bytes)
-        
+        fernet_key = _derive_fernet_key(key)
         fernet = Fernet(fernet_key)
         decrypted = fernet.decrypt(encrypted_data.encode('utf-8'))
-        
+
         return decrypted.decode('utf-8')
     except (InvalidToken, Exception):
         return None

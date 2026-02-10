@@ -17,8 +17,7 @@ if __name__ == '__main__':
         # Garantir que o diretório instance existe
         os.makedirs('instance', exist_ok=True)
         
-        # Mostrar configuração do banco
-        print(f"Banco de dados: {app.config['SQLALCHEMY_DATABASE_URI']}")
+        # Database configured (URL not printed to avoid credential exposure)
 
         # Criar tabelas
         db.create_all()

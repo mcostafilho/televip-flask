@@ -12,6 +12,7 @@ class Group(db.Model):
     creator_id = db.Column(db.Integer, db.ForeignKey('creators.id'), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
     total_subscribers = db.Column(db.Integer, default=0)
+    last_broadcast_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relacionamentos

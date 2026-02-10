@@ -24,7 +24,9 @@ if DATABASE_URL.startswith('sqlite:///') and not DATABASE_URL.startswith('sqlite
         full_path = os.path.join(root_dir, db_path)
         DATABASE_URL = f'sqlite:///{full_path}'
 
-print(f"Bot usando banco de dados: {DATABASE_URL}")
+# DB URL logged at debug level only (not printed to stdout to avoid credential exposure)
+import logging as _logging
+_logging.getLogger(__name__).debug("Bot database engine configured")
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

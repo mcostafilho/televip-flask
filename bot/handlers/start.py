@@ -211,10 +211,6 @@ async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_
         if not group:
             logger.warning(f"Grupo não encontrado - ID: {group_id}")
             
-            # Listar grupos disponíveis para debug
-            all_groups = session.query(Group).all()
-            logger.info(f"Grupos no banco: {[(g.id, g.name) for g in all_groups]}")
-            
             await update.message.reply_text(
                 "❌ Grupo não encontrado.\n\n"
                 "Possíveis causas:\n"

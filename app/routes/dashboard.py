@@ -1,11 +1,12 @@
 # app/routes/dashboard.py
 from flask import Blueprint, render_template, jsonify, request, redirect, url_for, flash, session
 from flask_login import login_required, current_user
-from app import db
+from app import db, limiter
 from app.models import Group, Transaction, Subscription, Creator, PricingPlan
 from app.services.payment_service import PaymentService
 from sqlalchemy import func, and_, desc
 from datetime import datetime, timedelta
+from decimal import Decimal
 
 bp = Blueprint('dashboard', __name__, url_prefix='/dashboard')
 
@@ -278,25 +279,60 @@ def withdrawals():
 
 @bp.route('/withdraw', methods=['POST'])
 @login_required
+@limiter.limit("5 per hour")
 def withdraw():
-    """Solicitar saque"""
+    """Solicitar saque com validação de saldo"""
+    from app.models import Withdrawal
+
     amount = request.form.get('amount', type=float)
-    
-    # Calcular saldo disponível
+    pix_key = current_user.pix_key
+
+    if not pix_key:
+        flash('Configure sua chave PIX no perfil antes de solicitar saque.', 'error')
+        return redirect(url_for('dashboard.index'))
+
+    # Minimum withdrawal: R$10.00
+    if not amount or amount < 10:
+        flash('Valor mínimo para saque é R$ 10,00', 'error')
+        return redirect(url_for('dashboard.index'))
+
+    # Calculate real available balance
     balance_info = calculate_balance(current_user.id)
     available_balance = balance_info['available_balance']
-    
-    if not amount or amount < 50:
-        flash('Valor mínimo para saque é R$ 50,00', 'error')
+
+    # Subtract already-completed withdrawals
+    total_withdrawn = db.session.query(
+        func.coalesce(func.sum(Withdrawal.amount), Decimal('0'))
+    ).filter(
+        Withdrawal.creator_id == current_user.id,
+        Withdrawal.status == 'completed'
+    ).scalar()
+
+    # Subtract pending withdrawals (already requested but not yet processed)
+    pending_withdrawals = db.session.query(
+        func.coalesce(func.sum(Withdrawal.amount), Decimal('0'))
+    ).filter(
+        Withdrawal.creator_id == current_user.id,
+        Withdrawal.status == 'pending'
+    ).scalar()
+
+    withdrawable = float(Decimal(str(available_balance)) - total_withdrawn - pending_withdrawals)
+
+    if amount > withdrawable:
+        flash('Saldo insuficiente para saque.', 'error')
         return redirect(url_for('dashboard.index'))
-    
-    if amount > available_balance:
-        flash('Saldo insuficiente para saque', 'error')
-        return redirect(url_for('dashboard.index'))
-    
-    # TODO: Implementar criação do saque
+
+    # Create withdrawal request
+    withdrawal = Withdrawal(
+        creator_id=current_user.id,
+        amount=amount,
+        pix_key=pix_key,
+        status='pending'
+    )
+    db.session.add(withdrawal)
+    db.session.commit()
+
     flash(f'Saque de R$ {amount:.2f} solicitado com sucesso! Será processado em até 3 dias úteis.', 'success')
-    
     return redirect(url_for('dashboard.index'))
 
 # Substitua a função profile() no arquivo app/routes/dashboard.py por esta versão:

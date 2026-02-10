@@ -58,7 +58,7 @@ Após promover, use /setup novamente.
 """
             await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
             return
-    except:
+    except Exception:
         await update.message.reply_text("❌ Erro ao verificar permissões do bot.")
         return
     
@@ -70,9 +70,9 @@ Após promover, use /setup novamente.
                 "❌ Apenas administradores do grupo podem usar este comando!"
             )
             return
-    except:
+    except Exception:
         return
-    
+
     with get_db_session() as session:
         # Verificar se o usuário é um criador cadastrado
         creator = session.query(Creator).filter_by(
@@ -228,9 +228,9 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "❌ Apenas administradores podem ver estatísticas!"
             )
             return
-    except:
+    except Exception:
         return
-    
+
     # Mostrar stats do grupo
     await show_group_stats(update, context, chat.id)
 
@@ -491,9 +491,9 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     "❌ Apenas administradores podem enviar broadcast!"
                 )
                 return
-        except:
+        except Exception:
             return
-    
+
     # Verificar se tem texto
     if not context.args:
         text = """
@@ -648,7 +648,7 @@ Se você já pagou, aguarde a confirmação ou entre em contato com o suporte.
 """,
                         parse_mode=ParseMode.MARKDOWN
                     )
-                except:
+                except Exception:
                     pass  # Usuário pode ter bloqueado o bot
                     
             except Exception as e:
@@ -684,7 +684,7 @@ Se você já pagou, aguarde a confirmação ou entre em contato com o suporte.
                     text=welcome_text,
                     parse_mode=ParseMode.MARKDOWN
                 )
-            except:
+            except Exception:
                 pass  # Não é crítico se falhar
 
 async def handle_new_chat_members(update: Update, context: ContextTypes.DEFAULT_TYPE):

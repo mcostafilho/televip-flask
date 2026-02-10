@@ -25,6 +25,7 @@ class Config:
     TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
     BOT_TOKEN = os.environ.get('BOT_TOKEN')  # Alias para compatibilidade
     TELEGRAM_BOT_USERNAME = os.environ.get('TELEGRAM_BOT_USERNAME')
+    TELEGRAM_WEBHOOK_SECRET = os.environ.get('TELEGRAM_WEBHOOK_SECRET')
     
     # Configurações do Stripe
     STRIPE_PUBLIC_KEY = os.environ.get('STRIPE_PUBLIC_KEY')
