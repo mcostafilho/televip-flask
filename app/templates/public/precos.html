@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#667eea">
+
+    <title>Precos - TeleVIP | Simples e Transparentes</title>
+
+    <meta name="description" content="TeleVIP: R$0 de mensalidade, apenas R$0,99 + 9,99% por transacao. A menor taxa do mercado para monetizar grupos do Telegram.">
+
+    <!-- Preload Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/landing.css') }}" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+
+    <style>
+        /* Precos Page Specific Styles */
+        .precos-hero {
+            padding: 140px 0 80px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            text-align: center;
+        }
+        .precos-hero h1 {
+            font-size: 36px;
+            font-weight: 900;
+            line-height: 1.2;
+            margin-bottom: 20px;
+        }
+        .precos-hero p.lead {
+            font-size: 18px;
+            color: #4a5568;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        @media (min-width: 768px) {
+            .precos-hero h1 { font-size: 48px; }
+            .precos-hero p.lead { font-size: 20px; }
+        }
+        @media (min-width: 1024px) {
+            .precos-hero h1 { font-size: 56px; }
+        }
+
+        /* Main Pricing Card */
+        .main-pricing-card {
+            background: white;
+            border-radius: 24px;
+            padding: 48px 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            border: 3px solid var(--primary);
+            position: relative;
+            overflow: hidden;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        .main-pricing-card .badge-top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--gradient-primary);
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .main-pricing-card .price-display {
+            text-align: center;
+            margin: 40px 0 24px;
+        }
+        .main-pricing-card .price-display .currency {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+            vertical-align: super;
+        }
+        .main-pricing-card .price-display .amount {
+            font-size: 72px;
+            font-weight: 900;
+            color: var(--primary);
+            line-height: 1;
+        }
+        .main-pricing-card .price-display .period {
+            font-size: 18px;
+            color: #718096;
+            display: block;
+            margin-top: 4px;
+        }
+        .fee-highlight {
+            background: #fff3cd;
+            border-radius: 12px;
+            padding: 16px 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .fee-highlight .fee-text {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a202c;
+        }
+        .fee-highlight .fee-sub {
+            font-size: 14px;
+            color: #718096;
+            margin-top: 4px;
+        }
+
+        /* Fee Calculator */
+        .calculator-section {
+            padding: 80px 0;
+            background: #f8f9fa;
+        }
+        .calculator-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+            max-width: 560px;
+            margin: 0 auto;
+        }
+        .calculator-input {
+            position: relative;
+            margin-bottom: 24px;
+        }
+        .calculator-input label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1a202c;
+        }
+        .calculator-input .input-wrapper {
+            position: relative;
+        }
+        .calculator-input .input-prefix {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            font-weight: 600;
+            color: #718096;
+        }
+        .calculator-input input {
+            width: 100%;
+            padding: 16px 16px 16px 48px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 24px;
+            font-weight: 700;
+            font-family: 'Poppins', sans-serif;
+            color: #1a202c;
+            transition: border-color 0.3s;
+        }
+        .calculator-input input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .calc-results {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 24px;
+        }
+        .calc-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            font-size: 15px;
+        }
+        .calc-row:not(:last-child) {
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .calc-row .label {
+            color: #718096;
+        }
+        .calc-row .value {
+            font-weight: 600;
+            color: #1a202c;
+        }
+        .calc-row.total {
+            padding-top: 16px;
+            margin-top: 4px;
+        }
+        .calc-row.total .label {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a202c;
+        }
+        .calc-row.total .value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #48bb78;
+        }
+
+        /* Comparison Table */
+        .comparison-section {
+            padding: 80px 0;
+            background: white;
+        }
+        .comparison-table {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .comparison-table th {
+            padding: 20px 24px;
+            font-weight: 700;
+            font-size: 15px;
+            text-align: center;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .comparison-table th:first-child {
+            text-align: left;
+        }
+        .comparison-table th.highlight {
+            background: var(--gradient-primary);
+            color: white;
+        }
+        .comparison-table td {
+            padding: 16px 24px;
+            text-align: center;
+            font-size: 15px;
+            color: #4a5568;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .comparison-table td:first-child {
+            text-align: left;
+            font-weight: 500;
+            color: #1a202c;
+        }
+        .comparison-table td.highlight {
+            background: #f0f4ff;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+        @media (max-width: 767px) {
+            .comparison-table th, .comparison-table td {
+                padding: 12px 10px;
+                font-size: 13px;
+            }
+        }
+
+        /* What's Included */
+        .included-section {
+            padding: 80px 0;
+            background: #f8f9fa;
+        }
+        .included-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        @media (min-width: 768px) {
+            .included-grid { grid-template-columns: 1fr 1fr; }
+        }
+        .included-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+        .included-item i {
+            color: #48bb78;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .included-item span {
+            font-size: 15px;
+            color: #1a202c;
+            font-weight: 500;
+        }
+
+        /* Pricing FAQ */
+        .pricing-faq {
+            padding: 80px 0;
+            background: white;
+        }
+        .pricing-faq .accordion-item {
+            border: none;
+            margin-bottom: 12px;
+            border-radius: 12px !important;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .pricing-faq .accordion-button {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 16px;
+            color: #1a202c;
+            padding: 20px 24px;
+            background: white;
+        }
+        .pricing-faq .accordion-button:not(.collapsed) {
+            background: white;
+            color: var(--primary);
+            box-shadow: none;
+        }
+        .pricing-faq .accordion-button:focus {
+            box-shadow: none;
+        }
+        .pricing-faq .accordion-body {
+            color: #718096;
+            font-size: 15px;
+            line-height: 1.8;
+            padding: 0 24px 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Cursor Animation (Desktop Only) -->
+    <div class="cursor"></div>
+    <div class="cursor2"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('auth.index') }}">
+                <i class="bi bi-telegram"></i> TeleVIP
+            </a>
+            <a href="https://wa.me/551721223445" target="_blank" rel="noopener noreferrer"
+               class="btn btn-success btn-sm d-lg-none ms-auto me-2"
+               style="font-size: 13px; white-space: nowrap;">
+                <i class="bi bi-whatsapp"></i> Suporte
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.recursos') }}">Recursos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('auth.precos') }}">Precos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn-nav-cta" href="{{ url_for('auth.register') }}">
+                            Comecar Gratis
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="precos-hero">
+        <div class="container">
+            <div data-aos="fade-up">
+                <h1>Precos simples e <span class="text-gradient">transparentes</span></h1>
+                <p class="lead">
+                    Sem mensalidade, sem surpresas. Voce so paga quando recebe. Simples assim.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Pricing Card -->
+    <section style="padding: 80px 0; background: white;">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-6" data-aos="zoom-in">
+                    <div class="main-pricing-card">
+                        <div class="badge-top">PLANO UNICO - PARA SEMPRE</div>
+
+                        <div class="price-display">
+                            <span class="currency">R$</span>
+                            <span class="amount">0</span>
+                            <span class="period">/para sempre</span>
+                        </div>
+
+                        <div class="fee-highlight">
+                            <div class="fee-text">R$ 0,99 + 9,99% por transacao</div>
+                            <div class="fee-sub">A menor taxa do mercado</div>
+                        </div>
+
+                        <ul style="list-style: none; padding: 0; margin: 24px 0;">
+                            <li style="padding: 10px 0; font-size: 15px; color: #4a5568;">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i> Grupos ilimitados
+                            </li>
+                            <li style="padding: 10px 0; font-size: 15px; color: #4a5568;">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i> Membros ilimitados
+                            </li>
+                            <li style="padding: 10px 0; font-size: 15px; color: #4a5568;">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i> Assinaturas recorrentes via Stripe
+                            </li>
+                            <li style="padding: 10px 0; font-size: 15px; color: #4a5568;">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i> Bot inteligente 24/7
+                            </li>
+                            <li style="padding: 10px 0; font-size: 15px; color: #4a5568;">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i> Dashboard completo
+                            </li>
+                            <li style="padding: 10px 0; font-size: 15px; color: #4a5568;">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i> Suporte via WhatsApp
+                            </li>
+                            <li style="padding: 10px 0; font-size: 15px; color: #4a5568;">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i> Sem taxas ocultas
+                            </li>
+                            <li style="padding: 10px 0; font-size: 15px; color: #4a5568;">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i> Sem limite de faturamento
+                            </li>
+                        </ul>
+
+                        <a href="{{ url_for('auth.register') }}" class="btn-pricing" style="background: var(--gradient-primary); color: white; border: none;">
+                            <i class="bi bi-rocket-takeoff"></i> Criar Conta Gratis
+                        </a>
+
+                        <p class="text-center text-muted mt-3" style="font-size: 14px;">
+                            Sem cartao de credito &bull; Cadastre em 30 segundos
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Fee Calculator -->
+    <section class="calculator-section">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="display-5 fw-bold">Calculadora de <span class="text-gradient">taxas</span></h2>
+                <p class="lead text-muted">Simule quanto voce recebe em cada venda</p>
+            </div>
+
+            <div data-aos="fade-up">
+                <div class="calculator-card">
+                    <div class="calculator-input">
+                        <label for="saleValue">Valor da venda</label>
+                        <div class="input-wrapper">
+                            <span class="input-prefix">R$</span>
+                            <input type="number" id="saleValue" value="100" min="1" step="0.01" placeholder="100,00">
+                        </div>
+                    </div>
+
+                    <div class="calc-results">
+                        <div class="calc-row">
+                            <span class="label">Valor da venda</span>
+                            <span class="value" id="calcSale">R$ 100,00</span>
+                        </div>
+                        <div class="calc-row">
+                            <span class="label">Taxa fixa</span>
+                            <span class="value" id="calcFixed">- R$ 0,99</span>
+                        </div>
+                        <div class="calc-row">
+                            <span class="label">Taxa percentual (9,99%)</span>
+                            <span class="value" id="calcPercent">- R$ 9,99</span>
+                        </div>
+                        <div class="calc-row">
+                            <span class="label">Total de taxas</span>
+                            <span class="value" id="calcTotalFee" style="color: #e53e3e;">- R$ 10,98</span>
+                        </div>
+                        <div class="calc-row total">
+                            <span class="label">Voce recebe</span>
+                            <span class="value" id="calcNet">R$ 89,02</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Table -->
+    <section class="comparison-section">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="display-5 fw-bold">Compare e <span class="text-gradient">economize</span></h2>
+                <p class="lead text-muted">Veja por que o TeleVIP e a melhor escolha</p>
+            </div>
+
+            <div class="row justify-content-center" data-aos="fade-up">
+                <div class="col-lg-10">
+                    <div class="comparison-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Plataforma A</th>
+                                    <th class="highlight"><i class="bi bi-telegram"></i> TeleVIP</th>
+                                    <th>Plataforma B</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Mensalidade</td>
+                                    <td>R$ 97/mes</td>
+                                    <td class="highlight">R$ 0 (gratis!)</td>
+                                    <td>R$ 67/mes</td>
+                                </tr>
+                                <tr>
+                                    <td>Taxa por transacao</td>
+                                    <td>12% + R$ 1,49</td>
+                                    <td class="highlight">9,99% + R$ 0,99</td>
+                                    <td>15% + R$ 0,99</td>
+                                </tr>
+                                <tr>
+                                    <td>Custo em 100 vendas de R$50</td>
+                                    <td>R$ 769,00</td>
+                                    <td class="highlight">R$ 598,50</td>
+                                    <td>R$ 916,00</td>
+                                </tr>
+                                <tr>
+                                    <td>Grupos ilimitados</td>
+                                    <td><i class="bi bi-x-circle text-danger"></i></td>
+                                    <td class="highlight"><i class="bi bi-check-circle-fill text-success"></i></td>
+                                    <td><i class="bi bi-x-circle text-danger"></i></td>
+                                </tr>
+                                <tr>
+                                    <td>Assinatura recorrente</td>
+                                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                                    <td class="highlight"><i class="bi bi-check-circle-fill text-success"></i></td>
+                                    <td><i class="bi bi-x-circle text-danger"></i></td>
+                                </tr>
+                                <tr>
+                                    <td>Bot 24/7</td>
+                                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                                    <td class="highlight"><i class="bi bi-check-circle-fill text-success"></i></td>
+                                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                                </tr>
+                                <tr>
+                                    <td>Suporte via WhatsApp</td>
+                                    <td><i class="bi bi-x-circle text-danger"></i></td>
+                                    <td class="highlight"><i class="bi bi-check-circle-fill text-success"></i></td>
+                                    <td><i class="bi bi-x-circle text-danger"></i></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- What's Included -->
+    <section class="included-section">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="display-5 fw-bold">Tudo <span class="text-gradient">incluso</span></h2>
+                <p class="lead text-muted">Sem planos diferentes. Voce tem acesso a tudo.</p>
+            </div>
+
+            <div class="included-grid" data-aos="fade-up">
+                <div class="included-item">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Grupos ilimitados</span>
+                </div>
+                <div class="included-item">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Membros ilimitados</span>
+                </div>
+                <div class="included-item">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Bot inteligente 24/7</span>
+                </div>
+                <div class="included-item">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Pagamento via PIX</span>
+                </div>
+                <div class="included-item">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Pagamento via cartao de credito</span>
+                </div>
+                <div class="included-item">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Assinaturas recorrentes (Stripe)</span>
+                </div>
+                <div class="included-item">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Dashboard com analytics</span>
+                </div>
+                <div class="included-item">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Historico de transacoes</span>
+                </div>
+                <div class="included-item">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Gestao automatica de membros</span>
+                </div>
+                <div class="included-item">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Multiplos planos por grupo</span>
+                </div>
+                <div class="included-item">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Saques para conta bancaria</span>
+                </div>
+                <div class="included-item">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Suporte premium via WhatsApp</span>
+                </div>
+                <div class="included-item">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Criptografia e seguranca total</span>
+                </div>
+                <div class="included-item">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Sem limite de faturamento</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing FAQ -->
+    <section class="pricing-faq">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="display-5 fw-bold">Duvidas sobre <span class="text-gradient">precos</span></h2>
+                <p class="lead text-muted">Respostas para as perguntas mais comuns</p>
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="accordion" id="pricingFaq" data-aos="fade-up">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#pfaq1">
+                                    Tem alguma taxa oculta?
+                                </button>
+                            </h2>
+                            <div id="pfaq1" class="accordion-collapse collapse show" data-bs-parent="#pricingFaq">
+                                <div class="accordion-body">
+                                    Nao! A unica taxa e R$ 0,99 + 9,99% por transacao. Sem mensalidade, sem taxa de setup, sem taxa de saque, sem surpresas. Voce so paga quando recebe.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pfaq2">
+                                    Como funciona a cobranca da taxa?
+                                </button>
+                            </h2>
+                            <div id="pfaq2" class="accordion-collapse collapse" data-bs-parent="#pricingFaq">
+                                <div class="accordion-body">
+                                    A taxa e descontada automaticamente de cada transacao. Por exemplo, em uma venda de R$ 100, a taxa e R$ 0,99 + R$ 9,99 = R$ 10,98. Voce recebe R$ 89,02. O valor ja chega liquido no seu saldo.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pfaq3">
+                                    Tem taxa para sacar meu dinheiro?
+                                </button>
+                            </h2>
+                            <div id="pfaq3" class="accordion-collapse collapse" data-bs-parent="#pricingFaq">
+                                <div class="accordion-body">
+                                    Nao cobramos taxa de saque. O valor disponivel no seu saldo pode ser transferido para sua conta bancaria sem custos adicionais.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pfaq4">
+                                    Preciso de cartao de credito para criar conta?
+                                </button>
+                            </h2>
+                            <div id="pfaq4" class="accordion-collapse collapse" data-bs-parent="#pricingFaq">
+                                <div class="accordion-body">
+                                    Nao! Crie sua conta gratuitamente sem precisar de cartao de credito. Voce so sera cobrado quando comecar a receber pagamentos dos seus membros.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pfaq5">
+                                    Existe limite de faturamento?
+                                </button>
+                            </h2>
+                            <div id="pfaq5" class="accordion-collapse collapse" data-bs-parent="#pricingFaq">
+                                <div class="accordion-body">
+                                    Nao existe limite. Voce pode faturar quanto quiser, com quantos grupos e membros desejar. A taxa e sempre a mesma: R$ 0,99 + 9,99% por transacao.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pfaq6">
+                                    Posso cancelar a qualquer momento?
+                                </button>
+                            </h2>
+                            <div id="pfaq6" class="accordion-collapse collapse" data-bs-parent="#pricingFaq">
+                                <div class="accordion-body">
+                                    Sim! Como nao ha mensalidade, nao existe contrato ou fidelidade. Voce pode parar de usar a plataforma quando quiser. Seus membros e dados permanecem seguros.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <div data-aos="zoom-in">
+                <h2>Pronto para comecar a lucrar?</h2>
+                <p class="lead">
+                    Crie sua conta gratuita agora e comece a monetizar seu Telegram com a menor taxa do mercado.
+                </p>
+                <a href="{{ url_for('auth.register') }}" class="btn-cta">
+                    <i class="bi bi-rocket-takeoff"></i> Criar Conta Gratis
+                </a>
+                <p class="mt-3 small opacity-75">
+                    <i class="bi bi-shield-check"></i> R$ 0 de mensalidade &bull; Sem cartao de credito &bull; Cancele quando quiser
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h5 class="text-gradient">
+                        <i class="bi bi-telegram"></i> TeleVIP
+                    </h5>
+                    <p class="text-muted">
+                        A plataforma definitiva para monetizacao de grupos no Telegram.
+                    </p>
+                    <div class="badge bg-warning text-dark p-2 mt-2">
+                        <i class="bi bi-tag-fill"></i> Taxa: R$ 0,99 + 9,99% por transacao
+                    </div>
+                    <div class="social-links mt-3">
+                        <a href="#"><i class="bi bi-facebook"></i></a>
+                        <a href="#"><i class="bi bi-instagram"></i></a>
+                        <a href="#"><i class="bi bi-twitter"></i></a>
+                        <a href="#"><i class="bi bi-linkedin"></i></a>
+                        <a href="#"><i class="bi bi-youtube"></i></a>
+                    </div>
+                </div>
+
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h6>PRODUTO</h6>
+                    <ul>
+                        <li><a href="{{ url_for('auth.recursos') }}">Recursos</a></li>
+                        <li><a href="{{ url_for('auth.precos') }}">Precos</a></li>
+                        <li><a href="#">API</a></li>
+                        <li><a href="#">Integracoes</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h6>EMPRESA</h6>
+                    <ul>
+                        <li><a href="#">Sobre</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Carreiras</a></li>
+                        <li><a href="#">Afiliados</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h6>SUPORTE</h6>
+                    <ul>
+                        <li><a href="#">Central de Ajuda</a></li>
+                        <li><a href="#">Contato</a></li>
+                        <li><a href="#">Status</a></li>
+                        <li><a href="#">Comunidade</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h6>LEGAL</h6>
+                    <ul>
+                        <li><a href="{{ url_for('auth.privacy') }}">Privacidade</a></li>
+                        <li><a href="{{ url_for('auth.terms') }}">Termos</a></li>
+                        <li><a href="#">Cookies</a></li>
+                        <li><a href="#">LGPD</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <hr class="my-4 border-secondary">
+
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted">
+                        &copy; 2024 TeleVIP. Todos os direitos reservados.
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0 text-muted">
+                        Feito com &#10084;&#65039; no Brasil
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <!-- Floating WhatsApp Button -->
+    <div id="whatsapp-float" class="d-none d-lg-flex" style="position: fixed; bottom: 24px; right: 24px; z-index: 9999; align-items: center; gap: 12px;">
+        <div id="whatsapp-tooltip" style="background: white; color: #333; padding: 10px 16px; border-radius: 12px;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.12); font-size: 14px; font-weight: 500; white-space: nowrap;
+                opacity: 1; transition: opacity 0.3s ease; font-family: 'Poppins', sans-serif;">
+            Fale com nosso suporte
+        </div>
+        <a href="https://wa.me/551721223445" target="_blank" rel="noopener noreferrer"
+           style="background-color: #25D366; color: white; width: 60px; height: 60px; border-radius: 50%;
+                  display: flex; align-items: center; justify-content: center;
+                  box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4); text-decoration: none; font-size: 30px;
+                  transition: all 0.3s ease; animation: whatsapp-pulse 2s infinite;"
+           onmouseover="this.style.transform='scale(1.1)'"
+           onmouseout="this.style.transform='scale(1)'"
+           title="Fale com o Suporte via WhatsApp">
+            <i class="bi bi-whatsapp"></i>
+        </a>
+    </div>
+    <style>
+        @keyframes whatsapp-pulse {
+            0% { box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4); }
+            50% { box-shadow: 0 4px 24px rgba(37, 211, 102, 0.7); }
+            100% { box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4); }
+        }
+    </style>
+
+    <script>
+        AOS.init({ duration: 1000, once: true, offset: 100 });
+
+        if (window.innerWidth > 768) {
+            const cursor = document.querySelector('.cursor');
+            const cursor2 = document.querySelector('.cursor2');
+            document.addEventListener('mousemove', e => {
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
+                cursor2.style.left = e.clientX + 'px';
+                cursor2.style.top = e.clientY + 'px';
+            });
+        }
+
+        // Fee Calculator
+        const saleInput = document.getElementById('saleValue');
+        const calcSale = document.getElementById('calcSale');
+        const calcFixed = document.getElementById('calcFixed');
+        const calcPercent = document.getElementById('calcPercent');
+        const calcTotalFee = document.getElementById('calcTotalFee');
+        const calcNet = document.getElementById('calcNet');
+
+        function formatBRL(value) {
+            return 'R$ ' + value.toFixed(2).replace('.', ',');
+        }
+
+        function calculate() {
+            const sale = parseFloat(saleInput.value) || 0;
+            const fixedFee = 0.99;
+            const percentFee = sale * 0.0999;
+            const totalFee = fixedFee + percentFee;
+            const net = Math.max(sale - totalFee, 0);
+
+            calcSale.textContent = formatBRL(sale);
+            calcFixed.textContent = '- ' + formatBRL(fixedFee);
+            calcPercent.textContent = '- ' + formatBRL(percentFee);
+            calcTotalFee.textContent = '- ' + formatBRL(totalFee);
+            calcNet.textContent = formatBRL(net);
+        }
+
+        saleInput.addEventListener('input', calculate);
+        calculate();
+    </script>
+
+    <!-- Cookie Banner -->
+    <div id="cookieBanner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:10000;
+        background:rgba(33,37,41,.95); backdrop-filter:blur(6px); padding:14px 20px;
+        font-size:14px; color:#ccc; text-align:center; font-family:'Poppins',sans-serif;">
+        Usamos cookies essenciais para o funcionamento do site.
+        <a href="{{ url_for('auth.privacy') }}" style="color:#7c8dff; text-decoration:underline;">Saiba mais</a>
+        <button onclick="acceptCookies()" style="margin-left:12px; background:#667eea; color:#fff;
+            border:none; border-radius:6px; padding:6px 18px; cursor:pointer; font-size:14px;">OK</button>
+    </div>
+    <script>
+    if(!localStorage.getItem('cookies_ok')){document.getElementById('cookieBanner').style.display='block'}
+    function acceptCookies(){localStorage.setItem('cookies_ok','1');document.getElementById('cookieBanner').style.display='none'}
+    </script>
+</body>
+</html>

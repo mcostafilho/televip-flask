@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#667eea">
+
+    <title>Recursos - TeleVIP | Tudo para Monetizar seu Telegram</title>
+
+    <meta name="description" content="Conheça todos os recursos do TeleVIP: bot inteligente 24/7, pagamentos automáticos, dashboard completo, segurança total e muito mais.">
+
+    <!-- Preload Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/landing.css') }}" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+
+    <style>
+        /* Recursos Page Specific Styles */
+        .recursos-hero {
+            padding: 140px 0 80px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            text-align: center;
+        }
+        .recursos-hero h1 {
+            font-size: 36px;
+            font-weight: 900;
+            line-height: 1.2;
+            margin-bottom: 20px;
+        }
+        .recursos-hero p.lead {
+            font-size: 18px;
+            color: #4a5568;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        @media (min-width: 768px) {
+            .recursos-hero h1 { font-size: 48px; }
+            .recursos-hero p.lead { font-size: 20px; }
+        }
+        @media (min-width: 1024px) {
+            .recursos-hero h1 { font-size: 56px; }
+        }
+
+        /* Feature cards extended */
+        .feature-card-ext {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+            transition: all 0.3s ease;
+            height: 100%;
+            text-align: center;
+        }
+        .feature-card-ext:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 16px 32px rgba(0,0,0,0.12);
+        }
+        .feature-card-ext .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 34px;
+            color: white;
+            margin: 0 auto 24px;
+        }
+        .feature-card-ext h4 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #1a202c;
+        }
+        .feature-card-ext p {
+            color: #718096;
+            font-size: 15px;
+            line-height: 1.7;
+            margin: 0;
+        }
+
+        /* Como Funciona */
+        .step-card {
+            text-align: center;
+            padding: 30px 20px;
+        }
+        .step-number {
+            width: 64px;
+            height: 64px;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 800;
+            color: white;
+            margin: 0 auto 20px;
+        }
+        .step-card h4 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #1a202c;
+        }
+        .step-card p {
+            color: #718096;
+            font-size: 15px;
+        }
+        .step-connector {
+            display: none;
+        }
+        @media (min-width: 768px) {
+            .step-connector {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 32px;
+                color: var(--primary);
+                padding-top: 20px;
+            }
+        }
+
+        /* Details section */
+        .detail-block {
+            padding: 40px 0;
+        }
+        .detail-block .detail-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--gradient-primary);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            margin-bottom: 20px;
+        }
+        .detail-block h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #1a202c;
+        }
+        .detail-block p {
+            color: #718096;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+        .detail-block ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 16px;
+        }
+        .detail-block ul li {
+            padding: 8px 0;
+            color: #4a5568;
+            font-size: 15px;
+        }
+        .detail-block ul li i {
+            color: #48bb78;
+            margin-right: 10px;
+        }
+
+        /* FAQ */
+        .faq-section {
+            padding: 80px 0;
+            background: #f8f9fa;
+        }
+        .faq-section .accordion-item {
+            border: none;
+            margin-bottom: 12px;
+            border-radius: 12px !important;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .faq-section .accordion-button {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 16px;
+            color: #1a202c;
+            padding: 20px 24px;
+            background: white;
+        }
+        .faq-section .accordion-button:not(.collapsed) {
+            background: white;
+            color: var(--primary);
+            box-shadow: none;
+        }
+        .faq-section .accordion-button:focus {
+            box-shadow: none;
+        }
+        .faq-section .accordion-body {
+            color: #718096;
+            font-size: 15px;
+            line-height: 1.8;
+            padding: 0 24px 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Cursor Animation (Desktop Only) -->
+    <div class="cursor"></div>
+    <div class="cursor2"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('auth.index') }}">
+                <i class="bi bi-telegram"></i> TeleVIP
+            </a>
+            <a href="https://wa.me/551721223445" target="_blank" rel="noopener noreferrer"
+               class="btn btn-success btn-sm d-lg-none ms-auto me-2"
+               style="font-size: 13px; white-space: nowrap;">
+                <i class="bi bi-whatsapp"></i> Suporte
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('auth.recursos') }}">Recursos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.precos') }}">Precos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn-nav-cta" href="{{ url_for('auth.register') }}">
+                            Comecar Gratis
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="recursos-hero">
+        <div class="container">
+            <div data-aos="fade-up">
+                <h1>Tudo que voce precisa para <span class="text-gradient">monetizar seu Telegram</span></h1>
+                <p class="lead">
+                    Recursos poderosos, automacao inteligente e a menor taxa do mercado. Tudo em uma unica plataforma.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" style="padding: 80px 0;">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="display-5 fw-bold">Recursos <span class="text-gradient">completos</span></h2>
+                <p class="lead text-muted">Tudo integrado para voce focar no que importa: seu conteudo</p>
+            </div>
+
+            <div class="row g-4">
+                <!-- Feature 1 -->
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="feature-card-ext">
+                        <div class="feature-icon">
+                            <i class="bi bi-robot"></i>
+                        </div>
+                        <h4>Bot Inteligente 24/7</h4>
+                        <p>Nosso bot opera 24 horas por dia, 7 dias por semana. Ele cuida de toda a cobranca, aprovacao de membros e gestao automatica do seu grupo. Voce dorme enquanto seu negocio funciona.</p>
+                    </div>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="feature-card-ext">
+                        <div class="feature-icon">
+                            <i class="bi bi-credit-card"></i>
+                        </div>
+                        <h4>Pagamentos Automaticos</h4>
+                        <p>Aceite pagamentos via PIX e cartao de credito com aprovacao instantanea. Assinaturas recorrentes via Stripe garantem receita previsivel todo mes.</p>
+                    </div>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="feature-card-ext">
+                        <div class="feature-icon">
+                            <i class="bi bi-bar-chart"></i>
+                        </div>
+                        <h4>Dashboard Completo</h4>
+                        <p>Acompanhe receita, novos membros, churn e crescimento em tempo real. Graficos intuitivos e metricas detalhadas para tomar as melhores decisoes.</p>
+                    </div>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="400">
+                    <div class="feature-card-ext">
+                        <div class="feature-icon">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <h4>Seguranca Total</h4>
+                        <p>Criptografia de ponta a ponta, tokens JWT seguros e protecao contra fraudes. Seus dados e os dos seus membros estao sempre protegidos.</p>
+                    </div>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="500">
+                    <div class="feature-card-ext">
+                        <div class="feature-icon">
+                            <i class="bi bi-lightning"></i>
+                        </div>
+                        <h4>Setup em 2 Minutos</h4>
+                        <p>Crie sua conta, conecte seu grupo do Telegram e adicione o bot. Em poucos cliques voce ja esta pronto para receber pagamentos e gerenciar membros.</p>
+                    </div>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="600">
+                    <div class="feature-card-ext">
+                        <div class="feature-icon">
+                            <i class="bi bi-headset"></i>
+                        </div>
+                        <h4>Suporte Premium</h4>
+                        <p>Time especializado disponivel via WhatsApp e chat. Ajudamos voce desde a configuracao inicial ate estrategias para maximizar seus resultados.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Como Funciona -->
+    <section style="padding: 80px 0; background: white;">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="display-5 fw-bold">Como <span class="text-gradient">funciona</span></h2>
+                <p class="lead text-muted">Tres passos simples para comecar a lucrar</p>
+            </div>
+
+            <div class="row align-items-center justify-content-center">
+                <div class="col-md-3" data-aos="fade-up" data-aos-delay="100">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <h4>Crie sua conta</h4>
+                        <p>Cadastre-se gratuitamente em menos de 30 segundos. Sem cartao de credito.</p>
+                    </div>
+                </div>
+                <div class="col-md-1 d-none d-md-block" data-aos="fade-up" data-aos-delay="150">
+                    <div class="step-connector">
+                        <i class="bi bi-arrow-right"></i>
+                    </div>
+                </div>
+                <div class="col-md-3" data-aos="fade-up" data-aos-delay="200">
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <h4>Adicione o bot</h4>
+                        <p>Conecte nosso bot ao seu grupo do Telegram e configure seus planos de preco.</p>
+                    </div>
+                </div>
+                <div class="col-md-1 d-none d-md-block" data-aos="fade-up" data-aos-delay="250">
+                    <div class="step-connector">
+                        <i class="bi bi-arrow-right"></i>
+                    </div>
+                </div>
+                <div class="col-md-3" data-aos="fade-up" data-aos-delay="300">
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <h4>Comece a lucrar</h4>
+                        <p>Compartilhe o link de pagamento e receba automaticamente. Simples assim!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Details Section -->
+    <section style="padding: 80px 0; background: #f8f9fa;">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="display-5 fw-bold">Mergulhe nos <span class="text-gradient">detalhes</span></h2>
+                <p class="lead text-muted">Entenda como cada recurso trabalha a seu favor</p>
+            </div>
+
+            <!-- Detail 1: Dashboard -->
+            <div class="detail-block">
+                <div class="row align-items-center" data-aos="fade-up">
+                    <div class="col-lg-6 mb-4 mb-lg-0">
+                        <div class="detail-icon">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+                        <h3>Dashboard com Analytics Avancado</h3>
+                        <p>Tenha visibilidade total sobre o desempenho do seu negocio. Nosso painel mostra metricas em tempo real para voce tomar decisoes inteligentes.</p>
+                        <ul>
+                            <li><i class="bi bi-check-circle-fill"></i> Receita diaria, semanal e mensal</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Taxa de conversao e churn rate</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Historico completo de transacoes</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Relatorios exportaveis</li>
+                        </ul>
+                    </div>
+                    <div class="col-lg-6">
+                        <div style="background: white; border-radius: 16px; padding: 40px; box-shadow: 0 8px 24px rgba(0,0,0,0.08);">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0 fw-bold">Receita Mensal</h5>
+                                <span class="badge" style="background: var(--gradient-primary); color: white; padding: 6px 14px; border-radius: 20px;">+32%</span>
+                            </div>
+                            <div style="display: flex; align-items: flex-end; gap: 8px; height: 120px; margin-bottom: 16px;">
+                                <div style="flex: 1; background: #e2e8f0; border-radius: 6px; height: 40%;"></div>
+                                <div style="flex: 1; background: #e2e8f0; border-radius: 6px; height: 55%;"></div>
+                                <div style="flex: 1; background: #e2e8f0; border-radius: 6px; height: 45%;"></div>
+                                <div style="flex: 1; background: #e2e8f0; border-radius: 6px; height: 65%;"></div>
+                                <div style="flex: 1; background: #e2e8f0; border-radius: 6px; height: 70%;"></div>
+                                <div style="flex: 1; background: var(--gradient-primary); border-radius: 6px; height: 90%;"></div>
+                            </div>
+                            <div class="d-flex justify-content-between text-muted" style="font-size: 13px;">
+                                <span>Jul</span><span>Ago</span><span>Set</span><span>Out</span><span>Nov</span><span>Dez</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail 2: Recurring Billing -->
+            <div class="detail-block">
+                <div class="row align-items-center flex-lg-row-reverse" data-aos="fade-up">
+                    <div class="col-lg-6 mb-4 mb-lg-0">
+                        <div class="detail-icon">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </div>
+                        <h3>Cobranca Recorrente Automatica</h3>
+                        <p>Configure uma vez e receba todo mes. O Stripe cuida de renovacoes, retentativas e notificacoes automaticamente.</p>
+                        <ul>
+                            <li><i class="bi bi-check-circle-fill"></i> Assinaturas mensais automaticas</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Retentativa automatica em caso de falha</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Cancelamento pelo membro a qualquer momento</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Notificacao automatica de renovacao</li>
+                        </ul>
+                    </div>
+                    <div class="col-lg-6">
+                        <div style="background: white; border-radius: 16px; padding: 40px; box-shadow: 0 8px 24px rgba(0,0,0,0.08);">
+                            <div class="d-flex align-items-center gap-3 mb-3 p-3" style="background: #f0fdf4; border-radius: 12px;">
+                                <i class="bi bi-check-circle-fill text-success" style="font-size: 24px;"></i>
+                                <div>
+                                    <div class="fw-bold" style="font-size: 14px;">Pagamento confirmado</div>
+                                    <div class="text-muted" style="font-size: 13px;">Carlos S. - Plano VIP - R$ 49,90</div>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-3 mb-3 p-3" style="background: #f0fdf4; border-radius: 12px;">
+                                <i class="bi bi-arrow-repeat text-primary" style="font-size: 24px;"></i>
+                                <div>
+                                    <div class="fw-bold" style="font-size: 14px;">Renovacao automatica</div>
+                                    <div class="text-muted" style="font-size: 13px;">Ana C. - Plano Premium - R$ 99,90</div>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-3 p-3" style="background: #eff6ff; border-radius: 12px;">
+                                <i class="bi bi-person-plus-fill text-primary" style="font-size: 24px;"></i>
+                                <div>
+                                    <div class="fw-bold" style="font-size: 14px;">Novo membro adicionado</div>
+                                    <div class="text-muted" style="font-size: 13px;">Pedro M. entrou no grupo VIP</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail 3: Member Management -->
+            <div class="detail-block">
+                <div class="row align-items-center" data-aos="fade-up">
+                    <div class="col-lg-6 mb-4 mb-lg-0">
+                        <div class="detail-icon">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h3>Gestao Inteligente de Membros</h3>
+                        <p>O bot gerencia automaticamente a entrada e saida de membros. Quem paga entra, quem nao paga sai. Sem trabalho manual.</p>
+                        <ul>
+                            <li><i class="bi bi-check-circle-fill"></i> Aprovacao automatica apos pagamento</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Remocao automatica de inadimplentes</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Lista completa de membros ativos</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Multiplos planos por grupo</li>
+                        </ul>
+                    </div>
+                    <div class="col-lg-6">
+                        <div style="background: white; border-radius: 16px; padding: 40px; box-shadow: 0 8px 24px rgba(0,0,0,0.08);">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5 class="mb-0 fw-bold">Membros Ativos</h5>
+                                <span class="text-success fw-bold">247 membros</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 14px;">CS</div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold" style="font-size: 14px;">Carlos Silva</div>
+                                    <div class="text-muted" style="font-size: 12px;">Plano VIP - Ativo</div>
+                                </div>
+                                <span class="badge bg-success">Ativo</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div style="width: 40px; height: 40px; border-radius: 50%; background: #f59e0b; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 14px;">AC</div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold" style="font-size: 14px;">Ana Costa</div>
+                                    <div class="text-muted" style="font-size: 12px;">Plano Premium - Ativo</div>
+                                </div>
+                                <span class="badge bg-success">Ativo</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-3">
+                                <div style="width: 40px; height: 40px; border-radius: 50%; background: #10b981; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 14px;">PM</div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold" style="font-size: 14px;">Pedro Mendes</div>
+                                    <div class="text-muted" style="font-size: 12px;">Plano VIP - Ativo</div>
+                                </div>
+                                <span class="badge bg-success">Ativo</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="display-5 fw-bold">Perguntas <span class="text-gradient">frequentes</span></h2>
+                <p class="lead text-muted">Tire suas duvidas sobre a plataforma</p>
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="accordion" id="faqAccordion" data-aos="fade-up">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                    Como o bot funciona no meu grupo?
+                                </button>
+                            </h2>
+                            <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Apos adicionar o bot como administrador do seu grupo, ele monitora automaticamente pagamentos e gerencia membros. Quando alguem paga, o bot aprova a entrada. Quando a assinatura expira, o membro e removido automaticamente.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                    Quais formas de pagamento sao aceitas?
+                                </button>
+                            </h2>
+                            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Aceitamos PIX (pagamento instantaneo) e cartao de credito via Stripe. Para assinaturas recorrentes, o Stripe gerencia automaticamente as cobracas mensais no cartao do membro.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                    Posso ter multiplos grupos e planos?
+                                </button>
+                            </h2>
+                            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Sim! Voce pode criar quantos grupos quiser e configurar diferentes planos de preco para cada um. Por exemplo, um plano basico de R$ 29,90 e um premium de R$ 99,90 no mesmo grupo.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                    O que acontece se um membro nao pagar?
+                                </button>
+                            </h2>
+                            <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Para assinaturas recorrentes, o Stripe tenta cobrar automaticamente. Se o pagamento falhar apos as retentativas, o bot remove o membro do grupo automaticamente. Para pagamentos unicos, o membro e removido quando o periodo expira.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                                    Preciso de conhecimento tecnico?
+                                </button>
+                            </h2>
+                            <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Nao! O TeleVIP foi feito para ser simples. O setup leva menos de 2 minutos e nosso suporte esta disponivel para ajudar em qualquer etapa. Nenhum conhecimento de programacao e necessario.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+                                    Como funciona o saque do meu dinheiro?
+                                </button>
+                            </h2>
+                            <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Voce pode solicitar saques a qualquer momento pelo dashboard. O valor e transferido para sua conta bancaria. Acompanhe todos os saques e saldos diretamente na plataforma.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq7">
+                                    Meus dados estao seguros?
+                                </button>
+                            </h2>
+                            <div id="faq7" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Sim. Utilizamos criptografia de ponta a ponta, tokens JWT seguros e todas as transacoes sao processadas pelo Stripe, que possui certificacao PCI DSS Level 1. Seus dados e os dos seus membros estao sempre protegidos.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <div data-aos="zoom-in">
+                <h2>Pronto para comecar?</h2>
+                <p class="lead">
+                    Crie sua conta gratuita e comece a monetizar seu Telegram em menos de 2 minutos.
+                </p>
+                <a href="{{ url_for('auth.register') }}" class="btn-cta">
+                    <i class="bi bi-rocket-takeoff"></i> Comecar Gratis
+                </a>
+                <p class="mt-3 small opacity-75">
+                    <i class="bi bi-clock"></i> Leva menos de 30 segundos para criar sua conta
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h5 class="text-gradient">
+                        <i class="bi bi-telegram"></i> TeleVIP
+                    </h5>
+                    <p class="text-muted">
+                        A plataforma definitiva para monetizacao de grupos no Telegram.
+                    </p>
+                    <div class="badge bg-warning text-dark p-2 mt-2">
+                        <i class="bi bi-tag-fill"></i> Taxa: R$ 0,99 + 9,99% por transacao
+                    </div>
+                    <div class="social-links mt-3">
+                        <a href="#"><i class="bi bi-facebook"></i></a>
+                        <a href="#"><i class="bi bi-instagram"></i></a>
+                        <a href="#"><i class="bi bi-twitter"></i></a>
+                        <a href="#"><i class="bi bi-linkedin"></i></a>
+                        <a href="#"><i class="bi bi-youtube"></i></a>
+                    </div>
+                </div>
+
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h6>PRODUTO</h6>
+                    <ul>
+                        <li><a href="{{ url_for('auth.recursos') }}">Recursos</a></li>
+                        <li><a href="{{ url_for('auth.precos') }}">Precos</a></li>
+                        <li><a href="#">API</a></li>
+                        <li><a href="#">Integracoes</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h6>EMPRESA</h6>
+                    <ul>
+                        <li><a href="#">Sobre</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Carreiras</a></li>
+                        <li><a href="#">Afiliados</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h6>SUPORTE</h6>
+                    <ul>
+                        <li><a href="#">Central de Ajuda</a></li>
+                        <li><a href="#">Contato</a></li>
+                        <li><a href="#">Status</a></li>
+                        <li><a href="#">Comunidade</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h6>LEGAL</h6>
+                    <ul>
+                        <li><a href="{{ url_for('auth.privacy') }}">Privacidade</a></li>
+                        <li><a href="{{ url_for('auth.terms') }}">Termos</a></li>
+                        <li><a href="#">Cookies</a></li>
+                        <li><a href="#">LGPD</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <hr class="my-4 border-secondary">
+
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted">
+                        &copy; 2024 TeleVIP. Todos os direitos reservados.
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0 text-muted">
+                        Feito com &#10084;&#65039; no Brasil
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <!-- Floating WhatsApp Button -->
+    <div id="whatsapp-float" class="d-none d-lg-flex" style="position: fixed; bottom: 24px; right: 24px; z-index: 9999; align-items: center; gap: 12px;">
+        <div id="whatsapp-tooltip" style="background: white; color: #333; padding: 10px 16px; border-radius: 12px;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.12); font-size: 14px; font-weight: 500; white-space: nowrap;
+                opacity: 1; transition: opacity 0.3s ease; font-family: 'Poppins', sans-serif;">
+            Fale com nosso suporte
+        </div>
+        <a href="https://wa.me/551721223445" target="_blank" rel="noopener noreferrer"
+           style="background-color: #25D366; color: white; width: 60px; height: 60px; border-radius: 50%;
+                  display: flex; align-items: center; justify-content: center;
+                  box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4); text-decoration: none; font-size: 30px;
+                  transition: all 0.3s ease; animation: whatsapp-pulse 2s infinite;"
+           onmouseover="this.style.transform='scale(1.1)'"
+           onmouseout="this.style.transform='scale(1)'"
+           title="Fale com o Suporte via WhatsApp">
+            <i class="bi bi-whatsapp"></i>
+        </a>
+    </div>
+    <style>
+        @keyframes whatsapp-pulse {
+            0% { box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4); }
+            50% { box-shadow: 0 4px 24px rgba(37, 211, 102, 0.7); }
+            100% { box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4); }
+        }
+    </style>
+
+    <script>
+        AOS.init({ duration: 1000, once: true, offset: 100 });
+
+        if (window.innerWidth > 768) {
+            const cursor = document.querySelector('.cursor');
+            const cursor2 = document.querySelector('.cursor2');
+            document.addEventListener('mousemove', e => {
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
+                cursor2.style.left = e.clientX + 'px';
+                cursor2.style.top = e.clientY + 'px';
+            });
+        }
+    </script>
+
+    <!-- Cookie Banner -->
+    <div id="cookieBanner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:10000;
+        background:rgba(33,37,41,.95); backdrop-filter:blur(6px); padding:14px 20px;
+        font-size:14px; color:#ccc; text-align:center; font-family:'Poppins',sans-serif;">
+        Usamos cookies essenciais para o funcionamento do site.
+        <a href="{{ url_for('auth.privacy') }}" style="color:#7c8dff; text-decoration:underline;">Saiba mais</a>
+        <button onclick="acceptCookies()" style="margin-left:12px; background:#667eea; color:#fff;
+            border:none; border-radius:6px; padding:6px 18px; cursor:pointer; font-size:14px;">OK</button>
+    </div>
+    <script>
+    if(!localStorage.getItem('cookies_ok')){document.getElementById('cookieBanner').style.display='block'}
+    function acceptCookies(){localStorage.setItem('cookies_ok','1');document.getElementById('cookieBanner').style.display='none'}
+    </script>
+</body>
+</html>

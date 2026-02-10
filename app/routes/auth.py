@@ -254,6 +254,18 @@ def logout():
     return redirect(url_for('auth.index'))
 
 
+@bp.route('/recursos')
+def recursos():
+    """Página de recursos"""
+    return render_template('public/recursos.html')
+
+
+@bp.route('/precos')
+def precos():
+    """Página de preços"""
+    return render_template('public/precos.html')
+
+
 @bp.route('/termos')
 def terms():
     """Termos de Uso"""
