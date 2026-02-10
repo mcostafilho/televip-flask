@@ -86,7 +86,7 @@ def create():
         # Dados básicos do grupo
         name = request.form.get('name', '').strip()
         description = request.form.get('description', '').strip()
-        telegram_id = request.form.get('telegram_id', '').strip()
+        telegram_id = request.form.get('telegram_id', '').replace(' ', '').replace('\t', '').strip()
         invite_link = request.form.get('invite_link', '').strip()
         
         # Verificar se deve validar no Telegram
