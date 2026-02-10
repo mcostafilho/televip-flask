@@ -159,7 +159,7 @@ class TestHandleCheckoutCompleted:
         db.session.add(txn)
         db.session.commit()
 
-        expected_net = float(txn.net_amount)  # 91.02
+        expected_net = float(txn.net_amount)  # 89.02
 
         session = {
             'id': 'cs_test_balance',

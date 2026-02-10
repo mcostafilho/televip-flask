@@ -65,6 +65,7 @@ def creator(db):
         username='testcreator',
         balance=Decimal('0'),
         total_earned=Decimal('0'),
+        is_verified=True,
     )
     user.set_password('TestPass123')
     db.session.add(user)
@@ -80,6 +81,7 @@ def admin_user(db):
         email='admin@test.com',
         username='adminuser',
         is_admin=True,
+        is_verified=True,
         balance=Decimal('0'),
         total_earned=Decimal('0'),
     )
@@ -98,6 +100,7 @@ def second_creator(db):
         username='secondcreator',
         balance=Decimal('100.00'),
         total_earned=Decimal('500.00'),
+        is_verified=True,
     )
     user.set_password('SecondPass123')
     db.session.add(user)

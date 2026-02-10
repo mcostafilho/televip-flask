@@ -227,9 +227,9 @@ class TestTransactionModel:
         db.session.add(txn)
         db.session.commit()
         assert txn.fixed_fee == Decimal('0.99')
-        assert txn.percentage_fee == Decimal('7.99')
-        assert txn.total_fee == Decimal('8.98')
-        assert txn.net_amount == Decimal('91.02')
+        assert txn.percentage_fee == Decimal('9.99')
+        assert txn.total_fee == Decimal('10.98')
+        assert txn.net_amount == Decimal('89.02')
 
     def test_fee_recalculation(self, app_context, db, subscription):
         txn = Transaction(
@@ -245,7 +245,7 @@ class TestTransactionModel:
         txn.calculate_fees()
         db.session.commit()
         assert txn.net_amount != old_net
-        assert txn.net_amount == Decimal('183.03')
+        assert txn.net_amount == Decimal('179.03')
 
     def test_zero_amount_fees(self, app_context, db, subscription):
         txn = Transaction(

@@ -46,14 +46,14 @@ class Transaction(db.Model):
         """
         Calcular taxas automaticamente
         Taxa fixa: R$ 0,99
-        Taxa percentual: 7,99%
+        Taxa percentual: 9,99%
         """
         if self.amount:
             # Taxa fixa
             self.fixed_fee = 0.99
             
-            # Taxa percentual (7,99%)
-            self.percentage_fee = float(self.amount) * 0.0799
+            # Taxa percentual (9,99%)
+            self.percentage_fee = float(self.amount) * 0.0999
             
             # Taxa total
             self.total_fee = self.fixed_fee + self.percentage_fee

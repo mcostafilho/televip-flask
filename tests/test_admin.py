@@ -58,7 +58,7 @@ class TestAdminDashboard:
         resp = client.get('/admin/')
         html = resp.data.decode('utf-8')
         # O net_amount da transação de R$49.90 deve aparecer
-        # net_amount = 49.90 - 0.99 - (49.90 * 0.0799) = 49.90 - 0.99 - 3.99 = 44.92
+        # net_amount = 49.90 - 0.99 - (49.90 * 0.0999) = 49.90 - 0.99 - 4.99 = 43.92
         assert 'R$' in html
 
     def test_admin_balance_with_withdrawals(self, client, admin_user, db,
@@ -91,9 +91,9 @@ class TestAdminDashboard:
         login(client, 'admin@test.com', 'AdminPass123')
         resp = client.get('/admin/')
         html = resp.data.decode('utf-8')
-        # net_amount de R$100 = 91.02
-        # saldo = 91.02 - 20.00 = 71.02
-        assert '71.02' in html
+        # net_amount de R$100 = 89.02
+        # saldo = 89.02 - 20.00 = 69.02
+        assert '69.02' in html
 
     def test_admin_multiple_creators(self, client, admin_user, creator, second_creator):
         login(client, 'admin@test.com', 'AdminPass123')

@@ -17,7 +17,7 @@ class TestFullPaymentFlow:
     def test_payment_creates_subscription_and_updates_balance(self, app_context, db):
         """Fluxo: criador -> grupo -> plano -> assinatura -> transação -> webhook -> saldo"""
         # 1. Criar criador
-        creator = Creator(name='Flow Creator', email='flow@test.com', username='flowcreator')
+        creator = Creator(name='Flow Creator', email='flow@test.com', username='flowcreator', is_verified=True)
         creator.set_password('FlowPass1')
         db.session.add(creator)
         db.session.commit()
@@ -57,7 +57,7 @@ class TestFullPaymentFlow:
         db.session.add(txn)
         db.session.commit()
 
-        assert txn.net_amount == Decimal('91.02')
+        assert txn.net_amount == Decimal('89.02')
 
         # 6. Simular webhook do Stripe
         session = {
@@ -81,12 +81,12 @@ class TestFullPaymentFlow:
         assert updated_sub.status == 'active'
 
         updated_creator = Creator.query.get(creator.id)
-        assert updated_creator.balance == Decimal('91.02')
-        assert updated_creator.total_earned == Decimal('91.02')
+        assert updated_creator.balance == Decimal('89.02')
+        assert updated_creator.total_earned == Decimal('89.02')
 
     def test_multiple_payments_accumulate_balance(self, app_context, db):
         """Múltiplas transações devem acumular no saldo do criador"""
-        creator = Creator(name='Multi', email='multi@test.com', username='multi')
+        creator = Creator(name='Multi', email='multi@test.com', username='multi', is_verified=True)
         creator.set_password('MultiPass1')
         db.session.add(creator)
         db.session.commit()
@@ -144,7 +144,7 @@ class TestWithdrawalFlow:
 
     def test_withdrawal_reduces_balance_on_process(self, client, admin_user, db):
         # Criar criador com saldo
-        creator = Creator(name='Withdraw', email='withdraw@test.com', username='withdraw')
+        creator = Creator(name='Withdraw', email='withdraw@test.com', username='withdraw', is_verified=True)
         creator.set_password('WithPass1')
         creator.balance = Decimal('200.00')
         creator.total_earned = Decimal('200.00')
@@ -170,16 +170,14 @@ class TestCreatorDashboardFlow:
     """Teste do fluxo completo do criador"""
 
     def test_creator_full_workflow(self, client, db, app_context):
-        """Registro -> criar grupo -> ver dashboard -> ver analytics"""
-        # 1. Registro
-        resp = client.post('/register', data={
-            'name': 'Flow Test',
-            'email': 'flowtest@test.com',
-            'username': 'flowtest',
-            'password': 'FlowTest1',
-            'confirm_password': 'FlowTest1',
-        }, follow_redirects=True)
-        assert resp.status_code == 200
+        """Criar conta -> login -> criar grupo -> ver dashboard -> ver analytics"""
+        # 1. Criar criador verificado e fazer login
+        creator = Creator(name='Flow Test', email='flowtest@test.com',
+                          username='flowtest', is_verified=True)
+        creator.set_password('FlowTest1')
+        db.session.add(creator)
+        db.session.commit()
+        login(client, 'flowtest@test.com', 'FlowTest1')
 
         # 2. Dashboard
         resp = client.get('/dashboard/')
@@ -223,7 +221,7 @@ class TestAdminViewsMultipleCreators:
         # Criar 3 criadores com grupos e transações
         for i in range(3):
             c = Creator(name=f'Creator {i}', email=f'c{i}@test.com',
-                       username=f'creator{i}')
+                       username=f'creator{i}', is_verified=True)
             c.set_password('Pass1234')
             db.session.add(c)
             db.session.commit()
@@ -271,12 +269,12 @@ class TestDataIsolation:
     """Testa que criadores só veem seus próprios dados"""
 
     def test_creator_cant_see_others_groups(self, client, db):
-        c1 = Creator(name='Owner', email='owner@test.com', username='owner')
+        c1 = Creator(name='Owner', email='owner@test.com', username='owner', is_verified=True)
         c1.set_password('Owner123')
         db.session.add(c1)
         db.session.commit()
 
-        c2 = Creator(name='Other', email='other@test.com', username='other')
+        c2 = Creator(name='Other', email='other@test.com', username='other', is_verified=True)
         c2.set_password('Other123')
         db.session.add(c2)
         db.session.commit()
@@ -297,12 +295,12 @@ class TestDataIsolation:
         assert resp.status_code == 404
 
     def test_creator_cant_delete_others_groups(self, client, db):
-        c1 = Creator(name='Owner2', email='owner2@test.com', username='owner2')
+        c1 = Creator(name='Owner2', email='owner2@test.com', username='owner2', is_verified=True)
         c1.set_password('Owner123')
         db.session.add(c1)
         db.session.commit()
 
-        c2 = Creator(name='Other2', email='other2@test.com', username='other2')
+        c2 = Creator(name='Other2', email='other2@test.com', username='other2', is_verified=True)
         c2.set_password('Other123')
         db.session.add(c2)
         db.session.commit()

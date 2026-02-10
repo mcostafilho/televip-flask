@@ -25,8 +25,8 @@ class TestFeeCalculationStress:
         fees = PaymentService.calculate_fees(10000)
         assert fees['net_amount'] > 0
         assert fees['total_fee'] > 0
-        # 10000 - 0.99 - (10000 * 0.0799) = 10000 - 0.99 - 799 = 9200.01
-        assert fees['net_amount'] == Decimal('9200.01')
+        # 10000 - 0.99 - (10000 * 0.0999) = 10000 - 0.99 - 999 = 9000.01
+        assert fees['net_amount'] == Decimal('9000.01')
 
     def test_very_large_amount(self):
         fees = PaymentService.calculate_fees(999999.99)
@@ -81,7 +81,7 @@ class TestFeeCalculationStress:
 
     def test_integer_amount(self):
         fees = PaymentService.calculate_fees(100)
-        assert fees['net_amount'] == Decimal('91.02')
+        assert fees['net_amount'] == Decimal('89.02')
 
 
 class TestFormatFeeBreakdown:
@@ -91,7 +91,7 @@ class TestFormatFeeBreakdown:
         formatted = PaymentService.format_fee_breakdown(100)
         assert 'R$' in formatted['gross']
         assert 'R$' in formatted['net']
-        assert '7,99%' in formatted['percentage_fee']
+        assert '9,99%' in formatted['percentage_fee']
 
     def test_format_zero(self):
         formatted = PaymentService.format_fee_breakdown(0)
@@ -150,7 +150,7 @@ class TestCreatorEarnings:
         result = PaymentService.calculate_creator_earnings(txns)
         assert result['transaction_count'] == 1
         assert result['total_gross'] == 100
-        assert round(Decimal(str(result['total_net'])), 2) == Decimal('91.02')
+        assert round(Decimal(str(result['total_net'])), 2) == Decimal('89.02')
 
 
 class TestMonthlyProjection:
@@ -184,4 +184,4 @@ class TestFeeDescription:
         desc = PaymentService.get_fee_description()
         assert 'R$' in desc
         assert '0,99' in desc
-        assert '7,99%' in desc
+        assert '9,99%' in desc

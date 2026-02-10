@@ -3,6 +3,7 @@
 Testes das rotas de autenticação
 """
 import pytest
+from unittest.mock import patch
 from app.models import Creator
 from tests.conftest import login, logout
 
@@ -72,7 +73,8 @@ class TestRegister:
         resp = client.get('/register')
         assert resp.status_code == 200
 
-    def test_register_success(self, client, app_context, db):
+    @patch('app.routes.auth.send_confirmation_email')
+    def test_register_success(self, mock_email, client, app_context, db):
         resp = client.post('/register', data={
             'name': 'New User',
             'email': 'newuser@test.com',
@@ -84,6 +86,7 @@ class TestRegister:
         user = Creator.query.filter_by(email='newuser@test.com').first()
         assert user is not None
         assert user.name == 'New User'
+        mock_email.assert_called_once()
 
     def test_register_short_name(self, client):
         resp = client.post('/register', data={

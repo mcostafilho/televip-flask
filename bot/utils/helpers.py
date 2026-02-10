@@ -20,7 +20,7 @@ def format_date_br(date):
         return date.strftime('%d/%m/%Y')
     return str(date)
 
-def calculate_platform_fee(amount, fixed_fee=0.99, percentage_fee=0.0799):
+def calculate_platform_fee(amount, fixed_fee=0.99, percentage_fee=0.0999):
     """Calcular taxa da plataforma"""
     total_fee = fixed_fee + (amount * percentage_fee)
     creator_amount = amount - total_fee

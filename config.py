@@ -79,7 +79,7 @@ class Config:
     
     # Taxas da plataforma
     PLATFORM_FIXED_FEE = 0.99  # R$ 0,99
-    PLATFORM_PERCENTAGE_FEE = 0.0799  # 7,99%
+    PLATFORM_PERCENTAGE_FEE = 0.0999  # 9,99%
     
     # Configurações de limites
     MIN_WITHDRAWAL_AMOUNT = 10.00  # Valor mínimo para saque

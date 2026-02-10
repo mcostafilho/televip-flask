@@ -42,7 +42,7 @@ def calculate_balance(creator_id):
         
         # Calcular taxas
         fixed_fee = 0.99  # Taxa fixa
-        percentage_fee = amount * 0.0799  # 7,99%
+        percentage_fee = amount * 0.0999  # 9,99%
         total_fee = fixed_fee + percentage_fee
         net_amount = amount - total_fee
         

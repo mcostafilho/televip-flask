@@ -1,7 +1,7 @@
 # app/services/payment_service.py
 """
 Serviço para cálculo de taxas e processamento de pagamentos
-Taxa: R$ 0,99 + 7,99% por transação
+Taxa: R$ 0,99 + 9,99% por transação
 """
 from decimal import Decimal, ROUND_HALF_UP
 
@@ -13,13 +13,13 @@ class PaymentService:
 
     # Taxas do sistema
     FIXED_FEE = Decimal('0.99')  # Taxa fixa por transação
-    PERCENTAGE_FEE = Decimal('0.0799')  # 7,99% de taxa percentual
+    PERCENTAGE_FEE = Decimal('0.0999')  # 9,99% de taxa percentual
 
     @staticmethod
     def calculate_fees(gross_amount):
         """
         Calcula as taxas sobre um valor bruto
-        Taxa: R$ 0,99 + 7,99% do valor
+        Taxa: R$ 0,99 + 9,99% do valor
 
         Args:
             gross_amount: Valor bruto da transação (float ou Decimal)
@@ -71,7 +71,7 @@ class PaymentService:
         return {
             'gross': f"R$ {fees['gross_amount']:.2f}",
             'fixed_fee': f"R$ {fees['fixed_fee']:.2f}",
-            'percentage_fee': f"R$ {fees['percentage_fee']:.2f} (7,99%)",
+            'percentage_fee': f"R$ {fees['percentage_fee']:.2f} (9,99%)",
             'total_fee': f"R$ {fees['total_fee']:.2f}",
             'net': f"R$ {fees['net_amount']:.2f}",
             'effective_rate': f"{fees['fee_percentage']:.2f}%"
@@ -80,7 +80,7 @@ class PaymentService:
     @staticmethod
     def get_fee_description():
         """Retorna a descrição das taxas"""
-        return "R$ 0,99 + 7,99% por transação"
+        return "R$ 0,99 + 9,99% por transação"
 
     @staticmethod
     def calculate_creator_earnings(transactions):
