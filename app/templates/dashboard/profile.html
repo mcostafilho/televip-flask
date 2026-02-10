@@ -264,6 +264,43 @@ body > footer {
                                            value="{{ user.email }}" required>
                                 </div>
                                 
+                                <!-- Dados para Saque -->
+                                <div class="col-12">
+                                    <hr class="my-3">
+                                    <h6 class="text-muted mb-3">
+                                        <i class="bi bi-bank"></i> Dados para Saque
+                                    </h6>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Tipo de Chave PIX</label>
+                                    <select class="form-select" name="pix_key_type" id="pixKeyType" style="padding: 0.5rem 0.75rem; font-size: 0.875rem;">
+                                        <option value="">Selecione...</option>
+                                        <option value="cpf" {% if user.pix_key and user.pix_key.startswith('cpf:') %}selected{% endif %}>CPF</option>
+                                        <option value="cnpj" {% if user.pix_key and user.pix_key.startswith('cnpj:') %}selected{% endif %}>CNPJ</option>
+                                        <option value="email" {% if user.pix_key and user.pix_key.startswith('email:') %}selected{% endif %}>Email</option>
+                                        <option value="telefone" {% if user.pix_key and user.pix_key.startswith('telefone:') %}selected{% endif %}>Telefone</option>
+                                        <option value="aleatoria" {% if user.pix_key and user.pix_key.startswith('aleatoria:') %}selected{% endif %}>Chave Aleatória</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="form-label">Chave PIX</label>
+                                    <input type="text" class="form-control" name="pix_key_value" id="pixKeyValue"
+                                           value="{{ user.pix_key.split(':', 1)[1] if user.pix_key and ':' in user.pix_key else (user.pix_key or '') }}"
+                                           placeholder="Digite sua chave PIX">
+                                    <small class="text-muted">
+                                        <i class="bi bi-lock"></i> Sua chave PIX é armazenada de forma encriptada. Alteração exige senha atual.
+                                    </small>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Telefone / WhatsApp</label>
+                                    <input type="tel" class="form-control" name="phone"
+                                           value="{{ user.phone or '' }}"
+                                           placeholder="(11) 99999-9999">
+                                    <small class="text-muted">Para contato de suporte</small>
+                                </div>
+
                                 <!-- Senha -->
                                 <div class="col-12">
                                     <hr class="my-3">
@@ -395,9 +432,89 @@ body > footer {
                         </div>
                     </div>
                     {% endif %}
+                    <!-- Excluir Conta (LGPD) -->
+                    <div class="profile-card">
+                        <h5 class="mb-3 text-danger">
+                            <i class="bi bi-exclamation-triangle"></i> Zona de Perigo
+                        </h5>
+                        <p class="text-muted mb-3">
+                            A exclusão da conta é irreversível. Todos os seus dados pessoais serão anonimizados,
+                            mas o histórico financeiro será mantido para fins de auditoria.
+                        </p>
+                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                            <i class="bi bi-trash"></i> Excluir Minha Conta
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Modal Excluir Conta -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle"></i> Excluir Conta
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('dashboard.delete_account') }}" id="deleteAccountForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <strong>Atenção!</strong> Esta ação é <strong>irreversível</strong>. Ao excluir sua conta:
+                        <ul class="mb-0 mt-2">
+                            <li>Seus dados pessoais serão anonimizados</li>
+                            <li>Você perderá acesso a todos os grupos</li>
+                            <li>Assinantes ativos não serão renovados</li>
+                            <li>Saques pendentes ainda serão processados</li>
+                        </ul>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Senha atual</label>
+                        <input type="password" class="form-control" name="password" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Digite <strong>EXCLUIR</strong> para confirmar</label>
+                        <input type="text" class="form-control" name="confirmation" id="deleteConfirmation"
+                               required autocomplete="off">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger" id="deleteAccountBtn" disabled>
+                        <i class="bi bi-trash"></i> Excluir Minha Conta
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Enable delete button only when "EXCLUIR" is typed
+document.getElementById('deleteConfirmation').addEventListener('input', function() {
+    document.getElementById('deleteAccountBtn').disabled = this.value !== 'EXCLUIR';
+});
+
+// Phone mask
+document.querySelector('input[name="phone"]').addEventListener('input', function() {
+    let v = this.value.replace(/\D/g, '');
+    if (v.length > 11) v = v.slice(0, 11);
+    if (v.length > 6) {
+        this.value = '(' + v.slice(0, 2) + ') ' + v.slice(2, 7) + '-' + v.slice(7);
+    } else if (v.length > 2) {
+        this.value = '(' + v.slice(0, 2) + ') ' + v.slice(2);
+    } else if (v.length > 0) {
+        this.value = '(' + v;
+    }
+});
+</script>
 {% endblock %}

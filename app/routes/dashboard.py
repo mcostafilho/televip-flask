@@ -405,18 +405,28 @@ def update_profile():
     """Atualizar perfil"""
     name = request.form.get('name')
     email = request.form.get('email')
-    pix_key = request.form.get('pix_key')
+    phone = request.form.get('phone', '').strip()
+    pix_key_type = request.form.get('pix_key_type', '').strip()
+    pix_key_value = request.form.get('pix_key_value', '').strip()
     current_password = request.form.get('current_password')
     new_password = request.form.get('new_password')
     confirm_password = request.form.get('confirm_password')
 
-    # Check if sensitive changes are being made (email or password)
+    # Build new PIX key from type:value
+    new_pix_key = None
+    if pix_key_type and pix_key_value:
+        new_pix_key = f"{pix_key_type}:{pix_key_value}"
+
+    # Check if PIX key is being changed
+    changing_pix = new_pix_key != current_user.pix_key
+
+    # Check if sensitive changes are being made (email, password, or PIX)
     changing_email = email and email != current_user.email
     changing_password = bool(new_password)
 
-    if changing_email or changing_password:
+    if changing_email or changing_password or changing_pix:
         if not current_password:
-            flash('Informe a senha atual para alterar email ou senha', 'error')
+            flash('Informe a senha atual para alterar email, senha ou chave PIX', 'error')
             return redirect(url_for('dashboard.profile'))
         if not current_user.check_password(current_password):
             flash('Senha atual incorreta', 'error')
@@ -443,14 +453,54 @@ def update_profile():
             return redirect(url_for('dashboard.profile'))
         current_user.email = email
 
-    # Update PIX key (no password required)
-    if pix_key is not None:
-        current_user.pix_key = pix_key
+    # Update PIX key (password already verified above)
+    if changing_pix:
+        current_user.pix_key = new_pix_key
+
+    # Update phone (no password required)
+    if phone is not None:
+        current_user.phone = phone
 
     db.session.commit()
     flash('Perfil atualizado com sucesso!', 'success')
 
     return redirect(url_for('dashboard.profile'))
+
+
+@bp.route('/profile/delete', methods=['POST'])
+@login_required
+@limiter.limit("3 per hour")
+def delete_account():
+    """Excluir conta (LGPD) - soft delete com anonimização"""
+    from flask_login import logout_user
+
+    password = request.form.get('password')
+    confirmation = request.form.get('confirmation')
+
+    if confirmation != 'EXCLUIR':
+        flash('Confirmação inválida. Digite EXCLUIR para confirmar.', 'error')
+        return redirect(url_for('dashboard.profile'))
+
+    if not password or not current_user.check_password(password):
+        flash('Senha incorreta.', 'error')
+        return redirect(url_for('dashboard.profile'))
+
+    # Soft delete: deactivate and anonymize personal data
+    creator = Creator.query.get(current_user.id)
+    creator.is_active = False
+    creator.name = 'Conta Excluída'
+    creator.email = f'deleted_{creator.id}@removed'
+    creator.username = f'deleted_{creator.id}'
+    creator.pix_key = None
+    creator.phone = None
+    creator.telegram_username = None
+
+    db.session.commit()
+
+    logout_user()
+    flash('Sua conta foi excluída com sucesso.', 'info')
+    return redirect(url_for('main.index'))
+
 
 @bp.route('/analytics')
 @login_required

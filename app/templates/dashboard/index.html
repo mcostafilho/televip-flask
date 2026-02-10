@@ -369,6 +369,21 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             {% if available_balance|default(0) >= 50 %}
+                {% if not current_user.pix_key %}
+                <div class="modal-body text-center py-4">
+                    <div class="mb-3">
+                        <i class="bi bi-key text-warning" style="font-size: 3rem;"></i>
+                    </div>
+                    <p class="mb-1"><strong>Chave PIX não cadastrada</strong></p>
+                    <p class="text-muted">Cadastre sua chave PIX no perfil antes de solicitar um saque.</p>
+                    <a href="{{ url_for('dashboard.profile') }}" class="btn btn-primary">
+                        <i class="bi bi-person-gear"></i> Ir para o Perfil
+                    </a>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+                {% else %}
             <form method="POST" action="{{ url_for('dashboard.withdraw') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="modal-body">
@@ -401,6 +416,7 @@
                     </button>
                 </div>
             </form>
+                {% endif %}
             {% else %}
             <div class="modal-body text-center py-4">
                 <div class="mb-3">
