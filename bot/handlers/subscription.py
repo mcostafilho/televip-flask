@@ -540,7 +540,10 @@ async def cancel_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE
                 f"A renovacao automatica sera desativada."
             )
         else:
-            cancel_text = "Voce perdera acesso ao grupo **imediatamente**."
+            cancel_text = (
+                f"Voce mantera acesso ao grupo ate **{sub.end_date.strftime('%d/%m/%Y')}**.\n"
+                f"Apos essa data, o acesso sera removido automaticamente."
+            )
 
         text = (
             f"⚠️ **Cancelar Assinatura**\n\n"
@@ -612,18 +615,16 @@ async def confirm_cancel_subscription(update: Update, context: ContextTypes.DEFA
                 )
                 keyboard = [[InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")]]
         else:
-            # Legacy: immediate cancel
-            sub.status = 'cancelled'
+            # Legacy: cancel at period end (manter acesso até expirar)
+            sub.cancel_at_period_end = True
+            sub.auto_renew = False
             session.commit()
 
-            from bot.jobs.scheduled_tasks import remove_from_group
-            await remove_from_group(sub)
-
             text = (
-                f"✅ **Assinatura Cancelada**\n\n"
-                f"Sua assinatura do grupo **{group_name}** foi cancelada com sucesso.\n\n"
-                f"Voce foi removido do grupo.\n"
-                f"Para assinar novamente, use /descobrir."
+                f"✅ **Cancelamento Agendado**\n\n"
+                f"Sua assinatura do grupo **{group_name}** nao sera renovada.\n\n"
+                f"📅 Voce mantera acesso ate **{end_date_str}**.\n\n"
+                f"Apos essa data, o acesso sera removido automaticamente."
             )
 
             keyboard = [[InlineKeyboardButton("🏠 Menu Principal", callback_data="back_to_start")]]
