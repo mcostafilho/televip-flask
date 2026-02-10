@@ -417,6 +417,11 @@ def update_profile():
     if pix_key_type and pix_key_value:
         new_pix_key = f"{pix_key_type}:{pix_key_value}"
 
+    # PIX requires phone for support contact
+    if new_pix_key and not phone:
+        flash('Informe seu telefone/WhatsApp para cadastrar a chave PIX (necessário para suporte).', 'error')
+        return redirect(url_for('dashboard.profile'))
+
     # Check if PIX key is being changed
     changing_pix = new_pix_key != current_user.pix_key
 

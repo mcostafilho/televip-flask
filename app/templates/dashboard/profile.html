@@ -504,8 +504,21 @@ document.getElementById('deleteConfirmation').addEventListener('input', function
     document.getElementById('deleteAccountBtn').disabled = this.value !== 'EXCLUIR';
 });
 
+// Require phone when PIX is filled
+var pixType = document.getElementById('pixKeyType');
+var pixValue = document.getElementById('pixKeyValue');
+var phoneInput = document.querySelector('input[name="phone"]');
+
+function togglePhoneRequired() {
+    var hasPix = pixType.value && pixValue.value;
+    phoneInput.required = hasPix;
+}
+pixType.addEventListener('change', togglePhoneRequired);
+pixValue.addEventListener('input', togglePhoneRequired);
+togglePhoneRequired();
+
 // Phone mask
-document.querySelector('input[name="phone"]').addEventListener('input', function() {
+phoneInput.addEventListener('input', function() {
     let v = this.value.replace(/\D/g, '');
     if (v.length > 11) v = v.slice(0, 11);
     if (v.length > 6) {
