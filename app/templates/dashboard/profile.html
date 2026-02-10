@@ -301,24 +301,6 @@ body > footer {
                                     <small class="text-muted">Para contato de suporte</small>
                                 </div>
 
-                                <!-- Senha Atual -->
-                                <div class="col-12">
-                                    <hr class="my-3">
-                                    <h6 class="text-muted mb-3">
-                                        <i class="bi bi-shield-lock"></i> Confirme sua Identidade
-                                    </h6>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Senha Atual</label>
-                                    <input type="password" class="form-control" name="current_password"
-                                           placeholder="Digite sua senha atual">
-                                    <small class="text-muted">
-                                        <i class="bi bi-info-circle"></i>
-                                        Necessária para salvar alterações em email, chave PIX ou senha
-                                    </small>
-                                </div>
-
                                 <!-- Alterar Senha -->
                                 <div class="col-12">
                                     <hr class="my-3">
@@ -334,15 +316,23 @@ body > footer {
                                     <input type="password" class="form-control" name="confirm_password" minlength="6">
                                 </div>
 
+                                <!-- Senha Atual + Botões -->
                                 <div class="col-12">
-                                    <small class="text-muted">
-                                        <i class="bi bi-info-circle"></i>
-                                        Deixe em branco se não quiser alterar a senha
-                                    </small>
+                                    <hr class="my-3">
+                                    <div class="alert alert-warning mb-3">
+                                        <h6 class="alert-heading mb-2">
+                                            <i class="bi bi-shield-lock"></i> Confirme sua senha para salvar
+                                        </h6>
+                                        <p class="mb-2 small">
+                                            Para sua segurança, informe sua senha atual para salvar alterações em <strong>email</strong>, <strong>chave PIX</strong> ou <strong>senha</strong>.
+                                        </p>
+                                        <input type="password" class="form-control" name="current_password"
+                                               placeholder="Digite sua senha atual">
+                                    </div>
                                 </div>
 
                                 <!-- Botões -->
-                                <div class="col-12 mt-3">
+                                <div class="col-12">
                                     <button type="submit" class="btn btn-primary">
                                         <i class="bi bi-check-circle"></i> Salvar Alterações
                                     </button>
