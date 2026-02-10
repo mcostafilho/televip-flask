@@ -113,6 +113,10 @@ class TestInviteSlugInLinks:
             'description': 'Testing slug generation',
             'telegram_id': '-100999888',
             'skip_validation': 'on',
+            'plan_name[]': 'Mensal',
+            'plan_duration[]': '30',
+            'plan_price[]': '29.90',
+            'plan_lifetime[]': '0',
         }, follow_redirects=True)
         assert resp.status_code == 200
         g = Group.query.filter_by(name='Slug Test Group').first()

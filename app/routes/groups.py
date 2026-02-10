@@ -175,19 +175,59 @@ def create():
                 else:
                     flash('⚠️ ID do Telegram não fornecido.', 'warning')
         
-        # Criar grupo (empty strings → None for unique-constrained fields)
-        group = Group(
-            name=name,
-            description=description,
-            telegram_id=telegram_id or None,
-            invite_link=invite_link or None,
-            creator_id=current_user.id,
-            is_active=True
-        )
-
+        # Criar grupo + planos de forma atômica
         try:
+            group = Group(
+                name=name,
+                description=description,
+                telegram_id=telegram_id or None,
+                invite_link=invite_link or None,
+                creator_id=current_user.id,
+                is_active=True
+            )
             db.session.add(group)
+            db.session.flush()  # gera group.id sem commitar
+
+            # Adicionar planos
+            plan_names = request.form.getlist('plan_name[]')
+            plan_durations = request.form.getlist('plan_duration[]')
+            plan_prices = request.form.getlist('plan_price[]')
+            plan_lifetimes = request.form.getlist('plan_lifetime[]')
+
+            has_valid_plan = False
+            for i in range(len(plan_names)):
+                if plan_names[i]:
+                    lifetime = (plan_lifetimes[i] == '1') if i < len(plan_lifetimes) else False
+                    errs, price, duration = _validate_plan_input(
+                        plan_names[i],
+                        plan_prices[i] if i < len(plan_prices) else '0',
+                        plan_durations[i] if i < len(plan_durations) else '0',
+                        is_lifetime=lifetime
+                    )
+                    if errs:
+                        for e in errs:
+                            flash(e, 'error')
+                        continue
+                    plan = PricingPlan(
+                        group_id=group.id,
+                        name=plan_names[i][:100],
+                        duration_days=duration,
+                        price=price,
+                        is_lifetime=lifetime,
+                        is_active=True
+                    )
+                    db.session.add(plan)
+                    has_valid_plan = True
+
+            if not has_valid_plan:
+                db.session.rollback()
+                flash('Adicione pelo menos um plano válido.', 'error')
+                return render_template('dashboard/group_form.html',
+                                     group=None,
+                                     show_success_modal=False)
+
             db.session.commit()
+
         except Exception as e:
             db.session.rollback()
             logger.error(f"Erro ao criar grupo: {e}")
@@ -198,50 +238,18 @@ def create():
             return render_template('dashboard/group_form.html',
                                  group=None,
                                  show_success_modal=False)
-        
-        # Adicionar planos com validação
-        plan_names = request.form.getlist('plan_name[]')
-        plan_durations = request.form.getlist('plan_duration[]')
-        plan_prices = request.form.getlist('plan_price[]')
-        plan_lifetimes = request.form.getlist('plan_lifetime[]')
 
-        for i in range(len(plan_names)):
-            if plan_names[i]:
-                lifetime = (plan_lifetimes[i] == '1') if i < len(plan_lifetimes) else False
-                errs, price, duration = _validate_plan_input(
-                    plan_names[i],
-                    plan_prices[i] if i < len(plan_prices) else '0',
-                    plan_durations[i] if i < len(plan_durations) else '0',
-                    is_lifetime=lifetime
-                )
-                if errs:
-                    for e in errs:
-                        flash(e, 'error')
-                    continue
-                plan = PricingPlan(
-                    group_id=group.id,
-                    name=plan_names[i][:100],
-                    duration_days=duration,
-                    price=price,
-                    is_lifetime=lifetime,
-                    is_active=True
-                )
-                db.session.add(plan)
-
-        db.session.commit()
-        
-        # CORREÇÃO IMPORTANTE: Gerar link do bot usando group.id, não telegram_id
+        # Gerar link do bot
         bot_username = os.getenv('TELEGRAM_BOT_USERNAME') or os.getenv('BOT_USERNAME', 'televipbra_bot')
         bot_link = f"https://t.me/{bot_username}?start=g_{group.invite_slug}"
-        
+
         flash(f'Grupo "{group.name}" criado com sucesso! Link: {bot_link}', 'success')
-        
-        # Renderizar template com modal de sucesso
-        return render_template('dashboard/group_form.html', 
+
+        return render_template('dashboard/group_form.html',
                              group=None,
                              show_success_modal=True,
                              new_group_name=group.name,
-                             new_group_id=group.id,  # Passar o ID também
+                             new_group_id=group.id,
                              new_group_telegram_id=group.telegram_id,
                              bot_link=bot_link)
     
