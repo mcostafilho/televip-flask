@@ -447,8 +447,14 @@ def update_profile():
         if new_password != confirm_password:
             flash('As novas senhas não coincidem', 'error')
             return redirect(url_for('dashboard.profile'))
-        if len(new_password) < 6:
-            flash('A nova senha deve ter no mínimo 6 caracteres', 'error')
+        if len(new_password) < 8:
+            flash('A nova senha deve ter no mínimo 8 caracteres', 'error')
+            return redirect(url_for('dashboard.profile'))
+        if not any(c.isupper() for c in new_password):
+            flash('A nova senha deve conter pelo menos uma letra maiúscula', 'error')
+            return redirect(url_for('dashboard.profile'))
+        if not any(c.isdigit() for c in new_password):
+            flash('A nova senha deve conter pelo menos um número', 'error')
             return redirect(url_for('dashboard.profile'))
         current_user.set_password(new_password)
 

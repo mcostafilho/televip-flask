@@ -25,9 +25,12 @@
                         <i class="bi bi-whatsapp"></i> WhatsApp: entre em contato pelo nosso suporte
                     </div>
 
-                    <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger mt-3">
-                        <i class="bi bi-box-arrow-right"></i> Sair da conta
-                    </a>
+                    <form method="POST" action="{{ url_for('auth.logout') }}" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="btn btn-outline-danger mt-3">
+                            <i class="bi bi-box-arrow-right"></i> Sair da conta
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

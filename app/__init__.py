@@ -23,6 +23,10 @@ def create_app():
     from config import get_config
     app.config.from_object(get_config())
 
+    # ProxyFix para IP correto atrás do Nginx (1 proxy: Nginx)
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
     # Inicializar extensões
     db.init_app(app)
     login_manager.init_app(app)
@@ -38,8 +42,8 @@ def create_app():
         client_kwargs={'scope': 'openid email profile'},
     )
 
-    # Fix 2: Restrict CORS to webhooks and API routes only
-    CORS(app, resources={r"/webhooks/*": {"origins": "*"}, r"/api/*": {"origins": "*"}})
+    # Fix 2: Restrict CORS to webhooks only (uses signature verification)
+    CORS(app, resources={r"/webhooks/*": {"origins": "*"}})
 
     # Configurar login
     login_manager.login_view = 'auth.login'

@@ -14,7 +14,11 @@ class Config:
     """Configurações base da aplicação"""
     
     # Configurações gerais
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    if not SECRET_KEY:
+        import warnings
+        SECRET_KEY = 'dev-secret-key-change-in-production'
+        warnings.warn('SECRET_KEY não definida! Usando fallback inseguro. Defina SECRET_KEY no .env.', stacklevel=2)
     
     # Configurações do banco de dados
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
@@ -74,7 +78,11 @@ class Config:
     
     # Configurações de segurança
     WTF_CSRF_ENABLED = True
-    WTF_CSRF_TIME_LIMIT = None
+    WTF_CSRF_TIME_LIMIT = 3600  # 1 hora
+
+    # Remember-me cookie
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = 'Lax'
     
     # Configurações de desenvolvimento
     DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() in ['true', '1', 'on']
@@ -109,6 +117,7 @@ class ProductionConfig(Config):
 
     # Cookies seguros em produção (HTTPONLY and SameSite are in base Config)
     SESSION_COOKIE_SECURE = True
+    REMEMBER_COOKIE_SECURE = True
 
     @classmethod
     def init_app(cls, app):

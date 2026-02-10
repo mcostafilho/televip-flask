@@ -12,6 +12,13 @@ from datetime import datetime
 bp = Blueprint('auth', __name__)
 logger = logging.getLogger(__name__)
 
+
+def _regenerate_session():
+    """Regenera o session ID mantendo os dados (previne session fixation)"""
+    data = dict(session)
+    session.clear()
+    session.update(data)
+
 @bp.route('/')
 def index():
     """Página inicial - redireciona para login ou dashboard"""
@@ -41,6 +48,9 @@ def login():
                 user.google_id = pending_google_id
                 db.session.commit()
                 flash('Conta Google vinculada com sucesso!', 'success')
+            user.update_last_login()
+            # Regenerar sessão para prevenir session fixation
+            _regenerate_session()
             login_user(user, remember=bool(remember))
             next_page = request.args.get('next')
             if next_page and not is_safe_url(next_page):
@@ -113,7 +123,7 @@ def register():
                 email=email,
                 username=username,
                 terms_accepted_at=datetime.utcnow(),
-                terms_ip=request.headers.get('X-Forwarded-For', request.remote_addr),
+                terms_ip=request.remote_addr,
                 terms_user_agent=request.headers.get('User-Agent', '')[:500]
             )
             user.set_password(password)
@@ -324,6 +334,7 @@ def google_callback():
         db.session.commit()
 
         flash(f'Conta criada com sucesso! Bem-vindo, {user.name}!', 'success')
+        _regenerate_session()
         login_user(user)
         return redirect(url_for('dashboard.index'))
 
@@ -332,8 +343,13 @@ def google_callback():
         flash('Sua conta está bloqueada.', 'error')
         return redirect(url_for('auth.login'))
 
+    # M8: Se vinculou por email e não era verificado, verificar agora (Google confirmou o email)
+    if not user.is_verified:
+        user.is_verified = True
+
     # Login
     user.update_last_login()
+    _regenerate_session()
     login_user(user)
     flash(f'Bem-vindo de volta, {user.name}!', 'success')
     return redirect(url_for('dashboard.index'))
@@ -346,7 +362,7 @@ def blocked_account():
     return render_template('public/blocked.html')
 
 
-@bp.route('/logout')
+@bp.route('/logout', methods=['POST'])
 @login_required
 def logout():
     logout_user()
