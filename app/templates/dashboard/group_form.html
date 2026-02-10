@@ -96,36 +96,11 @@
     border-style: solid;
 }
 
-.group-form-page .duration-wrapper {
-    position: relative;
-}
-
-.group-form-page .lifetime-toggle {
-    position: absolute;
-    right: 0;
-    top: 0;
-    padding: 0.1rem 0.4rem;
-    font-size: 0.65rem;
-    font-weight: 600;
-    border-radius: 4px;
-    cursor: pointer;
-    border: 1px solid #adb5bd;
-    color: #6c757d;
-    background: #fff;
-    transition: all 0.2s ease;
-    line-height: 1.2;
-    z-index: 1;
-}
-
-.group-form-page .lifetime-toggle:hover {
-    border-color: #667eea;
+.group-form-page .lifetime-check label {
+    font-size: 0.75rem;
     color: #667eea;
-}
-
-.group-form-page .lifetime-toggle.active {
-    background: #667eea;
-    color: white;
-    border-color: #667eea;
+    cursor: pointer;
+    user-select: none;
 }
 
 .group-form-page .guide-card {
@@ -303,14 +278,15 @@
                                                            value="{{ plan.name }}" required>
                                                 </div>
                                                 <div class="col-md-3">
-                                                    <div class="duration-wrapper">
-                                                        <label class="form-label">Duração (dias)</label>
-                                                        <button type="button" class="lifetime-toggle {{ 'active' if plan.is_lifetime else '' }}" onclick="toggleLifetime(this)" title="Plano Vitalício">&#8734; Vitalício</button>
-                                                    </div>
+                                                    <label class="form-label">Duração (dias)</label>
                                                     <input type="number" name="plan_duration[]" class="form-control duration-input"
                                                            value="{{ plan.duration_days }}" min="1" required
                                                            {{ 'disabled' if plan.is_lifetime else '' }}
                                                            {{ 'placeholder=∞' if plan.is_lifetime else '' }}>
+                                                    <div class="form-check lifetime-check mt-1">
+                                                        <input class="form-check-input" type="checkbox" onchange="toggleLifetime(this)" {{ 'checked' if plan.is_lifetime else '' }}>
+                                                        <label class="form-check-label">&#8734; Vitalício</label>
+                                                    </div>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <label class="form-label">Preço (R$)</label>
@@ -337,12 +313,13 @@
                                                            value="Mensal" required>
                                                 </div>
                                                 <div class="col-md-3">
-                                                    <div class="duration-wrapper">
-                                                        <label class="form-label">Duração (dias)</label>
-                                                        <button type="button" class="lifetime-toggle" onclick="toggleLifetime(this)" title="Plano Vitalício">&#8734; Vitalício</button>
-                                                    </div>
+                                                    <label class="form-label">Duração (dias)</label>
                                                     <input type="number" name="plan_duration[]" class="form-control duration-input"
                                                            value="30" min="1" required>
+                                                    <div class="form-check lifetime-check mt-1">
+                                                        <input class="form-check-input" type="checkbox" onchange="toggleLifetime(this)">
+                                                        <label class="form-check-label">&#8734; Vitalício</label>
+                                                    </div>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <label class="form-label">Preço (R$)</label>
@@ -538,11 +515,12 @@ function addPlan() {
                 <input type="text" name="plan_name[]" class="form-control" required>
             </div>
             <div class="col-md-3">
-                <div class="duration-wrapper">
-                    <label class="form-label">Duração (dias)</label>
-                    <button type="button" class="lifetime-toggle" onclick="toggleLifetime(this)" title="Plano Vitalício">&#8734; Vitalício</button>
-                </div>
+                <label class="form-label">Duração (dias)</label>
                 <input type="number" name="plan_duration[]" class="form-control duration-input" min="1" required>
+                <div class="form-check lifetime-check mt-1">
+                    <input class="form-check-input" type="checkbox" onchange="toggleLifetime(this)">
+                    <label class="form-check-label">&#8734; Vitalício</label>
+                </div>
             </div>
             <div class="col-md-3">
                 <label class="form-label">Preço (R$)</label>
@@ -582,13 +560,12 @@ function removePlan(button) {
 }
 
 // Toggle plano vitalício
-function toggleLifetime(btn) {
-    const planItem = btn.closest('.plan-item');
+function toggleLifetime(checkbox) {
+    const planItem = checkbox.closest('.plan-item');
     const durationInput = planItem.querySelector('.duration-input');
     const hiddenInput = planItem.querySelector('.lifetime-hidden');
-    const isActive = btn.classList.toggle('active');
 
-    if (isActive) {
+    if (checkbox.checked) {
         durationInput.dataset.prevValue = durationInput.value;
         durationInput.value = '';
         durationInput.placeholder = '\u221E';
