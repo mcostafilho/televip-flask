@@ -265,12 +265,12 @@ def logout():
 def sitemap():
     """Sitemap XML para motores de busca"""
     urls = [
-        'https://televip.com/',
-        'https://televip.com/recursos',
-        'https://televip.com/precos',
-        'https://televip.com/termos',
-        'https://televip.com/privacidade',
-        'https://televip.com/denuncia',
+        'https://televip.app/',
+        'https://televip.app/recursos',
+        'https://televip.app/precos',
+        'https://televip.app/termos',
+        'https://televip.app/privacidade',
+        'https://televip.app/denuncia',
     ]
     xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
     xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
@@ -283,7 +283,7 @@ def sitemap():
 @bp.route('/robots.txt')
 def robots():
     """Robots.txt para motores de busca"""
-    txt = "User-agent: *\nAllow: /\n\nSitemap: https://televip.com/sitemap.xml\n"
+    txt = "User-agent: *\nAllow: /\n\nSitemap: https://televip.app/sitemap.xml\n"
     return Response(txt, content_type='text/plain')
 
 
