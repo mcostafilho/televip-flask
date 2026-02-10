@@ -98,9 +98,6 @@
                         {% endif %}
                         
                         <div class="mt-1">
-                            <small class="text-muted d-block">
-                                Taxa: R$ 0,99 + 9,99%
-                            </small>
                             {% if available_balance|default(0) >= 50 %}
                             <a href="#" class="btn btn-sm btn-success mt-1" data-bs-toggle="modal" data-bs-target="#withdrawModal">
                                 <i class="bi bi-cash-stack"></i> Sacar
@@ -392,13 +389,12 @@
                             <input type="number" name="amount" class="form-control" 
                                    step="0.01" min="50" max="{{ available_balance|default(0) }}" required>
                         </div>
-                        <small class="text-muted">Mínimo: R$ 50,00 | Taxa: R$ 0,99 + 9,99%</small>
+                        <small class="text-muted">Mínimo: R$ 50,00</small>
                     </div>
-                    
-                    <div class="alert alert-warning">
+
+                    <div class="alert alert-info">
                         <small>
-                            <i class="bi bi-exclamation-triangle"></i>
-                            <strong>Taxas aplicadas:</strong> R$ 0,99 + 9,99% por transação<br>
+                            <i class="bi bi-info-circle"></i>
                             <strong>Prazo:</strong> Até 3 dias úteis via PIX
                         </small>
                     </div>
