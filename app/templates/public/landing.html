@@ -43,6 +43,11 @@
             <a class="navbar-brand" href="#home">
                 <i class="bi bi-telegram"></i> TeleVIP
             </a>
+            <a href="https://wa.me/551721223445" target="_blank" rel="noopener noreferrer"
+               class="btn btn-success btn-sm d-lg-none ms-auto me-2"
+               style="font-size: 13px; white-space: nowrap;">
+                <i class="bi bi-whatsapp"></i> Suporte
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -543,8 +548,8 @@
         }
     </style>
     
-    <!-- Floating WhatsApp Button -->
-    <div id="whatsapp-float" style="position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; align-items: center; gap: 12px;">
+    <!-- Floating WhatsApp Button (hidden on mobile, shown in navbar instead) -->
+    <div id="whatsapp-float" class="d-none d-lg-flex" style="position: fixed; bottom: 24px; right: 24px; z-index: 9999; align-items: center; gap: 12px;">
         <div id="whatsapp-tooltip" style="background: white; color: #333; padding: 10px 16px; border-radius: 12px;
                 box-shadow: 0 4px 16px rgba(0,0,0,0.12); font-size: 14px; font-weight: 500; white-space: nowrap;
                 opacity: 1; transition: opacity 0.3s ease; font-family: 'Poppins', sans-serif;">
