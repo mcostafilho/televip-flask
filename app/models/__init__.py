@@ -4,6 +4,7 @@
 from .user import Creator
 from .group import Group, PricingPlan
 from .subscription import Subscription, Transaction
+from .report import Report
 
 # Tentar importar Withdrawal se existir
 try:
@@ -14,4 +15,4 @@ except ImportError:
         pass
 
 # Exportar todos os modelos
-__all__ = ['Creator', 'Group', 'PricingPlan', 'Subscription', 'Transaction', 'Withdrawal']
+__all__ = ['Creator', 'Group', 'PricingPlan', 'Subscription', 'Transaction', 'Withdrawal', 'Report']

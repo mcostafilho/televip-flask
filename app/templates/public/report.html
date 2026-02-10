@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Denunciar Abuso - TeleVIP{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 700px;">
+    <h1 class="mb-2">Denunciar Abuso</h1>
+    <p class="text-muted mb-4">
+        Utilize este formulário para reportar conteúdo que viole nossos
+        <a href="{{ url_for('auth.terms') }}">Termos de Uso</a>.
+        Todas as denúncias são analisadas pela nossa equipe com sigilo.
+    </p>
+
+    {% if success %}
+    <div class="alert alert-success">
+        <i class="bi bi-check-circle-fill"></i>
+        <strong>Denúncia enviada com sucesso!</strong> Nossa equipe irá analisar e tomar as providências cabíveis.
+    </div>
+    <div class="text-center mt-4">
+        <a href="{{ url_for('auth.index') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Voltar ao Início
+        </a>
+    </div>
+    {% else %}
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <form method="POST" action="{{ url_for('auth.report') }}">
+                <div class="mb-3">
+                    <label for="report_type" class="form-label fw-semibold">Tipo de Denúncia *</label>
+                    <select class="form-select" id="report_type" name="report_type" required>
+                        <option value="" disabled selected>Selecione o tipo</option>
+                        <option value="conteudo_ilicito">Conteúdo ilícito</option>
+                        <option value="fraude">Fraude ou golpe</option>
+                        <option value="abuso">Abuso ou assédio</option>
+                        <option value="outro">Outro</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="target_name" class="form-label fw-semibold">Nome do Grupo ou Criador *</label>
+                    <input type="text" class="form-control" id="target_name" name="target_name"
+                           placeholder="Ex: Nome do grupo ou @username do criador" required maxlength="200">
+                </div>
+
+                <div class="mb-3">
+                    <label for="description" class="form-label fw-semibold">Descrição *</label>
+                    <textarea class="form-control" id="description" name="description" rows="5"
+                              placeholder="Descreva o que aconteceu com o máximo de detalhes possível"
+                              required maxlength="2000"></textarea>
+                    <div class="form-text">Máximo 2000 caracteres.</div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="reporter_email" class="form-label fw-semibold">Seu Email (opcional)</label>
+                    <input type="email" class="form-control" id="reporter_email" name="reporter_email"
+                           placeholder="Para recebermos retorno sobre a denúncia" maxlength="200">
+                    <div class="form-text">Não é obrigatório, mas permite que entremos em contato se necessário.</div>
+                </div>
+
+                <button type="submit" class="btn btn-danger w-100">
+                    <i class="bi bi-flag"></i> Enviar Denúncia
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <a href="{{ url_for('auth.index') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Voltar ao Início
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

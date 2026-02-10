@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, current_user, login_required
 from app import db, limiter
-from app.models import Creator
+from app.models import Creator, Report
 from app.utils.email import send_password_reset_email, send_welcome_email, send_confirmation_email
 from app.utils.security import generate_reset_token, verify_reset_token, generate_confirmation_token, verify_confirmation_token, is_safe_url
 import re
@@ -276,3 +276,36 @@ def terms():
 def privacy():
     """Política de Privacidade"""
     return render_template('public/privacy.html')
+
+
+@bp.route('/denuncia', methods=['GET', 'POST'])
+@limiter.limit("5 per hour", methods=["POST"])
+def report():
+    """Canal de denúncia de abuso"""
+    if request.method == 'POST':
+        report_type = request.form.get('report_type', '').strip()
+        target_name = request.form.get('target_name', '').strip()
+        description = request.form.get('description', '').strip()
+        reporter_email = request.form.get('reporter_email', '').strip() or None
+
+        # Validação
+        valid_types = ['conteudo_ilicito', 'fraude', 'abuso', 'outro']
+        if not report_type or report_type not in valid_types:
+            flash('Selecione um tipo de denúncia válido.', 'error')
+        elif not target_name or len(target_name) < 2:
+            flash('Informe o nome do grupo ou criador.', 'error')
+        elif not description or len(description) < 10:
+            flash('A descrição deve ter pelo menos 10 caracteres.', 'error')
+        else:
+            new_report = Report(
+                report_type=report_type,
+                target_name=target_name[:200],
+                description=description[:2000],
+                reporter_email=reporter_email[:200] if reporter_email else None
+            )
+            db.session.add(new_report)
+            db.session.commit()
+            logger.info(f"New abuse report submitted: type={report_type}, target={target_name}")
+            return render_template('public/report.html', success=True)
+
+    return render_template('public/report.html', success=False)
