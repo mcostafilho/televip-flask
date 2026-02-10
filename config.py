@@ -41,9 +41,9 @@ class Config:
     STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
     
     # Configurações de sessão
-    SESSION_PERMANENT = False
+    SESSION_PERMANENT = True
     SESSION_TYPE = 'filesystem'
-    PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=2)  # Expira após 2h de inatividade
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
     

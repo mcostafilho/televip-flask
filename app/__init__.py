@@ -1,5 +1,5 @@
 # app/__init__.py
-from flask import Flask, request, redirect, render_template, url_for
+from flask import Flask, request, redirect, render_template, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user
 from flask_migrate import Migrate
@@ -77,6 +77,11 @@ def create_app():
     import os
     os.makedirs('logs', exist_ok=True)
     os.makedirs('instance', exist_ok=True)
+
+    # Renovar sessão a cada request (timeout por inatividade, não absoluto)
+    @app.before_request
+    def refresh_session():
+        session.permanent = True
 
     # Bloquear acesso de criadores bloqueados ao dashboard/groups
     @app.before_request

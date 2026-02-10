@@ -171,7 +171,7 @@ def forgot_password():
 @limiter.limit("5 per minute", methods=["POST"])
 def reset_password(token):
     if current_user.is_authenticated:
-        return redirect(url_for('dashboard.index'))
+        logout_user()
 
     # First decode without hash check to get user_id
     user_id = verify_reset_token(token)
