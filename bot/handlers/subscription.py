@@ -123,7 +123,7 @@ Precisa de ajuda? Use /help
                 # Estatísticas da assinatura
                 duration = (datetime.utcnow() - sub.start_date).days
                 text += f"   📊 Assinante há {duration} dias\n"
-                
+
                 text += "\n"
         
         # Listar expiradas recentes
@@ -162,6 +162,16 @@ Precisa de ajuda? Use /help
                 )
             ])
         
+        # Botões de cancelamento para cada assinatura ativa
+        for sub in active:
+            group = sub.group
+            keyboard.append([
+                InlineKeyboardButton(
+                    f"❌ Cancelar: {group.name[:20]}",
+                    callback_data=f"cancel_sub_{sub.id}"
+                )
+            ])
+
         # Outros botões
         keyboard.extend([
             [
@@ -472,9 +482,92 @@ async def process_renewal(update: Update, context: ContextTypes.DEFAULT_TYPE, su
                 InlineKeyboardButton("❌ Cancelar", callback_data="check_renewals")
             ]
         ]
-        
+
         await query.edit_message_text(
             text,
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
+
+async def cancel_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Mostrar confirmação de cancelamento de assinatura"""
+    query = update.callback_query
+    await query.answer()
+    user = query.from_user
+
+    # Extrair sub_id do callback_data "cancel_sub_123"
+    sub_id = int(query.data.replace("cancel_sub_", ""))
+
+    with get_db_session() as session:
+        sub = session.query(Subscription).get(sub_id)
+
+        if not sub or sub.telegram_user_id != str(user.id) or sub.status != 'active':
+            await query.edit_message_text("❌ Assinatura não encontrada ou já cancelada.")
+            return
+
+        group = sub.group
+
+        text = (
+            f"⚠️ **Cancelar Assinatura**\n\n"
+            f"**Grupo:** {group.name}\n"
+            f"**Plano:** {sub.plan.name}\n\n"
+            f"Tem certeza que deseja cancelar?\n"
+            f"Você perderá acesso ao grupo **imediatamente**."
+        )
+
+        keyboard = [
+            [
+                InlineKeyboardButton("✅ Sim, cancelar", callback_data=f"confirm_cancel_sub_{sub.id}"),
+                InlineKeyboardButton("❌ Não, manter", callback_data="back_to_start")
+            ]
+        ]
+
+        await query.edit_message_text(
+            text,
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+
+async def confirm_cancel_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Confirmar cancelamento e remover usuário do grupo"""
+    query = update.callback_query
+    await query.answer()
+    user = query.from_user
+
+    # Extrair sub_id do callback_data "confirm_cancel_sub_123"
+    sub_id = int(query.data.replace("confirm_cancel_sub_", ""))
+
+    with get_db_session() as session:
+        sub = session.query(Subscription).get(sub_id)
+
+        if not sub or sub.telegram_user_id != str(user.id) or sub.status != 'active':
+            await query.edit_message_text("❌ Assinatura não encontrada ou já cancelada.")
+            return
+
+        group_name = sub.group.name
+
+        # Cancelar assinatura
+        sub.status = 'cancelled'
+        session.commit()
+
+        # Remover usuário do grupo
+        from bot.jobs.scheduled_tasks import remove_from_group
+        await remove_from_group(sub)
+
+    # Enviar confirmação
+    text = (
+        f"✅ **Assinatura Cancelada**\n\n"
+        f"Sua assinatura do grupo **{group_name}** foi cancelada com sucesso.\n\n"
+        f"Você foi removido do grupo.\n"
+        f"Para assinar novamente, use /descobrir."
+    )
+
+    keyboard = [[
+        InlineKeyboardButton("🏠 Menu Principal", callback_data="back_to_start")
+    ]]
+
+    await query.edit_message_text(
+        text,
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )

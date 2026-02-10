@@ -333,7 +333,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 Clique no link fornecido pelo criador ou use /descobrir
 
 **Como cancelo uma assinatura?**
-As assinaturas não renovam automaticamente
+Use /status e clique no botão "Cancelar" da assinatura desejada
 
 **Posso mudar de plano?**
 Sim, quando sua assinatura atual expirar

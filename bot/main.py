@@ -36,7 +36,8 @@ from bot.handlers.payment import (
     check_payment_status, handle_payment_error
 )
 from bot.handlers.subscription import (
-    status_command, planos_command, handle_renewal
+    status_command, planos_command, handle_renewal,
+    cancel_subscription, confirm_cancel_subscription
 )
 from bot.handlers.admin import (
     setup_command, stats_command, broadcast_command,
@@ -112,7 +113,7 @@ async def handle_help_callback(update: Update, context: ContextTypes.DEFAULT_TYP
 Clique no link fornecido pelo criador ou use /descobrir
 
 **Como cancelo uma assinatura?**
-As assinaturas não renovam automaticamente
+Use /status e clique no botão "Cancelar" da assinatura desejada
 
 **Posso mudar de plano?**
 Sim, quando sua assinatura atual expirar
@@ -236,7 +237,11 @@ def setup_handlers(application: Application) -> None:
     
     # Callbacks de renovação
     application.add_handler(CallbackQueryHandler(handle_renewal, pattern=r"^renew_\d+$"))
-    
+
+    # Callbacks de cancelamento de assinatura
+    application.add_handler(CallbackQueryHandler(cancel_subscription, pattern=r"^cancel_sub_\d+$"))
+    application.add_handler(CallbackQueryHandler(confirm_cancel_subscription, pattern=r"^confirm_cancel_sub_\d+$"))
+
     # Handlers de grupo
     application.add_handler(MessageHandler(
         filters.StatusUpdate.NEW_CHAT_MEMBERS,
