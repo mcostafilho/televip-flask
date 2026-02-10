@@ -168,10 +168,6 @@ def setup_handlers(application: Application) -> None:
     
 # Callbacks de descoberta
     application.add_handler(CallbackQueryHandler(handle_discover_callback, pattern=r"^discover.*$"))
-    application.add_handler(CallbackQueryHandler(handle_discover_callback, pattern="^categories$"))
-    application.add_handler(CallbackQueryHandler(handle_discover_callback, pattern="^premium_groups$"))
-    application.add_handler(CallbackQueryHandler(handle_discover_callback, pattern="^new_groups$"))
-    application.add_handler(CallbackQueryHandler(handle_discover_callback, pattern="^cheapest_groups$"))
 
     # Callbacks de navegação
     application.add_handler(CallbackQueryHandler(handle_back_callback, pattern="^back_to_start$"))

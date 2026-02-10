@@ -1729,53 +1729,6 @@ class TestDiscovery:
                         assert f'g_{group_a.invite_slug}' in button.url
                         assert f'g_{group_a.id}' not in button.url
 
-    def test_premium_groups(self, app_ctx, group_a, group_b,
-                            plan_a_monthly, plan_a_quarterly, plan_b_monthly):
-        """Premium mostra grupos ordenados por preco mais alto"""
-        from bot.handlers.discovery import show_premium_groups
-
-        user = make_user(805)
-        query = make_callback_query(user=user, data='premium_groups')
-        update = make_update(user=user, callback_query=query)
-        ctx = make_context()
-
-        import asyncio
-        asyncio.get_event_loop().run_until_complete(show_premium_groups(update, ctx))
-
-        text = query.edit_message_text.call_args[0][0]
-        assert 'Premium' in text
-
-    def test_cheapest_groups(self, app_ctx, group_a, group_b,
-                              plan_a_monthly, plan_b_monthly):
-        """Mais baratos mostra grupos ordenados por preco mais baixo"""
-        from bot.handlers.discovery import show_cheapest_groups
-
-        user = make_user(806)
-        query = make_callback_query(user=user, data='cheapest_groups')
-        update = make_update(user=user, callback_query=query)
-        ctx = make_context()
-
-        import asyncio
-        asyncio.get_event_loop().run_until_complete(show_cheapest_groups(update, ctx))
-
-        text = query.edit_message_text.call_args[0][0]
-        assert 'Acess' in text or 'Beta VIP' in text  # Beta is cheaper (19.90)
-
-    def test_new_groups(self, app_ctx, group_a, plan_a_monthly):
-        """Novos mostra grupos recentes"""
-        from bot.handlers.discovery import show_new_groups
-
-        user = make_user(807)
-        query = make_callback_query(user=user, data='new_groups')
-        update = make_update(user=user, callback_query=query)
-        ctx = make_context()
-
-        import asyncio
-        asyncio.get_event_loop().run_until_complete(show_new_groups(update, ctx))
-
-        text = query.edit_message_text.call_args[0][0]
-        assert 'Novos' in text or 'Alpha Premium' in text
-
 
 # ===========================================================================
 # 10. SCHEDULED TASKS TESTS
