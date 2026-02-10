@@ -338,12 +338,9 @@ body > footer {
                                         <input type="password" class="form-control" name="current_password"
                                                placeholder="Digite sua senha atual">
                                         <div class="mt-2 text-end">
-                                            <form method="POST" action="{{ url_for('dashboard.profile_reset_password') }}" class="d-inline">
-                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                                <button type="submit" class="btn btn-link btn-sm p-0 small text-decoration-none">
-                                                    <i class="bi bi-key"></i> Esqueceu a senha?
-                                                </button>
-                                            </form>
+                                            <a href="#" id="forgotPasswordLink" class="small text-decoration-none">
+                                                <i class="bi bi-key"></i> Esqueceu a senha?
+                                            </a>
                                         </div>
                                     </div>
                                     {% else %}
@@ -480,6 +477,11 @@ body > footer {
     </div>
 </div>
 
+<!-- Form oculto para reset de senha (fora do form principal) -->
+<form method="POST" action="{{ url_for('dashboard.profile_reset_password') }}" id="forgotPasswordForm" class="d-none">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+</form>
+
 <!-- Modal Excluir Conta -->
 <div class="modal fade" id="deleteAccountModal" tabindex="-1">
     <div class="modal-dialog">
@@ -528,6 +530,15 @@ body > footer {
 
 {% block extra_js %}
 <script>
+// Forgot password - submit hidden form outside main form
+var forgotLink = document.getElementById('forgotPasswordLink');
+if (forgotLink) {
+    forgotLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.getElementById('forgotPasswordForm').submit();
+    });
+}
+
 // Enable delete button only when "EXCLUIR" is typed
 document.getElementById('deleteConfirmation').addEventListener('input', function() {
     document.getElementById('deleteAccountBtn').disabled = this.value !== 'EXCLUIR';
