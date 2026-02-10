@@ -64,12 +64,14 @@ async def send_reminders_loop():
 
 
 async def check_expired_subscriptions():
-    """Verificar e processar assinaturas expiradas"""
+    """Verificar e processar assinaturas expiradas (somente legacy/sem Stripe subscription)"""
     try:
         with get_db_session() as session:
+            # Only check legacy subscriptions — Stripe-managed ones are handled via webhooks
             expired = session.query(Subscription).filter(
                 Subscription.status == 'active',
-                Subscription.end_date < datetime.utcnow()
+                Subscription.end_date < datetime.utcnow(),
+                (Subscription.stripe_subscription_id == None) | (Subscription.is_legacy == True)
             ).all()
 
             if not expired:
@@ -201,7 +203,7 @@ async def send_renewal_reminders():
 
 
 async def send_renewal_notification(subscription, days_left):
-    """Enviar lembrete individual de renovacao"""
+    """Enviar lembrete individual de renovacao - diferenciado por tipo"""
     if not _application:
         return
 
@@ -210,26 +212,69 @@ async def send_renewal_notification(subscription, days_left):
         plan = subscription.plan
         user_id = int(subscription.telegram_user_id)
 
-        if days_left == 1:
-            urgency = "🔴 ULTIMO DIA"
-        else:
-            urgency = f"⚠️ {days_left} dias restantes"
+        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-        text = (
-            f"{urgency}\n\n"
-            f"Sua assinatura do grupo **{group.name}** "
-            f"expira em **{days_left} dia(s)**.\n\n"
-            f"Plano: {plan.name} - R$ {plan.price:.2f}\n\n"
-            f"Renove agora para nao perder o acesso!"
+        is_stripe_managed = (
+            subscription.stripe_subscription_id
+            and not getattr(subscription, 'is_legacy', False)
         )
 
-        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-        keyboard = [[
-            InlineKeyboardButton(
-                "🔄 Renovar Agora",
-                callback_data=f"plan_{group.id}_{plan.id}"
+        if is_stripe_managed and getattr(subscription, 'cancel_at_period_end', False):
+            # User chose not to renew
+            text = (
+                f"⚠️ Sua assinatura do grupo **{group.name}** "
+                f"encerra em **{days_left} dia(s)**.\n\n"
+                f"Voce optou por nao renovar. Apos essa data, voce perdera o acesso.\n\n"
+                f"Mudou de ideia? Reative a renovacao automatica!"
             )
-        ]]
+            keyboard = [[
+                InlineKeyboardButton(
+                    "🔄 Reativar Renovacao",
+                    callback_data=f"reactivate_sub_{subscription.id}"
+                )
+            ]]
+        elif is_stripe_managed and getattr(subscription, 'auto_renew', False):
+            # Auto-renew active
+            payment_type = getattr(subscription, 'payment_method_type', 'card')
+            if payment_type == 'boleto':
+                text = (
+                    f"📋 Um novo boleto sera gerado em breve para renovacao "
+                    f"do grupo **{group.name}**.\n\n"
+                    f"Fique atento ao seu email para pagar o boleto a tempo!"
+                )
+            else:
+                text = (
+                    f"🔄 Sua assinatura do grupo **{group.name}** "
+                    f"sera renovada automaticamente em **{days_left} dia(s)**.\n\n"
+                    f"Valor: R$ {plan.price:.2f}\n\n"
+                    f"Nenhuma acao necessaria. O cartao cadastrado sera cobrado automaticamente."
+                )
+            keyboard = [[
+                InlineKeyboardButton(
+                    "📊 Ver Status",
+                    callback_data="check_status"
+                )
+            ]]
+        else:
+            # Legacy subscription
+            if days_left == 1:
+                urgency = "🔴 ULTIMO DIA"
+            else:
+                urgency = f"⚠️ {days_left} dias restantes"
+
+            text = (
+                f"{urgency}\n\n"
+                f"Sua assinatura do grupo **{group.name}** "
+                f"expira em **{days_left} dia(s)**.\n\n"
+                f"Plano: {plan.name} - R$ {plan.price:.2f}\n\n"
+                f"Renove agora para nao perder o acesso!"
+            )
+            keyboard = [[
+                InlineKeyboardButton(
+                    "🔄 Renovar Agora",
+                    callback_data=f"plan_{group.id}_{plan.id}"
+                )
+            ]]
 
         await _application.bot.send_message(
             chat_id=user_id,

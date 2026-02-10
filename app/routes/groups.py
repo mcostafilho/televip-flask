@@ -204,14 +204,24 @@ def edit(id):
         group.invite_link = request.form.get('invite_link')
         group.is_active = 'is_active' in request.form
         
-        # Remover planos existentes (simplificado - em produção, seria melhor atualizar)
-        PricingPlan.query.filter_by(group_id=group.id).delete()
-        
-        # Adicionar novos planos
+        # Safe plan editing: deactivate plans with active subscriptions instead of deleting
+        existing_plans = PricingPlan.query.filter_by(group_id=group.id).all()
+        for plan in existing_plans:
+            active_sub_count = Subscription.query.filter(
+                Subscription.plan_id == plan.id,
+                Subscription.status.in_(['active', 'pending'])
+            ).count()
+            if active_sub_count > 0:
+                # Deactivate instead of delete — active subs reference this plan
+                plan.is_active = False
+            else:
+                db.session.delete(plan)
+
+        # Add new plans from form
         plan_names = request.form.getlist('plan_name[]')
         plan_durations = request.form.getlist('plan_duration[]')
         plan_prices = request.form.getlist('plan_price[]')
-        
+
         for i in range(len(plan_names)):
             if plan_names[i]:
                 plan = PricingPlan(

@@ -24,6 +24,8 @@ class Transaction(db.Model):
     stripe_session_id = db.Column(db.String(255))
     payment_id = db.Column(db.String(255))
     stripe_payment_intent_id = db.Column(db.String(100))
+    stripe_invoice_id = db.Column(db.String(100))
+    billing_reason = db.Column(db.String(50))  # 'subscription_create', 'subscription_cycle'
     pix_transaction_id = db.Column(db.String(100))
     
     # Status e método

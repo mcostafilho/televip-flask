@@ -14,9 +14,14 @@ class Subscription(db.Model):
     telegram_user_id = db.Column(db.String(50), nullable=False)
     telegram_username = db.Column(db.String(100))
     stripe_subscription_id = db.Column(db.String(100))
+    stripe_customer_id = db.Column(db.String(100))
     start_date = db.Column(db.DateTime, default=datetime.utcnow)
     end_date = db.Column(db.DateTime, nullable=False)
     status = db.Column(db.String(20), default='active')  # active, expired, cancelled
+    cancel_at_period_end = db.Column(db.Boolean, default=False)
+    payment_method_type = db.Column(db.String(20), default='card')  # 'card' or 'boleto'
+    auto_renew = db.Column(db.Boolean, default=True)
+    is_legacy = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relacionamentos
@@ -49,6 +54,8 @@ class Transaction(db.Model):
     payment_method = db.Column(db.String(20), default='stripe')
     stripe_payment_intent_id = db.Column(db.String(100))
     stripe_session_id = db.Column(db.String(200), index=True)
+    stripe_invoice_id = db.Column(db.String(100))
+    billing_reason = db.Column(db.String(50))  # 'subscription_create', 'subscription_cycle'
     
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

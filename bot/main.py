@@ -37,7 +37,8 @@ from bot.handlers.payment import (
 )
 from bot.handlers.subscription import (
     status_command, planos_command, handle_renewal,
-    cancel_subscription, confirm_cancel_subscription
+    cancel_subscription, confirm_cancel_subscription,
+    reactivate_subscription
 )
 from bot.handlers.admin import (
     setup_command, stats_command, broadcast_command,
@@ -216,7 +217,7 @@ def setup_handlers(application: Application) -> None:
     
     # Callbacks de pagamento
     application.add_handler(CallbackQueryHandler(start_payment, pattern=r"^plan_\d+_\d+$"))
-    application.add_handler(CallbackQueryHandler(handle_payment_method, pattern=r"^pay_(stripe|pix)$"))
+    application.add_handler(CallbackQueryHandler(handle_payment_method, pattern=r"^pay_stripe$"))
     application.add_handler(CallbackQueryHandler(check_payment_status, pattern="^check_payment_status$"))
     application.add_handler(CallbackQueryHandler(handle_payment_error, pattern="^payment_error$"))
     application.add_handler(CallbackQueryHandler(handle_retry_payment, pattern="^retry_payment$"))
@@ -241,6 +242,7 @@ def setup_handlers(application: Application) -> None:
     # Callbacks de cancelamento de assinatura
     application.add_handler(CallbackQueryHandler(cancel_subscription, pattern=r"^cancel_sub_\d+$"))
     application.add_handler(CallbackQueryHandler(confirm_cancel_subscription, pattern=r"^confirm_cancel_sub_\d+$"))
+    application.add_handler(CallbackQueryHandler(reactivate_subscription, pattern=r"^reactivate_sub_\d+$"))
 
     # Handlers de grupo
     application.add_handler(MessageHandler(

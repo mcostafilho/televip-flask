@@ -8,7 +8,11 @@ from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
 
 from bot.utils.database import get_db_session
-from bot.utils.stripe_integration import create_checkout_session, verify_payment
+from bot.utils.stripe_integration import (
+    create_checkout_session, verify_payment,
+    get_or_create_stripe_customer, get_or_create_stripe_price,
+    create_subscription_checkout
+)
 from bot.utils.format_utils import format_currency
 from app.models import Group, PricingPlan, Subscription, Transaction, Creator
 
@@ -76,10 +80,11 @@ async def start_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
 📱 **Grupo:** {group.name}
 📅 **Plano:** {plan.name}
 ⏱ **Duração:** {plan.duration_days} dias
+🔄 **Renovacao:** Automatica (cartao) ou novo boleto a cada ciclo
 
 💰 **Valor:** {format_currency(amount)}
 
-Clique abaixo para pagar com cartao, boleto ou Apple/Google Pay:
+Clique abaixo para pagar com cartao ou boleto:
 """
 
         keyboard = [
@@ -110,70 +115,105 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
         )
         return
     
-    if query.data in ("pay_stripe", "pay_pix"):
+    if query.data == "pay_stripe":
         await process_stripe_payment(query, context, checkout_data)
 
 
 async def process_stripe_payment(query, context, checkout_data):
-    """Processar pagamento via Stripe - VERSÃO CORRIGIDA"""
+    """Processar pagamento via Stripe - Modo assinatura recorrente"""
     user = query.from_user
-    
+
     # URLs de retorno
     bot_username = context.bot.username
     success_url = f"https://t.me/{bot_username}?start=payment_success"
     cancel_url = f"https://t.me/{bot_username}?start=payment_cancel"
-    
-    # Criar sessão no Stripe
-    result = await create_checkout_session(
-        amount=checkout_data['amount'],
-        group_name=checkout_data['group_name'],
-        plan_name=checkout_data['plan_name'],
-        user_id=str(user.id),
-        success_url=success_url,
-        cancel_url=cancel_url
-    )
-    
-    if result['success']:
-        # Salvar dados do checkout
-        context.user_data['stripe_session_id'] = result['session_id']
-        
+
+    try:
+        # 1. Get or create Stripe Customer
+        customer_id = get_or_create_stripe_customer(
+            telegram_user_id=str(user.id),
+            username=user.username
+        )
+
+        # 2. Get or create Stripe Price for the plan
         with get_db_session() as session:
-            # Criar subscription como pending
-            new_subscription = Subscription(
-                group_id=checkout_data['group_id'],
-                plan_id=checkout_data['plan_id'],
-                telegram_user_id=str(user.id),
-                telegram_username=user.username,
-                status='pending',
-                start_date=datetime.utcnow(),
-                end_date=datetime.utcnow() + timedelta(days=checkout_data['duration_days'])
-            )
-            session.add(new_subscription)
-            session.flush()
-            
-            # Criar transaction com o session_id
-            transaction = Transaction(
-                subscription_id=new_subscription.id,
-                amount=checkout_data['amount'],
-                fee=checkout_data['platform_fee'],
-                net_amount=checkout_data['creator_amount'],
-                payment_method='stripe',
-                stripe_session_id=result['session_id'],  # ← CORRETO
-                stripe_payment_intent_id=None,  # ← Deixar None por enquanto
-                status='pending'
-            )
-            session.add(transaction)
-            session.commit()
-            
-            logger.info(f"Criada subscription {new_subscription.id} e transaction com session_id: {result['session_id']}")
-        
-        # Mostrar instruções e botão de pagamento
-        text = """
+            plan = session.query(PricingPlan).get(checkout_data['plan_id'])
+            group = session.query(Group).get(checkout_data['group_id'])
+
+            if not plan or not group:
+                await query.edit_message_text(
+                    "❌ Plano ou grupo nao encontrado.",
+                    reply_markup=InlineKeyboardMarkup([[
+                        InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")
+                    ]])
+                )
+                return
+
+            price_id = get_or_create_stripe_price(plan, group)
+
+        # 3. Create subscription checkout session
+        metadata = {
+            'user_id': str(user.id),
+            'username': user.username or '',
+            'group_id': str(checkout_data['group_id']),
+            'plan_id': str(checkout_data['plan_id']),
+            'group_name': checkout_data['group_name'],
+            'plan_name': checkout_data['plan_name']
+        }
+
+        result = await create_subscription_checkout(
+            customer_id=customer_id,
+            price_id=price_id,
+            metadata=metadata,
+            success_url=success_url,
+            cancel_url=cancel_url
+        )
+
+        if result['success']:
+            # Salvar dados do checkout
+            context.user_data['stripe_session_id'] = result['session_id']
+
+            with get_db_session() as session:
+                # Criar subscription como pending (ativação via webhook invoice.paid)
+                new_subscription = Subscription(
+                    group_id=checkout_data['group_id'],
+                    plan_id=checkout_data['plan_id'],
+                    telegram_user_id=str(user.id),
+                    telegram_username=user.username,
+                    stripe_customer_id=customer_id,
+                    status='pending',
+                    auto_renew=True,
+                    is_legacy=False,
+                    start_date=datetime.utcnow(),
+                    end_date=datetime.utcnow() + timedelta(days=checkout_data['duration_days'])
+                )
+                session.add(new_subscription)
+                session.flush()
+
+                # Criar transaction pending (completada via webhook)
+                transaction = Transaction(
+                    subscription_id=new_subscription.id,
+                    amount=checkout_data['amount'],
+                    fee=checkout_data['platform_fee'],
+                    net_amount=checkout_data['creator_amount'],
+                    payment_method='stripe',
+                    stripe_session_id=result['session_id'],
+                    billing_reason='subscription_create',
+                    status='pending'
+                )
+                session.add(transaction)
+                session.commit()
+
+                logger.info(f"Criada subscription {new_subscription.id} (recurring) com session_id: {result['session_id']}")
+
+            # Mostrar instruções e botão de pagamento
+            text = """
 🔐 **Pagamento Seguro via Stripe**
 
 Clique no botao abaixo para ser redirecionado para a pagina de pagamento segura.
 
-💳 **Aceita:** Cartao, Boleto, Apple Pay, Google Pay
+💳 **Aceita:** Cartao e Boleto
+🔄 **Renovacao automatica** a cada ciclo
 
 Apos concluir o pagamento:
 1. Voce sera redirecionado de volta ao Telegram
@@ -182,23 +222,33 @@ Apos concluir o pagamento:
 
 ⚠️ **Importante:** Nao feche esta conversa durante o pagamento!
 """
-        
-        keyboard = [
-            [InlineKeyboardButton("💳 Pagar Agora", url=result['url'])],
-            [InlineKeyboardButton("🔄 Verificar Pagamento", callback_data="check_payment_status")],
-            [InlineKeyboardButton("❌ Cancelar", callback_data=f"group_{checkout_data['group_id']}")]
-        ]
-        
+
+            keyboard = [
+                [InlineKeyboardButton("💳 Pagar Agora", url=result['url'])],
+                [InlineKeyboardButton("🔄 Verificar Pagamento", callback_data="check_payment_status")],
+                [InlineKeyboardButton("❌ Cancelar", callback_data=f"group_{checkout_data['group_id']}")]
+            ]
+
+            await query.edit_message_text(
+                text,
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+        else:
+            # Erro ao criar sessão
+            await query.edit_message_text(
+                f"❌ Erro ao processar pagamento: {result.get('error', 'Erro desconhecido')}\n\n"
+                "Por favor, tente novamente ou entre em contato com o suporte.",
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton("🔄 Tentar Novamente", callback_data=f"plan_{checkout_data['group_id']}_{checkout_data['plan_id']}"),
+                    InlineKeyboardButton("📞 Suporte", url="https://t.me/suporte_televip")
+                ]])
+            )
+    except Exception as e:
+        logger.error(f"Erro ao processar pagamento recorrente: {e}")
         await query.edit_message_text(
-            text,
-            parse_mode=ParseMode.MARKDOWN,
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
-    else:
-        # Erro ao criar sessão
-        await query.edit_message_text(
-            f"❌ Erro ao processar pagamento: {result.get('error', 'Erro desconhecido')}\n\n"
-            "Por favor, tente novamente ou entre em contato com o suporte.",
+            "❌ Erro ao processar pagamento. Tente novamente.\n\n"
+            "Se o problema persistir, entre em contato com o suporte.",
             reply_markup=InlineKeyboardMarkup([[
                 InlineKeyboardButton("🔄 Tentar Novamente", callback_data=f"plan_{checkout_data['group_id']}_{checkout_data['plan_id']}"),
                 InlineKeyboardButton("📞 Suporte", url="https://t.me/suporte_televip")
@@ -328,7 +378,7 @@ def register_payment_handlers(application):
     
     # Handlers de callback
     application.add_handler(CallbackQueryHandler(start_payment, pattern=r'^plan_\d+_\d+$'))
-    application.add_handler(CallbackQueryHandler(handle_payment_method, pattern='^pay_(stripe|pix)$'))
+    application.add_handler(CallbackQueryHandler(handle_payment_method, pattern='^pay_stripe$'))
     application.add_handler(CallbackQueryHandler(list_user_subscriptions, pattern='^my_subscriptions$'))
     
     # Command handlers

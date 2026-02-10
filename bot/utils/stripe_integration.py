@@ -17,6 +17,182 @@ stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 IS_TEST_MODE = os.getenv('STRIPE_SECRET_KEY', '').startswith('sk_test_')
 
 
+def get_or_create_stripe_customer(telegram_user_id: str, username: Optional[str] = None) -> str:
+    """
+    Get existing Stripe customer or create new one for a Telegram user.
+    Searches existing subscriptions first to reuse customer ID.
+
+    Returns:
+        stripe_customer_id
+    """
+    try:
+        # Try to find existing customer from previous subscriptions
+        from bot.utils.database import get_db_session
+        from app.models import Subscription
+
+        with get_db_session() as session:
+            existing = session.query(Subscription).filter(
+                Subscription.telegram_user_id == str(telegram_user_id),
+                Subscription.stripe_customer_id.isnot(None)
+            ).first()
+
+            if existing and existing.stripe_customer_id:
+                logger.info(f"Reusing Stripe customer {existing.stripe_customer_id} for user {telegram_user_id}")
+                return existing.stripe_customer_id
+
+        # Create new customer
+        customer = stripe.Customer.create(
+            metadata={
+                'telegram_user_id': str(telegram_user_id),
+                'telegram_username': username or ''
+            },
+            name=f"@{username}" if username else f"Telegram User {telegram_user_id}"
+        )
+
+        logger.info(f"Created Stripe customer {customer.id} for user {telegram_user_id}")
+        return customer.id
+
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe error creating customer: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Error creating Stripe customer: {e}")
+        raise
+
+
+def get_or_create_stripe_price(plan, group) -> str:
+    """
+    Get existing Stripe Price or create Product + Price for a plan.
+
+    Args:
+        plan: PricingPlan model instance
+        group: Group model instance
+
+    Returns:
+        stripe_price_id
+    """
+    try:
+        if plan.stripe_price_id:
+            logger.info(f"Reusing Stripe price {plan.stripe_price_id} for plan {plan.id}")
+            return plan.stripe_price_id
+
+        # Create Stripe Product
+        product_id = plan.stripe_product_id
+        if not product_id:
+            product = stripe.Product.create(
+                name=f"{group.name} - {plan.name}",
+                metadata={
+                    'group_id': str(group.id),
+                    'plan_id': str(plan.id)
+                }
+            )
+            product_id = product.id
+            logger.info(f"Created Stripe product {product_id}")
+
+        # Map duration_days to Stripe recurring interval
+        days = plan.duration_days
+        if days == 7:
+            interval = 'week'
+            interval_count = 1
+        elif days == 30:
+            interval = 'month'
+            interval_count = 1
+        elif days == 90:
+            interval = 'month'
+            interval_count = 3
+        elif days == 180:
+            interval = 'month'
+            interval_count = 6
+        elif days == 365:
+            interval = 'year'
+            interval_count = 1
+        else:
+            interval = 'day'
+            interval_count = days
+
+        # Create recurring Price
+        price = stripe.Price.create(
+            product=product_id,
+            unit_amount=int(float(plan.price) * 100),  # cents
+            currency='brl',
+            recurring={
+                'interval': interval,
+                'interval_count': interval_count
+            }
+        )
+
+        logger.info(f"Created Stripe price {price.id} for plan {plan.id}")
+
+        # Store IDs on plan (caller must commit)
+        from bot.utils.database import get_db_session
+        with get_db_session() as session:
+            from app.models import PricingPlan
+            db_plan = session.query(PricingPlan).get(plan.id)
+            if db_plan:
+                db_plan.stripe_product_id = product_id
+                db_plan.stripe_price_id = price.id
+                session.commit()
+
+        return price.id
+
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe error creating price: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Error creating Stripe price: {e}")
+        raise
+
+
+async def create_subscription_checkout(
+    customer_id: str,
+    price_id: str,
+    metadata: Dict,
+    success_url: str,
+    cancel_url: str
+) -> Dict:
+    """
+    Create a Stripe Checkout Session in subscription mode.
+
+    Returns:
+        Dict with success, session_id, url
+    """
+    try:
+        session = stripe.checkout.Session.create(
+            mode='subscription',
+            customer=customer_id,
+            line_items=[{
+                'price': price_id,
+                'quantity': 1
+            }],
+            payment_method_types=['card', 'boleto'],
+            metadata=metadata,
+            success_url=success_url,
+            cancel_url=cancel_url,
+            locale='pt-BR'
+        )
+
+        logger.info(f"Created subscription checkout session {session.id}")
+
+        return {
+            'success': True,
+            'session_id': session.id,
+            'url': session.url
+        }
+
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe error creating subscription checkout: {e}")
+        return {
+            'success': False,
+            'error': str(e.user_message if hasattr(e, 'user_message') else e)
+        }
+    except Exception as e:
+        logger.error(f"Error creating subscription checkout: {e}")
+        return {
+            'success': False,
+            'error': 'Erro ao processar pagamento. Tente novamente.'
+        }
+
+
 async def create_checkout_session(
     amount: float,
     group_name: str,

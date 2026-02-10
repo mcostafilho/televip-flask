@@ -7,9 +7,14 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
 
+import stripe
+import os
+
 from bot.utils.database import get_db_session
 from bot.keyboards.menus import get_renewal_keyboard
 from app.models import Subscription, Group, Creator, PricingPlan, Transaction
+
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
 logger = logging.getLogger(__name__)
 
@@ -112,17 +117,17 @@ Precisa de ajuda? Use /help
                 text += f"   📅 Expira: {sub.end_date.strftime('%d/%m/%Y')}\n"
                 text += f"   ⏳ Restam: {days_left} dias\n"
                 
-                # Avisos especiais
-                if getattr(sub, 'auto_renew', False):  # False é o valor padrão
-                    status_emoji = "🔄"
-                    auto_renew_text = "\n🔄 Renovação automática: **Ativada**"
-                else:
-                    status_emoji = "📅"
-                    auto_renew_text = "\n📅 Renovação automática: **Desativada**"
-                
+                # Subscription status info
+                if getattr(sub, 'cancel_at_period_end', False):
+                    text += f"   🚫 Cancelamento agendado - acesso ate {sub.end_date.strftime('%d/%m/%Y')}\n"
+                elif getattr(sub, 'auto_renew', False) and sub.stripe_subscription_id and not getattr(sub, 'is_legacy', False):
+                    text += f"   🔄 Renovacao automatica ativa\n"
+                elif getattr(sub, 'is_legacy', False) or not sub.stripe_subscription_id:
+                    text += f"   📅 Assinatura avulsa (sem renovacao automatica)\n"
+
                 # Estatísticas da assinatura
                 duration = (datetime.utcnow() - sub.start_date).days
-                text += f"   📊 Assinante há {duration} dias\n"
+                text += f"   📊 Assinante ha {duration} dias\n"
 
                 text += "\n"
         
@@ -162,15 +167,23 @@ Precisa de ajuda? Use /help
                 )
             ])
         
-        # Botões de cancelamento para cada assinatura ativa
+        # Botões de cancelamento/reativação para cada assinatura ativa
         for sub in active:
             group = sub.group
-            keyboard.append([
-                InlineKeyboardButton(
-                    f"❌ Cancelar: {group.name[:20]}",
-                    callback_data=f"cancel_sub_{sub.id}"
-                )
-            ])
+            if getattr(sub, 'cancel_at_period_end', False):
+                keyboard.append([
+                    InlineKeyboardButton(
+                        f"🔄 Reativar: {group.name[:20]}",
+                        callback_data=f"reactivate_sub_{sub.id}"
+                    )
+                ])
+            else:
+                keyboard.append([
+                    InlineKeyboardButton(
+                        f"❌ Cancelar: {group.name[:20]}",
+                        callback_data=f"cancel_sub_{sub.id}"
+                    )
+                ])
 
         # Outros botões
         keyboard.extend([
@@ -507,12 +520,21 @@ async def cancel_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         group = sub.group
 
+        # Differentiate Stripe-managed vs legacy
+        if sub.stripe_subscription_id and not sub.is_legacy:
+            cancel_text = (
+                f"Voce mantera acesso ao grupo ate **{sub.end_date.strftime('%d/%m/%Y')}**.\n"
+                f"A renovacao automatica sera desativada."
+            )
+        else:
+            cancel_text = "Voce perdera acesso ao grupo **imediatamente**."
+
         text = (
             f"⚠️ **Cancelar Assinatura**\n\n"
             f"**Grupo:** {group.name}\n"
             f"**Plano:** {sub.plan.name}\n\n"
             f"Tem certeza que deseja cancelar?\n"
-            f"Você perderá acesso ao grupo **imediatamente**."
+            f"{cancel_text}"
         )
 
         keyboard = [
@@ -529,42 +551,119 @@ async def cancel_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE
         )
 
 async def confirm_cancel_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Confirmar cancelamento e remover usuário do grupo"""
+    """Confirmar cancelamento — Stripe cancel_at_period_end ou legacy immediate"""
     query = update.callback_query
     await query.answer()
     user = query.from_user
 
-    # Extrair sub_id do callback_data "confirm_cancel_sub_123"
     sub_id = int(query.data.replace("confirm_cancel_sub_", ""))
 
     with get_db_session() as session:
         sub = session.query(Subscription).get(sub_id)
 
         if not sub or sub.telegram_user_id != str(user.id) or sub.status != 'active':
-            await query.edit_message_text("❌ Assinatura não encontrada ou já cancelada.")
+            await query.edit_message_text("❌ Assinatura nao encontrada ou ja cancelada.")
             return
 
         group_name = sub.group.name
+        end_date_str = sub.end_date.strftime('%d/%m/%Y') if sub.end_date else 'N/A'
 
-        # Cancelar assinatura
-        sub.status = 'cancelled'
-        session.commit()
+        if sub.stripe_subscription_id and not sub.is_legacy:
+            # Stripe-managed: cancel at period end (keep access until end_date)
+            try:
+                stripe.Subscription.modify(
+                    sub.stripe_subscription_id,
+                    cancel_at_period_end=True
+                )
+                sub.cancel_at_period_end = True
+                sub.auto_renew = False
+                session.commit()
 
-        # Remover usuário do grupo
-        from bot.jobs.scheduled_tasks import remove_from_group
-        await remove_from_group(sub)
+                text = (
+                    f"✅ **Cancelamento Agendado**\n\n"
+                    f"Sua assinatura do grupo **{group_name}** nao sera renovada.\n\n"
+                    f"📅 Voce mantera acesso ate **{end_date_str}**.\n\n"
+                    f"Mudou de ideia? Voce pode reativar a renovacao automatica a qualquer momento."
+                )
 
-    # Enviar confirmação
-    text = (
-        f"✅ **Assinatura Cancelada**\n\n"
-        f"Sua assinatura do grupo **{group_name}** foi cancelada com sucesso.\n\n"
-        f"Você foi removido do grupo.\n"
-        f"Para assinar novamente, use /descobrir."
+                keyboard = [
+                    [InlineKeyboardButton("🔄 Reativar Renovacao", callback_data=f"reactivate_sub_{sub.id}")],
+                    [InlineKeyboardButton("🏠 Menu Principal", callback_data="back_to_start")]
+                ]
+
+            except stripe.error.StripeError as e:
+                logger.error(f"Stripe error cancelling subscription: {e}")
+                text = (
+                    f"❌ Erro ao cancelar assinatura no Stripe.\n"
+                    f"Tente novamente ou entre em contato com o suporte."
+                )
+                keyboard = [[InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")]]
+        else:
+            # Legacy: immediate cancel
+            sub.status = 'cancelled'
+            session.commit()
+
+            from bot.jobs.scheduled_tasks import remove_from_group
+            await remove_from_group(sub)
+
+            text = (
+                f"✅ **Assinatura Cancelada**\n\n"
+                f"Sua assinatura do grupo **{group_name}** foi cancelada com sucesso.\n\n"
+                f"Voce foi removido do grupo.\n"
+                f"Para assinar novamente, use /descobrir."
+            )
+
+            keyboard = [[InlineKeyboardButton("🏠 Menu Principal", callback_data="back_to_start")]]
+
+    await query.edit_message_text(
+        text,
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
-    keyboard = [[
-        InlineKeyboardButton("🏠 Menu Principal", callback_data="back_to_start")
-    ]]
+
+async def reactivate_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Reactivate a subscription that was set to cancel at period end"""
+    query = update.callback_query
+    await query.answer()
+    user = query.from_user
+
+    sub_id = int(query.data.replace("reactivate_sub_", ""))
+
+    with get_db_session() as session:
+        sub = session.query(Subscription).get(sub_id)
+
+        if not sub or sub.telegram_user_id != str(user.id):
+            await query.edit_message_text("❌ Assinatura nao encontrada.")
+            return
+
+        if not sub.stripe_subscription_id or not sub.cancel_at_period_end:
+            await query.edit_message_text("❌ Esta assinatura nao pode ser reativada.")
+            return
+
+        try:
+            stripe.Subscription.modify(
+                sub.stripe_subscription_id,
+                cancel_at_period_end=False
+            )
+            sub.cancel_at_period_end = False
+            sub.auto_renew = True
+            session.commit()
+
+            group_name = sub.group.name
+
+            text = (
+                f"✅ **Renovacao Reativada!**\n\n"
+                f"Sua assinatura do grupo **{group_name}** sera renovada automaticamente.\n\n"
+                f"📅 Proxima renovacao: {sub.end_date.strftime('%d/%m/%Y')}"
+            )
+
+            keyboard = [[InlineKeyboardButton("🏠 Menu Principal", callback_data="back_to_start")]]
+
+        except stripe.error.StripeError as e:
+            logger.error(f"Stripe error reactivating subscription: {e}")
+            text = "❌ Erro ao reativar. Tente novamente."
+            keyboard = [[InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")]]
 
     await query.edit_message_text(
         text,
