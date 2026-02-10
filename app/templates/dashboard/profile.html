@@ -301,28 +301,42 @@ body > footer {
                                     <small class="text-muted">Para contato de suporte</small>
                                 </div>
 
-                                <!-- Senha -->
+                                <!-- Senha Atual -->
+                                <div class="col-12">
+                                    <hr class="my-3">
+                                    <h6 class="text-muted mb-3">
+                                        <i class="bi bi-shield-lock"></i> Confirme sua Identidade
+                                    </h6>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Senha Atual</label>
+                                    <input type="password" class="form-control" name="current_password"
+                                           placeholder="Digite sua senha atual">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle"></i>
+                                        Necessária para salvar alterações em email, chave PIX ou senha
+                                    </small>
+                                </div>
+
+                                <!-- Alterar Senha -->
                                 <div class="col-12">
                                     <hr class="my-3">
                                     <h6 class="text-muted mb-3">Alterar Senha (opcional)</h6>
                                 </div>
-                                
-                                <div class="col-md-4">
-                                    <label class="form-label">Senha Atual</label>
-                                    <input type="password" class="form-control" name="current_password">
-                                </div>
-                                <div class="col-md-4">
+
+                                <div class="col-md-6">
                                     <label class="form-label">Nova Senha</label>
                                     <input type="password" class="form-control" name="new_password" minlength="6">
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <label class="form-label">Confirmar Nova Senha</label>
                                     <input type="password" class="form-control" name="confirm_password" minlength="6">
                                 </div>
 
                                 <div class="col-12">
                                     <small class="text-muted">
-                                        <i class="bi bi-info-circle"></i> 
+                                        <i class="bi bi-info-circle"></i>
                                         Deixe em branco se não quiser alterar a senha
                                     </small>
                                 </div>
