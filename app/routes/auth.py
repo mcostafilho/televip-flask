@@ -35,6 +35,12 @@ def login():
             if not user.is_verified:
                 flash('Confirme seu email antes de fazer login. Verifique sua caixa de entrada.', 'warning')
                 return render_template('auth/login.html', unverified_email=email)
+            # Vincular Google pendente (se veio do fluxo OAuth)
+            pending_google_id = session.pop('pending_google_id', None)
+            if pending_google_id and not user.google_id:
+                user.google_id = pending_google_id
+                db.session.commit()
+                flash('Conta Google vinculada com sucesso!', 'success')
             login_user(user, remember=bool(remember))
             next_page = request.args.get('next')
             if next_page and not is_safe_url(next_page):
@@ -137,21 +143,16 @@ def forgot_password():
         email = request.form.get('email', '').strip().lower()
 
         user = Creator.query.filter_by(email=email).first()
-        if user:
-            # Gerar token de reset (includes password hash prefix for single-use)
+        # Só enviar reset para contas com senha (bloqueia contas OAuth-only)
+        if user and user.password_hash:
             token = generate_reset_token(user.id, password_hash=user.password_hash)
-
-            # Enviar email
             try:
                 send_password_reset_email(user, token)
-                flash('Email enviado! Verifique sua caixa de entrada.', 'success')
-            except Exception as e:
-                flash('Erro ao enviar email. Tente novamente mais tarde.', 'error')
-                print(f"Erro ao enviar email: {e}")
-        else:
-            # Por segurança, sempre mostrar mensagem de sucesso
-            flash('Se o email estiver cadastrado, você receberá as instruções.', 'info')
+            except Exception:
+                logger.error("Failed to send password reset email", exc_info=True)
 
+        # Mensagem genérica sempre (previne enumeração de usuários)
+        flash('Se o email estiver cadastrado, você receberá as instruções.', 'info')
         return redirect(url_for('auth.login'))
 
     return render_template('auth/forgot_password.html')
@@ -284,12 +285,20 @@ def google_callback():
     # 1. Buscar por google_id (já vinculado)
     user = Creator.query.filter_by(google_id=google_id).first()
 
-    # 2. Se não achou, buscar por email e vincular
+    # 2. Se não achou, buscar por email
     if not user:
-        user = Creator.query.filter_by(email=email).first()
-        if user:
-            user.google_id = google_id
-            db.session.commit()
+        existing = Creator.query.filter_by(email=email).first()
+        if existing:
+            if existing.password_hash:
+                # Conta com senha — exigir login para vincular (previne account takeover)
+                session['pending_google_id'] = google_id
+                flash('Já existe uma conta com este email. Faça login com sua senha para vincular o Google.', 'warning')
+                return redirect(url_for('auth.login'))
+            else:
+                # Conta OAuth-only (sem senha) — vincular direto
+                existing.google_id = google_id
+                db.session.commit()
+                user = existing
 
     # 3. Se não achou nenhum, criar nova conta
     if not user:

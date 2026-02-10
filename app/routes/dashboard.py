@@ -429,13 +429,18 @@ def update_profile():
     changing_email = email and email != current_user.email
     changing_password = bool(new_password)
 
+    is_oauth_only = not current_user.password_hash
     if changing_email or changing_password or changing_pix:
-        if not current_password:
-            flash('Informe a senha atual para alterar email, senha ou chave PIX', 'error')
-            return redirect(url_for('dashboard.profile'))
-        if not current_user.check_password(current_password):
-            flash('Senha atual incorreta', 'error')
-            return redirect(url_for('dashboard.profile'))
+        if is_oauth_only and changing_password and not changing_email and not changing_pix:
+            # OAuth-only user definindo senha pela primeira vez — não exigir senha atual
+            pass
+        else:
+            if not current_password:
+                flash('Informe a senha atual para alterar email, senha ou chave PIX', 'error')
+                return redirect(url_for('dashboard.profile'))
+            if not current_user.check_password(current_password):
+                flash('Senha atual incorreta', 'error')
+                return redirect(url_for('dashboard.profile'))
 
     # Process password change
     if changing_password:
