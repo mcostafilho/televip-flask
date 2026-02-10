@@ -96,19 +96,25 @@
     border-style: solid;
 }
 
+.group-form-page .duration-wrapper {
+    position: relative;
+}
+
 .group-form-page .lifetime-toggle {
-    display: inline-block;
-    padding: 0.15rem 0.5rem;
-    font-size: 0.75rem;
+    position: absolute;
+    right: 0;
+    top: 0;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.65rem;
     font-weight: 600;
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
-    border: 1.5px solid #6c757d;
+    border: 1px solid #adb5bd;
     color: #6c757d;
-    background: transparent;
+    background: #fff;
     transition: all 0.2s ease;
-    vertical-align: middle;
-    margin-left: 0.4rem;
+    line-height: 1.2;
+    z-index: 1;
 }
 
 .group-form-page .lifetime-toggle:hover {
@@ -117,9 +123,9 @@
 }
 
 .group-form-page .lifetime-toggle.active {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: #667eea;
     color: white;
-    border-color: transparent;
+    border-color: #667eea;
 }
 
 .group-form-page .guide-card {
@@ -297,10 +303,10 @@
                                                            value="{{ plan.name }}" required>
                                                 </div>
                                                 <div class="col-md-3">
-                                                    <label class="form-label">
-                                                        Duração (dias)
+                                                    <div class="duration-wrapper">
+                                                        <label class="form-label">Duração (dias)</label>
                                                         <button type="button" class="lifetime-toggle {{ 'active' if plan.is_lifetime else '' }}" onclick="toggleLifetime(this)" title="Plano Vitalício">&#8734; Vitalício</button>
-                                                    </label>
+                                                    </div>
                                                     <input type="number" name="plan_duration[]" class="form-control duration-input"
                                                            value="{{ plan.duration_days }}" min="1" required
                                                            {{ 'disabled' if plan.is_lifetime else '' }}
@@ -331,10 +337,10 @@
                                                            value="Mensal" required>
                                                 </div>
                                                 <div class="col-md-3">
-                                                    <label class="form-label">
-                                                        Duração (dias)
+                                                    <div class="duration-wrapper">
+                                                        <label class="form-label">Duração (dias)</label>
                                                         <button type="button" class="lifetime-toggle" onclick="toggleLifetime(this)" title="Plano Vitalício">&#8734; Vitalício</button>
-                                                    </label>
+                                                    </div>
                                                     <input type="number" name="plan_duration[]" class="form-control duration-input"
                                                            value="30" min="1" required>
                                                 </div>
@@ -532,10 +538,10 @@ function addPlan() {
                 <input type="text" name="plan_name[]" class="form-control" required>
             </div>
             <div class="col-md-3">
-                <label class="form-label">
-                    Duração (dias)
+                <div class="duration-wrapper">
+                    <label class="form-label">Duração (dias)</label>
                     <button type="button" class="lifetime-toggle" onclick="toggleLifetime(this)" title="Plano Vitalício">&#8734; Vitalício</button>
-                </label>
+                </div>
                 <input type="number" name="plan_duration[]" class="form-control duration-input" min="1" required>
             </div>
             <div class="col-md-3">
