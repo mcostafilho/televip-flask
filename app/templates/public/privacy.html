@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Política de Privacidade - TeleVIP{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 800px;">
+    <h1 class="mb-4">Política de Privacidade</h1>
+    <p class="text-muted mb-4">Ultima atualização: 10 de fevereiro de 2026</p>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+            <h5>1. Introdução</h5>
+            <p>A <strong>Web Flag LTDA</strong>, inscrita no CNPJ 45.528.008/0001-63, operadora da plataforma TeleVIP ("Plataforma"), está comprometida com a proteção dos dados pessoais de seus usuários, em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei n. 13.709/2018).</p>
+
+            <h5 class="mt-4">2. Dados Coletados</h5>
+            <p>Coletamos os seguintes dados pessoais:</p>
+
+            <h6>2.1. Criadores</h6>
+            <ul>
+                <li>Nome completo e email (cadastro);</li>
+                <li>Chave PIX (para recebimento de saques);</li>
+                <li>Dados de acesso (senha criptografada);</li>
+                <li>Dados de uso da Plataforma (grupos criados, transações).</li>
+            </ul>
+
+            <h6>2.2. Assinantes</h6>
+            <ul>
+                <li>ID e username do Telegram (fornecido automaticamente pelo bot);</li>
+                <li>Dados de pagamento (processados diretamente pelo Stripe, não armazenados por nós);</li>
+                <li>Histórico de assinaturas.</li>
+            </ul>
+
+            <h5 class="mt-4">3. Finalidade do Tratamento</h5>
+            <p>Os dados coletados são utilizados para:</p>
+            <ul>
+                <li>Criar e manter contas de Criadores;</li>
+                <li>Processar pagamentos e saques;</li>
+                <li>Gerenciar acessos a grupos do Telegram;</li>
+                <li>Enviar notificações sobre assinaturas e pagamentos;</li>
+                <li>Cumprir obrigações legais e regulatórias;</li>
+                <li>Melhorar a Plataforma e a experiência do usuário.</li>
+            </ul>
+
+            <h5 class="mt-4">4. Base Legal</h5>
+            <p>O tratamento de dados pessoais é realizado com base nas seguintes hipóteses legais (Art. 7 da LGPD):</p>
+            <ul>
+                <li><strong>Execução de contrato:</strong> para prestação dos serviços contratados;</li>
+                <li><strong>Consentimento:</strong> quando o usuário aceita os Termos de Uso e esta Política;</li>
+                <li><strong>Obrigação legal:</strong> para cumprimento de obrigações fiscais e regulatórias;</li>
+                <li><strong>Legítimo interesse:</strong> para melhoria dos serviços e prevenção a fraudes.</li>
+            </ul>
+
+            <h5 class="mt-4">5. Compartilhamento de Dados</h5>
+            <p>Compartilhamos dados pessoais apenas com:</p>
+            <ul>
+                <li><strong>Stripe:</strong> processamento de pagamentos (cartão e boleto);</li>
+                <li><strong>Telegram:</strong> gestão de acessos a grupos via Bot API;</li>
+                <li><strong>Autoridades competentes:</strong> quando exigido por lei ou ordem judicial.</li>
+            </ul>
+            <p>Não vendemos, alugamos ou compartilhamos dados pessoais com terceiros para fins de marketing.</p>
+
+            <h5 class="mt-4">6. Armazenamento e Segurança</h5>
+            <ul>
+                <li>Senhas são armazenadas com hash criptográfico (bcrypt);</li>
+                <li>Comunicações são protegidas por HTTPS/TLS;</li>
+                <li>Dados de pagamento são processados pelo Stripe (certificado PCI DSS) e não são armazenados em nossos servidores;</li>
+                <li>Acesso ao banco de dados é restrito e monitorado;</li>
+                <li>Proteção contra CSRF, XSS e outras vulnerabilidades web.</li>
+            </ul>
+
+            <h5 class="mt-4">7. Retenção de Dados</h5>
+            <ul>
+                <li>Dados de conta são mantidos enquanto a conta estiver ativa;</li>
+                <li>Dados de transações são mantidos por <strong>5 anos</strong> para fins fiscais e legais;</li>
+                <li>Após exclusão da conta, dados pessoais são anonimizados ou removidos em até <strong>30 dias</strong>, exceto quando houver obrigação legal de retenção.</li>
+            </ul>
+
+            <h5 class="mt-4">8. Direitos do Titular (LGPD)</h5>
+            <p>Conforme a LGPD, você tem direito a:</p>
+            <ul>
+                <li><strong>Acesso:</strong> solicitar quais dados temos sobre você;</li>
+                <li><strong>Correção:</strong> atualizar dados incompletos ou incorretos;</li>
+                <li><strong>Exclusão:</strong> solicitar a remoção de seus dados pessoais;</li>
+                <li><strong>Portabilidade:</strong> receber seus dados em formato estruturado;</li>
+                <li><strong>Revogação do consentimento:</strong> retirar o consentimento a qualquer momento;</li>
+                <li><strong>Oposição:</strong> opor-se ao tratamento em determinadas situações.</li>
+            </ul>
+            <p>Para exercer seus direitos, entre em contato pelo email <strong>contato@webflag.com.br</strong>. Responderemos em até <strong>15 dias úteis</strong>.</p>
+
+            <h5 class="mt-4">9. Cookies</h5>
+            <p>A Plataforma utiliza cookies essenciais para:</p>
+            <ul>
+                <li>Manter sua sessão de login ativa;</li>
+                <li>Proteger contra ataques CSRF;</li>
+                <li>Lembrar suas preferências.</li>
+            </ul>
+            <p>Não utilizamos cookies de rastreamento ou publicidade.</p>
+
+            <h5 class="mt-4">10. Transferência Internacional</h5>
+            <p>Alguns dados podem ser processados por serviços hospedados fora do Brasil (Stripe, Telegram). Nesses casos, garantimos que os prestadores adotam padrões de segurança compatíveis com a LGPD.</p>
+
+            <h5 class="mt-4">11. Alterações nesta Política</h5>
+            <p>Esta Política pode ser atualizada periodicamente. Alterações significativas serão comunicadas por email ou pela Plataforma. A data da última atualização estará sempre indicada no topo desta página.</p>
+
+            <h5 class="mt-4">12. Encarregado de Dados (DPO)</h5>
+            <p>Para questões relacionadas à proteção de dados pessoais, entre em contato com nosso Encarregado:</p>
+            <ul>
+                <li><strong>Email:</strong> contato@webflag.com.br</li>
+                <li><strong>Empresa:</strong> Web Flag LTDA - CNPJ 45.528.008/0001-63</li>
+            </ul>
+
+            <h5 class="mt-4">13. Legislação e Foro</h5>
+            <p>Esta Política é regida pela legislação brasileira, em especial a LGPD. Fica eleito o foro da comarca da sede da Web Flag LTDA para dirimir quaisquer controvérsias.</p>
+        </div>
+    </div>
+
+    <div class="text-center mb-4">
+        <a href="{{ url_for('auth.index') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Voltar ao Início
+        </a>
+    </div>
+</div>
+{% endblock %}

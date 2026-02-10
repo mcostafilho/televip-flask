@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Termos de Uso - TeleVIP{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 800px;">
+    <h1 class="mb-4">Termos de Uso</h1>
+    <p class="text-muted mb-4">Ultima atualização: 10 de fevereiro de 2026</p>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+            <h5>1. Aceitação dos Termos</h5>
+            <p>Ao acessar e utilizar a plataforma TeleVIP ("Plataforma"), operada por <strong>Web Flag LTDA</strong>, inscrita no CNPJ 45.528.008/0001-63, você concorda com estes Termos de Uso. Caso não concorde, interrompa o uso da Plataforma imediatamente.</p>
+
+            <h5 class="mt-4">2. Descrição do Serviço</h5>
+            <p>A TeleVIP é uma plataforma de intermediação que permite a criadores de conteúdo ("Criadores") monetizar grupos e canais no Telegram por meio de assinaturas pagas. A Plataforma oferece:</p>
+            <ul>
+                <li>Gestão automatizada de assinaturas e acessos a grupos do Telegram;</li>
+                <li>Processamento de pagamentos via Stripe (cartão de crédito e boleto);</li>
+                <li>Dashboard de gestão para Criadores;</li>
+                <li>Bot do Telegram para automação de acessos.</li>
+            </ul>
+
+            <h5 class="mt-4">3. Cadastro e Conta</h5>
+            <p>Para utilizar a Plataforma como Criador, é necessário criar uma conta fornecendo informações verdadeiras, completas e atualizadas. Você é responsável por manter a confidencialidade de sua senha e por todas as atividades realizadas em sua conta.</p>
+
+            <h5 class="mt-4">4. Obrigações do Criador</h5>
+            <p>O Criador se compromete a:</p>
+            <ul>
+                <li>Não utilizar a Plataforma para atividades ilegais, fraudulentas ou que violem direitos de terceiros;</li>
+                <li>Não publicar conteúdo que viole leis brasileiras, incluindo, mas não se limitando a, conteúdo ilícito, discriminatório ou que promova violência;</li>
+                <li>Manter seus dados cadastrais atualizados;</li>
+                <li>Cumprir todas as obrigações fiscais e tributárias decorrentes dos valores recebidos.</li>
+            </ul>
+
+            <h5 class="mt-4">5. Assinantes</h5>
+            <p>Os assinantes ("Assinantes") adquirem acesso a grupos do Telegram por meio de planos definidos pelos Criadores. A relação comercial de conteúdo é entre o Criador e o Assinante, cabendo à TeleVIP apenas a intermediação técnica e de pagamento.</p>
+
+            <h5 class="mt-4">6. Pagamentos e Taxas</h5>
+            <ul>
+                <li>Os pagamentos são processados exclusivamente via Stripe;</li>
+                <li>A TeleVIP cobra uma taxa de <strong>R$ 0,99 + 9,99%</strong> sobre cada transação;</li>
+                <li>Os valores ficam retidos por <strong>7 dias</strong> antes de ficarem disponíveis para saque;</li>
+                <li>O valor mínimo para saque é de <strong>R$ 50,00</strong>;</li>
+                <li>Saques são realizados via PIX, conforme chave cadastrada pelo Criador.</li>
+            </ul>
+
+            <h5 class="mt-4">7. Cancelamentos e Reembolsos</h5>
+            <ul>
+                <li>Assinaturas recorrentes podem ser canceladas a qualquer momento, com acesso mantido até o fim do período pago;</li>
+                <li>Reembolsos seguem a política do Stripe e as regras do Código de Defesa do Consumidor;</li>
+                <li>Em caso de disputa (chargeback), a assinatura será suspensa até resolução.</li>
+            </ul>
+
+            <h5 class="mt-4">8. Propriedade Intelectual</h5>
+            <p>Todo o conteúdo, design, código e marca da TeleVIP são de propriedade exclusiva da Web Flag LTDA. O conteúdo publicado pelos Criadores em seus grupos permanece de propriedade dos respectivos Criadores.</p>
+
+            <h5 class="mt-4">9. Limitação de Responsabilidade</h5>
+            <p>A TeleVIP não se responsabiliza por:</p>
+            <ul>
+                <li>Conteúdo publicado pelos Criadores em seus grupos;</li>
+                <li>Indisponibilidade do Telegram ou de serviços de terceiros;</li>
+                <li>Perdas ou danos indiretos decorrentes do uso da Plataforma;</li>
+                <li>Problemas técnicos fora do controle da Plataforma.</li>
+            </ul>
+
+            <h5 class="mt-4">10. Suspensão e Encerramento</h5>
+            <p>A TeleVIP reserva-se o direito de suspender ou encerrar contas que violem estes Termos, sem aviso prévio, especialmente em casos de fraude, atividade ilegal ou violação de direitos de terceiros.</p>
+
+            <h5 class="mt-4">11. Alterações nos Termos</h5>
+            <p>Estes Termos podem ser atualizados a qualquer momento. Alterações significativas serão comunicadas por email ou pela Plataforma. O uso continuado após alterações implica aceitação dos novos Termos.</p>
+
+            <h5 class="mt-4">12. Legislação e Foro</h5>
+            <p>Estes Termos são regidos pela legislação brasileira. Fica eleito o foro da comarca da sede da Web Flag LTDA para dirimir quaisquer controvérsias.</p>
+
+            <h5 class="mt-4">13. Contato</h5>
+            <p>Para dúvidas sobre estes Termos, entre em contato pelo email <strong>contato@webflag.com.br</strong> ou pelo WhatsApp de suporte disponível na Plataforma.</p>
+        </div>
+    </div>
+
+    <div class="text-center mb-4">
+        <a href="{{ url_for('auth.index') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Voltar ao Início
+        </a>
+    </div>
+</div>
+{% endblock %}

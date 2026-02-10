@@ -235,3 +235,15 @@ def logout():
     logout_user()
     flash('Você saiu da sua conta.', 'info')
     return redirect(url_for('auth.index'))
+
+
+@bp.route('/termos')
+def terms():
+    """Termos de Uso"""
+    return render_template('public/terms.html')
+
+
+@bp.route('/privacidade')
+def privacy():
+    """Política de Privacidade"""
+    return render_template('public/privacy.html')
