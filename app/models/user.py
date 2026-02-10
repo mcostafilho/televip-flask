@@ -12,6 +12,7 @@ class Creator(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password_hash = db.Column(db.String(200))
+    google_id = db.Column(db.String(100), unique=True, nullable=True)
     telegram_id = db.Column(db.String(50))
     telegram_username = db.Column(db.String(50))
     phone = db.Column(db.String(20))
@@ -69,6 +70,8 @@ class Creator(UserMixin, db.Model):
     
     def check_password(self, password):
         """Verifica a senha do usuário"""
+        if not self.password_hash:
+            return False
         return check_password_hash(self.password_hash, password)
     
     def update_last_login(self):

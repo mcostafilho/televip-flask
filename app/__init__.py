@@ -7,12 +7,14 @@ from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
+from authlib.integrations.flask_client import OAuth
 
 db = SQLAlchemy()
 login_manager = LoginManager()
 migrate = Migrate()
 limiter = Limiter(key_func=get_remote_address, default_limits=[])
 csrf = CSRFProtect()
+oauth = OAuth()
 
 def create_app():
     app = Flask(__name__)
@@ -27,6 +29,14 @@ def create_app():
     migrate.init_app(app, db)
     limiter.init_app(app)
     csrf.init_app(app)
+    oauth.init_app(app)
+
+    # Registrar Google OAuth provider
+    oauth.register(
+        name='google',
+        server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+        client_kwargs={'scope': 'openid email profile'},
+    )
 
     # Fix 2: Restrict CORS to webhooks and API routes only
     CORS(app, resources={r"/webhooks/*": {"origins": "*"}, r"/api/*": {"origins": "*"}})
@@ -99,8 +109,8 @@ def create_app():
             "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://fonts.googleapis.com; "
             "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; "
             "img-src 'self' data: https:; "
-            "connect-src 'self' https://api.stripe.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com; "
-            "frame-src https://js.stripe.com; "
+            "connect-src 'self' https://api.stripe.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://accounts.google.com; "
+            "frame-src https://js.stripe.com https://accounts.google.com; "
             "object-src 'none'; "
             "base-uri 'self'"
         )

@@ -1,11 +1,12 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, Response
+from flask import Blueprint, render_template, redirect, url_for, flash, request, Response, session
 from flask_login import login_user, logout_user, current_user, login_required
-from app import db, limiter
+from app import db, limiter, oauth
 from app.models import Creator, Report
 from app.utils.email import send_password_reset_email, send_welcome_email, send_confirmation_email
 from app.utils.security import generate_reset_token, verify_reset_token, generate_confirmation_token, verify_confirmation_token, is_safe_url
 import re
 import logging
+import secrets
 from datetime import datetime
 
 bp = Blueprint('auth', __name__)
@@ -244,6 +245,89 @@ def resend_confirmation():
 
     flash('Se o email estiver cadastrado, voce recebera um novo link de confirmacao.', 'info')
     return redirect(url_for('auth.login'))
+
+
+@bp.route('/auth/google')
+def google_login():
+    """Inicia o fluxo OAuth com Google"""
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard.index'))
+    nonce = secrets.token_urlsafe(32)
+    session['google_oauth_nonce'] = nonce
+    redirect_uri = url_for('auth.google_callback', _external=True)
+    return oauth.google.authorize_redirect(redirect_uri, nonce=nonce)
+
+
+@bp.route('/auth/google/callback')
+def google_callback():
+    """Callback do Google OAuth — login, vinculação ou cadastro"""
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard.index'))
+
+    try:
+        token = oauth.google.authorize_access_token()
+        nonce = session.pop('google_oauth_nonce', None)
+        user_info = oauth.google.parse_id_token(token, nonce=nonce)
+    except Exception:
+        logger.error("Google OAuth callback failed", exc_info=True)
+        flash('Erro ao autenticar com Google. Tente novamente.', 'error')
+        return redirect(url_for('auth.login'))
+
+    google_id = user_info.get('sub')
+    email = user_info.get('email', '').lower()
+    name = user_info.get('name', '')
+
+    if not google_id or not email:
+        flash('Não foi possível obter suas informações do Google.', 'error')
+        return redirect(url_for('auth.login'))
+
+    # 1. Buscar por google_id (já vinculado)
+    user = Creator.query.filter_by(google_id=google_id).first()
+
+    # 2. Se não achou, buscar por email e vincular
+    if not user:
+        user = Creator.query.filter_by(email=email).first()
+        if user:
+            user.google_id = google_id
+            db.session.commit()
+
+    # 3. Se não achou nenhum, criar nova conta
+    if not user:
+        # Gerar username a partir do email (parte antes do @)
+        base_username = re.sub(r'[^a-z0-9]', '', email.split('@')[0].lower())
+        if len(base_username) < 3:
+            base_username = base_username + 'user'
+        username = base_username
+        # Garantir unicidade do username
+        counter = 1
+        while Creator.query.filter_by(username=username).first():
+            username = f"{base_username}{counter}"
+            counter += 1
+
+        user = Creator(
+            name=name,
+            email=email,
+            username=username,
+            google_id=google_id,
+            is_verified=True,
+        )
+        db.session.add(user)
+        db.session.commit()
+
+        flash(f'Conta criada com sucesso! Bem-vindo, {user.name}!', 'success')
+        login_user(user)
+        return redirect(url_for('dashboard.index'))
+
+    # Verificar se conta está bloqueada
+    if user.is_blocked:
+        flash('Sua conta está bloqueada.', 'error')
+        return redirect(url_for('auth.login'))
+
+    # Login
+    user.update_last_login()
+    login_user(user)
+    flash(f'Bem-vindo de volta, {user.name}!', 'success')
+    return redirect(url_for('dashboard.index'))
 
 
 @bp.route('/conta-bloqueada')
