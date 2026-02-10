@@ -191,7 +191,7 @@
                             <span class="stat-label">Assinantes</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-value">{{ group.pricing_plans.count() }}</span>
+                            <span class="stat-value">{{ group.pricing_plans.filter_by(is_active=True).count() }}</span>
                             <span class="stat-label">Planos</span>
                         </div>
                         <div class="stat-item">
