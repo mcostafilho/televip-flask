@@ -364,7 +364,8 @@
     </div>
 </div>
 
-<!-- Modal de Saque -->
+<!-- Modal de Saque (só renderiza quando há saldo suficiente) -->
+{% if available_balance|default(0) >= 50 %}
 <div class="modal fade" id="withdrawModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -379,15 +380,15 @@
                 <div class="modal-body">
                     <div class="alert alert-info">
                         <i class="bi bi-info-circle"></i>
-                        <strong>Saldo disponível:</strong> R$ {{ "%.2f"|format(available_balance|default(0)) }}
+                        <strong>Saldo disponível:</strong> R$ {{ "%.2f"|format(available_balance) }}
                     </div>
-                    
+
                     <div class="mb-3">
                         <label class="form-label">Valor do Saque</label>
                         <div class="input-group">
                             <span class="input-group-text">R$</span>
-                            <input type="number" name="amount" class="form-control" 
-                                   step="0.01" min="50" max="{{ available_balance|default(0) }}" required>
+                            <input type="number" name="amount" class="form-control"
+                                   step="0.01" min="50" max="{{ available_balance }}" required>
                         </div>
                         <small class="text-muted">Mínimo: R$ 50,00</small>
                     </div>
@@ -409,6 +410,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 <!-- Modal de Detalhes do Saldo -->
 <div class="modal fade" id="balanceDetailsModal" tabindex="-1">
