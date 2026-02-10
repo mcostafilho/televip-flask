@@ -2653,3 +2653,711 @@ class TestPlanosCommand:
 
         text = update.message.reply_text.call_args[0][0]
         assert 'Vitalicio' in text
+
+
+# ===========================================================================
+# 16. CONCURRENT / LOAD TESTS
+# ===========================================================================
+
+import asyncio
+import concurrent.futures
+import threading
+
+
+class TestConcurrentStart:
+    """Muitos usuarios chamando /start ao mesmo tempo"""
+
+    def test_50_users_start_simultaneously(self, app_ctx):
+        """50 usuarios novos chamam /start ao mesmo tempo sem erro"""
+        from bot.handlers.start import start_command
+
+        num_users = 50
+        results = []
+
+        async def run_all():
+            tasks = []
+            for i in range(num_users):
+                user = make_user(5000 + i, first_name=f'User{i}')
+                update = make_update(user=user)
+                ctx = make_context()
+                tasks.append(start_command(update, ctx))
+            return await asyncio.gather(*tasks, return_exceptions=True)
+
+        loop = asyncio.get_event_loop()
+        results = loop.run_until_complete(run_all())
+
+        errors = [r for r in results if isinstance(r, Exception)]
+        assert len(errors) == 0, f"{len(errors)} erros em 50 starts: {errors[:3]}"
+
+    def test_30_users_start_with_active_subscriptions(self, app_ctx,
+                                                       group_a, plan_a_monthly, creator_a):
+        """30 usuarios com assinaturas ativas chamam /start simultaneamente"""
+        from bot.handlers.start import start_command
+
+        num_users = 30
+        # Criar assinaturas para todos
+        for i in range(num_users):
+            sub = Subscription(
+                group_id=group_a.id, plan_id=plan_a_monthly.id,
+                telegram_user_id=str(5100 + i),
+                telegram_username=f'activeuser{i}',
+                start_date=datetime.utcnow(),
+                end_date=datetime.utcnow() + timedelta(days=25),
+                status='active',
+            )
+            _db.session.add(sub)
+        _db.session.commit()
+
+        async def run_all():
+            tasks = []
+            for i in range(num_users):
+                user = make_user(5100 + i, first_name=f'Active{i}')
+                update = make_update(user=user)
+                ctx = make_context()
+                tasks.append(start_command(update, ctx))
+            return await asyncio.gather(*tasks, return_exceptions=True)
+
+        loop = asyncio.get_event_loop()
+        results = loop.run_until_complete(run_all())
+
+        errors = [r for r in results if isinstance(r, Exception)]
+        assert len(errors) == 0, f"{len(errors)} erros: {errors[:3]}"
+
+    def test_mixed_new_and_existing_users(self, app_ctx,
+                                           group_a, plan_a_monthly, creator_a):
+        """Mistura de novos e existentes usando /start simultaneamente"""
+        from bot.handlers.start import start_command
+
+        # Criar 10 assinaturas
+        for i in range(10):
+            sub = Subscription(
+                group_id=group_a.id, plan_id=plan_a_monthly.id,
+                telegram_user_id=str(5200 + i),
+                telegram_username=f'mixuser{i}',
+                start_date=datetime.utcnow(),
+                end_date=datetime.utcnow() + timedelta(days=15),
+                status='active',
+            )
+            _db.session.add(sub)
+        _db.session.commit()
+
+        async def run_all():
+            tasks = []
+            # 10 com assinatura + 20 novos
+            for i in range(30):
+                user = make_user(5200 + i, first_name=f'Mix{i}')
+                update = make_update(user=user)
+                ctx = make_context()
+                tasks.append(start_command(update, ctx))
+            return await asyncio.gather(*tasks, return_exceptions=True)
+
+        loop = asyncio.get_event_loop()
+        results = loop.run_until_complete(run_all())
+
+        errors = [r for r in results if isinstance(r, Exception)]
+        assert len(errors) == 0, f"{len(errors)} erros: {errors[:3]}"
+
+
+class TestConcurrentDiscovery:
+    """Muitos usuarios descobrindo grupos ao mesmo tempo"""
+
+    def test_40_users_discover_simultaneously(self, app_ctx,
+                                               group_a, group_b, plan_a_monthly,
+                                               plan_b_monthly, creator_a, creator_b):
+        """40 usuarios chamam /descobrir ao mesmo tempo"""
+        from bot.handlers.discovery import descobrir_command as discover_groups
+
+        num_users = 40
+
+        async def run_all():
+            tasks = []
+            for i in range(num_users):
+                user = make_user(6000 + i, first_name=f'Discover{i}')
+                update = make_update(user=user)
+                ctx = make_context()
+                tasks.append(discover_groups(update, ctx))
+            return await asyncio.gather(*tasks, return_exceptions=True)
+
+        loop = asyncio.get_event_loop()
+        results = loop.run_until_complete(run_all())
+
+        errors = [r for r in results if isinstance(r, Exception)]
+        assert len(errors) == 0, f"{len(errors)} erros em discover: {errors[:3]}"
+
+
+class TestConcurrentSubscriptionFlow:
+    """Multiplos usuarios entrando em fluxos de assinatura simultaneamente"""
+
+    def test_20_users_view_plans_same_group(self, app_ctx,
+                                             group_a, plan_a_monthly, plan_a_quarterly,
+                                             creator_a):
+        """20 usuarios vendo planos do mesmo grupo ao mesmo tempo"""
+        from bot.handlers.start import start_subscription_flow
+
+        num_users = 20
+
+        async def run_all():
+            tasks = []
+            for i in range(num_users):
+                user = make_user(6100 + i, first_name=f'Plan{i}')
+                update = make_update(user=user)
+                ctx = make_context()
+                tasks.append(
+                    start_subscription_flow(update, ctx, group_a.invite_slug)
+                )
+            return await asyncio.gather(*tasks, return_exceptions=True)
+
+        loop = asyncio.get_event_loop()
+        results = loop.run_until_complete(run_all())
+
+        errors = [r for r in results if isinstance(r, Exception)]
+        assert len(errors) == 0, f"{len(errors)} erros: {errors[:3]}"
+
+    def test_users_subscribe_different_groups_simultaneously(self, app_ctx,
+                                                              group_a, group_b,
+                                                              plan_a_monthly, plan_b_monthly,
+                                                              creator_a, creator_b):
+        """Usuarios assinando grupos diferentes ao mesmo tempo"""
+        from bot.handlers.start import start_subscription_flow
+
+        async def run_all():
+            tasks = []
+            # 15 usuarios no grupo A
+            for i in range(15):
+                user = make_user(6200 + i, first_name=f'SubA{i}')
+                update = make_update(user=user)
+                ctx = make_context()
+                tasks.append(
+                    start_subscription_flow(update, ctx, group_a.invite_slug)
+                )
+            # 15 usuarios no grupo B
+            for i in range(15):
+                user = make_user(6300 + i, first_name=f'SubB{i}')
+                update = make_update(user=user)
+                ctx = make_context()
+                tasks.append(
+                    start_subscription_flow(update, ctx, group_b.invite_slug)
+                )
+            return await asyncio.gather(*tasks, return_exceptions=True)
+
+        loop = asyncio.get_event_loop()
+        results = loop.run_until_complete(run_all())
+
+        errors = [r for r in results if isinstance(r, Exception)]
+        assert len(errors) == 0, f"{len(errors)} erros: {errors[:3]}"
+
+
+class TestConcurrentPaymentVerification:
+    """Multiplos usuarios verificando pagamento ao mesmo tempo"""
+
+    @patch('bot.handlers.payment_verification.get_stripe_session_details', new_callable=AsyncMock)
+    @patch('bot.handlers.payment_verification.verify_payment', new_callable=AsyncMock)
+    def test_20_users_verify_payment_simultaneously(self, mock_verify, mock_details,
+                                                     app_ctx, group_a, plan_a_monthly,
+                                                     creator_a):
+        """20 usuarios confirmando pagamento ao mesmo tempo — sem race condition no saldo"""
+        mock_verify.return_value = True
+        mock_details.return_value = {
+            'subscription_id': None,
+            'payment_intent_id': 'pi_test_conc',
+            'payment_method_type': 'card',
+        }
+
+        num_users = 20
+        subs = []
+        for i in range(num_users):
+            sub = Subscription(
+                group_id=group_a.id, plan_id=plan_a_monthly.id,
+                telegram_user_id=str(7000 + i),
+                telegram_username=f'payconc{i}',
+                start_date=datetime.utcnow(),
+                end_date=datetime.utcnow() + timedelta(days=30),
+                status='pending',
+            )
+            _db.session.add(sub)
+            _db.session.flush()
+            txn = Transaction(
+                subscription_id=sub.id, amount=Decimal('29.90'),
+                status='pending', payment_method='stripe',
+                stripe_session_id=f'cs_test_conc_{7000 + i}',
+            )
+            _db.session.add(txn)
+            subs.append(sub)
+        _db.session.commit()
+
+        from bot.handlers.payment_verification import check_payment_status
+
+        async def run_all():
+            tasks = []
+            for i in range(num_users):
+                user = make_user(7000 + i)
+                query = make_callback_query(user=user, data='check_payment_status')
+                update = MagicMock()
+                update.callback_query = query
+                ctx = make_context()
+                invite_obj = MagicMock()
+                invite_obj.invite_link = f'https://t.me/+link_{7000 + i}'
+                ctx.bot.create_chat_invite_link = AsyncMock(return_value=invite_obj)
+                tasks.append(check_payment_status(update, ctx))
+            return await asyncio.gather(*tasks, return_exceptions=True)
+
+        loop = asyncio.get_event_loop()
+        results = loop.run_until_complete(run_all())
+
+        errors = [r for r in results if isinstance(r, Exception)]
+        assert len(errors) == 0, f"{len(errors)} erros: {errors[:3]}"
+
+        # Todas as assinaturas devem estar ativas
+        for sub in subs:
+            _db.session.refresh(sub)
+            assert sub.status == 'active', f"Sub {sub.id} status={sub.status}"
+
+        # Saldo do criador deve ter crescido (20 pagamentos)
+        _db.session.refresh(creator_a)
+        assert creator_a.balance > 0
+        assert creator_a.total_earned > 0
+
+    @patch('bot.handlers.payment_verification.get_stripe_session_details', new_callable=AsyncMock)
+    @patch('bot.handlers.payment_verification.verify_payment', new_callable=AsyncMock)
+    def test_mixed_confirmed_and_pending_simultaneously(self, mock_verify, mock_details,
+                                                         app_ctx, group_a, plan_a_monthly,
+                                                         creator_a):
+        """Mistura de pagamentos confirmados e pendentes ao mesmo tempo"""
+        # Alternar: pares = confirmado, impares = pendente
+        call_count = 0
+
+        async def smart_verify(session_id):
+            nonlocal call_count
+            call_count += 1
+            # Baseado no user_id embutido no session_id
+            uid = int(session_id.split('_')[-1])
+            return uid % 2 == 0  # Pares pagaram
+
+        mock_verify.side_effect = smart_verify
+        mock_details.return_value = {
+            'subscription_id': None,
+            'payment_intent_id': None,
+            'payment_method_type': None,
+        }
+
+        num_users = 20
+        subs = []
+        for i in range(num_users):
+            uid = 7200 + i
+            sub = Subscription(
+                group_id=group_a.id, plan_id=plan_a_monthly.id,
+                telegram_user_id=str(uid),
+                telegram_username=f'mixpay{i}',
+                start_date=datetime.utcnow(),
+                end_date=datetime.utcnow() + timedelta(days=30),
+                status='pending',
+            )
+            _db.session.add(sub)
+            _db.session.flush()
+            txn = Transaction(
+                subscription_id=sub.id, amount=Decimal('29.90'),
+                status='pending', payment_method='stripe',
+                stripe_session_id=f'cs_test_mix_{uid}',
+            )
+            _db.session.add(txn)
+            subs.append(sub)
+        _db.session.commit()
+
+        from bot.handlers.payment_verification import check_payment_status
+
+        async def run_all():
+            tasks = []
+            for i in range(num_users):
+                uid = 7200 + i
+                user = make_user(uid)
+                query = make_callback_query(user=user, data='check_payment_status')
+                update = MagicMock()
+                update.callback_query = query
+                ctx = make_context()
+                invite_obj = MagicMock()
+                invite_obj.invite_link = f'https://t.me/+link_{uid}'
+                ctx.bot.create_chat_invite_link = AsyncMock(return_value=invite_obj)
+                tasks.append(check_payment_status(update, ctx))
+            return await asyncio.gather(*tasks, return_exceptions=True)
+
+        loop = asyncio.get_event_loop()
+        results = loop.run_until_complete(run_all())
+
+        errors = [r for r in results if isinstance(r, Exception)]
+        assert len(errors) == 0, f"{len(errors)} erros: {errors[:3]}"
+
+        # Verificar estados: pares=active, impares=pending
+        active_count = 0
+        pending_count = 0
+        for sub in subs:
+            _db.session.refresh(sub)
+            uid = int(sub.telegram_user_id)
+            if uid % 2 == 0:
+                assert sub.status == 'active', f"Sub uid={uid} deveria ser active"
+                active_count += 1
+            else:
+                assert sub.status == 'pending', f"Sub uid={uid} deveria ser pending"
+                pending_count += 1
+        assert active_count == 10
+        assert pending_count == 10
+
+
+class TestConcurrentStatusCheck:
+    """Muitos usuarios consultando status ao mesmo tempo"""
+
+    def test_30_users_check_status_simultaneously(self, app_ctx,
+                                                    group_a, group_b,
+                                                    plan_a_monthly, plan_b_monthly,
+                                                    creator_a, creator_b):
+        """30 usuarios com assinaturas em grupos diferentes checam /status"""
+        from bot.handlers.subscription import status_command
+
+        num_users = 30
+        for i in range(num_users):
+            # Metade no grupo A, metade no grupo B
+            gid = group_a.id if i < 15 else group_b.id
+            pid = plan_a_monthly.id if i < 15 else plan_b_monthly.id
+            sub = Subscription(
+                group_id=gid, plan_id=pid,
+                telegram_user_id=str(7400 + i),
+                telegram_username=f'statususer{i}',
+                start_date=datetime.utcnow(),
+                end_date=datetime.utcnow() + timedelta(days=20),
+                status='active',
+            )
+            _db.session.add(sub)
+        _db.session.commit()
+
+        async def run_all():
+            tasks = []
+            for i in range(num_users):
+                user = make_user(7400 + i, first_name=f'Status{i}')
+                update = make_update(user=user)
+                ctx = make_context()
+                tasks.append(status_command(update, ctx))
+            return await asyncio.gather(*tasks, return_exceptions=True)
+
+        loop = asyncio.get_event_loop()
+        results = loop.run_until_complete(run_all())
+
+        errors = [r for r in results if isinstance(r, Exception)]
+        assert len(errors) == 0, f"{len(errors)} erros: {errors[:3]}"
+
+
+class TestConcurrentCancellation:
+    """Multiplas cancelações ao mesmo tempo"""
+
+    def test_15_users_cancel_simultaneously(self, app_ctx,
+                                             group_a, plan_a_monthly, creator_a):
+        """15 usuarios cancelam assinatura ao mesmo tempo"""
+        from bot.handlers.subscription import confirm_cancel_subscription
+
+        num_users = 15
+        subs = []
+        for i in range(num_users):
+            sub = Subscription(
+                group_id=group_a.id, plan_id=plan_a_monthly.id,
+                telegram_user_id=str(7600 + i),
+                telegram_username=f'cancelconc{i}',
+                start_date=datetime.utcnow(),
+                end_date=datetime.utcnow() + timedelta(days=20),
+                status='active',
+                is_legacy=True,
+            )
+            _db.session.add(sub)
+            _db.session.flush()
+            subs.append(sub)
+        _db.session.commit()
+
+        sub_ids = [s.id for s in subs]
+
+        async def run_all():
+            tasks = []
+            for i, sid in enumerate(sub_ids):
+                user = make_user(7600 + i)
+                query = make_callback_query(user=user, data=f'confirm_cancel_sub_{sid}')
+                update = make_update(user=user, callback_query=query)
+                ctx = make_context()
+                tasks.append(confirm_cancel_subscription(update, ctx))
+            return await asyncio.gather(*tasks, return_exceptions=True)
+
+        loop = asyncio.get_event_loop()
+        results = loop.run_until_complete(run_all())
+
+        errors = [r for r in results if isinstance(r, Exception)]
+        assert len(errors) == 0, f"{len(errors)} erros: {errors[:3]}"
+
+        # Todos devem ter cancel_at_period_end=True (mantém acesso até end_date)
+        for sub in subs:
+            _db.session.refresh(sub)
+            assert sub.cancel_at_period_end is True, f"Sub {sub.id} cancel_at_period_end={sub.cancel_at_period_end}"
+            assert sub.auto_renew is False, f"Sub {sub.id} auto_renew={sub.auto_renew}"
+
+
+class TestConcurrentScheduledTasks:
+    """Jobs agendados com muitas assinaturas para processar"""
+
+    def test_expire_50_subscriptions_at_once(self, app_ctx,
+                                              group_a, plan_a_monthly, creator_a):
+        """Job de expiração processa 50 assinaturas vencidas de uma vez"""
+        from bot.jobs.scheduled_tasks import check_expired_subscriptions
+        import bot.jobs.scheduled_tasks as tasks_mod
+
+        num = 50
+        for i in range(num):
+            sub = Subscription(
+                group_id=group_a.id, plan_id=plan_a_monthly.id,
+                telegram_user_id=str(8000 + i),
+                telegram_username=f'expired{i}',
+                start_date=datetime.utcnow() - timedelta(days=35),
+                end_date=datetime.utcnow() - timedelta(days=5),
+                status='active',
+                is_legacy=True,
+            )
+            _db.session.add(sub)
+        _db.session.commit()
+
+        # Mock _application para que remove_from_group e notify_expiration funcionem
+        mock_app = MagicMock()
+        mock_app.bot = AsyncMock()
+        old_app = tasks_mod._application
+        tasks_mod._application = mock_app
+
+        try:
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(check_expired_subscriptions())
+        finally:
+            tasks_mod._application = old_app
+
+        # Verificar que todas foram expiradas
+        expired = _db.session.query(Subscription).filter(
+            Subscription.telegram_user_id.in_([str(8000 + i) for i in range(num)]),
+            Subscription.status == 'expired'
+        ).count()
+        assert expired == num, f"Apenas {expired}/{num} expiradas"
+
+    def test_renewal_reminders_for_30_users(self, app_ctx,
+                                             group_a, plan_a_monthly, creator_a):
+        """Lembretes de renovação para 30 usuarios proximos de expirar"""
+        from bot.jobs.scheduled_tasks import send_renewal_reminders
+        import bot.jobs.scheduled_tasks as tasks_mod
+
+        num = 30
+        for i in range(num):
+            sub = Subscription(
+                group_id=group_a.id, plan_id=plan_a_monthly.id,
+                telegram_user_id=str(8100 + i),
+                telegram_username=f'renew{i}',
+                start_date=datetime.utcnow() - timedelta(days=27),
+                end_date=datetime.utcnow() + timedelta(days=3),
+                status='active',
+                is_legacy=True,
+            )
+            _db.session.add(sub)
+        _db.session.commit()
+
+        mock_app = MagicMock()
+        mock_app.bot = AsyncMock()
+        mock_app.bot.send_message = AsyncMock()
+        old_app = tasks_mod._application
+        tasks_mod._application = mock_app
+
+        try:
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(send_renewal_reminders())
+        finally:
+            tasks_mod._application = old_app
+
+        # Deve ter tentado enviar mensagem para todos
+        assert mock_app.bot.send_message.call_count == num, \
+            f"Esperado {num} mensagens, enviadas {mock_app.bot.send_message.call_count}"
+
+
+class TestConcurrentMultiCreatorLoad:
+    """Cenario realista: multiplos criadores com muitos assinantes"""
+
+    def test_many_users_across_many_groups(self, app_ctx, db):
+        """Simula 5 criadores, 5 grupos, 50 assinaturas — todos chamam /status"""
+        from bot.handlers.subscription import status_command
+
+        creators = []
+        groups = []
+        plans = []
+        for c_idx in range(5):
+            creator = Creator(
+                name=f'LoadCreator{c_idx}',
+                email=f'load{c_idx}@test.com',
+                username=f'loadcreator{c_idx}',
+                balance=Decimal('0'),
+                total_earned=Decimal('0'),
+                is_verified=True,
+            )
+            creator.set_password(f'LoadPass{c_idx}!')
+            db.session.add(creator)
+            db.session.flush()
+            creators.append(creator)
+
+            group = Group(
+                name=f'Load Group {c_idx}',
+                description=f'Grupo de carga {c_idx}',
+                telegram_id=f'-100{9000 + c_idx}',
+                creator_id=creator.id,
+                is_active=True,
+            )
+            db.session.add(group)
+            db.session.flush()
+            groups.append(group)
+
+            plan = PricingPlan(
+                group_id=group.id,
+                name=f'Mensal Load {c_idx}',
+                duration_days=30,
+                price=Decimal('29.90'),
+                is_active=True,
+            )
+            db.session.add(plan)
+            db.session.flush()
+            plans.append(plan)
+
+        # 50 assinaturas: 10 usuarios por grupo
+        for g_idx in range(5):
+            for u_idx in range(10):
+                uid = 9000 + g_idx * 100 + u_idx
+                sub = Subscription(
+                    group_id=groups[g_idx].id,
+                    plan_id=plans[g_idx].id,
+                    telegram_user_id=str(uid),
+                    telegram_username=f'loaduser_{uid}',
+                    start_date=datetime.utcnow(),
+                    end_date=datetime.utcnow() + timedelta(days=25),
+                    status='active',
+                )
+                db.session.add(sub)
+        db.session.commit()
+
+        async def run_all():
+            tasks = []
+            for g_idx in range(5):
+                for u_idx in range(10):
+                    uid = 9000 + g_idx * 100 + u_idx
+                    user = make_user(uid, first_name=f'Load{uid}')
+                    update = make_update(user=user)
+                    ctx = make_context()
+                    tasks.append(status_command(update, ctx))
+            return await asyncio.gather(*tasks, return_exceptions=True)
+
+        loop = asyncio.get_event_loop()
+        results = loop.run_until_complete(run_all())
+
+        errors = [r for r in results if isinstance(r, Exception)]
+        assert len(errors) == 0, f"{len(errors)} erros em 50 status: {errors[:3]}"
+
+    @patch('bot.handlers.payment_verification.get_stripe_session_details', new_callable=AsyncMock)
+    @patch('bot.handlers.payment_verification.verify_payment', new_callable=AsyncMock)
+    def test_concurrent_payments_multiple_creators(self, mock_verify, mock_details,
+                                                    app_ctx, db):
+        """Pagamentos simultaneos para criadores diferentes — saldos independentes"""
+        mock_verify.return_value = True
+        mock_details.return_value = {
+            'subscription_id': None,
+            'payment_intent_id': None,
+            'payment_method_type': 'card',
+        }
+
+        creators = []
+        groups = []
+        plans = []
+        for c_idx in range(3):
+            creator = Creator(
+                name=f'PayCreator{c_idx}',
+                email=f'payc{c_idx}@test.com',
+                username=f'paycreator{c_idx}',
+                balance=Decimal('0'),
+                total_earned=Decimal('0'),
+                is_verified=True,
+            )
+            creator.set_password(f'PayPass{c_idx}!')
+            db.session.add(creator)
+            db.session.flush()
+            creators.append(creator)
+
+            group = Group(
+                name=f'Pay Group {c_idx}',
+                telegram_id=f'-100{9500 + c_idx}',
+                creator_id=creator.id,
+                is_active=True,
+            )
+            db.session.add(group)
+            db.session.flush()
+            groups.append(group)
+
+            plan = PricingPlan(
+                group_id=group.id,
+                name=f'Mensal Pay {c_idx}',
+                duration_days=30,
+                price=Decimal('29.90'),
+                is_active=True,
+            )
+            db.session.add(plan)
+            db.session.flush()
+            plans.append(plan)
+
+        # 10 assinaturas pendentes por criador = 30 total
+        all_subs = []
+        for c_idx in range(3):
+            for u_idx in range(10):
+                uid = 9500 + c_idx * 100 + u_idx
+                sub = Subscription(
+                    group_id=groups[c_idx].id,
+                    plan_id=plans[c_idx].id,
+                    telegram_user_id=str(uid),
+                    telegram_username=f'payu_{uid}',
+                    start_date=datetime.utcnow(),
+                    end_date=datetime.utcnow() + timedelta(days=30),
+                    status='pending',
+                )
+                db.session.add(sub)
+                db.session.flush()
+                txn = Transaction(
+                    subscription_id=sub.id, amount=Decimal('29.90'),
+                    status='pending', payment_method='stripe',
+                    stripe_session_id=f'cs_test_mc_{uid}',
+                )
+                db.session.add(txn)
+                all_subs.append(sub)
+        db.session.commit()
+
+        from bot.handlers.payment_verification import check_payment_status
+
+        async def run_all():
+            tasks = []
+            for c_idx in range(3):
+                for u_idx in range(10):
+                    uid = 9500 + c_idx * 100 + u_idx
+                    user = make_user(uid)
+                    query = make_callback_query(user=user, data='check_payment_status')
+                    update = MagicMock()
+                    update.callback_query = query
+                    ctx = make_context()
+                    inv = MagicMock()
+                    inv.invite_link = f'https://t.me/+mc_{uid}'
+                    ctx.bot.create_chat_invite_link = AsyncMock(return_value=inv)
+                    tasks.append(check_payment_status(update, ctx))
+            return await asyncio.gather(*tasks, return_exceptions=True)
+
+        loop = asyncio.get_event_loop()
+        results = loop.run_until_complete(run_all())
+
+        errors = [r for r in results if isinstance(r, Exception)]
+        assert len(errors) == 0, f"{len(errors)} erros: {errors[:3]}"
+
+        # Todos ativados
+        for sub in all_subs:
+            _db.session.refresh(sub)
+            assert sub.status == 'active'
+
+        # Cada criador deve ter recebido saldo de 10 pagamentos
+        for creator in creators:
+            _db.session.refresh(creator)
+            assert creator.balance > 0, f"Creator {creator.name} balance={creator.balance}"
+            assert creator.total_earned > 0
