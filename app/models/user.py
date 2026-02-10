@@ -29,6 +29,7 @@ class Creator(UserMixin, db.Model):
     is_active = db.Column(db.Boolean, default=True)
     is_verified = db.Column(db.Boolean, default=False)
     is_admin = db.Column(db.Boolean, default=False)
+    is_blocked = db.Column(db.Boolean, default=False)
 
     # Aceite dos termos (prova jurídica)
     terms_accepted_at = db.Column(db.DateTime)

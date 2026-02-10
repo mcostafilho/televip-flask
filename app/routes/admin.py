@@ -307,6 +307,30 @@ def send_creator_message(creator_id):
     flash(f'Mensagem enviada para {creator.name}!', 'success')
     return redirect(url_for('admin.index'))
 
+@bp.route('/creator/<int:creator_id>/block', methods=['POST'])
+@login_required
+@admin_required
+def block_creator(creator_id):
+    """Bloquear conta de um criador"""
+    creator = Creator.query.get_or_404(creator_id)
+    creator.is_blocked = True
+    db.session.commit()
+    flash(f'Criador {creator.name} foi bloqueado.', 'warning')
+    return redirect(url_for('admin.index'))
+
+
+@bp.route('/creator/<int:creator_id>/unblock', methods=['POST'])
+@login_required
+@admin_required
+def unblock_creator(creator_id):
+    """Desbloquear conta de um criador"""
+    creator = Creator.query.get_or_404(creator_id)
+    creator.is_blocked = False
+    db.session.commit()
+    flash(f'Criador {creator.name} foi desbloqueado.', 'success')
+    return redirect(url_for('admin.index'))
+
+
 @bp.route('/exit-creator-view')
 @login_required
 @admin_required

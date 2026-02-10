@@ -106,6 +106,7 @@
                 <button class="btn btn-sm btn-outline-primary" onclick="filterCreators('all')">Todos</button>
                 <button class="btn btn-sm btn-outline-success" onclick="filterCreators('active')">Ativos</button>
                 <button class="btn btn-sm btn-outline-warning" onclick="filterCreators('pending')">Com Saque Pendente</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="filterCreators('blocked')">Bloqueados</button>
             </div>
         </div>
         <div class="card-body">
@@ -126,9 +127,12 @@
                     </thead>
                     <tbody>
                         {% for creator in creators %}
-                        <tr data-status="{{ 'pending' if creator.pending_withdrawal else 'active' }}">
+                        <tr data-status="{{ 'blocked' if creator.is_blocked else ('pending' if creator.pending_withdrawal else 'active') }}">
                             <td>
                                 <strong>{{ creator.name }}</strong>
+                                {% if creator.is_blocked %}
+                                    <span class="badge bg-danger ms-1">Bloqueado</span>
+                                {% endif %}
                                 {% if creator.pending_withdrawal %}
                                     <span class="badge bg-warning ms-1">Saque Pendente</span>
                                 {% endif %}
@@ -150,11 +154,28 @@
                                        class="btn btn-info" title="Detalhes">
                                         <i class="bi bi-info-circle"></i>
                                     </a>
-                                    <button class="btn btn-warning" onclick="sendMessage({{ creator.id }})" 
+                                    <button class="btn btn-warning" onclick="sendMessage({{ creator.id }})"
                                             title="Enviar Mensagem">
                                         <i class="bi bi-envelope"></i>
                                     </button>
                                 </div>
+                                {% if creator.is_blocked %}
+                                    <form method="POST" action="{{ url_for('admin.unblock_creator', creator_id=creator.id) }}" class="d-inline ms-1">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn btn-sm btn-success" title="Desbloquear"
+                                                onclick="return confirm('Desbloquear {{ creator.name }}?')">
+                                            <i class="bi bi-unlock"></i> Desbloquear
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <form method="POST" action="{{ url_for('admin.block_creator', creator_id=creator.id) }}" class="d-inline ms-1">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Bloquear"
+                                                onclick="return confirm('Bloquear {{ creator.name }}? O criador não poderá acessar o dashboard.')">
+                                            <i class="bi bi-lock"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
@@ -199,13 +220,11 @@
 <script>
 function filterCreators(status) {
     const rows = document.querySelectorAll('#creatorsTable tbody tr');
-    
+
     rows.forEach(row => {
         if (status === 'all') {
             row.style.display = '';
-        } else if (status === 'pending' && row.dataset.status === 'pending') {
-            row.style.display = '';
-        } else if (status === 'active' && row.dataset.status === 'active') {
+        } else if (row.dataset.status === status) {
             row.style.display = '';
         } else {
             row.style.display = 'none';

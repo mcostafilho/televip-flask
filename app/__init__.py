@@ -1,7 +1,7 @@
 # app/__init__.py
-from flask import Flask, request, redirect, render_template
+from flask import Flask, request, redirect, render_template, url_for
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_limiter import Limiter
@@ -63,6 +63,14 @@ def create_app():
     import os
     os.makedirs('logs', exist_ok=True)
     os.makedirs('instance', exist_ok=True)
+
+    # Bloquear acesso de criadores bloqueados ao dashboard/groups
+    @app.before_request
+    def check_blocked_user():
+        if current_user.is_authenticated and getattr(current_user, 'is_blocked', False):
+            allowed_prefixes = ('/conta-bloqueada', '/logout', '/login', '/static')
+            if not any(request.path.startswith(p) for p in allowed_prefixes):
+                return redirect(url_for('auth.blocked_account'))
 
     # Fix 6: Redirecionar HTTP → HTTPS em produção (só quando SSL ativo)
     @app.before_request

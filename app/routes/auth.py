@@ -246,6 +246,13 @@ def resend_confirmation():
     return redirect(url_for('auth.login'))
 
 
+@bp.route('/conta-bloqueada')
+@login_required
+def blocked_account():
+    """Página exibida para contas bloqueadas"""
+    return render_template('public/blocked.html')
+
+
 @bp.route('/logout')
 @login_required
 def logout():
