@@ -268,7 +268,7 @@ Use /descobrir para explorar grupos disponíveis!
                     text += f"♾️ **Acesso Vitalicio**\n"
                 else:
                     days_left = (sub.end_date - datetime.utcnow()).days
-                    monthly_value = plan.price * (30 / plan.duration_days)
+                    monthly_value = float(plan.price) * (30 / plan.duration_days)
                     total_monthly += monthly_value
 
                     text += f"💰 Valor: R$ {plan.price:.2f} ({plan.duration_days} dias)\n"
@@ -467,7 +467,7 @@ async def process_renewal(update: Update, context: ContextTypes.DEFAULT_TYPE, su
             discount = 0
             discount_text = ""
         
-        final_price = plan.price * (1 - discount)
+        final_price = float(plan.price) * (1 - discount)
         
         text = f"""
 🔄 **Renovar Assinatura**
@@ -481,7 +481,7 @@ async def process_renewal(update: Update, context: ContextTypes.DEFAULT_TYPE, su
         if discount > 0:
             text += f"\n✨ **{discount_text}**\n"
             text += f"**Valor com desconto:** R$ {final_price:.2f}\n"
-            text += f"**Você economiza:** R$ {plan.price - final_price:.2f}\n"
+            text += f"**Você economiza:** R$ {float(plan.price) - final_price:.2f}\n"
         else:
             text += f"\n**Valor:** R$ {final_price:.2f}\n"
         

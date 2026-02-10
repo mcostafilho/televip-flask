@@ -117,7 +117,7 @@ Se não fez nenhum pagamento recentemente, pode continuar para o menu principal.
         subscriptions = session.query(Subscription).filter_by(
             telegram_user_id=str(user.id),
             status='active'
-        ).order_by(Subscription.end_date).order_by(Transaction.created_at.desc()).limit(1).all()
+        ).order_by(Subscription.end_date).all()
         
         if not subscriptions:
             # Usuário novo - mostrar mensagem de boas-vindas
