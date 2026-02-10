@@ -940,11 +940,17 @@ class TestPaymentVerification:
         text = query.edit_message_text.call_args[0][0]
         assert 'Nenhum pagamento pendente' in text
 
+    @patch('bot.handlers.payment_verification.get_stripe_session_details', new_callable=AsyncMock)
     @patch('bot.handlers.payment_verification.verify_payment', new_callable=AsyncMock)
-    def test_payment_confirmed_activates_subscription(self, mock_verify, app_ctx,
+    def test_payment_confirmed_activates_subscription(self, mock_verify, mock_details, app_ctx,
                                                        group_a, plan_a_monthly, creator_a):
         """Pagamento confirmado ativa assinatura e atualiza saldo"""
         mock_verify.return_value = True
+        mock_details.return_value = {
+            'subscription_id': 'sub_test_401',
+            'payment_intent_id': 'pi_test_401',
+            'payment_method_type': 'card',
+        }
 
         user_id = 401
         sub = Subscription(
@@ -987,6 +993,11 @@ class TestPaymentVerification:
         assert txn.status == 'completed'
         assert txn.paid_at is not None
 
+        # Verificar que stripe_subscription_id foi salvo
+        assert sub.stripe_subscription_id == 'sub_test_401'
+        assert txn.stripe_payment_intent_id == 'pi_test_401'
+        assert sub.payment_method_type == 'card'
+
         # Verificar saldo do criador (Transaction auto-calculates fees:
         # 29.90 - 0.99 fixed - 2.99 percentage = 25.92 net)
         _db.session.refresh(creator_a)
@@ -996,6 +1007,57 @@ class TestPaymentVerification:
         # Verificar mensagem
         text = query.edit_message_text.call_args[0][0]
         assert 'CONFIRMADO' in text
+
+    @patch('bot.handlers.payment_verification.get_stripe_session_details', new_callable=AsyncMock)
+    @patch('bot.handlers.payment_verification.verify_payment', new_callable=AsyncMock)
+    def test_payment_confirmed_saves_stripe_subscription_id(self, mock_verify, mock_details,
+                                                             app_ctx, group_a, plan_a_monthly, creator_a):
+        """Pagamento confirmado salva stripe_subscription_id — corrige bug 'Assinatura avulsa'"""
+        mock_verify.return_value = True
+        mock_details.return_value = {
+            'subscription_id': 'sub_recurring_test',
+            'payment_intent_id': None,
+            'payment_method_type': 'boleto',
+        }
+
+        user_id = 410
+        sub = Subscription(
+            group_id=group_a.id, plan_id=plan_a_monthly.id,
+            telegram_user_id=str(user_id), telegram_username='recuruser',
+            start_date=datetime.utcnow(),
+            end_date=datetime.utcnow() + timedelta(days=30),
+            status='pending',
+            is_legacy=False, auto_renew=True,
+        )
+        _db.session.add(sub)
+        _db.session.flush()
+        txn = Transaction(
+            subscription_id=sub.id, amount=Decimal('29.90'),
+            status='pending', payment_method='stripe',
+            stripe_session_id='cs_test_recurring_410',
+        )
+        _db.session.add(txn)
+        _db.session.commit()
+
+        from bot.handlers.payment_verification import check_payment_status
+
+        user = make_user(user_id)
+        query = make_callback_query(user=user, data='check_payment_status')
+        update = MagicMock()
+        update.callback_query = query
+        ctx = make_context()
+        invite_link_obj = MagicMock()
+        invite_link_obj.invite_link = 'https://t.me/+link_410'
+        ctx.bot.create_chat_invite_link = AsyncMock(return_value=invite_link_obj)
+
+        import asyncio
+        asyncio.get_event_loop().run_until_complete(check_payment_status(update, ctx))
+
+        _db.session.refresh(sub)
+        # stripe_subscription_id must be set — this is the fix for "Assinatura avulsa"
+        assert sub.stripe_subscription_id == 'sub_recurring_test'
+        assert sub.payment_method_type == 'boleto'
+        assert sub.status == 'active'
 
     @patch('bot.handlers.payment_verification.verify_payment', new_callable=AsyncMock)
     def test_payment_pending_shows_retry(self, mock_verify, app_ctx, group_a, plan_a_monthly):

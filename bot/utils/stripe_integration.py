@@ -330,6 +330,33 @@ async def verify_payment(payment_id: str) -> bool:
         return False
 
 
+async def get_stripe_session_details(session_id: str) -> Dict:
+    """
+    Retrieve Stripe Checkout Session details including subscription ID.
+
+    Returns:
+        Dict with subscription_id, payment_intent_id, payment_method_type
+    """
+    result = {
+        'subscription_id': None,
+        'payment_intent_id': None,
+        'payment_method_type': None,
+    }
+    try:
+        if not session_id or not session_id.startswith('cs_'):
+            return result
+        session = stripe.checkout.Session.retrieve(session_id, expand=['payment_intent'])
+        result['subscription_id'] = session.get('subscription')
+        if session.payment_intent:
+            result['payment_intent_id'] = session.payment_intent.id
+            if hasattr(session.payment_intent, 'payment_method_types') and session.payment_intent.payment_method_types:
+                result['payment_method_type'] = session.payment_intent.payment_method_types[0]
+        return result
+    except Exception as e:
+        logger.error(f"Error fetching session details: {e}")
+        return result
+
+
 async def get_payment_details(payment_id: str) -> Dict:
     """
     Obter detalhes completos do pagamento

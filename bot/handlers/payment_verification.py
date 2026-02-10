@@ -9,7 +9,7 @@ from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
 
 from bot.utils.database import get_db_session
-from bot.utils.stripe_integration import verify_payment
+from bot.utils.stripe_integration import verify_payment, get_stripe_session_details
 from app.models import Transaction, Subscription, Group, Creator
 
 logger = logging.getLogger(__name__)
@@ -105,6 +105,20 @@ async def handle_payment_confirmed(query, context, transaction, db_session):
     # Ativar assinatura
     subscription = transaction.subscription
     subscription.status = 'active'
+
+    # Buscar detalhes da sessão Stripe (subscription_id, payment_intent, etc.)
+    if transaction.stripe_session_id:
+        try:
+            details = await get_stripe_session_details(transaction.stripe_session_id)
+            if details.get('subscription_id') and not subscription.stripe_subscription_id:
+                subscription.stripe_subscription_id = details['subscription_id']
+                logger.info(f"stripe_subscription_id={details['subscription_id']} salvo na assinatura {subscription.id}")
+            if details.get('payment_intent_id') and not transaction.stripe_payment_intent_id:
+                transaction.stripe_payment_intent_id = details['payment_intent_id']
+            if details.get('payment_method_type'):
+                subscription.payment_method_type = details['payment_method_type']
+        except Exception as e:
+            logger.warning(f"Não foi possível buscar detalhes da sessão Stripe: {e}")
 
     # Atualizar saldo e total ganho do criador
     group = subscription.group
