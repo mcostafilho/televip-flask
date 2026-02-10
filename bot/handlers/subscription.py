@@ -54,8 +54,7 @@ Precisa de ajuda? Use /help
 """
             keyboard = [
                 [
-                    InlineKeyboardButton("🔍 Descobrir Grupos", callback_data="discover"),
-                    InlineKeyboardButton("❓ Ajuda", callback_data="help")
+                    InlineKeyboardButton("🔍 Descobrir Grupos", callback_data="discover")
                 ]
             ]
             
@@ -194,23 +193,10 @@ Precisa de ajuda? Use /help
                     )
                 ])
 
-        # Outros botões
-        keyboard.extend([
-            [
-                InlineKeyboardButton("💰 Histórico Financeiro", callback_data="financial_history"),
-                InlineKeyboardButton("📈 Estatísticas", callback_data="subscription_stats")
-            ],
-            [
-                InlineKeyboardButton("🔍 Descobrir Novos", callback_data="discover"),
-                InlineKeyboardButton("⚙️ Configurações", callback_data="subscription_settings")
-            ]
+        # Botão voltar
+        keyboard.append([
+            InlineKeyboardButton("🏠 Menu Principal", callback_data="back_to_start")
         ])
-        
-        # Adicionar botão voltar se veio de callback
-        if update.callback_query:
-            keyboard.append([
-                InlineKeyboardButton("⬅️ Voltar", callback_data="back_to_start")
-            ])
         
         # Responder
         if update.callback_query:
@@ -287,9 +273,6 @@ Use /descobrir para explorar grupos disponíveis!
                 [
                     InlineKeyboardButton("📊 Ver Detalhes", callback_data="check_status"),
                     InlineKeyboardButton("🔄 Renovar", callback_data="check_renewals")
-                ],
-                [
-                    InlineKeyboardButton("🔍 Adicionar Mais", callback_data="discover")
                 ]
             ]
         

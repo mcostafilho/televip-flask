@@ -371,11 +371,10 @@ Precisando de ajuda? Use /help
     
     keyboard = [
         [
-            InlineKeyboardButton("🔍 Descobrir Grupos", callback_data="discover"),
-            InlineKeyboardButton("❓ Ajuda", callback_data="help")
+            InlineKeyboardButton("🏠 Menu Principal", callback_data="back_to_start")
         ]
     ]
-    
+
     await update.message.reply_text(
         text,
         parse_mode=ParseMode.MARKDOWN,
