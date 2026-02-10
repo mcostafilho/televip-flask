@@ -337,6 +337,11 @@ body > footer {
                                         </p>
                                         <input type="password" class="form-control" name="current_password"
                                                placeholder="Digite sua senha atual">
+                                        <div class="mt-2 text-end">
+                                            <a href="{{ url_for('auth.forgot_password') }}" class="small text-decoration-none">
+                                                <i class="bi bi-key"></i> Esqueceu a senha?
+                                            </a>
+                                        </div>
                                     </div>
                                     {% else %}
                                     <div class="alert alert-info mb-3">
