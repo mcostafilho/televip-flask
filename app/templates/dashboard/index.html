@@ -98,15 +98,9 @@
                         {% endif %}
                         
                         <div class="mt-1">
-                            {% if available_balance|default(0) >= 50 %}
                             <a href="#" class="btn btn-sm btn-success mt-1" data-bs-toggle="modal" data-bs-target="#withdrawModal">
                                 <i class="bi bi-cash-stack"></i> Sacar
                             </a>
-                            {% else %}
-                            <small class="text-warning d-block mt-1">
-                                <i class="bi bi-info-circle"></i> Mínimo: R$ 50,00
-                            </small>
-                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -364,8 +358,7 @@
     </div>
 </div>
 
-<!-- Modal de Saque (só renderiza quando há saldo suficiente) -->
-{% if available_balance|default(0) >= 50 %}
+<!-- Modal de Saque -->
 <div class="modal fade" id="withdrawModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -375,6 +368,7 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+            {% if available_balance|default(0) >= 50 %}
             <form method="POST" action="{{ url_for('dashboard.withdraw') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="modal-body">
@@ -407,10 +401,21 @@
                     </button>
                 </div>
             </form>
+            {% else %}
+            <div class="modal-body text-center py-4">
+                <div class="mb-3">
+                    <i class="bi bi-wallet2 text-muted" style="font-size: 3rem;"></i>
+                </div>
+                <p class="mb-1"><strong>Saldo disponível:</strong> R$ {{ "%.2f"|format(available_balance|default(0)) }}</p>
+                <p class="text-muted">O saldo mínimo para solicitar um saque é de <strong>R$ 50,00</strong>.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
-{% endif %}
 
 <!-- Modal de Detalhes do Saldo -->
 <div class="modal fade" id="balanceDetailsModal" tabindex="-1">
