@@ -78,7 +78,7 @@ Explore os grupos VIP mais populares:
                     keyboard.append([
                         InlineKeyboardButton(
                             f"📍 {group.name}",
-                            url=f"https://t.me/{bot_username}?start=g_{group.id}"
+                            url=f"https://t.me/{bot_username}?start=g_{group.invite_slug}"
                         )
                     ])
             
@@ -208,7 +208,7 @@ Os grupos VIP mais exclusivos:
             keyboard.append([
                 InlineKeyboardButton(
                     f"💎 {group.name}",
-                    url=f"https://t.me/{bot_username}?start=g_{group.id}"
+                    url=f"https://t.me/{bot_username}?start=g_{group.invite_slug}"
                 )
             ])
         
@@ -259,7 +259,7 @@ Grupos recém-chegados na plataforma:
                 keyboard.append([
                     InlineKeyboardButton(
                         f"🌟 {group.name}",
-                        url=f"https://t.me/{bot_username}?start=g_{group.id}"
+                        url=f"https://t.me/{bot_username}?start=g_{group.invite_slug}"
                     )
                 ])
         
@@ -313,7 +313,7 @@ async def show_cheapest_groups(update: Update, context: ContextTypes.DEFAULT_TYP
             keyboard.append([
                 InlineKeyboardButton(
                     f"✨ {group.name}",
-                    url=f"https://t.me/{bot_username}?start=g_{group.id}"
+                    url=f"https://t.me/{bot_username}?start=g_{group.invite_slug}"
                 )
             ])
         

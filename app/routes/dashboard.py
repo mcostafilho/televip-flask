@@ -395,7 +395,8 @@ def profile():
     return render_template('dashboard/profile.html',
         user=current_user,
         stats=stats,
-        recent_transactions=recent_transactions
+        recent_transactions=recent_transactions,
+        has_password=bool(current_user.password_hash)
     )
 
 

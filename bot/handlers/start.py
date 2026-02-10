@@ -38,9 +38,9 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await handle_payment_cancel(update, context)
             return
         elif args[0].startswith('g_'):
-            group_id = args[0][2:]
-            logger.info(f"Iniciando fluxo de assinatura para grupo ID: {group_id}")
-            await start_subscription_flow(update, context, group_id)
+            group_identifier = args[0][2:]
+            logger.info(f"Iniciando fluxo de assinatura para grupo: {group_identifier}")
+            await start_subscription_flow(update, context, group_identifier)
             return
     
     # Sem argumentos - mostrar dashboard
@@ -193,24 +193,23 @@ Precisa de ajuda? Use /help ou clique no botão abaixo.
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
 
-async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_TYPE, group_id: str):
-    """Iniciar fluxo de assinatura para um grupo específico"""
+async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_TYPE, group_identifier: str):
+    """Iniciar fluxo de assinatura para um grupo específico (por slug ou ID legado)"""
     user = update.effective_user
-    
-    try:
-        group_id = int(group_id)
-    except ValueError:
-        logger.error(f"ID de grupo inválido: {group_id}")
-        await update.message.reply_text("❌ Link inválido.")
-        return
-    
+
     with get_db_session() as session:
-        # Buscar grupo pelo ID do banco de dados
-        group = session.query(Group).filter_by(id=group_id).first()
+        # Tentar buscar por invite_slug primeiro, fallback para ID numérico (links antigos)
+        group = session.query(Group).filter_by(invite_slug=group_identifier).first()
+        if not group:
+            try:
+                group_id = int(group_identifier)
+                group = session.query(Group).filter_by(id=group_id).first()
+            except ValueError:
+                pass
         
         if not group:
-            logger.warning(f"Grupo não encontrado - ID: {group_id}")
-            
+            logger.warning(f"Grupo não encontrado - identificador: {group_identifier}")
+
             await update.message.reply_text(
                 "❌ Grupo não encontrado.\n\n"
                 "Possíveis causas:\n"
@@ -219,9 +218,9 @@ async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_
                 "Use /descobrir para ver grupos disponíveis."
             )
             return
-            
+
         if not group.is_active:
-            logger.warning(f"Grupo inativo: {group.name} (ID: {group_id})")
+            logger.warning(f"Grupo inativo: {group.name} (ID: {group.id})")
             await update.message.reply_text(
                 "❌ Este grupo está temporariamente indisponível.\n\n"
                 "Entre em contato com o criador ou use /descobrir para ver outros grupos."
@@ -233,7 +232,7 @@ async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_
         
         # Verificar se já tem assinatura ativa
         existing_sub = session.query(Subscription).filter_by(
-            group_id=group_id,
+            group_id=group.id,
             telegram_user_id=str(user.id),
             status='active'
         ).first()
@@ -265,7 +264,7 @@ Sua assinatura expira em: {existing_sub.end_date.strftime('%d/%m/%Y')}
         
         # Buscar planos disponíveis
         plans = session.query(PricingPlan).filter_by(
-            group_id=group_id,
+            group_id=group.id,
             is_active=True
         ).order_by(PricingPlan.price).all()
         
@@ -297,7 +296,7 @@ Sua assinatura expira em: {existing_sub.end_date.strftime('%d/%m/%Y')}
             keyboard.append([
                 InlineKeyboardButton(
                     f"💳 {plan.name} - R$ {plan.price:.2f}",
-                    callback_data=f"plan_{group_id}_{plan.id}"
+                    callback_data=f"plan_{group.id}_{plan.id}"
                 )
             ])
         

@@ -136,7 +136,7 @@ ou use /setup novamente apos vincular.
 • Planos configurados: {active_plans}
 
 🔗 **Link de Assinatura:**
-`https://t.me/{context.bot.username}?start=g_{chat.id}`
+`https://t.me/{context.bot.username}?start=g_{group.invite_slug}`
 
 📋 **Comandos Disponíveis:**
 /stats - Ver estatísticas detalhadas
@@ -180,7 +180,7 @@ Seu grupo foi registrado na plataforma TeleVIP.
 • Criador: @{creator.username or creator.name}
 
 🔗 **Seu Link de Assinatura:**
-`https://t.me/{context.bot.username}?start=g_{chat.id}`
+`https://t.me/{context.bot.username}?start=g_{group.invite_slug}`
 
 📌 **Próximos Passos:**
 1. Configure os planos de preço no site
@@ -329,7 +329,7 @@ async def show_group_stats(update: Update, context: ContextTypes.DEFAULT_TYPE, g
 • Ticket médio: R$ {(monthly_revenue/active_subs if active_subs > 0 else 0):.2f}
 
 🔗 **Link do Grupo:**
-`https://t.me/{context.bot.username}?start=g_{group.telegram_id}`
+`https://t.me/{context.bot.username}?start=g_{group.invite_slug}`
 
 📅 Atualizado: {datetime.now().strftime('%d/%m/%Y %H:%M')}
 """
@@ -642,7 +642,7 @@ Para acessar o grupo, você precisa:
 3. Usar o link de acesso fornecido
 
 🔗 Link para assinar:
-https://t.me/{context.bot.username}?start=g_{group.telegram_id}
+https://t.me/{context.bot.username}?start=g_{group.invite_slug}
 
 Se você já pagou, aguarde a confirmação ou entre em contato com o suporte.
 """,

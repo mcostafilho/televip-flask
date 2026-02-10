@@ -240,7 +240,7 @@
                                         <div class="mt-1">
                                             <div class="input-group input-group-sm" style="max-width: 300px;">
                                                 <input type="text" class="form-control" 
-                                                       value="https://t.me/{{ config.BOT_USERNAME or 'televipbra_bot' }}?start=g_{{ group.id }}"
+                                                       value="https://t.me/{{ config.BOT_USERNAME or 'televipbra_bot' }}?start=g_{{ group.invite_slug }}"
                                                        id="link_{{ group.id }}" readonly>
                                                 <button class="btn btn-sm btn-outline-secondary" type="button"
                                                         onclick="copyLink('link_{{ group.id }}')">

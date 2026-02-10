@@ -221,7 +221,7 @@ def create():
         
         # CORREÇÃO IMPORTANTE: Gerar link do bot usando group.id, não telegram_id
         bot_username = os.getenv('TELEGRAM_BOT_USERNAME') or os.getenv('BOT_USERNAME', 'televipbra_bot')
-        bot_link = f"https://t.me/{bot_username}?start=g_{group.id}"  # USAR group.id AQUI!
+        bot_link = f"https://t.me/{bot_username}?start=g_{group.invite_slug}"
         
         flash(f'Grupo "{group.name}" criado com sucesso! Link: {bot_link}', 'success')
         
@@ -655,8 +655,8 @@ def get_link(id):
     
     # CORREÇÃO: Usar group.id ao invés de telegram_id
     bot_username = os.getenv('TELEGRAM_BOT_USERNAME') or os.getenv('BOT_USERNAME', 'televipbra_bot')
-    bot_link = f"https://t.me/{bot_username}?start=g_{group.id}"
-    
+    bot_link = f"https://t.me/{bot_username}?start=g_{group.invite_slug}"
+
     return jsonify({
         'success': True,
         'link': bot_link,

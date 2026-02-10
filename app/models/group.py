@@ -1,3 +1,4 @@
+import secrets
 from app import db
 from datetime import datetime
 
@@ -9,6 +10,7 @@ class Group(db.Model):
     description = db.Column(db.Text)
     telegram_id = db.Column(db.String(50), unique=True)
     invite_link = db.Column(db.String(200))
+    invite_slug = db.Column(db.String(16), unique=True, nullable=False, default=lambda: secrets.token_urlsafe(6))
     creator_id = db.Column(db.Integer, db.ForeignKey('creators.id'), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
     total_subscribers = db.Column(db.Integer, default=0)

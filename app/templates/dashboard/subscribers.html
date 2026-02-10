@@ -224,7 +224,7 @@
                 <label class="form-label text-muted small">Link de Assinatura:</label>
                 <div class="input-group">
                     <input type="text" class="form-control" 
-                           value="https://t.me/{{ config.BOT_USERNAME or 'televipbra_bot' }}?start=g_{{ group.id }}"
+                           value="https://t.me/{{ config.BOT_USERNAME or 'televipbra_bot' }}?start=g_{{ group.invite_slug }}"
                            id="shareLink" readonly>
                     <button class="btn btn-primary" type="button" onclick="copyShareLink()">
                         <i class="bi bi-clipboard"></i> Copiar Link

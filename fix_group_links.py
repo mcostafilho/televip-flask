@@ -54,7 +54,7 @@ def fix_group_links():
             
             # Gerar links corretos
             print(f"\n  🔗 Links corretos para este grupo:")
-            print(f"  Link por ID do banco: https://t.me/{bot_username}?start=g_{group.id}")
+            print(f"  Link por slug: https://t.me/{bot_username}?start=g_{group.invite_slug}")
             
             if plans:
                 print(f"\n  💰 Planos disponíveis:")
@@ -70,8 +70,8 @@ def fix_group_links():
         if active_groups:
             test_group = active_groups[0]
             print(f"\n✅ Grupo recomendado para teste: {test_group.name}")
-            print(f"🔗 Use este link: https://t.me/{bot_username}?start=g_{test_group.id}")
-            print("\n⚠️  IMPORTANTE: Use o ID do banco ({test_group.id}), não o telegram_id!")
+            print(f"🔗 Use este link: https://t.me/{bot_username}?start=g_{test_group.invite_slug}")
+            print("\n⚠️  IMPORTANTE: Use o slug aleatório, não o ID numérico!")
         else:
             print("\n⚠️  Nenhum grupo ativo! Ative pelo menos um grupo no dashboard.")
 
