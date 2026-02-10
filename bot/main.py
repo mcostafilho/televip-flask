@@ -42,7 +42,8 @@ from bot.handlers.subscription import (
 )
 from bot.handlers.admin import (
     setup_command, stats_command, broadcast_command,
-    handle_join_request, handle_new_chat_members
+    handle_join_request, handle_new_chat_members,
+    handle_broadcast_to_group, handle_broadcast_confirm, handle_cancel_broadcast
 )
 from bot.handlers.discovery import descobrir_command, handle_discover_callback
 from bot.handlers.payment_verification import check_payment_status
@@ -181,7 +182,7 @@ async def handle_retry_payment(update: Update, context: ContextTypes.DEFAULT_TYP
 async def handle_unknown_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler para callbacks não reconhecidos"""
     query = update.callback_query
-    await query.answer("🚧 Função em desenvolvimento...", show_alert=True)
+    await query.answer("Use /start para voltar ao menu principal.", show_alert=True)
     logger.warning(f"Callback não reconhecido: {query.data}")
 
 async def post_init(application: Application) -> None:
@@ -244,6 +245,11 @@ def setup_handlers(application: Application) -> None:
     application.add_handler(CallbackQueryHandler(confirm_cancel_subscription, pattern=r"^confirm_cancel_sub_\d+$"))
     application.add_handler(CallbackQueryHandler(reactivate_subscription, pattern=r"^reactivate_sub_\d+$"))
 
+    # Callbacks de broadcast
+    application.add_handler(CallbackQueryHandler(handle_broadcast_to_group, pattern=r"^broadcast_to_\d+$"))
+    application.add_handler(CallbackQueryHandler(handle_broadcast_confirm, pattern=r"^broadcast_confirm$"))
+    application.add_handler(CallbackQueryHandler(handle_cancel_broadcast, pattern=r"^cancel_broadcast$"))
+
     # Handlers de grupo
     application.add_handler(MessageHandler(
         filters.StatusUpdate.NEW_CHAT_MEMBERS,
@@ -253,7 +259,7 @@ def setup_handlers(application: Application) -> None:
         filters.ChatType.GROUPS & filters.StatusUpdate.CHAT_CREATED,
         handle_join_request
     ))
-    
+
     # Handler genérico para callbacks não reconhecidos (deve ser o último)
     application.add_handler(CallbackQueryHandler(handle_unknown_callback))
     

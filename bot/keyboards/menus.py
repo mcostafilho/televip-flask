@@ -83,10 +83,7 @@ def get_payment_keyboard(checkout_data: dict = None) -> InlineKeyboardMarkup:
     """Teclado para opções de pagamento"""
     keyboard = [
         [
-            InlineKeyboardButton("💳 Cartão de Crédito", callback_data="pay_stripe")
-        ],
-        [
-            InlineKeyboardButton("💰 PIX (Em breve)", callback_data="pay_pix")
+            InlineKeyboardButton("💳 Pagar com Stripe", callback_data="pay_stripe")
         ],
         [
             InlineKeyboardButton("❌ Cancelar", callback_data="cancel_payment")

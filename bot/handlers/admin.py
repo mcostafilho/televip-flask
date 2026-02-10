@@ -141,7 +141,7 @@ ou use /setup novamente apos vincular.
 📋 **Comandos Disponíveis:**
 /stats - Ver estatísticas detalhadas
 /broadcast - Enviar mensagem aos assinantes
-/planos - Gerenciar planos (em breve)
+/planos - Ver suas assinaturas ativas
 
 💡 Configure seus planos em:
 https://televip.app/dashboard
@@ -582,11 +582,142 @@ async def select_group_for_broadcast(update: Update, context: ContextTypes.DEFAU
 
 async def confirm_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE, group_telegram_id: str, message: str):
     """Confirmar envio de broadcast"""
-    # TODO: Implementar confirmação e envio
-    await update.message.reply_text(
-        "🚧 Sistema de broadcast em desenvolvimento...\n\n"
-        "Em breve você poderá enviar mensagens para todos os assinantes!"
+    context.user_data['broadcast_message'] = message
+    context.user_data['broadcast_group_telegram_id'] = str(group_telegram_id)
+
+    text = (
+        f"📢 **Confirmar Broadcast**\n\n"
+        f"**Mensagem:**\n{message}\n\n"
+        f"Deseja enviar esta mensagem para todos os assinantes ativos?"
     )
+    keyboard = [
+        [
+            InlineKeyboardButton("✅ Enviar", callback_data=f"broadcast_confirm"),
+            InlineKeyboardButton("❌ Cancelar", callback_data="cancel_broadcast")
+        ]
+    ]
+    await update.message.reply_text(
+        text,
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+
+
+async def handle_broadcast_to_group(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handler para callback broadcast_to_GROUPID"""
+    query = update.callback_query
+    await query.answer()
+
+    group_id = int(query.data.replace("broadcast_to_", ""))
+    message = context.user_data.get('broadcast_message', '')
+
+    if not message:
+        await query.edit_message_text("❌ Nenhuma mensagem para enviar. Use /broadcast <mensagem>")
+        return
+
+    context.user_data['broadcast_group_id'] = group_id
+
+    with get_db_session() as session:
+        group = session.query(Group).get(group_id)
+        group_name = group.name if group else 'Desconhecido'
+        active_count = session.query(Subscription).filter_by(
+            group_id=group_id, status='active'
+        ).count()
+
+    text = (
+        f"📢 **Confirmar Broadcast**\n\n"
+        f"**Grupo:** {group_name}\n"
+        f"**Assinantes ativos:** {active_count}\n\n"
+        f"**Mensagem:**\n{message}\n\n"
+        f"Confirma o envio?"
+    )
+    keyboard = [
+        [
+            InlineKeyboardButton("✅ Enviar", callback_data="broadcast_confirm"),
+            InlineKeyboardButton("❌ Cancelar", callback_data="cancel_broadcast")
+        ]
+    ]
+    await query.edit_message_text(
+        text,
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+
+
+async def handle_broadcast_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Enviar broadcast para todos os assinantes ativos do grupo"""
+    query = update.callback_query
+    await query.answer("Enviando...")
+
+    message = context.user_data.get('broadcast_message', '')
+    group_id = context.user_data.get('broadcast_group_id')
+    group_telegram_id = context.user_data.get('broadcast_group_telegram_id')
+
+    if not message:
+        await query.edit_message_text("❌ Nenhuma mensagem para enviar.")
+        return
+
+    with get_db_session() as session:
+        if group_id:
+            group = session.query(Group).get(group_id)
+        elif group_telegram_id:
+            group = session.query(Group).filter_by(telegram_id=str(group_telegram_id)).first()
+        else:
+            await query.edit_message_text("❌ Grupo nao identificado.")
+            return
+
+        if not group:
+            await query.edit_message_text("❌ Grupo nao encontrado.")
+            return
+
+        # Buscar assinantes ativos
+        subs = session.query(Subscription).filter_by(
+            group_id=group.id, status='active'
+        ).all()
+
+        if not subs:
+            await query.edit_message_text("❌ Nenhum assinante ativo neste grupo.")
+            return
+
+        sent = 0
+        failed = 0
+        for sub in subs:
+            try:
+                await context.bot.send_message(
+                    chat_id=int(sub.telegram_user_id),
+                    text=f"📢 **Mensagem de {group.name}:**\n\n{message}",
+                    parse_mode=ParseMode.MARKDOWN
+                )
+                sent += 1
+            except Exception as e:
+                logger.warning(f"Falha ao enviar broadcast para {sub.telegram_user_id}: {e}")
+                failed += 1
+
+        # Atualizar last_broadcast_at
+        group.last_broadcast_at = datetime.utcnow()
+        session.commit()
+
+    # Limpar dados do contexto
+    context.user_data.pop('broadcast_message', None)
+    context.user_data.pop('broadcast_group_id', None)
+    context.user_data.pop('broadcast_group_telegram_id', None)
+
+    await query.edit_message_text(
+        f"✅ **Broadcast Enviado!**\n\n"
+        f"**Grupo:** {group.name}\n"
+        f"**Enviados:** {sent}\n"
+        f"**Falhas:** {failed}"
+    )
+
+
+async def handle_cancel_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Cancelar broadcast"""
+    query = update.callback_query
+    await query.answer()
+    context.user_data.pop('broadcast_message', None)
+    context.user_data.pop('broadcast_group_id', None)
+    context.user_data.pop('broadcast_group_telegram_id', None)
+    await query.edit_message_text("❌ Broadcast cancelado.")
 
 # ==================== FUNÇÕES EXTRAS ADICIONADAS ====================
 
