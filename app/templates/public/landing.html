@@ -544,15 +544,30 @@
     </style>
     
     <!-- Floating WhatsApp Button -->
-    <a href="https://wa.me/551721223445" target="_blank" rel="noopener noreferrer"
-       style="position: fixed; top: 20px; right: 20px; z-index: 9999; background-color: #25D366; color: white;
-              width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-              box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4); transition: all 0.3s ease; text-decoration: none; font-size: 28px;"
-       onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 6px 20px rgba(37,211,102,0.6)'"
-       onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(37,211,102,0.4)'"
-       title="Fale com o Suporte via WhatsApp">
-        <i class="bi bi-whatsapp"></i>
-    </a>
+    <div id="whatsapp-float" style="position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; align-items: center; gap: 12px;">
+        <div id="whatsapp-tooltip" style="background: white; color: #333; padding: 10px 16px; border-radius: 12px;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.12); font-size: 14px; font-weight: 500; white-space: nowrap;
+                opacity: 1; transition: opacity 0.3s ease; font-family: 'Poppins', sans-serif;">
+            Fale com nosso suporte
+        </div>
+        <a href="https://wa.me/551721223445" target="_blank" rel="noopener noreferrer"
+           style="background-color: #25D366; color: white; width: 60px; height: 60px; border-radius: 50%;
+                  display: flex; align-items: center; justify-content: center;
+                  box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4); text-decoration: none; font-size: 30px;
+                  transition: all 0.3s ease; animation: whatsapp-pulse 2s infinite;"
+           onmouseover="this.style.transform='scale(1.1)'"
+           onmouseout="this.style.transform='scale(1)'"
+           title="Fale com o Suporte via WhatsApp">
+            <i class="bi bi-whatsapp"></i>
+        </a>
+    </div>
+    <style>
+        @keyframes whatsapp-pulse {
+            0% { box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4); }
+            50% { box-shadow: 0 4px 24px rgba(37, 211, 102, 0.7); }
+            100% { box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4); }
+        }
+    </style>
 
     <script>
         // Initialize AOS
