@@ -112,24 +112,6 @@ def get_renewal_keyboard(subscription_id: int) -> InlineKeyboardMarkup:
     ]]
     return InlineKeyboardMarkup(keyboard)
 
-def get_admin_menu() -> InlineKeyboardMarkup:
-    """Menu administrativo para criadores"""
-    keyboard = [
-        [
-            InlineKeyboardButton("📊 Estatísticas", callback_data="admin_stats"),
-            InlineKeyboardButton("👥 Assinantes", callback_data="admin_subscribers")
-        ],
-        [
-            InlineKeyboardButton("💰 Financeiro", callback_data="admin_finance"),
-            InlineKeyboardButton("⚙️ Configurações", callback_data="admin_settings")
-        ],
-        [
-            InlineKeyboardButton("📢 Broadcast", callback_data="admin_broadcast"),
-            InlineKeyboardButton("🌐 Dashboard Web", url="https://televip.app/dashboard")
-        ]
-    ]
-    return InlineKeyboardMarkup(keyboard)
-
 def get_broadcast_confirm_keyboard() -> InlineKeyboardMarkup:
     """Teclado de confirmação para broadcast"""
     keyboard = [[
