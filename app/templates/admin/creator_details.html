@@ -196,6 +196,7 @@
                             <td>{{ withdrawal.pix_key }}</td>
                             <td>
                                 <form method="POST" action="{{ url_for('admin.process_withdrawal', id=withdrawal.id) }}" style="display: inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                     <button type="submit" class="btn btn-sm btn-success">
                                         <i class="bi bi-check"></i> Processar
                                     </button>

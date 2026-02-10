@@ -35,6 +35,8 @@ class Config:
     SESSION_PERMANENT = False
     SESSION_TYPE = 'filesystem'
     PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
     
     # Configurações de upload
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
@@ -100,10 +102,8 @@ class ProductionConfig(Config):
     """Configurações de produção"""
     DEBUG = False
 
-    # Cookies seguros em produção
+    # Cookies seguros em produção (HTTPONLY and SameSite are in base Config)
     SESSION_COOKIE_SECURE = True
-    SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Lax'
 
     @classmethod
     def init_app(cls, app):

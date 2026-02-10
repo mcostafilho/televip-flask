@@ -43,6 +43,7 @@
         {% endwith %}
         
         <form method="POST" class="auth-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <!-- Nome Completo -->
             <div class="input-group">
                 <i class="bi bi-person input-icon"></i>

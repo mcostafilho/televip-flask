@@ -34,6 +34,7 @@
         {% if unverified_email %}
         <div class="alert alert-info">
             <form method="POST" action="{{ url_for('auth.resend_confirmation') }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <input type="hidden" name="email" value="{{ unverified_email }}">
                 <button type="submit" class="btn btn-link p-0 text-decoration-underline">
                     Reenviar email de confirmacao
@@ -43,6 +44,7 @@
         {% endif %}
         
         <form method="POST" class="auth-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <!-- Email -->
             <div class="input-group">
                 <i class="bi bi-envelope input-icon"></i>

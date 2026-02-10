@@ -233,15 +233,34 @@ def handle_dispute_created(dispute):
 def notify_bot_payment_complete(subscription, transaction):
     """Notificar o bot que o pagamento foi completado"""
     bot_token = os.getenv('BOT_TOKEN') or os.getenv('TELEGRAM_BOT_TOKEN')
-    
+
     if not bot_token:
         logger.error("Bot token não configurado")
         return
-    
+
     try:
+        # Generate single-use invite link via Bot API
+        invite_link = subscription.group.invite_link  # fallback
+        group = subscription.group
+        if group.telegram_id:
+            try:
+                create_link_url = f"https://api.telegram.org/bot{bot_token}/createChatInviteLink"
+                link_response = requests.post(create_link_url, json={
+                    'chat_id': int(group.telegram_id),
+                    'member_limit': 1
+                })
+                link_data = link_response.json()
+                if link_data.get('ok'):
+                    invite_link = link_data['result']['invite_link']
+                    logger.info(f"Created single-use invite link for group {group.telegram_id}")
+                else:
+                    logger.warning(f"Failed to create invite link: {link_data}. Using permanent link.")
+            except Exception as e:
+                logger.warning(f"Error creating single-use invite link: {e}. Using permanent link.")
+
         # URL da API do Telegram
         url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-        
+
         # Mensagem para o usuário
         text = f"""
 ✅ **Pagamento Aprovado!**
@@ -252,23 +271,23 @@ Sua assinatura do grupo **{subscription.group.name}** foi ativada com sucesso!
 💰 Valor pago: R$ {transaction.amount:.2f}
 
 Use o link abaixo para acessar o grupo:
-{subscription.group.invite_link}
+{invite_link}
 
 _Obrigado por assinar!_
 """
-        
+
         # Enviar mensagem
         response = requests.post(url, json={
             'chat_id': subscription.telegram_user_id,
             'text': text,
             'parse_mode': 'Markdown'
         })
-        
+
         if response.status_code == 200:
             logger.info(f"Usuário {subscription.telegram_user_id} notificado do pagamento")
         else:
             logger.error(f"Erro ao notificar usuário: {response.text}")
-            
+
     except Exception as e:
         logger.error(f"Erro ao notificar bot: {str(e)}")
 

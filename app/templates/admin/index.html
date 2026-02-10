@@ -80,7 +80,8 @@
                                 <td>{{ withdrawal.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
                                 <td>
                                     <form method="POST" action="{{ url_for('admin.process_withdrawal', id=withdrawal.id) }}" style="display: inline;">
-                                        <button type="submit" class="btn btn-success btn-sm" 
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn btn-success btn-sm"
                                                 onclick="return confirm('Confirma que o PIX foi realizado?')">
                                             ✅ Marcar como Pago
                                         </button>
@@ -173,6 +174,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="messageForm" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Assunto</label>

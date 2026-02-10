@@ -6,22 +6,30 @@ from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_wtf.csrf import CSRFProtect
 
 db = SQLAlchemy()
 login_manager = LoginManager()
 migrate = Migrate()
 limiter = Limiter(key_func=get_remote_address, default_limits=[])
+csrf = CSRFProtect()
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object('config.Config')
+
+    # Fix 4: Load environment-based config (development/production/testing)
+    from config import get_config
+    app.config.from_object(get_config())
 
     # Inicializar extensões
     db.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app, db)
     limiter.init_app(app)
-    CORS(app)
+    csrf.init_app(app)
+
+    # Fix 2: Restrict CORS to webhooks and API routes only
+    CORS(app, resources={r"/webhooks/*": {"origins": "*"}, r"/api/*": {"origins": "*"}})
 
     # Configurar login
     login_manager.login_view = 'auth.login'
@@ -42,6 +50,9 @@ def create_app():
     app.register_blueprint(admin.bp)
     app.register_blueprint(webhooks.bp)
     app.register_blueprint(api.bp)
+
+    # Exempt webhooks from CSRF (uses Stripe signature verification)
+    csrf.exempt(webhooks.bp)
 
     # Criar diretórios necessários
     import os

@@ -370,22 +370,50 @@ def update_profile():
     name = request.form.get('name')
     email = request.form.get('email')
     pix_key = request.form.get('pix_key')
-    
-    # Atualizar dados
+    current_password = request.form.get('current_password')
+    new_password = request.form.get('new_password')
+    confirm_password = request.form.get('confirm_password')
+
+    # Check if sensitive changes are being made (email or password)
+    changing_email = email and email != current_user.email
+    changing_password = bool(new_password)
+
+    if changing_email or changing_password:
+        if not current_password:
+            flash('Informe a senha atual para alterar email ou senha', 'error')
+            return redirect(url_for('dashboard.profile'))
+        if not current_user.check_password(current_password):
+            flash('Senha atual incorreta', 'error')
+            return redirect(url_for('dashboard.profile'))
+
+    # Process password change
+    if changing_password:
+        if new_password != confirm_password:
+            flash('As novas senhas não coincidem', 'error')
+            return redirect(url_for('dashboard.profile'))
+        if len(new_password) < 6:
+            flash('A nova senha deve ter no mínimo 6 caracteres', 'error')
+            return redirect(url_for('dashboard.profile'))
+        current_user.set_password(new_password)
+
+    # Update name (no password required)
     if name:
         current_user.name = name
-    if email and email != current_user.email:
-        # Verificar se email já existe
+
+    # Update email (password already verified above)
+    if changing_email:
         if Creator.query.filter_by(email=email).first():
             flash('Este email já está em uso', 'error')
             return redirect(url_for('dashboard.profile'))
         current_user.email = email
-    if pix_key:
+
+    # Update PIX key (no password required)
+    if pix_key is not None:
         current_user.pix_key = pix_key
-    
+
     db.session.commit()
     flash('Perfil atualizado com sucesso!', 'success')
-    
+
     return redirect(url_for('dashboard.profile'))
 
 @bp.route('/analytics')

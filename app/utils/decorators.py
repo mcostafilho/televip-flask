@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import redirect, url_for, flash
+from flask import redirect, url_for, abort
 from flask_login import current_user
 
 def admin_required(f):
@@ -9,8 +9,7 @@ def admin_required(f):
             return redirect(url_for('auth.login'))
 
         if not current_user.is_admin:
-            flash('Acesso negado. Apenas administradores.', 'error')
-            return redirect(url_for('dashboard.index'))
+            abort(404)
 
         return f(*args, **kwargs)
     return decorated_function

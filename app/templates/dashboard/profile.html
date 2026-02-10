@@ -251,6 +251,7 @@ body > footer {
                         </h5>
                         
                         <form method="POST" action="{{ url_for('dashboard.update_profile') }}" class="profile-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label">Nome Completo</label>

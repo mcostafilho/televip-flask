@@ -24,6 +24,7 @@
                     </div>
                     
                     <form method="POST" action="{{ url_for('groups.broadcast', group_id=group.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <div class="form-group">
                             <label for="message">Mensagem</label>
                             <textarea 

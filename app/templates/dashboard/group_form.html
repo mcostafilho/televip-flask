@@ -192,6 +192,7 @@
                     
                     <div class="form-body">
                         <form method="POST" action="{{ url_for('groups.edit', id=group.id) if group else url_for('groups.create') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                             <!-- Informações Básicas -->
                             <div class="form-section">
                                 <h5 class="section-title">Informações Básicas</h5>

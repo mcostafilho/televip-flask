@@ -235,6 +235,7 @@
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form action="{{ url_for('groups.toggle', id=group.id) }}" method="POST" style="margin: 0;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                         <button type="submit" class="dropdown-item">
                                             {% if group.is_active %}
                                                 <i class="bi bi-pause-circle"></i> Desativar
@@ -291,6 +292,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <form id="deleteForm" method="POST" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <button type="submit" class="btn btn-danger">
                         <i class="bi bi-trash"></i> Excluir
                     </button>
