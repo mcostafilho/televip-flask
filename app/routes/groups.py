@@ -175,18 +175,29 @@ def create():
                 else:
                     flash('⚠️ ID do Telegram não fornecido.', 'warning')
         
-        # Criar grupo
+        # Criar grupo (empty strings → None for unique-constrained fields)
         group = Group(
             name=name,
             description=description,
-            telegram_id=telegram_id,
-            invite_link=invite_link,
+            telegram_id=telegram_id or None,
+            invite_link=invite_link or None,
             creator_id=current_user.id,
             is_active=True
         )
-        
-        db.session.add(group)
-        db.session.commit()
+
+        try:
+            db.session.add(group)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Erro ao criar grupo: {e}")
+            if 'UNIQUE' in str(e).upper() or 'unique' in str(e).lower():
+                flash('Já existe um grupo com esse ID do Telegram.', 'error')
+            else:
+                flash('Erro ao criar grupo. Tente novamente.', 'error')
+            return render_template('dashboard/group_form.html',
+                                 group=None,
+                                 show_success_modal=False)
         
         # Adicionar planos com validação
         plan_names = request.form.getlist('plan_name[]')
