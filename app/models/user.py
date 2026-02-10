@@ -28,6 +28,11 @@ class Creator(UserMixin, db.Model):
     is_active = db.Column(db.Boolean, default=True)
     is_verified = db.Column(db.Boolean, default=False)
     is_admin = db.Column(db.Boolean, default=False)
+
+    # Aceite dos termos (prova jurídica)
+    terms_accepted_at = db.Column(db.DateTime)
+    terms_ip = db.Column(db.String(45))
+    terms_user_agent = db.Column(db.String(500))
     
     # Relacionamentos
     groups = db.relationship('Group', backref='creator', lazy='dynamic')

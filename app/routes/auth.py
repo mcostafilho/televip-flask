@@ -5,6 +5,7 @@ from app.models import Creator
 from app.utils.email import send_password_reset_email, send_welcome_email, send_confirmation_email
 from app.utils.security import generate_reset_token, verify_reset_token, generate_confirmation_token, verify_confirmation_token, is_safe_url
 import re
+from datetime import datetime
 
 bp = Blueprint('auth', __name__)
 
@@ -55,8 +56,13 @@ def register():
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
 
+        accept_terms = request.form.get('accept_terms')
+
         # Validações
         errors = []
+
+        if not accept_terms:
+            errors.append('Você precisa aceitar os Termos de Uso e a Política de Privacidade')
 
         # Validar nome
         if len(name) < 3:
@@ -92,11 +98,14 @@ def register():
             for error in errors:
                 flash(error, 'error')
         else:
-            # Criar novo usuário
+            # Criar novo usuário com prova jurídica do aceite dos termos
             user = Creator(
                 name=name,
                 email=email,
-                username=username
+                username=username,
+                terms_accepted_at=datetime.utcnow(),
+                terms_ip=request.headers.get('X-Forwarded-For', request.remote_addr),
+                terms_user_agent=request.headers.get('User-Agent', '')[:500]
             )
             user.set_password(password)
 
