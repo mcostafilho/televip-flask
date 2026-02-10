@@ -226,6 +226,16 @@ async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_
                 "Entre em contato com o criador ou use /descobrir para ver outros grupos."
             )
             return
+
+        # Verificar se o criador está bloqueado
+        creator = group.creator
+        if creator and getattr(creator, 'is_blocked', False):
+            logger.warning(f"Criador bloqueado: {creator.name} (grupo: {group.name})")
+            await update.message.reply_text(
+                "❌ Este grupo está temporariamente indisponível.\n\n"
+                "Use /descobrir para ver outros grupos."
+            )
+            return
         
         # Log para debug
         logger.info(f"Grupo encontrado: {group.name} (ID: {group.id}, Ativo: {group.is_active})")

@@ -10,7 +10,7 @@ from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
 
 from bot.utils.database import get_db_session
-from app.models import Group, PricingPlan, Subscription
+from app.models import Group, PricingPlan, Subscription, Creator
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +31,10 @@ async def show_popular_groups(update: Update, context: ContextTypes.DEFAULT_TYPE
     user = update.effective_user
     
     with get_db_session() as session:
-        # Buscar grupos ativos
-        groups = session.query(Group).filter_by(
-            is_active=True
+        # Buscar grupos ativos (excluir criadores bloqueados)
+        groups = session.query(Group).join(Creator).filter(
+            Group.is_active == True,
+            Creator.is_blocked == False
         ).order_by(Group.total_subscribers.desc()).limit(10).all()
         
         if not groups:
@@ -174,11 +175,14 @@ async def show_premium_groups(update: Update, context: ContextTypes.DEFAULT_TYPE
     user = update.effective_user
     
     with get_db_session() as session:
-        # Buscar grupos com planos mais caros
+        # Buscar grupos com planos mais caros (excluir criadores bloqueados)
         groups_with_prices = []
-        
-        groups = session.query(Group).filter_by(is_active=True).all()
-        
+
+        groups = session.query(Group).join(Creator).filter(
+            Group.is_active == True,
+            Creator.is_blocked == False
+        ).all()
+
         for group in groups:
             max_price_plan = session.query(PricingPlan).filter_by(
                 group_id=group.id,
@@ -228,9 +232,10 @@ async def show_new_groups(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     
     with get_db_session() as session:
-        # Buscar grupos mais recentes
-        groups = session.query(Group).filter_by(
-            is_active=True
+        # Buscar grupos mais recentes (excluir criadores bloqueados)
+        groups = session.query(Group).join(Creator).filter(
+            Group.is_active == True,
+            Creator.is_blocked == False
         ).order_by(Group.created_at.desc()).limit(5).all()
         
         text = """
@@ -279,10 +284,13 @@ async def show_cheapest_groups(update: Update, context: ContextTypes.DEFAULT_TYP
     query = update.callback_query
     
     with get_db_session() as session:
-        # Buscar grupos com planos mais baratos
+        # Buscar grupos com planos mais baratos (excluir criadores bloqueados)
         groups_with_prices = []
-        
-        groups = session.query(Group).filter_by(is_active=True).all()
+
+        groups = session.query(Group).join(Creator).filter(
+            Group.is_active == True,
+            Creator.is_blocked == False
+        ).all()
         
         for group in groups:
             min_price_plan = session.query(PricingPlan).filter_by(

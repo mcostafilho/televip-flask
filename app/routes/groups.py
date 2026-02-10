@@ -324,8 +324,12 @@ def delete(id):
     if active_subs > 0:
         flash(f'Não é possível deletar o grupo. Existem {active_subs} assinaturas ativas.', 'error')
         return redirect(url_for('groups.list'))
-    
-    # Deletar planos e depois o grupo
+
+    # Deletar na ordem correta: transactions -> subscriptions -> plans -> grupo
+    subs = Subscription.query.filter_by(group_id=id).all()
+    for sub in subs:
+        Transaction.query.filter_by(subscription_id=sub.id).delete()
+    Subscription.query.filter_by(group_id=id).delete()
     PricingPlan.query.filter_by(group_id=id).delete()
     db.session.delete(group)
     db.session.commit()
