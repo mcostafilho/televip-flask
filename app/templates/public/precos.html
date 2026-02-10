@@ -7,9 +7,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="theme-color" content="#667eea">
 
-    <title>Precos - TeleVIP | Simples e Transparentes</title>
+    <title>Preços - TeleVIP | Simples e Transparentes</title>
 
-    <meta name="description" content="TeleVIP: R$0 de mensalidade, apenas R$0,99 + 9,99% por transacao. A menor taxa do mercado para monetizar grupos do Telegram.">
+    <meta name="description" content="TeleVIP: R$0 de mensalidade, apenas R$0,99 + 9,99% por transação. A menor taxa do mercado para monetizar grupos do Telegram.">
 
     <!-- Preload Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26,7 +26,7 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
 
     <style>
-        /* Precos Page Specific Styles */
+        /* Preços Page Specific Styles */
         .precos-hero {
             padding: 140px 0 80px;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -354,14 +354,14 @@
                         <a class="nav-link" href="{{ url_for('auth.recursos') }}">Recursos</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="{{ url_for('auth.precos') }}">Precos</a>
+                        <a class="nav-link active" href="{{ url_for('auth.precos') }}">Preços</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
                     </li>
                     <li class="nav-item">
                         <a class="btn-nav-cta" href="{{ url_for('auth.register') }}">
-                            Comecar Gratis
+                            Começar Grátis
                         </a>
                     </li>
                 </ul>
@@ -373,9 +373,9 @@
     <section class="precos-hero">
         <div class="container">
             <div data-aos="fade-up">
-                <h1>Precos simples e <span class="text-gradient">transparentes</span></h1>
+                <h1>Preços simples e <span class="text-gradient">transparentes</span></h1>
                 <p class="lead">
-                    Sem mensalidade, sem surpresas. Voce so paga quando recebe. Simples assim.
+                    Sem mensalidade, sem surpresas. Você só paga quando recebe. Simples assim.
                 </p>
             </div>
         </div>
@@ -387,7 +387,7 @@
             <div class="row justify-content-center">
                 <div class="col-lg-6" data-aos="zoom-in">
                     <div class="main-pricing-card">
-                        <div class="badge-top">PLANO UNICO - PARA SEMPRE</div>
+                        <div class="badge-top">PLANO ÚNICO - PARA SEMPRE</div>
 
                         <div class="price-display">
                             <span class="currency">R$</span>
@@ -396,7 +396,7 @@
                         </div>
 
                         <div class="fee-highlight">
-                            <div class="fee-text">R$ 0,99 + 9,99% por transacao</div>
+                            <div class="fee-text">R$ 0,99 + 9,99% por transação</div>
                             <div class="fee-sub">A menor taxa do mercado</div>
                         </div>
 
@@ -428,11 +428,11 @@
                         </ul>
 
                         <a href="{{ url_for('auth.register') }}" class="btn-pricing" style="background: var(--gradient-primary); color: white; border: none;">
-                            <i class="bi bi-rocket-takeoff"></i> Criar Conta Gratis
+                            <i class="bi bi-rocket-takeoff"></i> Criar Conta Grátis
                         </a>
 
                         <p class="text-center text-muted mt-3" style="font-size: 14px;">
-                            Sem cartao de credito &bull; Cadastre em 30 segundos
+                            Sem cartão de crédito &bull; Cadastre em 30 segundos
                         </p>
                     </div>
                 </div>
@@ -445,7 +445,7 @@
         <div class="container">
             <div class="text-center mb-5" data-aos="fade-up">
                 <h2 class="display-5 fw-bold">Calculadora de <span class="text-gradient">taxas</span></h2>
-                <p class="lead text-muted">Simule quanto voce recebe em cada venda</p>
+                <p class="lead text-muted">Simule quanto você recebe em cada venda</p>
             </div>
 
             <div data-aos="fade-up">
@@ -454,7 +454,7 @@
                         <label for="saleValue">Valor da venda</label>
                         <div class="input-wrapper">
                             <span class="input-prefix">R$</span>
-                            <input type="number" id="saleValue" value="100" min="1" step="0.01" placeholder="100,00">
+                            <input type="text" inputmode="decimal" id="saleValue" value="100" placeholder="Ex: 49,90">
                         </div>
                     </div>
 
@@ -476,7 +476,7 @@
                             <span class="value" id="calcTotalFee" style="color: #e53e3e;">- R$ 10,98</span>
                         </div>
                         <div class="calc-row total">
-                            <span class="label">Voce recebe</span>
+                            <span class="label">Você recebe</span>
                             <span class="value" id="calcNet">R$ 89,02</span>
                         </div>
                     </div>
@@ -490,7 +490,7 @@
         <div class="container">
             <div class="text-center mb-5" data-aos="fade-up">
                 <h2 class="display-5 fw-bold">Compare e <span class="text-gradient">economize</span></h2>
-                <p class="lead text-muted">Veja por que o TeleVIP e a melhor escolha</p>
+                <p class="lead text-muted">Veja por que o TeleVIP é a melhor escolha</p>
             </div>
 
             <div class="row justify-content-center" data-aos="fade-up">
@@ -508,12 +508,12 @@
                             <tbody>
                                 <tr>
                                     <td>Mensalidade</td>
-                                    <td>R$ 97/mes</td>
-                                    <td class="highlight">R$ 0 (gratis!)</td>
-                                    <td>R$ 67/mes</td>
+                                    <td>R$ 97/mês</td>
+                                    <td class="highlight">R$ 0 (grátis!)</td>
+                                    <td>R$ 67/mês</td>
                                 </tr>
                                 <tr>
-                                    <td>Taxa por transacao</td>
+                                    <td>Taxa por transação</td>
                                     <td>12% + R$ 1,49</td>
                                     <td class="highlight">9,99% + R$ 0,99</td>
                                     <td>15% + R$ 0,99</td>
@@ -561,7 +561,7 @@
         <div class="container">
             <div class="text-center mb-5" data-aos="fade-up">
                 <h2 class="display-5 fw-bold">Tudo <span class="text-gradient">incluso</span></h2>
-                <p class="lead text-muted">Sem planos diferentes. Voce tem acesso a tudo.</p>
+                <p class="lead text-muted">Sem planos diferentes. Você tem acesso a tudo.</p>
             </div>
 
             <div class="included-grid" data-aos="fade-up">
@@ -583,7 +583,7 @@
                 </div>
                 <div class="included-item">
                     <i class="bi bi-check-circle-fill"></i>
-                    <span>Pagamento via cartao de credito</span>
+                    <span>Pagamento via cartão de crédito</span>
                 </div>
                 <div class="included-item">
                     <i class="bi bi-check-circle-fill"></i>
@@ -595,19 +595,19 @@
                 </div>
                 <div class="included-item">
                     <i class="bi bi-check-circle-fill"></i>
-                    <span>Historico de transacoes</span>
+                    <span>Histórico de transações</span>
                 </div>
                 <div class="included-item">
                     <i class="bi bi-check-circle-fill"></i>
-                    <span>Gestao automatica de membros</span>
+                    <span>Gestão automática de membros</span>
                 </div>
                 <div class="included-item">
                     <i class="bi bi-check-circle-fill"></i>
-                    <span>Multiplos planos por grupo</span>
+                    <span>Múltiplos planos por grupo</span>
                 </div>
                 <div class="included-item">
                     <i class="bi bi-check-circle-fill"></i>
-                    <span>Saques para conta bancaria</span>
+                    <span>Saques para conta bancária</span>
                 </div>
                 <div class="included-item">
                     <i class="bi bi-check-circle-fill"></i>
@@ -615,7 +615,7 @@
                 </div>
                 <div class="included-item">
                     <i class="bi bi-check-circle-fill"></i>
-                    <span>Criptografia e seguranca total</span>
+                    <span>Criptografia e segurança total</span>
                 </div>
                 <div class="included-item">
                     <i class="bi bi-check-circle-fill"></i>
@@ -629,7 +629,7 @@
     <section class="pricing-faq">
         <div class="container">
             <div class="text-center mb-5" data-aos="fade-up">
-                <h2 class="display-5 fw-bold">Duvidas sobre <span class="text-gradient">precos</span></h2>
+                <h2 class="display-5 fw-bold">Dúvidas sobre <span class="text-gradient">preços</span></h2>
                 <p class="lead text-muted">Respostas para as perguntas mais comuns</p>
             </div>
 
@@ -644,7 +644,7 @@
                             </h2>
                             <div id="pfaq1" class="accordion-collapse collapse show" data-bs-parent="#pricingFaq">
                                 <div class="accordion-body">
-                                    Nao! A unica taxa e R$ 0,99 + 9,99% por transacao. Sem mensalidade, sem taxa de setup, sem taxa de saque, sem surpresas. Voce so paga quando recebe.
+                                    Não! A única taxa é R$ 0,99 + 9,99% por transação. Sem mensalidade, sem taxa de setup, sem taxa de saque, sem surpresas. Você só paga quando recebe.
                                 </div>
                             </div>
                         </div>
@@ -652,12 +652,12 @@
                         <div class="accordion-item">
                             <h2 class="accordion-header">
                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pfaq2">
-                                    Como funciona a cobranca da taxa?
+                                    Como funciona a cobrança da taxa?
                                 </button>
                             </h2>
                             <div id="pfaq2" class="accordion-collapse collapse" data-bs-parent="#pricingFaq">
                                 <div class="accordion-body">
-                                    A taxa e descontada automaticamente de cada transacao. Por exemplo, em uma venda de R$ 100, a taxa e R$ 0,99 + R$ 9,99 = R$ 10,98. Voce recebe R$ 89,02. O valor ja chega liquido no seu saldo.
+                                    A taxa é descontada automaticamente de cada transação. Por exemplo, em uma venda de R$ 100, a taxa é R$ 0,99 + R$ 9,99 = R$ 10,98. Você recebe R$ 89,02. O valor já chega líquido no seu saldo.
                                 </div>
                             </div>
                         </div>
@@ -670,7 +670,7 @@
                             </h2>
                             <div id="pfaq3" class="accordion-collapse collapse" data-bs-parent="#pricingFaq">
                                 <div class="accordion-body">
-                                    Nao cobramos taxa de saque. O valor disponivel no seu saldo pode ser transferido para sua conta bancaria sem custos adicionais.
+                                    Não cobramos taxa de saque. O valor disponível no seu saldo pode ser transferido para sua conta bancária sem custos adicionais.
                                 </div>
                             </div>
                         </div>
@@ -678,12 +678,12 @@
                         <div class="accordion-item">
                             <h2 class="accordion-header">
                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pfaq4">
-                                    Preciso de cartao de credito para criar conta?
+                                    Preciso de cartão de crédito para criar conta?
                                 </button>
                             </h2>
                             <div id="pfaq4" class="accordion-collapse collapse" data-bs-parent="#pricingFaq">
                                 <div class="accordion-body">
-                                    Nao! Crie sua conta gratuitamente sem precisar de cartao de credito. Voce so sera cobrado quando comecar a receber pagamentos dos seus membros.
+                                    Não! Crie sua conta gratuitamente sem precisar de cartão de crédito. Você só será cobrado quando começar a receber pagamentos dos seus membros.
                                 </div>
                             </div>
                         </div>
@@ -696,7 +696,7 @@
                             </h2>
                             <div id="pfaq5" class="accordion-collapse collapse" data-bs-parent="#pricingFaq">
                                 <div class="accordion-body">
-                                    Nao existe limite. Voce pode faturar quanto quiser, com quantos grupos e membros desejar. A taxa e sempre a mesma: R$ 0,99 + 9,99% por transacao.
+                                    Não existe limite. Você pode faturar quanto quiser, com quantos grupos e membros desejar. A taxa é sempre a mesma: R$ 0,99 + 9,99% por transação.
                                 </div>
                             </div>
                         </div>
@@ -709,7 +709,7 @@
                             </h2>
                             <div id="pfaq6" class="accordion-collapse collapse" data-bs-parent="#pricingFaq">
                                 <div class="accordion-body">
-                                    Sim! Como nao ha mensalidade, nao existe contrato ou fidelidade. Voce pode parar de usar a plataforma quando quiser. Seus membros e dados permanecem seguros.
+                                    Sim! Como não há mensalidade, não existe contrato ou fidelidade. Você pode parar de usar a plataforma quando quiser. Seus membros e dados permanecem seguros.
                                 </div>
                             </div>
                         </div>
@@ -723,15 +723,15 @@
     <section class="cta">
         <div class="container">
             <div data-aos="zoom-in">
-                <h2>Pronto para comecar a lucrar?</h2>
+                <h2>Pronto para começar a lucrar?</h2>
                 <p class="lead">
                     Crie sua conta gratuita agora e comece a monetizar seu Telegram com a menor taxa do mercado.
                 </p>
                 <a href="{{ url_for('auth.register') }}" class="btn-cta">
-                    <i class="bi bi-rocket-takeoff"></i> Criar Conta Gratis
+                    <i class="bi bi-rocket-takeoff"></i> Criar Conta Grátis
                 </a>
                 <p class="mt-3 small opacity-75">
-                    <i class="bi bi-shield-check"></i> R$ 0 de mensalidade &bull; Sem cartao de credito &bull; Cancele quando quiser
+                    <i class="bi bi-shield-check"></i> R$ 0 de mensalidade &bull; Sem cartão de crédito &bull; Cancele quando quiser
                 </p>
             </div>
         </div>
@@ -746,10 +746,10 @@
                         <i class="bi bi-telegram"></i> TeleVIP
                     </h5>
                     <p class="text-muted">
-                        A plataforma definitiva para monetizacao de grupos no Telegram.
+                        A plataforma definitiva para monetização de grupos no Telegram.
                     </p>
                     <div class="badge bg-warning text-dark p-2 mt-2">
-                        <i class="bi bi-tag-fill"></i> Taxa: R$ 0,99 + 9,99% por transacao
+                        <i class="bi bi-tag-fill"></i> Taxa: R$ 0,99 + 9,99% por transação
                     </div>
                     <div class="social-links mt-3">
                         <a href="#"><i class="bi bi-facebook"></i></a>
@@ -764,9 +764,9 @@
                     <h6>PRODUTO</h6>
                     <ul>
                         <li><a href="{{ url_for('auth.recursos') }}">Recursos</a></li>
-                        <li><a href="{{ url_for('auth.precos') }}">Precos</a></li>
+                        <li><a href="{{ url_for('auth.precos') }}">Preços</a></li>
                         <li><a href="#">API</a></li>
-                        <li><a href="#">Integracoes</a></li>
+                        <li><a href="#">Integrações</a></li>
                     </ul>
                 </div>
 
@@ -874,8 +874,24 @@
             return 'R$ ' + value.toFixed(2).replace('.', ',');
         }
 
+        function parseInputValue(str) {
+            if (!str) return 0;
+            // Remove spaces and R$
+            str = str.replace(/\s/g, '').replace('R$', '');
+            // If has both comma and dot, figure out which is decimal
+            if (str.indexOf(',') > -1 && str.indexOf('.') > -1) {
+                // 1.000,50 format -> remove dots, replace comma
+                str = str.replace(/\./g, '').replace(',', '.');
+            } else if (str.indexOf(',') > -1) {
+                // 100,50 format -> replace comma with dot
+                str = str.replace(',', '.');
+            }
+            var val = parseFloat(str);
+            return isNaN(val) ? 0 : val;
+        }
+
         function calculate() {
-            const sale = parseFloat(saleInput.value) || 0;
+            const sale = parseInputValue(saleInput.value);
             const fixedFee = 0.99;
             const percentFee = sale * 0.0999;
             const totalFee = fixedFee + percentFee;
@@ -889,6 +905,7 @@
         }
 
         saleInput.addEventListener('input', calculate);
+        saleInput.addEventListener('change', calculate);
         calculate();
     </script>
 
