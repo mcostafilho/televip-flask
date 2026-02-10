@@ -204,15 +204,14 @@ def edit(id):
         group.invite_link = request.form.get('invite_link')
         group.is_active = 'is_active' in request.form
         
-        # Safe plan editing: deactivate plans with active subscriptions instead of deleting
+        # Safe plan editing: deactivate plans that have ANY subscriptions referencing them
         existing_plans = PricingPlan.query.filter_by(group_id=group.id).all()
         for plan in existing_plans:
-            active_sub_count = Subscription.query.filter(
-                Subscription.plan_id == plan.id,
-                Subscription.status.in_(['active', 'pending'])
+            sub_count = Subscription.query.filter(
+                Subscription.plan_id == plan.id
             ).count()
-            if active_sub_count > 0:
-                # Deactivate instead of delete — active subs reference this plan
+            if sub_count > 0:
+                # Deactivate instead of delete — subscriptions reference this plan
                 plan.is_active = False
             else:
                 db.session.delete(plan)
