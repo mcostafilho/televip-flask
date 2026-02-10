@@ -128,7 +128,7 @@ def get_admin_menu() -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton("📢 Broadcast", callback_data="admin_broadcast"),
-            InlineKeyboardButton("🌐 Dashboard Web", url="https://televip.com/dashboard")
+            InlineKeyboardButton("🌐 Dashboard Web", url="https://televip.app/dashboard")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)

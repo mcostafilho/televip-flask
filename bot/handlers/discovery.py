@@ -45,7 +45,7 @@ Ainda não há grupos disponíveis no momento.
 
 💡 **Dica:** Se você é criador de conteúdo, cadastre seu grupo!
 
-🔗 Acesse: https://televip.com/cadastro
+🔗 Acesse: https://televip.app/register
 """
             keyboard = [
                 [InlineKeyboardButton("🏠 Menu Principal", callback_data="back_to_start")]

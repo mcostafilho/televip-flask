@@ -35,7 +35,7 @@ Este comando deve ser usado dentro do seu grupo VIP.
 
 💡 **Importante:**
 Você precisa estar cadastrado como criador no site primeiro.
-Acesse: https://televip.com/cadastro
+Acesse: https://televip.app/register
 """
         await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
         return
@@ -144,7 +144,7 @@ ou use /setup novamente apos vincular.
 /planos - Gerenciar planos (em breve)
 
 💡 Configure seus planos em:
-https://televip.com/dashboard
+https://televip.app/dashboard
 """
             
             keyboard = [
@@ -153,7 +153,7 @@ https://televip.com/dashboard
                     InlineKeyboardButton("📢 Broadcast", callback_data="admin_broadcast")
                 ],
                 [
-                    InlineKeyboardButton("🌐 Ir para Dashboard", url="https://televip.com/dashboard")
+                    InlineKeyboardButton("🌐 Ir para Dashboard", url="https://televip.app/dashboard")
                 ]
             ]
             
@@ -194,12 +194,12 @@ Seu grupo foi registrado na plataforma TeleVIP.
 ✅ Estatísticas em tempo real
 
 💡 Acesse o dashboard para configurar planos:
-https://televip.com/dashboard
+https://televip.app/dashboard
 """
             
             keyboard = [
                 [
-                    InlineKeyboardButton("⚙️ Configurar Planos", url="https://televip.com/dashboard"),
+                    InlineKeyboardButton("⚙️ Configurar Planos", url="https://televip.app/dashboard"),
                     InlineKeyboardButton("📊 Ver Stats", callback_data="admin_stats")
                 ]
             ]
@@ -365,7 +365,7 @@ async def show_creator_stats(update: Update, context: ContextTypes.DEFAULT_TYPE)
 ❌ **Você não é um criador cadastrado!**
 
 Para se tornar criador:
-1. Acesse https://televip.com/cadastro
+1. Acesse https://televip.app/register
 2. Complete seu perfil
 3. Volte aqui para ver suas estatísticas
 
@@ -467,7 +467,7 @@ Para começar:
                 InlineKeyboardButton("📈 Ver Gráficos", callback_data="creator_charts")
             ],
             [
-                InlineKeyboardButton("🌐 Dashboard Web", url="https://televip.com/dashboard")
+                InlineKeyboardButton("🌐 Dashboard Web", url="https://televip.app/dashboard")
             ]
         ]
         
