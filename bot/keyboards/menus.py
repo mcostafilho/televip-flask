@@ -297,7 +297,7 @@ def get_support_keyboard() -> InlineKeyboardMarkup:
     """Teclado de opções de suporte"""
     keyboard = [
         [
-            InlineKeyboardButton("💬 Chat Suporte", url="https://t.me/televip_suporte"),
+            InlineKeyboardButton("💬 Chat Suporte", url="https://t.me/suporte_televip"),
             InlineKeyboardButton("📧 Email", callback_data="support_email")
         ],
         [
