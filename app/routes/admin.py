@@ -1,10 +1,15 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session, jsonify
 from flask_login import login_required, current_user
 from app import db
 from app.models import Creator, Group, Subscription, Transaction
 from app.utils.decorators import admin_required
 from datetime import datetime, timedelta
 from sqlalchemy import func
+import requests as http_requests
+import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Tentar importar Withdrawal
 try:
@@ -329,6 +334,92 @@ def unblock_creator(creator_id):
     db.session.commit()
     flash(f'Criador {creator.name} foi desbloqueado.', 'success')
     return redirect(url_for('admin.index'))
+
+
+@bp.route('/creator/<int:creator_id>/investigate', methods=['POST'])
+@login_required
+@admin_required
+def investigate_creator(creator_id):
+    """Gerar links de convite para investigador infiltrar grupos do criador"""
+    creator = Creator.query.get_or_404(creator_id)
+
+    investigator_user_id = request.form.get('investigator_user_id', '').strip()
+    if not investigator_user_id or not investigator_user_id.isdigit():
+        return jsonify({'error': 'Telegram User ID inválido. Deve ser numérico.'}), 400
+
+    bot_token = os.getenv('BOT_TOKEN') or os.getenv('TELEGRAM_BOT_TOKEN')
+    if not bot_token:
+        return jsonify({'error': 'BOT_TOKEN não configurado no servidor.'}), 500
+
+    groups = creator.groups.all()
+    if not groups:
+        return jsonify({'error': f'Criador {creator.name} não possui grupos cadastrados.'}), 404
+
+    results = []
+    for group in groups:
+        if not group.telegram_id:
+            results.append({
+                'group_name': group.name,
+                'status': 'skipped',
+                'message': 'Grupo sem Telegram ID'
+            })
+            continue
+
+        # Safety net: unban investigator in case they were previously removed
+        try:
+            http_requests.post(
+                f'https://api.telegram.org/bot{bot_token}/unbanChatMember',
+                json={
+                    'chat_id': group.telegram_id,
+                    'user_id': int(investigator_user_id),
+                    'only_if_banned': True
+                },
+                timeout=10
+            )
+        except Exception as e:
+            logger.warning(f'unbanChatMember failed for group {group.telegram_id}: {e}')
+
+        # Generate single-use invite link (expires in 7 days, no name for anonymity)
+        try:
+            response = http_requests.post(
+                f'https://api.telegram.org/bot{bot_token}/createChatInviteLink',
+                json={
+                    'chat_id': group.telegram_id,
+                    'member_limit': 1,
+                    'expire_date': int((datetime.utcnow() + timedelta(days=7)).timestamp())
+                },
+                timeout=10
+            )
+            data = response.json()
+
+            if data.get('ok'):
+                invite_link = data['result']['invite_link']
+                results.append({
+                    'group_name': group.name,
+                    'status': 'success',
+                    'invite_link': invite_link
+                })
+            else:
+                error_desc = data.get('description', 'Erro desconhecido')
+                logger.error(f'createChatInviteLink failed for group {group.telegram_id}: {error_desc}')
+                results.append({
+                    'group_name': group.name,
+                    'status': 'error',
+                    'message': error_desc
+                })
+        except Exception as e:
+            logger.error(f'createChatInviteLink exception for group {group.telegram_id}: {e}')
+            results.append({
+                'group_name': group.name,
+                'status': 'error',
+                'message': str(e)
+            })
+
+    return jsonify({
+        'creator_name': creator.name,
+        'investigator_user_id': investigator_user_id,
+        'results': results
+    })
 
 
 @bp.route('/exit-creator-view')

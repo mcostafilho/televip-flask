@@ -158,6 +158,10 @@
                                             title="Enviar Mensagem">
                                         <i class="bi bi-envelope"></i>
                                     </button>
+                                    <button class="btn btn-dark" onclick="openInvestigate({{ creator.id }}, '{{ creator.name }}')"
+                                            title="Investigar">
+                                        <i class="bi bi-search"></i>
+                                    </button>
                                 </div>
                                 {% if creator.is_blocked %}
                                     <form method="POST" action="{{ url_for('admin.unblock_creator', creator_id=creator.id) }}" class="d-inline ms-1">
@@ -214,6 +218,59 @@
         </div>
     </div>
 </div>
+<!-- Modal Investigar -->
+<div class="modal fade" id="investigateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title"><i class="bi bi-search"></i> Investigar: <span id="investigateCreatorName"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Phase 1: Input -->
+                <div id="investigateInput">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Telegram User ID do Investigador</label>
+                        <input type="text" id="investigatorUserId" class="form-control"
+                               placeholder="Ex: 123456789" inputmode="numeric" pattern="[0-9]*">
+                        <div class="form-text">ID numérico do Telegram do investigador que entrará nos grupos.</div>
+                    </div>
+                    <button class="btn btn-dark w-100" onclick="submitInvestigate()">
+                        <i class="bi bi-search"></i> Gerar Links de Convite
+                    </button>
+                </div>
+
+                <!-- Phase 2: Loading -->
+                <div id="investigateLoading" class="text-center py-4" style="display:none;">
+                    <div class="spinner-border text-dark mb-3" role="status"></div>
+                    <p class="text-muted">Gerando links de convite para cada grupo...</p>
+                </div>
+
+                <!-- Phase 3: Results -->
+                <div id="investigateResults" style="display:none;">
+                    <div id="investigateError" class="alert alert-danger" style="display:none;"></div>
+                    <div id="investigateSuccess">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Grupo</th>
+                                        <th>Status</th>
+                                        <th>Link</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="investigateResultsBody"></tbody>
+                            </table>
+                        </div>
+                        <button class="btn btn-outline-dark w-100 mt-2" onclick="copyAllLinks()">
+                            <i class="bi bi-clipboard"></i> Copiar Todos os Links
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -237,6 +294,104 @@ function sendMessage(creatorId) {
     const form = document.getElementById('messageForm');
     form.action = `/admin/creator/${creatorId}/message`;
     modal.show();
+}
+
+let investigateCreatorId = null;
+let collectedLinks = [];
+
+function openInvestigate(creatorId, creatorName) {
+    investigateCreatorId = creatorId;
+    collectedLinks = [];
+    document.getElementById('investigateCreatorName').textContent = creatorName;
+    document.getElementById('investigatorUserId').value = '';
+    document.getElementById('investigateInput').style.display = '';
+    document.getElementById('investigateLoading').style.display = 'none';
+    document.getElementById('investigateResults').style.display = 'none';
+    document.getElementById('investigateError').style.display = 'none';
+    const modal = new bootstrap.Modal(document.getElementById('investigateModal'));
+    modal.show();
+}
+
+function submitInvestigate() {
+    const userId = document.getElementById('investigatorUserId').value.trim();
+    if (!userId || !/^\d+$/.test(userId)) {
+        alert('Informe um Telegram User ID numérico válido.');
+        return;
+    }
+
+    document.getElementById('investigateInput').style.display = 'none';
+    document.getElementById('investigateLoading').style.display = '';
+
+    const formData = new FormData();
+    formData.append('investigator_user_id', userId);
+    formData.append('csrf_token', '{{ csrf_token() }}');
+
+    fetch(`/admin/creator/${investigateCreatorId}/investigate`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(resp => resp.json().then(data => ({status: resp.status, data})))
+    .then(({status, data}) => {
+        document.getElementById('investigateLoading').style.display = 'none';
+        document.getElementById('investigateResults').style.display = '';
+
+        if (status !== 200) {
+            document.getElementById('investigateError').style.display = '';
+            document.getElementById('investigateError').textContent = data.error || 'Erro desconhecido.';
+            document.getElementById('investigateSuccess').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('investigateError').style.display = 'none';
+        document.getElementById('investigateSuccess').style.display = '';
+        collectedLinks = [];
+
+        const tbody = document.getElementById('investigateResultsBody');
+        tbody.innerHTML = '';
+
+        data.results.forEach(r => {
+            const tr = document.createElement('tr');
+            if (r.status === 'success') {
+                collectedLinks.push(r.invite_link);
+                tr.innerHTML = `<td>${r.group_name}</td>
+                    <td><span class="badge bg-success">OK</span></td>
+                    <td><a href="${r.invite_link}" target="_blank" class="text-break small">${r.invite_link}</a></td>`;
+            } else if (r.status === 'skipped') {
+                tr.innerHTML = `<td>${r.group_name}</td>
+                    <td><span class="badge bg-secondary">Ignorado</span></td>
+                    <td class="text-muted small">${r.message}</td>`;
+            } else {
+                tr.innerHTML = `<td>${r.group_name}</td>
+                    <td><span class="badge bg-danger">Erro</span></td>
+                    <td class="text-danger small">${r.message}</td>`;
+            }
+            tbody.appendChild(tr);
+        });
+    })
+    .catch(err => {
+        document.getElementById('investigateLoading').style.display = 'none';
+        document.getElementById('investigateResults').style.display = '';
+        document.getElementById('investigateError').style.display = '';
+        document.getElementById('investigateError').textContent = 'Erro de rede: ' + err.message;
+        document.getElementById('investigateSuccess').style.display = 'none';
+    });
+}
+
+function copyAllLinks() {
+    if (collectedLinks.length === 0) {
+        alert('Nenhum link para copiar.');
+        return;
+    }
+    navigator.clipboard.writeText(collectedLinks.join('\n')).then(() => {
+        const btn = event.target.closest('button');
+        const original = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check"></i> Copiado!';
+        btn.classList.replace('btn-outline-dark', 'btn-success');
+        setTimeout(() => {
+            btn.innerHTML = original;
+            btn.classList.replace('btn-success', 'btn-outline-dark');
+        }, 2000);
+    });
 }
 </script>
 {% endblock %}
