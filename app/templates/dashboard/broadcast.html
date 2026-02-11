@@ -2,82 +2,87 @@
 
 {% block title %}Enviar Mensagem - {{ group.name }}{% endblock %}
 
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i class="fas fa-bullhorn"></i> Enviar Mensagem para Assinantes
-                        </h5>
-                        <a href="{{ url_for('groups.subscribers', id=group.id) }}" class="btn btn-sm btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Voltar
-                        </a>
-                    </div>
+<div class="dashboard-wrapper broadcast-page">
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="h2 mb-1">
+                        <i class="bi bi-broadcast"></i> Enviar Mensagem
+                    </h1>
+                    <p class="text-muted mb-0">Envie uma mensagem para os assinantes de {{ group.name }}</p>
                 </div>
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
-                        Esta mensagem será enviada para <strong>{{ active_count }}</strong> assinantes ativos do grupo <strong>{{ group.name }}</strong>.
-                    </div>
-                    
-                    <form method="POST" action="{{ url_for('groups.broadcast', group_id=group.id) }}">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <div class="form-group">
-                            <label for="message">Mensagem</label>
-                            <textarea 
-                                class="form-control" 
-                                id="message" 
-                                name="message" 
-                                rows="6" 
-                                placeholder="Digite sua mensagem aqui..."
-                                required
-                                maxlength="4000"
-                            ></textarea>
-                            <small class="form-text text-muted">
-                                Máximo 4000 caracteres. Você pode usar **negrito** e _itálico_.
-                            </small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Pré-visualização:</label>
-                            <div class="border rounded p-3 bg-light" id="preview">
-                                <em class="text-muted">A pré-visualização aparecerá aqui...</em>
-                            </div>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between">
-                            <a href="{{ url_for('groups.subscribers', id=group.id) }}" class="btn btn-secondary">
-                                Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-primary" onclick="return confirm('Confirma o envio desta mensagem para {{ active_count }} assinantes?')">
-                                <i class="fas fa-paper-plane"></i> Enviar Mensagem
-                            </button>
-                        </div>
-                    </form>
+                <div class="col-auto">
+                    <a href="{{ url_for('groups.subscribers', id=group.id) }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Voltar
+                    </a>
                 </div>
             </div>
         </div>
+
+        <!-- Conteudo -->
+        <div class="content-card">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                Esta mensagem será enviada para <strong>{{ active_count }}</strong> assinantes ativos do grupo <strong>{{ group.name }}</strong>.
+            </div>
+
+            <form method="POST" action="{{ url_for('groups.broadcast', group_id=group.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="form-group">
+                    <label class="form-label" for="message">Mensagem</label>
+                    <textarea
+                        class="form-control"
+                        id="message"
+                        name="message"
+                        rows="6"
+                        placeholder="Digite sua mensagem aqui..."
+                        required
+                        maxlength="4000"
+                    ></textarea>
+                    <small class="form-text text-muted">
+                        Máximo 4000 caracteres. Você pode usar **negrito** e _itálico_.
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Pré-visualização:</label>
+                    <div class="border rounded p-3" id="preview">
+                        <em class="text-muted">A pré-visualização aparecerá aqui...</em>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('groups.subscribers', id=group.id) }}" class="btn btn-secondary">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary" onclick="return confirm('Confirma o envio desta mensagem para {{ active_count }} assinantes?')">
+                        <i class="bi bi-send"></i> Enviar Mensagem
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-// Pré-visualização da mensagem
 document.getElementById('message').addEventListener('input', function() {
     let text = this.value;
-    
-    // Converter markdown básico
     text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     text = text.replace(/_(.*?)_/g, '<em>$1</em>');
     text = text.replace(/\n/g, '<br>');
-    
     if (text.trim() === '') {
         text = '<em class="text-muted">A pré-visualização aparecerá aqui...</em>';
     }
-    
-    document.getElementById('preview').innerHTML = '📢 <strong>Mensagem de {{ group.name }}</strong><br><br>' + text;
+    document.getElementById('preview').innerHTML = '<strong>Mensagem de {{ group.name }}</strong><br><br>' + text;
 });
 </script>
 {% endblock %}

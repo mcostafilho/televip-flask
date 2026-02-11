@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="theme-color" content="#667eea">
+    <meta name="theme-color" content="#7c5cfc">
 
     {% include 'partials/_analytics.html' %}
     <title>Recursos - TeleVIP | Tudo para Monetizar seu Telegram</title>
@@ -36,23 +36,34 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
 
     <style>
-        /* Recursos Page Specific Styles */
+        /* Recursos Page Specific Styles - Galactic Dark */
         .recursos-hero {
             padding: 140px 0 80px;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: linear-gradient(135deg, #0b0e1a 0%, #1a1040 50%, #0d1b2a 100%);
             text-align: center;
+            position: relative;
+        }
+        .recursos-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at 50% 0%, rgba(124, 92, 252, 0.15) 0%, transparent 60%);
+            pointer-events: none;
         }
         .recursos-hero h1 {
             font-size: 36px;
             font-weight: 900;
             line-height: 1.2;
             margin-bottom: 20px;
+            color: #ffffff;
+            position: relative;
         }
         .recursos-hero p.lead {
             font-size: 18px;
-            color: #4a5568;
+            color: #8b8fad;
             max-width: 600px;
             margin: 0 auto;
+            position: relative;
         }
         @media (min-width: 768px) {
             .recursos-hero h1 { font-size: 48px; }
@@ -62,19 +73,23 @@
             .recursos-hero h1 { font-size: 56px; }
         }
 
-        /* Feature cards extended */
+        /* Feature cards extended - Glass */
         .feature-card-ext {
-            background: white;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(124, 92, 252, 0.15);
             padding: 40px 30px;
             border-radius: 16px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
             transition: all 0.3s ease;
             height: 100%;
             text-align: center;
         }
         .feature-card-ext:hover {
             transform: translateY(-8px);
-            box-shadow: 0 16px 32px rgba(0,0,0,0.12);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(124, 92, 252, 0.3);
+            box-shadow: 0 16px 32px rgba(124, 92, 252, 0.15);
         }
         .feature-card-ext .feature-icon {
             width: 80px;
@@ -92,10 +107,10 @@
             font-size: 20px;
             font-weight: 700;
             margin-bottom: 12px;
-            color: #1a202c;
+            color: #e2e8f0;
         }
         .feature-card-ext p {
-            color: #718096;
+            color: #8b8fad;
             font-size: 15px;
             line-height: 1.7;
             margin: 0;
@@ -118,15 +133,16 @@
             font-weight: 800;
             color: white;
             margin: 0 auto 20px;
+            box-shadow: 0 4px 20px rgba(124, 92, 252, 0.3);
         }
         .step-card h4 {
             font-size: 20px;
             font-weight: 700;
             margin-bottom: 10px;
-            color: #1a202c;
+            color: #e2e8f0;
         }
         .step-card p {
-            color: #718096;
+            color: #8b8fad;
             font-size: 15px;
         }
         .step-connector {
@@ -163,10 +179,10 @@
             font-size: 24px;
             font-weight: 700;
             margin-bottom: 16px;
-            color: #1a202c;
+            color: #e2e8f0;
         }
         .detail-block p {
-            color: #718096;
+            color: #8b8fad;
             font-size: 16px;
             line-height: 1.8;
         }
@@ -177,47 +193,78 @@
         }
         .detail-block ul li {
             padding: 8px 0;
-            color: #4a5568;
+            color: #8b8fad;
             font-size: 15px;
         }
         .detail-block ul li i {
-            color: #48bb78;
+            color: #34d399;
             margin-right: 10px;
         }
 
-        /* FAQ */
+        /* Detail demo cards - Dark */
+        .detail-block [style*="background: white"] {
+            background: rgba(255, 255, 255, 0.05) !important;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(124, 92, 252, 0.15);
+        }
+        .detail-block [style*="background: white"] .fw-bold,
+        .detail-block [style*="background: white"] h5 {
+            color: #e2e8f0 !important;
+        }
+        .detail-block [style*="background: #f0fdf4"] {
+            background: rgba(52, 211, 153, 0.1) !important;
+            border: 1px solid rgba(52, 211, 153, 0.15);
+        }
+        .detail-block [style*="background: #eff6ff"] {
+            background: rgba(56, 189, 248, 0.1) !important;
+            border: 1px solid rgba(56, 189, 248, 0.15);
+        }
+        .detail-block [style*="background: #e2e8f0"] {
+            background: rgba(124, 92, 252, 0.15) !important;
+        }
+
+        /* FAQ - Dark */
         .faq-section {
             padding: 80px 0;
-            background: #f8f9fa;
+            background: rgba(11, 14, 26, 0.95);
         }
         .faq-section .accordion-item {
-            border: none;
+            border: 1px solid rgba(124, 92, 252, 0.1);
             margin-bottom: 12px;
             border-radius: 12px !important;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            background: rgba(255, 255, 255, 0.05);
         }
         .faq-section .accordion-button {
             font-family: 'Poppins', sans-serif;
             font-weight: 600;
             font-size: 16px;
-            color: #1a202c;
+            color: #e2e8f0;
             padding: 20px 24px;
-            background: white;
+            background: transparent;
         }
         .faq-section .accordion-button:not(.collapsed) {
-            background: white;
+            background: transparent;
             color: var(--primary);
             box-shadow: none;
+        }
+        .faq-section .accordion-button::after {
+            filter: invert(1) brightness(0.7);
         }
         .faq-section .accordion-button:focus {
             box-shadow: none;
         }
         .faq-section .accordion-body {
-            color: #718096;
+            color: #8b8fad;
             font-size: 15px;
             line-height: 1.8;
             padding: 0 24px 20px;
+        }
+
+        /* Override inline white/light backgrounds */
+        section[style*="background: white"],
+        section[style*="background: #f8f9fa"] {
+            background: linear-gradient(135deg, #0b0e1a 0%, #1a1040 50%, #0d1b2a 100%) !important;
         }
     </style>
 </head>
@@ -750,8 +797,8 @@
 
     <!-- Floating WhatsApp Button -->
     <div id="whatsapp-float" class="d-none d-lg-flex" style="position: fixed; bottom: 24px; right: 24px; z-index: 9999; align-items: center; gap: 12px;">
-        <div id="whatsapp-tooltip" style="background: white; color: #333; padding: 10px 16px; border-radius: 12px;
-                box-shadow: 0 4px 16px rgba(0,0,0,0.12); font-size: 14px; font-weight: 500; white-space: nowrap;
+        <div id="whatsapp-tooltip" style="background: rgba(15, 18, 32, 0.95); color: #e2e8f0; padding: 10px 16px; border-radius: 12px;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.3); border: 1px solid rgba(124, 92, 252, 0.15); font-size: 14px; font-weight: 500; white-space: nowrap;
                 opacity: 1; transition: opacity 0.3s ease; font-family: 'Poppins', sans-serif;">
             Fale com nosso suporte
         </div>
@@ -795,7 +842,7 @@
         font-size:14px; color:#ccc; text-align:center; font-family:'Poppins',sans-serif;">
         Usamos cookies essenciais para o funcionamento do site.
         <a href="{{ url_for('auth.privacy') }}" style="color:#7c8dff; text-decoration:underline;">Saiba mais</a>
-        <button onclick="acceptCookies()" style="margin-left:12px; background:#667eea; color:#fff;
+        <button onclick="acceptCookies()" style="margin-left:12px; background:#7c5cfc; color:#fff;
             border:none; border-radius:6px; padding:6px 18px; cursor:pointer; font-size:14px;">OK</button>
     </div>
     <script>

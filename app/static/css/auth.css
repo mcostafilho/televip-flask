@@ -1,5 +1,5 @@
 /* ========================================
-   TeleVIP Auth - Mobile First Design
+   TeleVIP Auth - Galactic Dark Glass
    ======================================== */
 
 /* Reset e Base */
@@ -8,22 +8,22 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-/* Variáveis CSS para fácil customização */
+/* Variaveis CSS */
 :root {
-    --primary-color: #667eea;
-    --secondary-color: #764ba2;
-    --success-color: #28a745;
-    --danger-color: #dc3545;
-    --text-dark: #333;
-    --text-muted: #6c757d;
-    --border-color: #e0e0e0;
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --primary-color: #7c5cfc;
+    --secondary-color: #38bdf8;
+    --success-color: #34d399;
+    --danger-color: #f87171;
+    --text-dark: #e2e8f0;
+    --text-muted: #8b8fad;
+    --border-color: rgba(124, 92, 252, 0.2);
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 20px;
-    
+
     /* Altura segura para iOS */
     --safe-area-inset-top: env(safe-area-inset-top);
     --safe-area-inset-bottom: env(safe-area-inset-bottom);
@@ -36,7 +36,7 @@ html, body {
     padding: 0;
 }
 
-/* Container Principal - Mobile First */
+/* Container Principal - Dark Space */
 .auth-container {
     min-height: 100vh;
     min-height: -webkit-fill-available; /* iOS fix */
@@ -45,8 +45,8 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    background-attachment: fixed; /* Fixa o background */
+    background: linear-gradient(135deg, #0b0e1a 0%, #1a1040 50%, #0d1b2a 100%);
+    background-attachment: fixed;
     background-size: cover;
     background-position: center;
     padding: 16px;
@@ -56,11 +56,14 @@ html, body {
     overflow: hidden;
 }
 
-/* Card Principal - Mobile First */
+/* Card Principal - Glass Morphism */
 .auth-card {
-    background: white;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(124, 92, 252, 0.15);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
     width: 100%;
     max-width: 400px;
     padding: 24px 20px;
@@ -107,7 +110,7 @@ html, body {
     margin: 0;
 }
 
-/* Step Indicator - Mobile Optimized */
+/* Step Indicator */
 .step-indicator {
     display: flex;
     justify-content: center;
@@ -133,6 +136,7 @@ html, body {
     background: var(--primary-color);
     color: white;
     transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(124, 92, 252, 0.4);
 }
 
 .step.completed {
@@ -141,14 +145,14 @@ html, body {
 }
 
 .step:not(.active):not(.completed) {
-    background: #f0f0f0;
-    color: #999;
+    background: rgba(255, 255, 255, 0.08);
+    color: #6b7280;
 }
 
 .step-connector {
     flex: 1;
     height: 2px;
-    background: #e0e0e0;
+    background: rgba(255, 255, 255, 0.1);
     max-width: 40px;
 }
 
@@ -156,14 +160,14 @@ html, body {
     background: var(--success-color);
 }
 
-/* Form Styles - Mobile Optimized */
+/* Form Styles */
 .auth-form {
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
 
-/* Input com ícone */
+/* Input com icone */
 .input-group {
     position: relative;
     margin-bottom: 0;
@@ -174,7 +178,7 @@ html, body {
     left: 16px;
     top: 50%;
     transform: translateY(-50%);
-    color: #718096;
+    color: var(--text-muted);
     font-size: 18px;
     pointer-events: none;
     z-index: 1;
@@ -187,7 +191,8 @@ html, body {
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     transition: all 0.3s ease;
-    background: #fafafa;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-dark);
     -webkit-appearance: none;
 }
 
@@ -198,8 +203,8 @@ html, body {
 .form-control:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    background: white;
+    box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.2);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .form-control:focus ~ .input-icon {
@@ -208,7 +213,7 @@ html, body {
 
 /* Placeholder styling */
 .form-control::placeholder {
-    color: #a0aec0;
+    color: #6b7280;
     opacity: 1;
 }
 
@@ -233,7 +238,7 @@ html, body {
     transform: translateY(-50%);
     background: none;
     border: none;
-    color: #718096;
+    color: var(--text-muted);
     cursor: pointer;
     padding: 8px;
     font-size: 18px;
@@ -252,13 +257,13 @@ html, body {
 /* Form text helper */
 .form-text {
     font-size: 13px;
-    color: #718096;
+    color: var(--text-muted);
     margin-top: 4px;
     margin-left: 48px;
     display: block;
 }
 
-/* Botões - Mobile Optimized */
+/* Botoes */
 .btn {
     padding: 16px 24px;
     border: none;
@@ -285,7 +290,7 @@ html, body {
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 5px 15px rgba(124, 92, 252, 0.4);
 }
 
 .btn-primary:active {
@@ -293,17 +298,17 @@ html, body {
 }
 
 .btn-secondary {
-    background: white;
+    background: rgba(255, 255, 255, 0.06);
     color: var(--text-dark);
     border: 1px solid var(--border-color);
 }
 
 .btn-secondary:hover {
-    background: #f8f9fa;
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .btn-secondary:active {
-    background: #e9ecef;
+    background: rgba(255, 255, 255, 0.12);
 }
 
 /* Divider */
@@ -344,6 +349,7 @@ html, body {
     cursor: pointer;
     flex-shrink: 0;
     margin-top: 2px;
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .form-check-input:checked {
@@ -353,10 +359,14 @@ html, body {
 
 .form-check-label {
     font-size: 14px;
-    color: var(--text-dark);
+    color: var(--text-muted);
     cursor: pointer;
     user-select: none;
     line-height: 1.4;
+}
+
+.form-check-label a {
+    color: var(--primary-color);
 }
 
 /* Links */
@@ -369,6 +379,7 @@ html, body {
 
 .auth-link:hover {
     text-decoration: underline;
+    color: var(--secondary-color);
 }
 
 .auth-link:active {
@@ -385,7 +396,7 @@ html, body {
     color: var(--text-muted);
 }
 
-/* Alerts - Mobile Friendly */
+/* Alerts */
 .alert {
     padding: 12px 16px;
     border-radius: var(--radius-sm);
@@ -397,22 +408,22 @@ html, body {
 }
 
 .alert-success {
-    background: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+    background: rgba(52, 211, 153, 0.1);
+    color: #34d399;
+    border: 1px solid rgba(52, 211, 153, 0.2);
 }
 
 .alert-error,
 .alert-danger {
-    background: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+    background: rgba(248, 113, 113, 0.1);
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.2);
 }
 
 .alert-info {
-    background: #d1ecf1;
-    color: #0c5460;
-    border: 1px solid #bee5eb;
+    background: rgba(56, 189, 248, 0.1);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.2);
 }
 
 .alert .btn-close {
@@ -464,7 +475,7 @@ html, body {
 
 .strength-bar {
     height: 4px;
-    background: #e0e0e0;
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 2px;
     overflow: hidden;
     margin-bottom: 8px;
@@ -482,7 +493,7 @@ html, body {
     color: var(--text-muted);
 }
 
-/* Botão Voltar */
+/* Botao Voltar */
 .btn-back {
     position: absolute;
     top: 20px;
@@ -494,15 +505,17 @@ html, body {
     text-decoration: none;
     font-weight: 500;
     padding: 8px 16px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.06);
     backdrop-filter: blur(10px);
+    border: 1px solid rgba(124, 92, 252, 0.15);
     border-radius: 25px;
     transition: all 0.3s ease;
     z-index: 100;
 }
 
 .btn-back:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(124, 92, 252, 0.15);
+    border-color: rgba(124, 92, 252, 0.3);
     color: white;
     transform: translateX(-5px);
 }
@@ -519,13 +532,13 @@ html, body {
         padding: 6px 12px;
         font-size: 14px;
     }
-    
+
     .btn-back span {
-        display: none; /* Mostra só o ícone no mobile */
+        display: none; /* Mostra so o icone no mobile */
     }
 }
 
-/* Decorações de fundo */
+/* Decoracoes de fundo */
 .auth-decoration {
     position: absolute;
     width: 100%;
@@ -540,13 +553,13 @@ html, body {
 .shape {
     position: absolute;
     border-radius: 50%;
-    opacity: 0.1;
+    opacity: 0.06;
 }
 
 .shape-1 {
     width: 200px;
     height: 200px;
-    background: white;
+    background: var(--primary-color);
     top: -100px;
     right: -100px;
 }
@@ -554,7 +567,7 @@ html, body {
 .shape-2 {
     width: 150px;
     height: 150px;
-    background: white;
+    background: var(--secondary-color);
     bottom: -75px;
     left: -75px;
 }
@@ -562,7 +575,7 @@ html, body {
 .shape-3 {
     width: 100px;
     height: 100px;
-    background: white;
+    background: var(--primary-color);
     top: 50%;
     left: 10%;
 }
@@ -577,11 +590,11 @@ html, body {
 }
 
 .auth-card::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(124, 92, 252, 0.3);
     border-radius: 2px;
 }
 
-/* Erro de validação */
+/* Erro de validacao */
 .form-control.is-invalid {
     border-color: var(--danger-color);
 }
@@ -604,7 +617,7 @@ html, body {
     margin-left: 48px;
 }
 
-/* Utilitários */
+/* Utilitarios */
 .text-center { text-align: center; }
 .text-muted { color: var(--text-muted); }
 .text-dark { color: var(--text-dark); }
@@ -632,30 +645,30 @@ html, body {
     .auth-container {
         padding: 24px;
     }
-    
+
     .auth-card {
         padding: 40px;
         max-width: 440px;
     }
-    
+
     .gradient-text {
         font-size: 28px;
     }
-    
+
     .step {
         width: 40px;
         height: 40px;
         font-size: 16px;
     }
-    
+
     .form-control {
         padding: 18px;
     }
-    
+
     .form-control.with-icon {
         padding-left: 52px;
     }
-    
+
     .btn {
         padding: 18px 32px;
         font-size: 17px;
@@ -670,25 +683,25 @@ html, body {
         padding: 48px;
         max-width: 480px;
     }
-    
+
     .gradient-text {
         font-size: 32px;
     }
-    
+
     .shape-1 {
         width: 300px;
         height: 300px;
         top: -150px;
         right: -150px;
     }
-    
+
     .shape-2 {
         width: 200px;
         height: 200px;
         bottom: -100px;
         left: -100px;
     }
-    
+
     .shape-3 {
         width: 150px;
         height: 150px;
@@ -701,7 +714,7 @@ html, body {
    Acessibilidade e Performance
    ======================================== */
 
-/* Remove animações se preferir movimento reduzido */
+/* Remove animacoes se preferir movimento reduzido */
 @media (prefers-reduced-motion: reduce) {
     * {
         animation-duration: 0.01ms !important;

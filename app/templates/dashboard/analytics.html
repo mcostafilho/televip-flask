@@ -4,81 +4,6 @@
 
 {% block extra_css %}
 <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
-<style>
-/* Analytics specific styles */
-.analytics-page .stat-card {
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-    padding: 1.5rem;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.analytics-page .stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-}
-
-.analytics-page .chart-card {
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
-}
-
-.analytics-page .chart-card .card-header {
-    background: transparent;
-    border-bottom: 1px solid #f0f0f0;
-    padding: 1.5rem;
-    font-weight: 600;
-}
-
-.analytics-page .chart-card .card-body {
-    padding: 1.5rem;
-}
-
-.analytics-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-@media (max-width: 992px) {
-    .analytics-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 576px) {
-    .analytics-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-}
-
-.period-selector {
-    background: white;
-    border-radius: 12px;
-    padding: 0.5rem 1rem;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-}
-
-.period-selector select {
-    background: transparent;
-    border: none;
-    font-weight: 500;
-    color: #495057;
-    cursor: pointer;
-}
-
-.period-selector select:focus {
-    outline: none;
-    box-shadow: none;
-}
-</style>
 {% endblock %}
 
 {% block content %}
@@ -347,7 +272,27 @@
 // Configuração padrão dos gráficos
 Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 Chart.defaults.font.size = 12;
-Chart.defaults.color = '#6c757d';
+Chart.defaults.color = '#8b8fad';
+
+// Galactic tooltip config
+const galacticTooltip = {
+    backgroundColor: 'rgba(11, 14, 26, 0.95)',
+    titleColor: '#e2e8f0',
+    bodyColor: '#e2e8f0',
+    borderColor: 'rgba(124, 92, 252, 0.3)',
+    borderWidth: 1,
+    padding: 12,
+    cornerRadius: 8
+};
+
+// Galactic palette
+const galacticPalette = [
+    'rgba(124, 92, 252, 0.8)',
+    'rgba(56, 189, 248, 0.8)',
+    'rgba(52, 211, 153, 0.8)',
+    'rgba(251, 191, 36, 0.8)',
+    'rgba(248, 113, 113, 0.8)'
+];
 
 // Dados dos gráficos
 const chartsData = {{ charts_data | tojson }};
@@ -361,14 +306,14 @@ new Chart(revenueCtx, {
         datasets: [{
             label: 'Receita (R$)',
             data: chartsData.revenue_by_day.data,
-            borderColor: '#28a745',
-            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+            borderColor: '#7c5cfc',
+            backgroundColor: 'rgba(124, 92, 252, 0.15)',
             borderWidth: 3,
             tension: 0.4,
             fill: true,
             pointRadius: 4,
-            pointBackgroundColor: '#28a745',
-            pointBorderColor: '#fff',
+            pointBackgroundColor: '#7c5cfc',
+            pointBorderColor: 'rgba(11, 14, 26, 0.8)',
             pointBorderWidth: 2,
             pointHoverRadius: 6
         }]
@@ -377,18 +322,11 @@ new Chart(revenueCtx, {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: {
-                display: false
-            },
+            legend: { display: false },
             tooltip: {
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                padding: 12,
-                titleFont: {
-                    size: 14
-                },
-                bodyFont: {
-                    size: 13
-                },
+                ...galacticTooltip,
+                titleFont: { size: 14 },
+                bodyFont: { size: 13 },
                 callbacks: {
                     label: function(context) {
                         return 'Receita: R$ ' + context.parsed.y.toFixed(2);
@@ -398,21 +336,14 @@ new Chart(revenueCtx, {
         },
         scales: {
             x: {
-                grid: {
-                    display: false
-                },
-                ticks: {
-                    font: {
-                        size: 11
-                    }
-                }
+                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                ticks: { color: '#8b8fad', font: { size: 11 } }
             },
             y: {
                 beginAtZero: true,
-                grid: {
-                    color: 'rgba(0, 0, 0, 0.05)'
-                },
+                grid: { color: 'rgba(255, 255, 255, 0.05)' },
                 ticks: {
+                    color: '#8b8fad',
                     callback: function(value) {
                         return 'R$ ' + value.toFixed(2);
                     }
@@ -431,8 +362,8 @@ new Chart(subscribersCtx, {
         datasets: [{
             label: 'Novos Assinantes',
             data: chartsData.subscribers_by_day.data,
-            backgroundColor: 'rgba(23, 162, 184, 0.8)',
-            borderColor: '#17a2b8',
+            backgroundColor: 'rgba(56, 189, 248, 0.6)',
+            borderColor: '#38bdf8',
             borderWidth: 2,
             borderRadius: 8,
             borderSkipped: false,
@@ -442,12 +373,9 @@ new Chart(subscribersCtx, {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: {
-                display: false
-            },
+            legend: { display: false },
             tooltip: {
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                padding: 12,
+                ...galacticTooltip,
                 callbacks: {
                     label: function(context) {
                         return 'Novos assinantes: ' + context.parsed.y;
@@ -457,19 +385,13 @@ new Chart(subscribersCtx, {
         },
         scales: {
             x: {
-                grid: {
-                    display: false
-                }
+                grid: { display: false },
+                ticks: { color: '#8b8fad' }
             },
             y: {
                 beginAtZero: true,
-                grid: {
-                    color: 'rgba(0, 0, 0, 0.05)'
-                },
-                ticks: {
-                    stepSize: 1,
-                    precision: 0
-                }
+                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                ticks: { color: '#8b8fad', stepSize: 1, precision: 0 }
             }
         }
     }
@@ -483,14 +405,8 @@ new Chart(groupCtx, {
         labels: chartsData.revenue_by_group.labels.length > 0 ? chartsData.revenue_by_group.labels : ['Sem dados'],
         datasets: [{
             data: chartsData.revenue_by_group.data.length > 0 ? chartsData.revenue_by_group.data : [1],
-            backgroundColor: [
-                'rgba(102, 126, 234, 0.8)',
-                'rgba(40, 167, 69, 0.8)',
-                'rgba(255, 193, 7, 0.8)',
-                'rgba(220, 53, 69, 0.8)',
-                'rgba(108, 117, 125, 0.8)'
-            ],
-            borderColor: '#fff',
+            backgroundColor: galacticPalette,
+            borderColor: 'rgba(11, 14, 26, 0.8)',
             borderWidth: 2
         }]
     },
@@ -502,16 +418,14 @@ new Chart(groupCtx, {
             legend: {
                 position: 'bottom',
                 labels: {
+                    color: '#8b8fad',
                     padding: 15,
                     usePointStyle: true,
-                    font: {
-                        size: 12
-                    }
+                    font: { size: 12 }
                 }
             },
             tooltip: {
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                padding: 12,
+                ...galacticTooltip,
                 callbacks: {
                     label: function(context) {
                         const label = context.label || '';
@@ -534,13 +448,13 @@ new Chart(planCtx, {
         datasets: [{
             data: chartsData.revenue_by_plan.data.length > 0 ? chartsData.revenue_by_plan.data : [1],
             backgroundColor: [
-                'rgba(255, 193, 7, 0.8)',
-                'rgba(253, 126, 20, 0.8)',
-                'rgba(102, 16, 242, 0.8)',
-                'rgba(232, 62, 140, 0.8)',
-                'rgba(32, 201, 151, 0.8)'
+                'rgba(251, 191, 36, 0.8)',
+                'rgba(248, 113, 113, 0.8)',
+                'rgba(124, 92, 252, 0.8)',
+                'rgba(52, 211, 153, 0.8)',
+                'rgba(56, 189, 248, 0.8)'
             ],
-            borderColor: '#fff',
+            borderColor: 'rgba(11, 14, 26, 0.8)',
             borderWidth: 2
         }]
     },
@@ -551,16 +465,14 @@ new Chart(planCtx, {
             legend: {
                 position: 'bottom',
                 labels: {
+                    color: '#8b8fad',
                     padding: 15,
                     usePointStyle: true,
-                    font: {
-                        size: 12
-                    }
+                    font: { size: 12 }
                 }
             },
             tooltip: {
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                padding: 12,
+                ...galacticTooltip,
                 callbacks: {
                     label: function(context) {
                         const label = context.label || '';

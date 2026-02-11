@@ -2,64 +2,110 @@
 
 {% block title %}Estatísticas - {{ group.name }} - TeleVIP{% endblock %}
 
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Estatísticas: {{ group.name }}</h2>
-        <a href="{{ url_for('groups.list') }}" class="btn btn-outline-secondary">Voltar</a>
-    </div>
+<div class="dashboard-wrapper">
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="h2 mb-1">
+                        <i class="bi bi-bar-chart-line"></i> Estatísticas: {{ group.name }}
+                    </h1>
+                    <p class="text-muted mb-0">Desempenho detalhado do grupo</p>
+                </div>
+                <div class="col-auto">
+                    <a href="{{ url_for('groups.list') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Voltar
+                    </a>
+                </div>
+            </div>
+        </div>
 
-    <!-- Cards de estatísticas -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h6 class="text-muted">Total Assinantes</h6>
-                    <h3>{{ stats.total_subscribers }}</h3>
+        <!-- Cards de Estatisticas -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="stat-icon primary">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <p class="text-muted mb-1 small">Total Assinantes</p>
+                        <h3 class="mb-0">{{ stats.total_subscribers }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="stat-icon success">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <p class="text-muted mb-1 small">Ativos</p>
+                        <h3 class="mb-0 text-success">{{ stats.active_subscribers }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="stat-icon warning">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <p class="text-muted mb-1 small">Receita Total</p>
+                        <h3 class="mb-0">R$ {{ "%.2f"|format(stats.total_revenue) }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="stat-icon info">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <p class="text-muted mb-1 small">Taxa de Churn</p>
+                        <h3 class="mb-0">{{ "%.1f"|format(stats.churn_rate) }}%</h3>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h6 class="text-muted">Ativos</h6>
-                    <h3 class="text-success">{{ stats.active_subscribers }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h6 class="text-muted">Receita Total</h6>
-                    <h3>R$ {{ "%.2f"|format(stats.total_revenue) }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h6 class="text-muted">Taxa de Churn</h6>
-                    <h3>{{ "%.1f"|format(stats.churn_rate) }}%</h3>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Gráficos -->
-    <div class="row g-3">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">Receita Diária (30 dias)</div>
-                <div class="card-body">
-                    <canvas id="revenueChart"></canvas>
+        <!-- Graficos -->
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="chart-card">
+                    <div class="card-header">
+                        <i class="bi bi-graph-up text-success"></i> Receita Diária (30 dias)
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">Novas Assinaturas (30 dias)</div>
-                <div class="card-body">
-                    <canvas id="subsChart"></canvas>
+            <div class="col-md-6">
+                <div class="chart-card">
+                    <div class="card-header">
+                        <i class="bi bi-bar-chart-fill text-info"></i> Novas Assinaturas (30 dias)
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="subsChart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -68,10 +114,19 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 const revenueData = {{ daily_revenue | tojson }};
 const subsData = {{ daily_subscriptions | tojson }};
+
+const galacticTooltip = {
+    backgroundColor: 'rgba(11, 14, 26, 0.95)',
+    titleColor: '#e2e8f0',
+    bodyColor: '#e2e8f0',
+    borderColor: 'rgba(124, 92, 252, 0.3)',
+    borderWidth: 1,
+    padding: 12,
+    cornerRadius: 8
+};
 
 if (document.getElementById('revenueChart')) {
     new Chart(document.getElementById('revenueChart'), {
@@ -81,9 +136,29 @@ if (document.getElementById('revenueChart')) {
             datasets: [{
                 label: 'Receita (R$)',
                 data: revenueData.map(d => d.revenue),
-                borderColor: '#198754',
-                tension: 0.3
+                borderColor: '#7c5cfc',
+                backgroundColor: 'rgba(124, 92, 252, 0.15)',
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 4,
+                pointBackgroundColor: '#7c5cfc',
+                pointBorderColor: 'rgba(11, 14, 26, 0.8)',
+                pointBorderWidth: 2,
+                pointHoverRadius: 6
             }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: galacticTooltip
+            },
+            scales: {
+                x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#8b8fad' } },
+                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#8b8fad' } }
+            }
         }
     });
 }
@@ -96,8 +171,24 @@ if (document.getElementById('subsChart')) {
             datasets: [{
                 label: 'Novas Assinaturas',
                 data: subsData.map(d => d.count),
-                backgroundColor: '#0d6efd'
+                backgroundColor: 'rgba(56, 189, 248, 0.6)',
+                borderColor: '#38bdf8',
+                borderWidth: 2,
+                borderRadius: 8,
+                borderSkipped: false
             }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: galacticTooltip
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#8b8fad' } },
+                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#8b8fad', stepSize: 1, precision: 0 } }
+            }
         }
     });
 }

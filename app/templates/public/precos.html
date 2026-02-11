@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="theme-color" content="#667eea">
+    <meta name="theme-color" content="#7c5cfc">
 
     {% include 'partials/_analytics.html' %}
     <title>Preços - TeleVIP | Simples e Transparentes</title>
@@ -36,23 +36,34 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
 
     <style>
-        /* Preços Page Specific Styles */
+        /* Precos Page Specific Styles - Galactic Dark */
         .precos-hero {
             padding: 140px 0 80px;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: linear-gradient(135deg, #0b0e1a 0%, #1a1040 50%, #0d1b2a 100%);
             text-align: center;
+            position: relative;
+        }
+        .precos-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at 50% 0%, rgba(124, 92, 252, 0.15) 0%, transparent 60%);
+            pointer-events: none;
         }
         .precos-hero h1 {
             font-size: 36px;
             font-weight: 900;
             line-height: 1.2;
             margin-bottom: 20px;
+            color: #ffffff;
+            position: relative;
         }
         .precos-hero p.lead {
             font-size: 18px;
-            color: #4a5568;
+            color: #8b8fad;
             max-width: 600px;
             margin: 0 auto;
+            position: relative;
         }
         @media (min-width: 768px) {
             .precos-hero h1 { font-size: 48px; }
@@ -62,13 +73,15 @@
             .precos-hero h1 { font-size: 56px; }
         }
 
-        /* Main Pricing Card */
+        /* Main Pricing Card - Glass */
         .main-pricing-card {
-            background: white;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border-radius: 24px;
             padding: 48px 40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-            border: 3px solid var(--primary);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(124, 92, 252, 0.3);
             position: relative;
             overflow: hidden;
             max-width: 480px;
@@ -76,9 +89,7 @@
         }
         .main-pricing-card .badge-top {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             background: var(--gradient-primary);
             color: white;
             text-align: center;
@@ -104,12 +115,13 @@
         }
         .main-pricing-card .price-display .period {
             font-size: 18px;
-            color: #718096;
+            color: #8b8fad;
             display: block;
             margin-top: 4px;
         }
         .fee-highlight {
-            background: #fff3cd;
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.2);
             border-radius: 12px;
             padding: 16px 20px;
             text-align: center;
@@ -118,24 +130,27 @@
         .fee-highlight .fee-text {
             font-size: 18px;
             font-weight: 700;
-            color: #1a202c;
+            color: #fbbf24;
         }
         .fee-highlight .fee-sub {
             font-size: 14px;
-            color: #718096;
+            color: #8b8fad;
             margin-top: 4px;
         }
 
-        /* Fee Calculator */
+        /* Fee Calculator - Dark Glass */
         .calculator-section {
             padding: 80px 0;
-            background: #f8f9fa;
+            background: rgba(11, 14, 26, 0.95);
         }
         .calculator-card {
-            background: white;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(124, 92, 252, 0.15);
             border-radius: 20px;
             padding: 40px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             max-width: 560px;
             margin: 0 auto;
         }
@@ -147,7 +162,7 @@
             display: block;
             font-weight: 600;
             margin-bottom: 8px;
-            color: #1a202c;
+            color: #e2e8f0;
         }
         .calculator-input .input-wrapper {
             position: relative;
@@ -159,25 +174,28 @@
             transform: translateY(-50%);
             font-size: 18px;
             font-weight: 600;
-            color: #718096;
+            color: #8b8fad;
         }
         .calculator-input input {
             width: 100%;
             padding: 16px 16px 16px 48px;
-            border: 2px solid #e2e8f0;
+            border: 2px solid rgba(124, 92, 252, 0.2);
             border-radius: 12px;
             font-size: 24px;
             font-weight: 700;
             font-family: 'Poppins', sans-serif;
-            color: #1a202c;
+            color: #e2e8f0;
+            background: rgba(255, 255, 255, 0.05);
             transition: border-color 0.3s;
         }
         .calculator-input input:focus {
             outline: none;
             border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.08);
         }
         .calc-results {
-            background: #f8f9fa;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(124, 92, 252, 0.1);
             border-radius: 12px;
             padding: 24px;
         }
@@ -188,14 +206,14 @@
             font-size: 15px;
         }
         .calc-row:not(:last-child) {
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
         .calc-row .label {
-            color: #718096;
+            color: #8b8fad;
         }
         .calc-row .value {
             font-weight: 600;
-            color: #1a202c;
+            color: #e2e8f0;
         }
         .calc-row.total {
             padding-top: 16px;
@@ -204,24 +222,26 @@
         .calc-row.total .label {
             font-size: 18px;
             font-weight: 700;
-            color: #1a202c;
+            color: #e2e8f0;
         }
         .calc-row.total .value {
             font-size: 24px;
             font-weight: 800;
-            color: #48bb78;
+            color: #34d399;
         }
 
-        /* Comparison Table */
+        /* Comparison Table - Dark */
         .comparison-section {
             padding: 80px 0;
-            background: white;
+            background: linear-gradient(135deg, #0b0e1a 0%, #1a1040 50%, #0d1b2a 100%);
         }
         .comparison-table {
-            background: white;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(124, 92, 252, 0.15);
             border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
         }
         .comparison-table table {
             width: 100%;
@@ -232,7 +252,8 @@
             font-weight: 700;
             font-size: 15px;
             text-align: center;
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom: 2px solid rgba(124, 92, 252, 0.15);
+            color: #e2e8f0;
         }
         .comparison-table th:first-child {
             text-align: left;
@@ -245,16 +266,16 @@
             padding: 16px 24px;
             text-align: center;
             font-size: 15px;
-            color: #4a5568;
-            border-bottom: 1px solid #f0f0f0;
+            color: #8b8fad;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
         .comparison-table td:first-child {
             text-align: left;
             font-weight: 500;
-            color: #1a202c;
+            color: #e2e8f0;
         }
         .comparison-table td.highlight {
-            background: #f0f4ff;
+            background: rgba(124, 92, 252, 0.08);
             font-weight: 600;
             color: var(--primary);
         }
@@ -268,10 +289,10 @@
             }
         }
 
-        /* What's Included */
+        /* What's Included - Dark */
         .included-section {
             padding: 80px 0;
-            background: #f8f9fa;
+            background: rgba(11, 14, 26, 0.95);
         }
         .included-grid {
             display: grid;
@@ -288,54 +309,68 @@
             align-items: center;
             gap: 12px;
             padding: 16px 20px;
-            background: white;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(124, 92, 252, 0.1);
             border-radius: 12px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
+        }
+        .included-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(124, 92, 252, 0.2);
         }
         .included-item i {
-            color: #48bb78;
+            color: #34d399;
             font-size: 20px;
             flex-shrink: 0;
         }
         .included-item span {
             font-size: 15px;
-            color: #1a202c;
+            color: #e2e8f0;
             font-weight: 500;
         }
 
-        /* Pricing FAQ */
+        /* Pricing FAQ - Dark */
         .pricing-faq {
             padding: 80px 0;
-            background: white;
+            background: linear-gradient(135deg, #0b0e1a 0%, #1a1040 50%, #0d1b2a 100%);
         }
         .pricing-faq .accordion-item {
             border: none;
             margin-bottom: 12px;
             border-radius: 12px !important;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(124, 92, 252, 0.1);
         }
         .pricing-faq .accordion-button {
             font-family: 'Poppins', sans-serif;
             font-weight: 600;
             font-size: 16px;
-            color: #1a202c;
+            color: #e2e8f0;
             padding: 20px 24px;
-            background: white;
+            background: transparent;
         }
         .pricing-faq .accordion-button:not(.collapsed) {
-            background: white;
+            background: transparent;
             color: var(--primary);
             box-shadow: none;
+        }
+        .pricing-faq .accordion-button::after {
+            filter: invert(1) brightness(0.7);
         }
         .pricing-faq .accordion-button:focus {
             box-shadow: none;
         }
         .pricing-faq .accordion-body {
-            color: #718096;
+            color: #8b8fad;
             font-size: 15px;
             line-height: 1.8;
             padding: 0 24px 20px;
+        }
+
+        /* Section backgrounds for non-classed sections */
+        section[style*="background: white"] {
+            background: linear-gradient(135deg, #0b0e1a 0%, #1a1040 50%, #0d1b2a 100%) !important;
         }
     </style>
 </head>
@@ -392,7 +427,7 @@
     </section>
 
     <!-- Main Pricing Card -->
-    <section style="padding: 80px 0; background: white;">
+    <section style="padding: 80px 0;">
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-lg-6" data-aos="zoom-in">
@@ -411,28 +446,28 @@
                         </div>
 
                         <ul style="list-style: none; padding: 0; margin: 24px 0;">
-                            <li style="padding: 10px 0; font-size: 15px; color: #4a5568;">
+                            <li style="padding: 10px 0; font-size: 15px; color: #8b8fad;">
                                 <i class="bi bi-check-circle-fill text-success me-2"></i> Grupos ilimitados
                             </li>
-                            <li style="padding: 10px 0; font-size: 15px; color: #4a5568;">
+                            <li style="padding: 10px 0; font-size: 15px; color: #8b8fad;">
                                 <i class="bi bi-check-circle-fill text-success me-2"></i> Membros ilimitados
                             </li>
-                            <li style="padding: 10px 0; font-size: 15px; color: #4a5568;">
+                            <li style="padding: 10px 0; font-size: 15px; color: #8b8fad;">
                                 <i class="bi bi-check-circle-fill text-success me-2"></i> Assinaturas recorrentes via Stripe
                             </li>
-                            <li style="padding: 10px 0; font-size: 15px; color: #4a5568;">
+                            <li style="padding: 10px 0; font-size: 15px; color: #8b8fad;">
                                 <i class="bi bi-check-circle-fill text-success me-2"></i> Bot inteligente 24/7
                             </li>
-                            <li style="padding: 10px 0; font-size: 15px; color: #4a5568;">
+                            <li style="padding: 10px 0; font-size: 15px; color: #8b8fad;">
                                 <i class="bi bi-check-circle-fill text-success me-2"></i> Dashboard completo
                             </li>
-                            <li style="padding: 10px 0; font-size: 15px; color: #4a5568;">
+                            <li style="padding: 10px 0; font-size: 15px; color: #8b8fad;">
                                 <i class="bi bi-check-circle-fill text-success me-2"></i> Suporte via WhatsApp
                             </li>
-                            <li style="padding: 10px 0; font-size: 15px; color: #4a5568;">
+                            <li style="padding: 10px 0; font-size: 15px; color: #8b8fad;">
                                 <i class="bi bi-check-circle-fill text-success me-2"></i> Sem taxas ocultas
                             </li>
-                            <li style="padding: 10px 0; font-size: 15px; color: #4a5568;">
+                            <li style="padding: 10px 0; font-size: 15px; color: #8b8fad;">
                                 <i class="bi bi-check-circle-fill text-success me-2"></i> Sem limite de faturamento
                             </li>
                         </ul>
@@ -486,7 +521,7 @@
                         </div>
                         <div class="calc-row">
                             <span class="label">Total de taxas</span>
-                            <span class="value" id="calcTotalFee" style="color: #e53e3e;">- R$ 10,98</span>
+                            <span class="value" id="calcTotalFee" style="color: #f87171;">- R$ 10,98</span>
                         </div>
                         <div class="calc-row total">
                             <span class="label">Você recebe</span>
@@ -837,8 +872,8 @@
 
     <!-- Floating WhatsApp Button -->
     <div id="whatsapp-float" class="d-none d-lg-flex" style="position: fixed; bottom: 24px; right: 24px; z-index: 9999; align-items: center; gap: 12px;">
-        <div id="whatsapp-tooltip" style="background: white; color: #333; padding: 10px 16px; border-radius: 12px;
-                box-shadow: 0 4px 16px rgba(0,0,0,0.12); font-size: 14px; font-weight: 500; white-space: nowrap;
+        <div id="whatsapp-tooltip" style="background: rgba(15, 18, 32, 0.95); color: #e2e8f0; padding: 10px 16px; border-radius: 12px;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.3); border: 1px solid rgba(124, 92, 252, 0.15); font-size: 14px; font-weight: 500; white-space: nowrap;
                 opacity: 1; transition: opacity 0.3s ease; font-family: 'Poppins', sans-serif;">
             Fale com nosso suporte
         </div>
@@ -911,7 +946,7 @@
         font-size:14px; color:#ccc; text-align:center; font-family:'Poppins',sans-serif;">
         Usamos cookies essenciais para o funcionamento do site.
         <a href="{{ url_for('auth.privacy') }}" style="color:#7c8dff; text-decoration:underline;">Saiba mais</a>
-        <button onclick="acceptCookies()" style="margin-left:12px; background:#667eea; color:#fff;
+        <button onclick="acceptCookies()" style="margin-left:12px; background:#7c5cfc; color:#fff;
             border:none; border-radius:6px; padding:6px 18px; cursor:pointer; font-size:14px;">OK</button>
     </div>
     <script>

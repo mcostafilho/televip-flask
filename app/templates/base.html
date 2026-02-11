@@ -30,7 +30,7 @@
     {% endif %}
     
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/">
                 <i class="bi bi-telegram"></i> TeleVIP
@@ -123,16 +123,16 @@
     {% block content %}{% endblock %}
     
     <!-- Footer -->
-    <footer class="bg-dark text-white py-4 mt-5">
+    <footer class="text-white py-4 mt-5" style="background: rgba(11, 14, 26, 0.95); border-top: 1px solid rgba(124, 92, 252, 0.15);">
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
-                    <h5><i class="bi bi-telegram"></i> TeleVIP</h5>
-                    <p class="mb-0">A plataforma completa para monetização de grupos no Telegram.</p>
+                    <h5><i class="bi bi-telegram" style="color: #38bdf8;"></i> TeleVIP</h5>
+                    <p class="mb-0" style="color: #8b8fad;">A plataforma completa para monetização de grupos no Telegram.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <p class="mb-0">© 2024 TeleVIP. Todos os direitos reservados.</p>
-                    <small>Feito com ❤️ no Brasil</small>
+                    <p class="mb-0" style="color: #8b8fad;">© 2024 TeleVIP. Todos os direitos reservados.</p>
+                    <small style="color: #8b8fad;">Feito com ❤️ no Brasil</small>
                 </div>
             </div>
         </div>
@@ -172,7 +172,7 @@
         font-size:14px; color:#ccc; text-align:center;">
         Usamos cookies essenciais para o funcionamento do site.
         <a href="{{ url_for('auth.privacy') }}" style="color:#7c8dff; text-decoration:underline;">Saiba mais</a>
-        <button onclick="acceptCookies()" style="margin-left:12px; background:#667eea; color:#fff;
+        <button onclick="acceptCookies()" style="margin-left:12px; background:#7c5cfc; color:#fff;
             border:none; border-radius:6px; padding:6px 18px; cursor:pointer; font-size:14px;">OK</button>
     </div>
     <script>
