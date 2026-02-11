@@ -735,7 +735,7 @@ footer,
 }
 
 /* ========================================
-   Orbit Cards — floating space cards
+   Space Objects — floating emoji elements
    ======================================== */
 .orbit-field {
     position: absolute;
@@ -745,71 +745,19 @@ footer,
     display: none; /* Hidden on mobile */
 }
 
-.orbit-card {
+.space-obj {
     position: absolute;
-    background: rgba(15, 18, 32, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: 12px;
-    padding: 10px 16px;
-    color: var(--galactic-text-primary);
-    font-size: 13px;
-    font-weight: 600;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
     pointer-events: none;
     will-change: transform, opacity;
-    opacity: 0; /* GSAP will animate in */
+    opacity: 0; /* GSAP controls */
+    line-height: 1;
+    filter: drop-shadow(0 0 8px rgba(124, 92, 252, 0.3));
 }
 
-.orbit-card i {
-    font-size: 16px;
-}
-
-/* Sizes */
-.orbit-lg { padding: 12px 20px; font-size: 15px; }
-.orbit-lg i { font-size: 18px; }
-.orbit-md { padding: 10px 16px; font-size: 13px; }
-.orbit-sm { padding: 8px 12px; font-size: 12px; }
-.orbit-sm i { font-size: 14px; }
-
-/* All cards start invisible — JS controls entrance */
-.orbit-depth-1,
-.orbit-depth-2,
-.orbit-depth-3 { opacity: 0; }
-
-/* Category colors */
-.orbit-money {
-    border: 1px solid rgba(52, 211, 153, 0.4);
-    box-shadow: 0 0 12px rgba(52, 211, 153, 0.15), 0 4px 12px rgba(0,0,0,0.3);
-}
-.orbit-money i { color: #34d399; }
-
-.orbit-member {
-    border: 1px solid rgba(56, 189, 248, 0.4);
-    box-shadow: 0 0 12px rgba(56, 189, 248, 0.15), 0 4px 12px rgba(0,0,0,0.3);
-}
-.orbit-member i { color: #38bdf8; }
-
-.orbit-growth {
-    border: 1px solid rgba(124, 92, 252, 0.4);
-    box-shadow: 0 0 12px rgba(124, 92, 252, 0.15), 0 4px 12px rgba(0,0,0,0.3);
-}
-.orbit-growth i { color: #7c5cfc; }
-
-.orbit-status {
-    border: 1px solid rgba(251, 191, 36, 0.4);
-    box-shadow: 0 0 12px rgba(251, 191, 36, 0.15), 0 4px 12px rgba(0,0,0,0.3);
-}
-.orbit-status i { color: #fbbf24; }
-
-.orbit-rocket {
-    border: 1px solid rgba(240, 147, 251, 0.4);
-    box-shadow: 0 0 12px rgba(240, 147, 251, 0.15), 0 4px 12px rgba(0,0,0,0.3);
-}
-.orbit-rocket i { color: #f093fb; }
+/* Sizes via data-size attribute */
+.space-obj[data-size="lg"] { font-size: 42px; }
+.space-obj[data-size="md"] { font-size: 30px; }
+.space-obj[data-size="sm"] { font-size: 22px; }
 
 /* ========================================
    Mobile First Features Section - Dark Glass
@@ -1459,13 +1407,13 @@ h2, h3, h4, h5 {
         gap: 20px;
     }
 
-    /* Show orbit cards on tablet+ */
+    /* Show space objects on tablet+ */
     .orbit-field {
         display: block;
     }
 
-    /* Tablet: hide last 4 cards (only 6 visible) */
-    .orbit-card:nth-child(n+7) {
+    /* Tablet: show 8 objects */
+    .space-obj:nth-child(n+9) {
         display: none;
     }
 
@@ -1519,10 +1467,10 @@ h2, h3, h4, h5 {
     }
 }
 
-/* Show all 10 orbit cards on desktop */
+/* Show all 15 space objects on desktop */
 @media (min-width: 1024px) {
-    .orbit-card:nth-child(n+7) {
-        display: inline-flex;
+    .space-obj:nth-child(n+9) {
+        display: inline;
     }
 }
 
