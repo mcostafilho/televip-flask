@@ -640,15 +640,25 @@
   }
 
   // ── 13. MOUSE REVEAL — Nebula Portal (desktop only) ──
+  // Full-screen overlay with space photo; circular CSS mask follows the mouse.
+  // Separate glow ring element so the box-shadow isn't clipped by the mask.
   function initMouseReveal() {
     if (isMobile) return;
 
+    // Portal layer — full-screen space image
     var reveal = document.createElement('div');
     reveal.className = 'space-reveal';
     reveal.setAttribute('aria-hidden', 'true');
     document.body.appendChild(reveal);
 
-    var hw = 300; // half of 600px — manual centering (no CSS transform)
+    // Glow ring — separate element for pulsing ambient light
+    var glow = document.createElement('div');
+    glow.className = 'space-reveal-glow';
+    glow.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(glow);
+
+    var hw = 300;   // half of 600px mask
+    var ghw = 210;  // half of 420px glow
     var mouseX = window.innerWidth / 2;
     var mouseY = window.innerHeight / 2;
     var curX = mouseX, curY = mouseY;
@@ -660,15 +670,23 @@
       if (!active) {
         active = true;
         reveal.style.opacity = '1';
+        glow.style.opacity = '1';
       }
     });
 
-    // Dreamy trailing — offset by half-size to center on cursor
+    // Dreamy trailing — move the mask hole + glow ring
     gsap.ticker.add(function () {
-      curX += (mouseX - curX) * 0.07;
-      curY += (mouseY - curY) * 0.07;
-      reveal.style.left = (curX - hw) + 'px';
-      reveal.style.top = (curY - hw) + 'px';
+      curX += (mouseX - curX) * 0.08;
+      curY += (mouseY - curY) * 0.08;
+
+      // Move the circular mask on the full-screen overlay
+      var maskPos = (curX - hw) + 'px ' + (curY - hw) + 'px';
+      reveal.style.webkitMaskPosition = maskPos;
+      reveal.style.maskPosition = maskPos;
+
+      // Move the glow ring
+      glow.style.left = (curX - ghw) + 'px';
+      glow.style.top = (curY - ghw) + 'px';
     });
   }
 
