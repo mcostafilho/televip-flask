@@ -120,14 +120,8 @@ Se não fez nenhum pagamento recentemente, pode continuar para o menu principal.
         ).order_by(Subscription.end_date).all()
         
         if not subscriptions:
-            text = f"""
-👋 Olá {user.first_name}!
-
-Você ainda não possui assinaturas ativas.
-
-Para assinar um grupo, use o link de convite fornecido pelo criador.
-"""
-            keyboard = []
+            text = f"👋 Olá {user.first_name}!\n\nVocê ainda não possui assinaturas ativas.\n\nPara assinar um grupo, use o link de convite fornecido pelo criador."
+            reply_markup = None
         else:
             text = f"👋 Olá {user.first_name}!\n\n"
 
@@ -143,25 +137,15 @@ Para assinar um grupo, use o link de convite fornecido pelo criador.
             if len(subscriptions) > 5:
                 text += f"... e mais {len(subscriptions) - 5} assinaturas\n\n"
 
-            keyboard = [
-                [
-                    InlineKeyboardButton("📊 Ver Detalhes", callback_data="check_status")
-                ]
-            ]
-        
+            reply_markup = InlineKeyboardMarkup([
+                [InlineKeyboardButton("📊 Ver Detalhes", callback_data="check_status")]
+            ])
+
         # Enviar ou editar mensagem
         if is_callback:
-            await message.edit_text(
-                text,
-                parse_mode=ParseMode.MARKDOWN,
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
+            await message.edit_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
         else:
-            await message.reply_text(
-                text,
-                parse_mode=ParseMode.MARKDOWN,
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
+            await message.reply_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
 
 async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_TYPE, group_identifier: str):
     """Iniciar fluxo de assinatura para um grupo específico (por slug ou ID legado)"""
