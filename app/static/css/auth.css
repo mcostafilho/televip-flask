@@ -1,5 +1,5 @@
 /* ========================================
-   TeleVIP Auth - Galactic Dark Glass
+   TeleVIP Auth - Galactic Dark Glass v2
    ======================================== */
 
 /* Reset e Base */
@@ -23,32 +23,28 @@
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 20px;
-
-    /* Altura segura para iOS */
     --safe-area-inset-top: env(safe-area-inset-top);
     --safe-area-inset-bottom: env(safe-area-inset-bottom);
 }
 
-/* Garantir que o body e html tenham altura total */
 html, body {
     height: 100%;
     margin: 0;
     padding: 0;
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* Container Principal - Dark Space */
+/* ========================================
+   Container + Starfield Background
+   ======================================== */
 .auth-container {
     min-height: 100vh;
-    min-height: -webkit-fill-available; /* iOS fix */
-    min-height: 100%; /* Fallback */
+    min-height: -webkit-fill-available;
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #0b0e1a 0%, #1a1040 50%, #0d1b2a 100%);
-    background-attachment: fixed;
-    background-size: cover;
-    background-position: center;
+    background: #0b0e1a;
     padding: 16px;
     padding-top: calc(16px + var(--safe-area-inset-top));
     padding-bottom: calc(16px + var(--safe-area-inset-bottom));
@@ -56,14 +52,66 @@ html, body {
     overflow: hidden;
 }
 
-/* Card Principal - Glass Morphism */
+/* Nebula gradient layer */
+.auth-container::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 80% 60% at 20% 80%, rgba(124, 92, 252, 0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 20%, rgba(56, 189, 248, 0.12) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 50% 50%, rgba(240, 147, 251, 0.06) 0%, transparent 50%);
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Starfield canvas placeholder */
+.auth-starfield {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Floating nebula orbs */
+.nebula-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+    will-change: transform, opacity;
+}
+.nebula-orb--1 {
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(124,92,252,0.3), transparent 70%);
+    top: 10%; left: -5%;
+}
+.nebula-orb--2 {
+    width: 250px; height: 250px;
+    background: radial-gradient(circle, rgba(56,189,248,0.25), transparent 70%);
+    bottom: 5%; right: -5%;
+}
+.nebula-orb--3 {
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(240,147,251,0.2), transparent 70%);
+    top: 50%; left: 60%;
+}
+
+/* ========================================
+   Auth Card - Premium Glass
+   ======================================== */
 .auth-card {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(124, 92, 252, 0.15);
+    background: rgba(15, 18, 35, 0.75);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(124, 92, 252, 0.18);
     border-radius: var(--radius-lg);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    box-shadow:
+        0 25px 50px rgba(0, 0, 0, 0.5),
+        0 0 80px rgba(124, 92, 252, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
     width: 100%;
     max-width: 400px;
     padding: 24px 20px;
@@ -71,18 +119,30 @@ html, body {
     z-index: 10;
     max-height: calc(100vh - 32px);
     overflow-y: auto;
-    -webkit-overflow-scrolling: touch; /* Smooth scroll iOS */
+    -webkit-overflow-scrolling: touch;
 }
 
-/* Header */
+/* Card top glow line */
+.auth-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 20%; right: 20%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(124,92,252,0.6), rgba(56,189,248,0.6), transparent);
+    border-radius: 1px;
+}
+
+/* ========================================
+   Header
+   ======================================== */
 .auth-header {
     text-align: center;
     margin-bottom: 24px;
 }
 
 .auth-logo {
-    width: 60px;
-    height: 60px;
+    width: 64px;
+    height: 64px;
     margin: 0 auto 16px;
     display: flex;
     align-items: center;
@@ -91,10 +151,27 @@ html, body {
     border-radius: 50%;
     color: white;
     font-size: 28px;
+    box-shadow: 0 0 30px rgba(124, 92, 252, 0.3);
+    position: relative;
+}
+
+/* Logo pulse ring */
+.auth-logo::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid rgba(124, 92, 252, 0.3);
+    animation: logoPulse 3s ease-in-out infinite;
+}
+
+@keyframes logoPulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.15); opacity: 0; }
 }
 
 .gradient-text {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    background: linear-gradient(135deg, #7c5cfc 0%, #38bdf8 50%, #f093fb 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -102,6 +179,13 @@ html, body {
     font-size: 24px;
     margin-bottom: 8px;
     line-height: 1.2;
+    background-size: 200% 100%;
+    animation: gradientShift 4s ease infinite;
+}
+
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
 }
 
 .subtitle {
@@ -110,7 +194,9 @@ html, body {
     margin: 0;
 }
 
-/* Step Indicator */
+/* ========================================
+   Step Indicator
+   ======================================== */
 .step-indicator {
     display: flex;
     justify-content: center;
@@ -160,14 +246,15 @@ html, body {
     background: var(--success-color);
 }
 
-/* Form Styles */
+/* ========================================
+   Form Styles
+   ======================================== */
 .auth-form {
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
 
-/* Input com icone */
 .input-group {
     position: relative;
     margin-bottom: 0;
@@ -182,16 +269,18 @@ html, body {
     font-size: 18px;
     pointer-events: none;
     z-index: 1;
+    transition: color 0.3s ease;
 }
 
 .form-control {
     width: 100%;
     padding: 16px;
     font-size: 16px;
-    border: 1px solid var(--border-color);
+    font-family: inherit;
+    border: 1px solid rgba(124, 92, 252, 0.15);
     border-radius: var(--radius-md);
     transition: all 0.3s ease;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.04);
     color: var(--text-dark);
     -webkit-appearance: none;
 }
@@ -203,30 +292,28 @@ html, body {
 .form-control:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.2);
-    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.15), 0 0 20px rgba(124, 92, 252, 0.08);
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .form-control:focus ~ .input-icon {
     color: var(--primary-color);
 }
 
-/* Placeholder styling */
 .form-control::placeholder {
     color: #6b7280;
     opacity: 1;
 }
 
 .form-control:focus::placeholder {
-    opacity: 0.7;
+    opacity: 0.6;
 }
 
-/* Remove labels flutuantes */
 .form-floating {
     display: none;
 }
 
-/* Password Toggle - Touch Friendly */
+/* Password Toggle */
 .password-field {
     position: relative;
 }
@@ -244,6 +331,7 @@ html, body {
     font-size: 18px;
     z-index: 2;
     -webkit-tap-highlight-color: transparent;
+    transition: color 0.3s ease;
 }
 
 .password-field .password-toggle:hover {
@@ -254,7 +342,6 @@ html, body {
     padding-right: 48px;
 }
 
-/* Form text helper */
 .form-text {
     font-size: 13px;
     color: var(--text-muted);
@@ -263,13 +350,16 @@ html, body {
     display: block;
 }
 
-/* Botoes */
+/* ========================================
+   Buttons
+   ======================================== */
 .btn {
     padding: 16px 24px;
     border: none;
     border-radius: var(--radius-md);
     font-size: 16px;
     font-weight: 600;
+    font-family: inherit;
     cursor: pointer;
     transition: all 0.3s ease;
     width: 100%;
@@ -280,6 +370,8 @@ html, body {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
     text-decoration: none;
+    position: relative;
+    overflow: hidden;
 }
 
 .btn-primary {
@@ -288,9 +380,24 @@ html, body {
     margin-top: 8px;
 }
 
+/* Shimmer sweep on primary button */
+.btn-primary::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    animation: btnShimmer 3s ease-in-out infinite;
+}
+
+@keyframes btnShimmer {
+    0% { left: -100%; }
+    50%, 100% { left: 100%; }
+}
+
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(124, 92, 252, 0.4);
+    box-shadow: 0 8px 25px rgba(124, 92, 252, 0.4);
 }
 
 .btn-primary:active {
@@ -305,13 +412,16 @@ html, body {
 
 .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(124, 92, 252, 0.3);
 }
 
 .btn-secondary:active {
     background: rgba(255, 255, 255, 0.12);
 }
 
-/* Divider */
+/* ========================================
+   Divider
+   ======================================== */
 .divider {
     display: flex;
     align-items: center;
@@ -333,7 +443,9 @@ html, body {
     padding: 0 16px;
 }
 
-/* Checkbox - Touch Friendly */
+/* ========================================
+   Checkbox
+   ======================================== */
 .form-check {
     display: flex;
     align-items: flex-start;
@@ -369,7 +481,9 @@ html, body {
     color: var(--primary-color);
 }
 
-/* Links */
+/* ========================================
+   Links
+   ======================================== */
 .auth-link {
     color: var(--primary-color);
     text-decoration: none;
@@ -386,7 +500,9 @@ html, body {
     opacity: 0.8;
 }
 
-/* Footer */
+/* ========================================
+   Footer
+   ======================================== */
 .auth-footer {
     text-align: center;
     margin-top: 24px;
@@ -396,7 +512,9 @@ html, body {
     color: var(--text-muted);
 }
 
-/* Alerts */
+/* ========================================
+   Alerts
+   ======================================== */
 .alert {
     padding: 12px 16px;
     border-radius: var(--radius-sm);
@@ -442,7 +560,9 @@ html, body {
     opacity: 1;
 }
 
-/* Loading State */
+/* ========================================
+   Loading State
+   ======================================== */
 .btn-loading {
     position: relative;
     color: transparent;
@@ -451,12 +571,9 @@ html, body {
 .btn-loading::after {
     content: '';
     position: absolute;
-    width: 20px;
-    height: 20px;
-    top: 50%;
-    left: 50%;
-    margin-left: -10px;
-    margin-top: -10px;
+    width: 20px; height: 20px;
+    top: 50%; left: 50%;
+    margin-left: -10px; margin-top: -10px;
     border: 2px solid #ffffff;
     border-radius: 50%;
     border-top-color: transparent;
@@ -467,7 +584,9 @@ html, body {
     to { transform: rotate(360deg); }
 }
 
-/* Strength Indicator */
+/* ========================================
+   Password Strength
+   ======================================== */
 .password-strength {
     margin-top: -8px;
     margin-bottom: 8px;
@@ -493,7 +612,9 @@ html, body {
     color: var(--text-muted);
 }
 
-/* Botao Voltar */
+/* ========================================
+   Back Button
+   ======================================== */
 .btn-back {
     position: absolute;
     top: 20px;
@@ -524,7 +645,6 @@ html, body {
     font-size: 18px;
 }
 
-/* Mobile adjustments for back button */
 @media (max-width: 768px) {
     .btn-back {
         top: 10px;
@@ -532,55 +652,49 @@ html, body {
         padding: 6px 12px;
         font-size: 14px;
     }
-
     .btn-back span {
-        display: none; /* Mostra so o icone no mobile */
+        display: none;
     }
 }
 
-/* Decoracoes de fundo */
-.auth-decoration {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    overflow: hidden;
-    z-index: 1;
-    pointer-events: none;
-}
-
-.shape {
+/* ========================================
+   Starfield (CSS fallback stars)
+   ======================================== */
+.star {
     position: absolute;
     border-radius: 50%;
-    opacity: 0.06;
+    background: white;
+    pointer-events: none;
+    z-index: 0;
 }
 
-.shape-1 {
-    width: 200px;
-    height: 200px;
-    background: var(--primary-color);
-    top: -100px;
-    right: -100px;
+.star--sm { width: 1px; height: 1px; }
+.star--md { width: 2px; height: 2px; }
+.star--lg { width: 3px; height: 3px; }
+
+@keyframes twinkle {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 1; }
 }
 
-.shape-2 {
-    width: 150px;
-    height: 150px;
-    background: var(--secondary-color);
-    bottom: -75px;
-    left: -75px;
+/* ========================================
+   Shooting stars
+   ======================================== */
+.shooting-star {
+    position: absolute;
+    width: 80px;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.8), transparent);
+    border-radius: 1px;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+    will-change: transform, opacity;
 }
 
-.shape-3 {
-    width: 100px;
-    height: 100px;
-    background: var(--primary-color);
-    top: 50%;
-    left: 10%;
-}
-
-/* Scrollbar customizada */
+/* ========================================
+   Scrollbar
+   ======================================== */
 .auth-card::-webkit-scrollbar {
     width: 4px;
 }
@@ -594,7 +708,9 @@ html, body {
     border-radius: 2px;
 }
 
-/* Erro de validacao */
+/* ========================================
+   Validation
+   ======================================== */
 .form-control.is-invalid {
     border-color: var(--danger-color);
 }
@@ -617,7 +733,9 @@ html, body {
     margin-left: 48px;
 }
 
-/* Utilitarios */
+/* ========================================
+   Utilities
+   ======================================== */
 .text-center { text-align: center; }
 .text-muted { color: var(--text-muted); }
 .text-dark { color: var(--text-dark); }
@@ -633,6 +751,7 @@ html, body {
 .small { font-size: 14px; }
 .w-100 { width: 100%; }
 .d-flex { display: flex; }
+.d-inline { display: inline; }
 .justify-content-between { justify-content: space-between; }
 .align-items-center { align-items: center; }
 .align-items-start { align-items: flex-start; }
@@ -687,43 +806,19 @@ html, body {
     .gradient-text {
         font-size: 32px;
     }
-
-    .shape-1 {
-        width: 300px;
-        height: 300px;
-        top: -150px;
-        right: -150px;
-    }
-
-    .shape-2 {
-        width: 200px;
-        height: 200px;
-        bottom: -100px;
-        left: -100px;
-    }
-
-    .shape-3 {
-        width: 150px;
-        height: 150px;
-        top: 50%;
-        left: 10%;
-    }
 }
 
 /* ========================================
    Acessibilidade e Performance
    ======================================== */
-
-/* Remove animacoes se preferir movimento reduzido */
 @media (prefers-reduced-motion: reduce) {
-    * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
+    .gradient-text { animation: none; }
+    .btn-primary::after { animation: none; }
+    .auth-logo::after { animation: none; }
+    .star { animation: none !important; }
+    .shooting-star { display: none; }
 }
 
-/* Focus visible para acessibilidade */
 .form-control:focus-visible,
 .btn:focus-visible,
 .auth-link:focus-visible {

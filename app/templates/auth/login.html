@@ -4,12 +4,21 @@
 
 {% block content %}
 <div class="auth-container">
-    <!-- Botão Voltar -->
+    <!-- Back Button -->
     <a href="{{ url_for('auth.index') }}" class="btn-back">
         <i class="bi bi-arrow-left"></i>
         <span>Voltar</span>
     </a>
-    
+
+    <!-- Nebula Orbs -->
+    <div class="nebula-orb nebula-orb--1"></div>
+    <div class="nebula-orb nebula-orb--2"></div>
+    <div class="nebula-orb nebula-orb--3"></div>
+
+    <!-- Shooting Stars -->
+    <div class="shooting-star" id="ss1"></div>
+    <div class="shooting-star" id="ss2"></div>
+
     <div class="auth-card">
         <div class="auth-header">
             <div class="auth-logo">
@@ -18,7 +27,7 @@
             <h1 class="gradient-text">Bem-vindo!</h1>
             <p class="subtitle">Entre na sua conta TeleVIP</p>
         </div>
-        
+
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -42,26 +51,26 @@
             </form>
         </div>
         {% endif %}
-        
+
         <form method="POST" class="auth-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <!-- Email -->
             <div class="input-group">
                 <i class="bi bi-envelope input-icon"></i>
-                <input type="email" name="email" class="form-control with-icon" 
+                <input type="email" name="email" class="form-control with-icon"
                        placeholder="Email" required autofocus>
             </div>
-            
+
             <!-- Senha -->
             <div class="input-group password-field">
                 <i class="bi bi-lock input-icon"></i>
-                <input type="password" name="password" class="form-control with-icon" 
+                <input type="password" name="password" class="form-control with-icon"
                        id="password" placeholder="Senha" required>
                 <button type="button" class="password-toggle" onclick="togglePassword('password')">
                     <i class="bi bi-eye" id="password-eye"></i>
                 </button>
             </div>
-            
+
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div class="form-check">
                     <input type="checkbox" name="remember" class="form-check-input" id="remember">
@@ -73,52 +82,119 @@
                     Esqueceu a senha?
                 </a>
             </div>
-            
+
             <button type="submit" class="btn btn-primary">
                 <i class="bi bi-box-arrow-in-right"></i>
                 Entrar
             </button>
         </form>
-        
+
         <div class="divider">
             <span>ou</span>
         </div>
-        
+
         <a href="{{ url_for('auth.google_login') }}" class="btn btn-secondary">
             <img src="https://www.google.com/favicon.ico" width="20" height="20">
             Continuar com Google
         </a>
-        
+
         <div class="auth-footer">
-            <p>Não tem uma conta? 
+            <p>Não tem uma conta?
                 <a href="{{ url_for('auth.register') }}" class="auth-link fw-bold">
                     Criar conta grátis
                 </a>
             </p>
         </div>
     </div>
-    
-    <!-- Decorative Elements -->
-    <div class="auth-decoration">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-    </div>
 </div>
 
 <script>
 function togglePassword(fieldId) {
-    const passwordField = document.getElementById(fieldId);
-    const eyeIcon = document.getElementById(fieldId + '-eye');
-    
-    if (passwordField.type === 'password') {
-        passwordField.type = 'text';
-        eyeIcon.classList.remove('bi-eye');
-        eyeIcon.classList.add('bi-eye-slash');
+    var f = document.getElementById(fieldId);
+    var e = document.getElementById(fieldId + '-eye');
+    if (f.type === 'password') {
+        f.type = 'text';
+        e.classList.remove('bi-eye');
+        e.classList.add('bi-eye-slash');
     } else {
-        passwordField.type = 'password';
-        eyeIcon.classList.remove('bi-eye-slash');
-        eyeIcon.classList.add('bi-eye');
+        f.type = 'password';
+        e.classList.remove('bi-eye-slash');
+        e.classList.add('bi-eye');
     }
 }
+
+(function() {
+    var container = document.querySelector('.auth-container');
+    if (!container || typeof gsap === 'undefined') return;
+
+    /* ---- Stars ---- */
+    for (var i = 0; i < 60; i++) {
+        var s = document.createElement('div');
+        var sizes = ['star--sm','star--sm','star--md','star--lg'];
+        s.className = 'star ' + sizes[Math.floor(Math.random() * sizes.length)];
+        s.style.left = Math.random() * 100 + '%';
+        s.style.top = Math.random() * 100 + '%';
+        s.style.opacity = (0.15 + Math.random() * 0.5).toString();
+        s.style.animation = 'twinkle ' + (2 + Math.random() * 4) + 's ease-in-out ' + (Math.random() * 3) + 's infinite';
+        container.appendChild(s);
+    }
+
+    /* ---- Nebula orbs float ---- */
+    var orbs = document.querySelectorAll('.nebula-orb');
+    orbs.forEach(function(orb, idx) {
+        gsap.to(orb, { opacity: 1, duration: 2, delay: 0.3 * idx, ease: 'power2.out' });
+        gsap.to(orb, {
+            x: function() { return (Math.random() - 0.5) * 60; },
+            y: function() { return (Math.random() - 0.5) * 40; },
+            duration: function() { return 6 + Math.random() * 4; },
+            repeat: -1, yoyo: true, ease: 'sine.inOut', delay: idx * 0.5
+        });
+    });
+
+    /* ---- Shooting stars ---- */
+    function shootStar(el) {
+        var startX = -100;
+        var startY = Math.random() * window.innerHeight * 0.6;
+        var angle = -15 + Math.random() * 10;
+        gsap.set(el, { x: startX, y: startY, rotation: angle, opacity: 0 });
+        gsap.to(el, {
+            x: window.innerWidth + 200,
+            y: startY + Math.tan(angle * Math.PI / 180) * (window.innerWidth + 300),
+            opacity: 0.8, duration: 0.8, ease: 'power1.in',
+            onComplete: function() {
+                gsap.to(el, { opacity: 0, duration: 0.2, onComplete: function() {
+                    setTimeout(function() { shootStar(el); }, 3000 + Math.random() * 8000);
+                }});
+            }
+        });
+    }
+    setTimeout(function() { shootStar(document.getElementById('ss1')); }, 2000);
+    setTimeout(function() { shootStar(document.getElementById('ss2')); }, 6000);
+
+    /* ---- Card + form entrance ---- */
+    var card = document.querySelector('.auth-card');
+    var tl = gsap.timeline({ defaults: { ease: 'back.out(1.4)' } });
+    tl.from(card, { y: 40, opacity: 0, duration: 0.7 })
+      .from('.auth-logo', { scale: 0, rotation: -180, duration: 0.5 }, '-=0.3')
+      .from('.gradient-text', { y: 20, opacity: 0, duration: 0.4 }, '-=0.2')
+      .from('.subtitle', { y: 10, opacity: 0, duration: 0.3 }, '-=0.15')
+      .from('.auth-form .input-group', { x: -30, opacity: 0, duration: 0.4, stagger: 0.1 }, '-=0.1')
+      .from('.auth-form .d-flex', { opacity: 0, duration: 0.3 }, '-=0.1')
+      .from('.auth-form .btn-primary', { y: 15, opacity: 0, duration: 0.4 }, '-=0.1')
+      .from('.divider', { scaleX: 0, opacity: 0, duration: 0.3 }, '-=0.1')
+      .from('.btn-secondary', { y: 10, opacity: 0, duration: 0.3 }, '-=0.1')
+      .from('.auth-footer', { opacity: 0, duration: 0.3 }, '-=0.1');
+
+    /* ---- Focus glow on inputs ---- */
+    var inputs = document.querySelectorAll('.form-control');
+    inputs.forEach(function(inp) {
+        inp.addEventListener('focus', function() {
+            gsap.to(this.closest('.input-group'), { boxShadow: '0 0 20px rgba(124,92,252,0.15)', duration: 0.3 });
+        });
+        inp.addEventListener('blur', function() {
+            gsap.to(this.closest('.input-group'), { boxShadow: 'none', duration: 0.3 });
+        });
+    });
+})();
 </script>
 {% endblock %}
