@@ -735,7 +735,7 @@ footer,
 }
 
 /* ========================================
-   Space Objects — floating emoji elements
+   Space Cards — SVG icon + message popups
    ======================================== */
 .orbit-field {
     position: absolute;
@@ -745,19 +745,66 @@ footer,
     display: none; /* Hidden on mobile */
 }
 
-.space-obj {
+.space-card {
     position: absolute;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(12, 14, 28, 0.82);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-radius: 14px;
+    padding: 8px 16px 8px 10px;
+    color: #e2e8f0;
+    font-weight: 600;
+    white-space: nowrap;
     pointer-events: none;
     will-change: transform, opacity;
-    opacity: 0; /* GSAP controls */
-    line-height: 1;
-    filter: drop-shadow(0 0 8px rgba(124, 92, 252, 0.3));
+    opacity: 0;
 }
 
-/* Sizes via data-size attribute */
-.space-obj[data-size="lg"] { font-size: 42px; }
-.space-obj[data-size="md"] { font-size: 30px; }
-.space-obj[data-size="sm"] { font-size: 22px; }
+.sc-icon {
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 6px rgba(124, 92, 252, 0.4));
+}
+
+.sc-msg {
+    letter-spacing: 0.01em;
+}
+
+/* Sizes */
+.space-card[data-size="lg"]          { padding: 10px 18px 10px 12px; }
+.space-card[data-size="lg"] .sc-icon { width: 32px; height: 32px; }
+.space-card[data-size="lg"] .sc-msg  { font-size: 14px; }
+
+.space-card[data-size="md"] .sc-icon { width: 26px; height: 26px; }
+.space-card[data-size="md"] .sc-msg  { font-size: 12.5px; }
+
+.space-card[data-size="sm"]          { padding: 6px 12px 6px 8px; gap: 7px; }
+.space-card[data-size="sm"] .sc-icon { width: 20px; height: 20px; }
+.space-card[data-size="sm"] .sc-msg  { font-size: 11.5px; }
+
+/* Color categories — border glow */
+.sc-purple {
+    border: 1px solid rgba(124, 92, 252, 0.35);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.35), 0 0 12px rgba(124, 92, 252, 0.12);
+}
+.sc-cyan {
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.35), 0 0 12px rgba(56, 189, 248, 0.12);
+}
+.sc-pink {
+    border: 1px solid rgba(240, 147, 251, 0.35);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.35), 0 0 12px rgba(240, 147, 251, 0.12);
+}
+.sc-gold {
+    border: 1px solid rgba(251, 191, 36, 0.35);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.35), 0 0 12px rgba(251, 191, 36, 0.12);
+}
+.sc-green {
+    border: 1px solid rgba(52, 211, 153, 0.35);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.35), 0 0 12px rgba(52, 211, 153, 0.12);
+}
 
 /* ========================================
    Mobile First Features Section - Dark Glass
@@ -1407,13 +1454,13 @@ h2, h3, h4, h5 {
         gap: 20px;
     }
 
-    /* Show space objects on tablet+ */
+    /* Show space cards on tablet+ */
     .orbit-field {
         display: block;
     }
 
-    /* Tablet: show 8 objects */
-    .space-obj:nth-child(n+9) {
+    /* Tablet: show first 8 cards (skip SVG defs which is child 1) */
+    .space-card:nth-child(n+10) {
         display: none;
     }
 
@@ -1467,10 +1514,10 @@ h2, h3, h4, h5 {
     }
 }
 
-/* Show all 15 space objects on desktop */
+/* Show all 12 space cards on desktop */
 @media (min-width: 1024px) {
-    .space-obj:nth-child(n+9) {
-        display: inline;
+    .space-card:nth-child(n+10) {
+        display: inline-flex;
     }
 }
 

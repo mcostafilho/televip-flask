@@ -31,7 +31,7 @@
     <!-- CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link href="{{ url_for('static', filename='css/landing.css') }}?v=25" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/landing.css') }}?v=26" rel="stylesheet">
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
@@ -151,23 +151,65 @@
             </div>
         </div>
 
-        <!-- Space Objects (Desktop) — JS positions and animates them -->
+        <!-- Space Cards (Desktop) — SVG icons + messages, JS animated -->
         <div class="orbit-field" aria-hidden="true">
-            <span class="space-obj" data-size="lg">🚀</span>
-            <span class="space-obj" data-size="md">🛸</span>
-            <span class="space-obj" data-size="lg">🪐</span>
-            <span class="space-obj" data-size="sm">⭐</span>
-            <span class="space-obj" data-size="md">🛰️</span>
-            <span class="space-obj" data-size="sm">👽</span>
-            <span class="space-obj" data-size="md">☄️</span>
-            <span class="space-obj" data-size="lg">🌍</span>
-            <span class="space-obj" data-size="sm">🔭</span>
-            <span class="space-obj" data-size="md">🌙</span>
-            <span class="space-obj" data-size="sm">💫</span>
-            <span class="space-obj" data-size="md">🚀</span>
-            <span class="space-obj" data-size="sm">🛸</span>
-            <span class="space-obj" data-size="lg">🛰️</span>
-            <span class="space-obj" data-size="sm">✨</span>
+            <!-- SVG gradient defs -->
+            <svg style="position:absolute;width:0;height:0"><defs>
+                <linearGradient id="sg-p" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7c5cfc"/><stop offset="100%" stop-color="#38bdf8"/></linearGradient>
+                <linearGradient id="sg-c" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#34d399"/></linearGradient>
+                <linearGradient id="sg-k" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f093fb"/><stop offset="100%" stop-color="#7c5cfc"/></linearGradient>
+                <linearGradient id="sg-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient>
+                <linearGradient id="sg-e" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#34d399"/><stop offset="100%" stop-color="#059669"/></linearGradient>
+            </defs></svg>
+
+            <div class="space-card sc-purple" data-size="lg">
+                <svg class="sc-icon" viewBox="0 0 32 32" fill="none"><path d="M16 3L11 17h3v7l2 3 2-3v-7h3z" fill="url(#sg-p)"/><path d="M14 24l2 5 2-5" fill="#f093fb" opacity=".5"/><circle cx="16" cy="12" r="2" fill="#fff" opacity=".8"/></svg>
+                <span class="sc-msg">+R$ 1.247 recebido</span>
+            </div>
+            <div class="space-card sc-cyan" data-size="md">
+                <svg class="sc-icon" viewBox="0 0 32 32" fill="none"><rect x="12" y="9" width="8" height="14" rx="2" fill="url(#sg-c)"/><rect x="4" y="13" width="7" height="3" rx="1" fill="url(#sg-c)" opacity=".6"/><rect x="21" y="13" width="7" height="3" rx="1" fill="url(#sg-c)" opacity=".6"/><circle cx="16" cy="14" r="1.5" fill="#fff" opacity=".7"/></svg>
+                <span class="sc-msg">Novo membro VIP</span>
+            </div>
+            <div class="space-card sc-cyan" data-size="lg">
+                <svg class="sc-icon" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="7" fill="url(#sg-c)"/><ellipse cx="16" cy="16" rx="14" ry="4" fill="none" stroke="url(#sg-c)" stroke-width="1.5" opacity=".45" transform="rotate(-20 16 16)"/></svg>
+                <span class="sc-msg">+48% de lucro</span>
+            </div>
+            <div class="space-card sc-pink" data-size="sm">
+                <svg class="sc-icon" viewBox="0 0 32 32" fill="none"><ellipse cx="16" cy="20" rx="13" ry="4.5" fill="url(#sg-k)" opacity=".6"/><path d="M10 20a6 8 0 0112 0z" fill="url(#sg-k)"/><circle cx="16" cy="16" r="1.5" fill="#fff" opacity=".5"/></svg>
+                <span class="sc-msg">Bot online 24/7</span>
+            </div>
+            <div class="space-card sc-gold" data-size="md">
+                <svg class="sc-icon" viewBox="0 0 32 32" fill="none"><path d="M16 4l3.5 8.5L28 14l-6.5 5.5L23 28l-7-4.5L9 28l1.5-8.5L4 14l8.5-1.5z" fill="url(#sg-g)"/></svg>
+                <span class="sc-msg">Saque R$ 3.200</span>
+            </div>
+            <div class="space-card sc-purple" data-size="sm">
+                <svg class="sc-icon" viewBox="0 0 32 32" fill="none"><path d="M20 5a11 11 0 100 22 8 8 0 010-22z" fill="url(#sg-p)"/></svg>
+                <span class="sc-msg">+18 membros hoje</span>
+            </div>
+            <div class="space-card sc-green" data-size="sm">
+                <svg class="sc-icon" viewBox="0 0 32 32" fill="none"><path d="M16 3L5 9v8c0 7 11 12 11 12s11-5 11-12V9z" fill="url(#sg-e)"/><path d="M13 16l2 2 4-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span class="sc-msg">Pagamento seguro</span>
+            </div>
+            <div class="space-card sc-gold" data-size="md">
+                <svg class="sc-icon" viewBox="0 0 32 32" fill="none"><circle cx="24" cy="10" r="5" fill="url(#sg-g)"/><path d="M20 13C15 17 8 22 3 28" stroke="url(#sg-g)" stroke-width="2" stroke-linecap="round" opacity=".45"/></svg>
+                <span class="sc-msg">1.430 ativos</span>
+            </div>
+            <div class="space-card sc-cyan" data-size="sm">
+                <svg class="sc-icon" viewBox="0 0 32 32" fill="none"><rect x="12" y="9" width="8" height="14" rx="2" fill="url(#sg-c)"/><rect x="4" y="13" width="7" height="3" rx="1" fill="url(#sg-c)" opacity=".6"/><rect x="21" y="13" width="7" height="3" rx="1" fill="url(#sg-c)" opacity=".6"/></svg>
+                <span class="sc-msg">Stripe conectado</span>
+            </div>
+            <div class="space-card sc-purple" data-size="md">
+                <svg class="sc-icon" viewBox="0 0 32 32" fill="none"><path d="M16 3L11 17h3v7l2 3 2-3v-7h3z" fill="url(#sg-p)"/><path d="M14 24l2 5 2-5" fill="#f093fb" opacity=".5"/></svg>
+                <span class="sc-msg">Grupo em orbita</span>
+            </div>
+            <div class="space-card sc-pink" data-size="md">
+                <svg class="sc-icon" viewBox="0 0 32 32" fill="none"><ellipse cx="16" cy="20" rx="13" ry="4.5" fill="url(#sg-k)" opacity=".6"/><path d="M10 20a6 8 0 0112 0z" fill="url(#sg-k)"/></svg>
+                <span class="sc-msg">+R$ 890 hoje</span>
+            </div>
+            <div class="space-card sc-gold" data-size="sm">
+                <svg class="sc-icon" viewBox="0 0 32 32" fill="none"><path d="M16 4l3.5 8.5L28 14l-6.5 5.5L23 28l-7-4.5L9 28l1.5-8.5L4 14l8.5-1.5z" fill="url(#sg-g)"/></svg>
+                <span class="sc-msg">98% satisfacao</span>
+            </div>
         </div>
     </section>
 
@@ -550,7 +592,7 @@
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
-    <script src="{{ url_for('static', filename='js/landing.js') }}?v=25"></script>
+    <script src="{{ url_for('static', filename='js/landing.js') }}?v=26"></script>
 
     <!-- Cookie Banner -->
     <div id="cookieBanner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:10000;

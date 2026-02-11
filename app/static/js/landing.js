@@ -272,9 +272,9 @@
 
   }
 
-  // ── 5b. SPACE OBJECTS — Floating emoji spawn system ───
-  // Emojis (rockets, UFOs, planets…) appear in waves from edges,
-  // float across the hero, fade out, recycle. Avoids center text.
+  // ── 5b. SPACE CARDS — SVG icon + message spawn system ─
+  // Glass cards with SVG space icons + messages appear in waves,
+  // float across the hero edges, fade out, recycle.
   function initOrbitCards() {
     if (!isLanding) return;
     var field = document.querySelector('.orbit-field');
@@ -282,7 +282,7 @@
     if (getComputedStyle(field).display === 'none') return;
 
     var allObjs = [];
-    field.querySelectorAll('.space-obj').forEach(function (o) {
+    field.querySelectorAll('.space-card').forEach(function (o) {
       if (getComputedStyle(o).display !== 'none') allObjs.push(o);
     });
     if (!allObjs.length) return;
@@ -317,9 +317,9 @@
     // Size-based opacity — lg brighter, sm more subtle
     function getOpacity(obj) {
       var sz = obj.dataset.size || 'md';
-      if (sz === 'lg') return reduced ? 0.7 : 0.85;
-      if (sz === 'sm') return reduced ? 0.3 : 0.45;
-      return reduced ? 0.5 : 0.65; // md
+      if (sz === 'lg') return reduced ? 0.75 : 0.92;
+      if (sz === 'sm') return reduced ? 0.45 : 0.6;
+      return reduced ? 0.6 : 0.78; // md
     }
 
     // Landing zones: LEFT (3-18%) or RIGHT (82-97%) — never center
