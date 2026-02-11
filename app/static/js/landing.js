@@ -215,7 +215,7 @@
 
   // ── 5. HERO ENTRANCE TIMELINE (landing.html only) ─────
   function initHeroEntrance() {
-    if (prefersReduced || !isLanding) return;
+    if (prefersReduced || !isLanding || isMobile) return;
     var heroContent = document.querySelector('.hero-content');
     if (!heroContent) return;
 
@@ -465,6 +465,9 @@
   // ── 6. SCROLL TRIGGER ANIMATIONS ──────────────────────
   function initScrollAnimations() {
     if (prefersReduced) return;
+    // Skip ALL scroll animations on mobile — removes ~25 ScrollTriggers.
+    // Content is visible by default; reveals are a desktop-only enhancement.
+    if (isMobile) return;
     // Default reveal for section headers
     gsap.utils.toArray('.text-center.mb-5, [data-aos="fade-up"]:not(.hero-content)').forEach(function (el) {
       // Skip if already handled

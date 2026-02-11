@@ -1686,9 +1686,15 @@ button:focus {
    Mobile Performance — reduce GPU-heavy effects
    ======================================== */
 @media (max-width: 767px) {
-    /* Kill fixed background — forces full-page repaint on every scroll frame on Android */
+    /* Replace 8-layer radial gradient with simple linear gradient.
+       Radial gradients + scroll paint across full page height (~5000px+).
+       Also kill page entrance animation — competes with LCP. */
     body {
+        background-image:
+            linear-gradient(180deg, #050816 0%, #0b0e1a 30%, #1a0a3e 50%, #0d1b2a 70%, #050816 100%);
         background-attachment: scroll;
+        background-size: auto;
+        animation: none;
     }
 
     /* Hide nebula glows entirely — 4 fixed layers with blur are too expensive */
@@ -1696,14 +1702,10 @@ button:focus {
         display: none;
     }
 
-    /* No will-change on mobile (saves memory) */
-    .starfield,
-    .shooting-star {
-        will-change: auto;
-    }
-
-    /* Kill star box-shadow — 40 blur layers cause repaints */
+    /* Static starfield on mobile — kill continuous CSS animations */
     .starfield .star {
+        animation: none;
+        opacity: 0.4;
         box-shadow: none;
     }
 
