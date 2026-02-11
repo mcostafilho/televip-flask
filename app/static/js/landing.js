@@ -626,7 +626,44 @@
     starfield.appendChild(frag);
   }
 
-  // ── 13. PAGE TRANSITIONS ──────────────────────────────
+  // ── 13. MOUSE REVEAL SPOTLIGHT (desktop only) ────────
+  function initMouseReveal() {
+    if (isMobile) return;
+
+    var overlay = document.createElement('div');
+    overlay.className = 'mouse-reveal-overlay';
+    overlay.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(overlay);
+
+    var mouseX = window.innerWidth / 2;
+    var mouseY = window.innerHeight / 2;
+    var currentX = mouseX;
+    var currentY = mouseY;
+
+    // Set initial position to center
+    overlay.style.setProperty('--mouse-x', currentX + 'px');
+    overlay.style.setProperty('--mouse-y', currentY + 'px');
+
+    document.addEventListener('mousemove', function (e) {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+
+    // Activate after hero entrance plays out
+    setTimeout(function () {
+      overlay.classList.add('active');
+    }, 2000);
+
+    // Smooth trailing via GSAP ticker
+    gsap.ticker.add(function () {
+      currentX += (mouseX - currentX) * 0.12;
+      currentY += (mouseY - currentY) * 0.12;
+      overlay.style.setProperty('--mouse-x', currentX + 'px');
+      overlay.style.setProperty('--mouse-y', currentY + 'px');
+    });
+  }
+
+  // ── 14. PAGE TRANSITIONS ──────────────────────────────
   function initPageTransitions() {
     // Intercept internal navigation links for smooth page exit
     document.addEventListener('click', function (e) {
@@ -644,7 +681,7 @@
     });
   }
 
-  // ── 14. INIT ORCHESTRATOR ──────────────────────────────
+  // ── 15. INIT ORCHESTRATOR ──────────────────────────────
   function init() {
     // Register GSAP plugin
     if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
@@ -656,6 +693,7 @@
     initLenis();
     initStarfield();
     initCosmicParticles();
+    initMouseReveal();
     initHeroEntrance();
     initScrollAnimations();
     initMagneticButtons();
