@@ -1686,9 +1686,8 @@ button:focus {
    Mobile Performance — reduce GPU-heavy effects
    ======================================== */
 @media (max-width: 767px) {
-    /* Replace 8-layer radial gradient with simple linear gradient.
-       Radial gradients + scroll paint across full page height (~5000px+).
-       Also kill page entrance animation — competes with LCP. */
+    /* ── BACKGROUND ── */
+    /* Simple linear gradient, no radial layers, no fixed attachment */
     body {
         background-image:
             linear-gradient(180deg, #050816 0%, #0b0e1a 30%, #1a0a3e 50%, #0d1b2a 70%, #050816 100%);
@@ -1697,17 +1696,67 @@ button:focus {
         animation: none;
     }
 
-    /* Hide nebula glows entirely — 4 fixed layers with blur are too expensive */
-    .nebula-glow {
+    /* ── OPAQUE SECTION BACKGROUNDS ── */
+    /* Eliminate ALL alpha blending — rgba() sections force compositing with body gradient */
+    .hero {
+        background: #050816;
+    }
+    .features {
+        background: #070a16;
+    }
+    .pricing {
+        background: #110830;
+    }
+    .testimonials {
+        background: #060a16;
+    }
+    .footer {
+        background: #050912;
+    }
+
+    /* ── KILL ALL PSEUDO-ELEMENT OVERLAYS ── */
+    /* Hero ::before = 3 radial gradients covering 100vh */
+    .hero::before {
+        display: none;
+    }
+    /* Hero ::after = glow ring */
+    .hero::after {
+        display: none;
+    }
+    /* Section dividers = gradient + box-shadow 30px + 60px blur */
+    .features::before,
+    .pricing::before,
+    .testimonials::before {
+        display: none;
+    }
+    /* CTA ::before = radial gradient overlay */
+    .cta::before {
+        display: none;
+    }
+    /* Button shimmer pseudo-elements */
+    .btn-hero-primary::before,
+    .btn-pricing::before,
+    .btn-cta::before {
         display: none;
     }
 
-    /* Hide starfield entirely — saves a fixed compositing layer + 18 DOM nodes */
-    .starfield {
+    /* ── KILL ANIMATIONS ── */
+    .btn-cta {
+        animation: none;
+    }
+    .hero h1 .text-gradient {
+        animation: none;
+    }
+
+    /* ── HIDE DECORATIVE LAYERS ── */
+    .nebula-glow,
+    .starfield,
+    .shooting-star {
         display: none;
     }
 
-    /* Remove backdrop-filter on mobile — saves compositing layers */
+    /* ── OPAQUE CARD BACKGROUNDS ── */
+    /* rgba() cards force blending — use solid equivalent */
     .stat-card,
     .feature-card,
     .testimonial-card,
@@ -1715,48 +1764,12 @@ button:focus {
     .comparison-card {
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
-        background: rgba(12, 15, 30, 0.85);
+        background: #0c0f1e;
     }
 
-    /* Kill shooting stars on mobile (3 extra animated elements) */
-    .shooting-star {
-        display: none;
-    }
-
-    /* Orbit cards hidden on mobile via .orbit-field display:none */
-
-    /* Kill non-composited animations on mobile (reflow/repaint) */
-    .features::before,
-    .pricing::before,
-    .testimonials::before {
-        animation: none;
-    }
-
-    .btn-hero-primary::before,
-    .btn-pricing::before,
-    .btn-cta::before {
-        animation: none;
-    }
-
-    .btn-cta {
-        animation: none;
-    }
-
-    .hero h1 .text-gradient {
-        animation: none;
-    }
-
-    .hero::after {
-        display: none;
-    }
-
-    .cta::before {
-        animation: none;
-    }
-
-    /* Smoother comparison cards transition */
     .comparison-card.featured {
         transform: none;
+        background: #130e30;
     }
 }
 
