@@ -293,35 +293,45 @@
       });
     });
 
-    // Feature cards — dramatic reveal with perspective flip
+    // Feature cards — dramatic on desktop, simpler on mobile
     gsap.utils.toArray('.feature-card, .feature-card-ext').forEach(function (card, i) {
       gsap.from(card, {
         scrollTrigger: { trigger: card, start: 'top 88%', once: true },
-        y: 80, opacity: 0, rotateX: 12, scale: 0.9, duration: 0.8,
-        delay: (i % 3) * 0.18,
-        ease: 'back.out(1.2)',
-        transformPerspective: 800
+        y: isMobile ? 25 : 80, opacity: 0,
+        rotateX: isMobile ? 0 : 12,
+        scale: isMobile ? 0.98 : 0.9,
+        duration: isMobile ? 0.4 : 0.8,
+        delay: isMobile ? 0 : (i % 3) * 0.18,
+        ease: isMobile ? 'power3.out' : 'back.out(1.2)',
+        transformPerspective: isMobile ? 0 : 800
       });
     });
 
     // Pricing card
     gsap.utils.toArray('.pricing-card, .main-pricing-card').forEach(function (card) {
       gsap.from(card, {
-        scrollTrigger: { trigger: card, start: 'top 85%', once: true },
-        scale: 0.8, opacity: 0, duration: 0.8, ease: 'back.out(1.4)'
+        scrollTrigger: { trigger: card, start: 'top 88%', once: true },
+        scale: isMobile ? 0.95 : 0.8, opacity: 0,
+        duration: isMobile ? 0.5 : 0.8, ease: 'back.out(1.4)'
       });
     });
 
-    // Testimonial cards — dramatic alternate slide-in with rotation
+    // Testimonial cards — dramatic on desktop, simple fade on mobile
     gsap.utils.toArray('.testimonial-card').forEach(function (card, i) {
-      var dir = i % 2 === 0 ? -80 : 80;
-      var rot = i % 2 === 0 ? -5 : 5;
-      gsap.from(card, {
-        scrollTrigger: { trigger: card, start: 'top 88%', once: true },
-        x: dir, opacity: 0, rotateY: rot, scale: 0.9, duration: 0.9,
-        ease: 'back.out(1.1)',
-        transformPerspective: 800
-      });
+      if (isMobile) {
+        gsap.from(card, {
+          scrollTrigger: { trigger: card, start: 'top 90%', once: true },
+          y: 20, opacity: 0, duration: 0.4, ease: 'power3.out'
+        });
+      } else {
+        var dir = i % 2 === 0 ? -80 : 80;
+        var rot = i % 2 === 0 ? -5 : 5;
+        gsap.from(card, {
+          scrollTrigger: { trigger: card, start: 'top 88%', once: true },
+          x: dir, opacity: 0, rotateY: rot, scale: 0.9, duration: 0.9,
+          ease: 'back.out(1.1)', transformPerspective: 800
+        });
+      }
     });
 
     // CTA section — dramatic clip-path reveal for h2
@@ -344,11 +354,13 @@
       });
     });
 
-    // Comparison cards
+    // Comparison cards — lighter on mobile to prevent overlap
     gsap.utils.toArray('.comparison-card').forEach(function (card, i) {
       gsap.from(card, {
-        scrollTrigger: { trigger: card, start: 'top 85%', once: true },
-        y: 40, opacity: 0, duration: 0.6, delay: i * 0.1,
+        scrollTrigger: { trigger: card, start: 'top 90%', once: true },
+        y: isMobile ? 15 : 40, opacity: 0,
+        duration: isMobile ? 0.35 : 0.6,
+        delay: isMobile ? 0 : i * 0.1,
         ease: 'power3.out'
       });
     });
@@ -657,7 +669,9 @@
       if (curSize < 2) return;
 
       reveal.style.opacity = '1';
-      reveal.style.clipPath = 'circle(' + Math.round(curSize) + 'px at ' + Math.round(curX) + 'px ' + Math.round(curY) + 'px)';
+      var cp = 'circle(' + Math.round(curSize) + 'px at ' + Math.round(curX) + 'px ' + Math.round(curY) + 'px)';
+      reveal.style.webkitClipPath = cp;
+      reveal.style.clipPath = cp;
     });
   }
 
@@ -680,6 +694,10 @@
   }
 
   // ── 15. INIT ORCHESTRATOR ──────────────────────────────
+  function safe(fn) {
+    try { fn(); } catch (e) { console.warn('TeleVIP anim error:', e.message); }
+  }
+
   function init() {
     // Register GSAP plugin
     if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
@@ -688,18 +706,18 @@
       return; // Can't proceed without GSAP
     }
 
-    initLenis();
-    initStarfield();
-    initCosmicParticles();
-    initMouseReveal();
-    initHeroEntrance();
-    initScrollAnimations();
-    initMagneticButtons();
-    initTiltCards();
-    initCursor();
-    initCounters();
-    initNavbar();
-    initPageTransitions();
+    safe(initLenis);
+    safe(initStarfield);
+    safe(initCosmicParticles);
+    safe(initMouseReveal);
+    safe(initHeroEntrance);
+    safe(initScrollAnimations);
+    safe(initMagneticButtons);
+    safe(initTiltCards);
+    safe(initCursor);
+    safe(initCounters);
+    safe(initNavbar);
+    safe(initPageTransitions);
   }
 
   // Run on DOMContentLoaded if not ready, else immediately
