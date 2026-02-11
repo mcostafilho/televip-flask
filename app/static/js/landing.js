@@ -626,30 +626,14 @@
     starfield.appendChild(frag);
   }
 
-  // ── 13. MOUSE REVEAL — Canvas Space Photo (desktop only) ──
+  // ── 13. MOUSE REVEAL — Space Photo Portal (desktop only) ──
   function initMouseReveal() {
     if (isMobile) return;
 
-    var canvas = document.createElement('canvas');
-    canvas.className = 'space-reveal-canvas';
-    canvas.setAttribute('aria-hidden', 'true');
-    document.body.appendChild(canvas);
-
-    var ctx = canvas.getContext('2d');
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var img = new Image();
-    var imgReady = false;
-
-    img.onload = function () { imgReady = true; };
-    img.src = '/static/img/space-bg.jpg';
-
-    function resize() {
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-    resize();
-    window.addEventListener('resize', resize);
+    var reveal = document.createElement('div');
+    reveal.className = 'space-reveal';
+    reveal.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(reveal);
 
     var mouseX = window.innerWidth / 2;
     var mouseY = window.innerHeight / 2;
@@ -662,38 +646,21 @@
     });
 
     // Grow reveal after hero entrance
-    setTimeout(function () { targetSize = 380; }, 2000);
+    setTimeout(function () { targetSize = 300; }, 2000);
 
     gsap.ticker.add(function () {
-      if (!imgReady) return;
-
       curX += (mouseX - curX) * 0.1;
       curY += (mouseY - curY) * 0.1;
-      curSize += (targetSize - curSize) * 0.04;
+      curSize += (targetSize - curSize) * 0.05;
 
-      var w = window.innerWidth;
-      var h = window.innerHeight;
+      if (curSize < 1) return;
 
-      ctx.clearRect(0, 0, w, h);
-      if (curSize < 2) return;
+      reveal.style.opacity = '1';
 
-      // 1. Draw space image (cover fit)
-      var ir = img.width / img.height;
-      var cr = w / h;
-      var dw, dh, dx, dy;
-      if (cr > ir) { dw = w; dh = w / ir; dx = 0; dy = (h - dh) / 2; }
-      else { dh = h; dw = h * ir; dx = (w - dw) / 2; dy = 0; }
-      ctx.drawImage(img, dx, dy, dw, dh);
-
-      // 2. Mask with radial gradient (destination-in = keep image only inside circle)
-      ctx.globalCompositeOperation = 'destination-in';
-      var grad = ctx.createRadialGradient(curX, curY, 0, curX, curY, curSize);
-      grad.addColorStop(0, 'rgba(0,0,0,1)');
-      grad.addColorStop(0.65, 'rgba(0,0,0,0.85)');
-      grad.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, w, h);
-      ctx.globalCompositeOperation = 'source-over';
+      // Set full mask string inline — avoids CSS variable issues
+      var mask = 'radial-gradient(circle ' + Math.round(curSize) + 'px at ' + Math.round(curX) + 'px ' + Math.round(curY) + 'px, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 65%, rgba(0,0,0,0) 100%)';
+      reveal.style.webkitMaskImage = mask;
+      reveal.style.maskImage = mask;
     });
   }
 
