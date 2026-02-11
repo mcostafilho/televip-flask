@@ -37,6 +37,7 @@ html, body {
    ======================================== */
 .auth-container {
     min-height: 100vh;
+    min-height: 100dvh;
     min-height: -webkit-fill-available;
     width: 100%;
     display: flex;
@@ -48,6 +49,7 @@ html, body {
     padding-bottom: calc(16px + var(--safe-area-inset-bottom));
     position: relative;
     overflow: hidden;
+    overscroll-behavior: none;
 }
 
 /* Vibrant multi-layer nebula */
@@ -923,6 +925,29 @@ html, body {
 .align-items-center { align-items: center; }
 .align-items-start { align-items: flex-start; }
 .gap-8 { gap: 8px; }
+
+/* ========================================
+   Mobile Performance (max 768px)
+   ======================================== */
+@media (max-width: 768px) {
+    .auth-container::before {
+        animation: none;
+        opacity: 0.6;
+    }
+    .auth-container::after {
+        display: none;
+    }
+    .nebula-orb {
+        will-change: auto;
+        filter: blur(25px);
+    }
+    #starCanvas {
+        opacity: 0.5;
+    }
+    .shooting-star {
+        display: none;
+    }
+}
 
 /* ========================================
    Tablet (768px+)

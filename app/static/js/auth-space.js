@@ -8,6 +8,9 @@
     var container = document.querySelector('.auth-container');
     if (!container || typeof gsap === 'undefined') return;
 
+    var isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth < 768;
+    var frameCount = 0;
+
     /* ================================================================
        WARP-SPEED CANVAS STARFIELD
        Stars fly outward from center, mouse controls vanishing point
@@ -17,7 +20,7 @@
     var ctx = canvas.getContext('2d');
     var W, H, cx, cy;
     var mouseX = 0.5, mouseY = 0.5; // normalized 0-1
-    var STAR_COUNT = 300;
+    var STAR_COUNT = isMobile ? 80 : 300;
     var stars = [];
     var speed = 0.5; // base warp speed
 
@@ -58,8 +61,15 @@
     }
 
     function drawFrame() {
+        // Mobile: skip every other frame for performance
+        frameCount++;
+        if (isMobile && frameCount % 2 !== 0) {
+            requestAnimationFrame(drawFrame);
+            return;
+        }
+
         // Semi-transparent clear for trails
-        ctx.fillStyle = 'rgba(5, 7, 20, 0.25)';
+        ctx.fillStyle = isMobile ? 'rgba(5, 7, 20, 0.45)' : 'rgba(5, 7, 20, 0.25)';
         ctx.fillRect(0, 0, W, H);
 
         // Vanishing point follows mouse
@@ -82,29 +92,29 @@
             var sx = vpx + s.x * scale * W * 0.5;
             var sy = vpy + s.y * scale * H * 0.5;
 
-            // Previous position for trail
-            var pz = s.z + speed * 0.008;
-            var pscale = 1 / pz;
-            var px = vpx + s.x * pscale * W * 0.5;
-            var py = vpy + s.y * pscale * H * 0.5;
-
             // Skip if off screen
             if (sx < -50 || sx > W + 50 || sy < -50 || sy > H + 50) continue;
 
             var brightness = Math.min(1, (1.5 - s.z) / 1.2);
             var size = Math.max(0.5, (1.5 - s.z) * 1.8);
 
-            // Trail line
-            ctx.beginPath();
-            ctx.moveTo(px, py);
-            ctx.lineTo(sx, sy);
-            ctx.lineWidth = size * 0.7;
-            if (s.hue > 0) {
-                ctx.strokeStyle = 'hsla(' + s.hue + ', 80%, 75%, ' + (brightness * 0.4) + ')';
-            } else {
-                ctx.strokeStyle = 'rgba(200, 210, 255, ' + (brightness * 0.4) + ')';
+            // Trail line (skip on mobile)
+            if (!isMobile) {
+                var pz = s.z + speed * 0.008;
+                var pscale = 1 / pz;
+                var px = vpx + s.x * pscale * W * 0.5;
+                var py = vpy + s.y * pscale * H * 0.5;
+                ctx.beginPath();
+                ctx.moveTo(px, py);
+                ctx.lineTo(sx, sy);
+                ctx.lineWidth = size * 0.7;
+                if (s.hue > 0) {
+                    ctx.strokeStyle = 'hsla(' + s.hue + ', 80%, 75%, ' + (brightness * 0.4) + ')';
+                } else {
+                    ctx.strokeStyle = 'rgba(200, 210, 255, ' + (brightness * 0.4) + ')';
+                }
+                ctx.stroke();
             }
-            ctx.stroke();
 
             // Star dot
             ctx.beginPath();
@@ -116,8 +126,8 @@
             }
             ctx.fill();
 
-            // Glow for close/bright stars
-            if (size > 2) {
+            // Glow for close/bright stars (skip on mobile)
+            if (!isMobile && size > 2) {
                 ctx.beginPath();
                 ctx.arc(sx, sy, size * 3, 0, Math.PI * 2);
                 if (s.hue > 0) {
@@ -137,6 +147,11 @@
        NEBULA ORBS - Breathing + drifting
        ================================================================ */
     document.querySelectorAll('.nebula-orb').forEach(function(orb, idx) {
+        if (isMobile) {
+            // Static orbs on mobile — no animation, save GPU
+            gsap.set(orb, { opacity: 0.3 });
+            return;
+        }
         gsap.to(orb, { opacity: 0.8, duration: 2.5, delay: 0.4 * idx, ease: 'power2.out' });
         gsap.to(orb, {
             x: function() { return (Math.random() - 0.5) * 80; },
@@ -171,9 +186,11 @@
             }
         });
     }
-    setTimeout(function() { shootStar(document.getElementById('ss1')); }, 1500);
-    setTimeout(function() { shootStar(document.getElementById('ss2')); }, 4500);
-    setTimeout(function() { shootStar(document.getElementById('ss3')); }, 7500);
+    if (!isMobile) {
+        setTimeout(function() { shootStar(document.getElementById('ss1')); }, 1500);
+        setTimeout(function() { shootStar(document.getElementById('ss2')); }, 4500);
+        setTimeout(function() { shootStar(document.getElementById('ss3')); }, 7500);
+    }
 
     /* ================================================================
        FLOATING PARTICLES
@@ -182,7 +199,8 @@
         'rgba(124,92,252,0.6)','rgba(0,240,255,0.5)',
         'rgba(240,147,251,0.5)','rgba(56,189,248,0.4)','rgba(255,255,255,0.3)'
     ];
-    for (var p = 0; p < 15; p++) {
+    var particleCount = isMobile ? 4 : 15;
+    for (var p = 0; p < particleCount; p++) {
         var dot = document.createElement('div');
         dot.className = 'particle';
         var sz = 2 + Math.random() * 3;

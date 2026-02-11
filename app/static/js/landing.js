@@ -783,7 +783,7 @@
   function initStarfield() {
     var starfield = document.getElementById('starfield');
     if (!starfield) return;
-    var count = isMobile ? 100 : 350;
+    var count = isMobile ? 40 : 350;
     var frag = document.createDocumentFragment();
     for (var i = 0; i < count; i++) {
       var star = document.createElement('div');
@@ -827,6 +827,7 @@
   // Space image revealed in irregular bursts across the viewport.
   // SVG feTurbulence warps edges into organic blob shapes.
   function initMouseReveal() {
+    if (isMobile) return;
     // Inject SVG filter for organic edge distortion
     var svgNS = 'http://www.w3.org/2000/svg';
     var svg = document.createElementNS(svgNS, 'svg');

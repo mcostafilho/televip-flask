@@ -51,8 +51,8 @@
     <div class="nebula-glow deep"></div>
 
     <!-- Cursor Animation (Desktop Only) -->
-    <div class="cursor"></div>
-    <div class="cursor2"></div>
+    <div class="cursor" aria-hidden="true"></div>
+    <div class="cursor2" aria-hidden="true"></div>
 
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-custom">
@@ -500,11 +500,11 @@
                         <i class="bi bi-tag-fill"></i> Taxa: R$ 0,99 + 9,99% por transação
                     </div>
                     <div class="social-links mt-3">
-                        <a href="#"><i class="bi bi-facebook"></i></a>
-                        <a href="#"><i class="bi bi-instagram"></i></a>
-                        <a href="#"><i class="bi bi-twitter"></i></a>
-                        <a href="#"><i class="bi bi-linkedin"></i></a>
-                        <a href="#"><i class="bi bi-youtube"></i></a>
+                        <a href="#" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+                        <a href="#" aria-label="Twitter"><i class="bi bi-twitter"></i></a>
+                        <a href="#" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+                        <a href="#" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
                     </div>
                 </div>
 
@@ -577,6 +577,7 @@
             Fale com nosso suporte
         </div>
         <a href="https://wa.me/551721223445" target="_blank" rel="noopener noreferrer"
+           aria-label="Fale com o Suporte via WhatsApp"
            style="background-color: #25D366; color: white; width: 60px; height: 60px; border-radius: 50%;
                   display: flex; align-items: center; justify-content: center;
                   box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4); text-decoration: none; font-size: 30px;
@@ -596,7 +597,7 @@
     <script src="{{ url_for('static', filename='js/landing.js') }}?v=29"></script>
 
     <!-- Cookie Banner -->
-    <div id="cookieBanner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:10000;
+    <div id="cookieBanner" role="dialog" aria-label="Cookie consent" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:10000;
         background:rgba(33,37,41,.95); backdrop-filter:blur(6px); padding:14px 20px;
         font-size:14px; color:#ccc; text-align:center; font-family:'Poppins',sans-serif;">
         Usamos cookies essenciais para o funcionamento do site.

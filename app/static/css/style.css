@@ -19,6 +19,7 @@ body {
     flex-direction: column;
     color: #e2e8f0;
     animation: pageEntrance 0.4s ease-out both;
+    overscroll-behavior-y: none;
 
     /* Same galaxy background as landing.css — loaded here so ALL pages
        (including base.html pages) render the nebula from the first CSS file */
@@ -105,6 +106,125 @@ main {
 
 .navbar .dropdown-divider {
     border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ========================================
+   Navbar Custom (public pages via base.html)
+   Mirrors landing.css .navbar-custom so pages
+   like privacy, terms, report get consistent nav
+   ======================================== */
+.navbar-custom {
+    background: #0b0e1a;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.6), 0 0 40px rgba(124, 92, 252, 0.08);
+    border-bottom: 1px solid rgba(124, 92, 252, 0.15);
+    padding: 12px 0;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 9990;
+    transition: all 0.3s ease;
+}
+
+.navbar-custom .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.navbar-custom .navbar-collapse {
+    justify-content: flex-end;
+}
+
+.navbar-custom .navbar-brand {
+    font-size: 24px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #7c5cfc 0%, #38bdf8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.navbar-custom .navbar-toggler {
+    border: 1px solid rgba(124, 92, 252, 0.3);
+    padding: 4px 8px;
+}
+
+.navbar-custom .navbar-toggler:focus {
+    box-shadow: none;
+}
+
+.navbar-custom .navbar-toggler-icon {
+    filter: invert(1);
+}
+
+@media (max-width: 991px) {
+    .navbar-custom .navbar-collapse {
+        background: #0f1220;
+        margin-top: 12px;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid rgba(124, 92, 252, 0.25);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+    }
+}
+
+.navbar-custom .nav-link,
+.navbar-custom .nav-link:visited,
+.navbar-custom .nav-link:link {
+    color: #c8cce0 !important;
+    font-weight: 500;
+    padding: 10px 16px;
+    transition: all 0.3s ease;
+    background: transparent;
+}
+
+.navbar-custom .nav-link:hover {
+    color: #ffffff !important;
+}
+
+.navbar-custom .nav-link:active,
+.navbar-custom .nav-link:focus,
+.navbar-custom .nav-link:focus-visible {
+    color: #ffffff !important;
+    background: rgba(124, 92, 252, 0.25) !important;
+    border-radius: 8px;
+}
+
+.navbar-custom .btn-nav-cta,
+.navbar-custom .btn-nav-cta:visited,
+.navbar-custom .btn-nav-cta:link {
+    background: linear-gradient(135deg, #7c5cfc 0%, #38bdf8 100%);
+    color: #ffffff !important;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 25px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 10px;
+    box-shadow: 0 2px 12px rgba(124, 92, 252, 0.4);
+}
+
+.navbar-custom .btn-nav-cta:hover {
+    box-shadow: 0 4px 24px rgba(124, 92, 252, 0.6);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+@media (min-width: 992px) {
+    .navbar-custom .navbar-nav {
+        align-items: center;
+    }
+
+    .navbar-custom .nav-item:last-child {
+        margin-left: 20px;
+    }
+
+    .navbar-custom .btn-nav-cta {
+        margin-top: 0;
+        margin-left: 20px;
+    }
 }
 
 /* Card Animations */
