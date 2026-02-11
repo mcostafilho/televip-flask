@@ -2,189 +2,218 @@
 
 {% block title %}Painel Admin - TeleVIP{% endblock %}
 
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-<!-- Header Admin -->
-<div class="bg-danger text-white py-4 mb-4">
-    <div class="container">
-        <h1 class="h3 mb-0">🔒 Painel Administrativo</h1>
-    </div>
-</div>
+<div class="dashboard-wrapper">
+    <div class="dashboard-container">
+        <!-- Admin Header -->
+        <div class="dashboard-header welcome-header">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="welcome-avatar">
+                        <i class="bi bi-shield-lock" style="font-size: 1.3rem;"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 mb-1">Painel Administrativo</h1>
+                        <p class="text-muted mb-0">Gerenciamento da plataforma TeleVIP</p>
+                    </div>
+                </div>
+                <div class="welcome-status d-none d-md-flex">
+                    <div class="status-pill online">
+                        <span class="status-dot"></span> Sistema online
+                    </div>
+                </div>
+            </div>
+        </div>
 
-<div class="container">
-    <!-- Estatísticas -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h5>Criadores</h5>
-                    <h2>{{ stats.total_creators }}</h2>
+        <!-- Stat Cards -->
+        <div class="stats-grid">
+            <div class="stat-card stat-primary">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon primary"><i class="bi bi-people"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Criadores</p>
+                        <h3 class="mb-0">{{ stats.total_creators }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card stat-info">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon info"><i class="bi bi-collection"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Grupos</p>
+                        <h3 class="mb-0">{{ stats.total_groups }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card stat-success">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon success"><i class="bi bi-check-circle"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Assinaturas Ativas</p>
+                        <h3 class="mb-0">{{ stats.total_subscriptions }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card stat-warning">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon warning"><i class="bi bi-cash-stack"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Saques Pendentes</p>
+                        <h3 class="mb-0">{{ stats.pending_withdrawals }}</h3>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h5>Grupos</h5>
-                    <h2>{{ stats.total_groups }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h5>Assinaturas Ativas</h5>
-                    <h2>{{ stats.total_subscriptions }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-warning">
-                <div class="card-body text-center">
-                    <h5>Saques Pendentes</h5>
-                    <h2>{{ stats.pending_withdrawals }}</h2>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Saques Pendentes -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="mb-0">💰 Saques Pendentes - Total: R$ {{ "%.2f"|format(total_to_pay) }}</h5>
-        </div>
-        <div class="card-body">
+        <!-- Pending Withdrawals -->
+        <div class="content-card mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">
+                    <i class="bi bi-cash-stack"></i> Saques Pendentes
+                </h5>
+                <span class="badge bg-warning">Total: R$ {{ "%.2f"|format(total_to_pay) }}</span>
+            </div>
+
             {% if pending_withdrawals %}
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Criador</th>
-                                <th>Valor</th>
-                                <th>PIX</th>
-                                <th>Solicitado em</th>
-                                <th>Ação</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for withdrawal in pending_withdrawals %}
-                            <tr>
-                                <td>
-                                    <a href="{{ url_for('admin.view_creator_dashboard', creator_id=withdrawal.creator.id) }}" 
-                                       class="text-decoration-none">
-                                        {{ withdrawal.creator.name }}
-                                        <i class="bi bi-box-arrow-up-right small"></i>
-                                    </a>
-                                </td>
-                                <td><strong>R$ {{ "%.2f"|format(withdrawal.amount) }}</strong></td>
-                                <td><code>{{ withdrawal.pix_key }}</code></td>
-                                <td>{{ withdrawal.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                                <td>
-                                    <form method="POST" action="{{ url_for('admin.process_withdrawal', id=withdrawal.id) }}" style="display: inline;">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                        <button type="submit" class="btn btn-success btn-sm"
-                                                onclick="return confirm('Confirma que o PIX foi realizado?')">
-                                            ✅ Marcar como Pago
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+            <div class="row-list">
+                {% for withdrawal in pending_withdrawals %}
+                <div class="row-item">
+                    <div class="row-item-left">
+                        <div class="row-icon pending">
+                            <i class="bi bi-clock"></i>
+                        </div>
+                        <div class="row-info">
+                            <div class="row-title">
+                                <a href="{{ url_for('admin.view_creator_dashboard', creator_id=withdrawal.creator.id) }}"
+                                   class="text-decoration-none" style="color: var(--galactic-text-bright);">
+                                    {{ withdrawal.creator.name }}
+                                    <i class="bi bi-box-arrow-up-right" style="font-size: 0.65rem; opacity: 0.6;"></i>
+                                </a>
+                            </div>
+                            <div class="row-sub">
+                                <code style="background: rgba(124, 92, 252, 0.15); color: var(--galactic-accent-2); padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.72rem;">{{ withdrawal.pix_key }}</code>
+                                &middot; {{ withdrawal.created_at.strftime('%d/%m/%Y %H:%M') }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row-item-right">
+                        <div class="tx-amount yellow">R$ {{ "%.2f"|format(withdrawal.amount) }}</div>
+                        <form method="POST" action="{{ url_for('admin.process_withdrawal', id=withdrawal.id) }}" style="display: inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="btn btn-sm btn-success"
+                                    onclick="return confirm('Confirma que o PIX foi realizado?')">
+                                <i class="bi bi-check-circle"></i> Pago
+                            </button>
+                        </form>
+                    </div>
                 </div>
+                {% endfor %}
+            </div>
             {% else %}
-                <p class="text-center text-muted py-3">Nenhum saque pendente</p>
+            <div class="empty-state-v2">
+                <div class="empty-icon"><i class="bi bi-check-circle"></i></div>
+                <p class="text-muted mb-0">Nenhum saque pendente</p>
+            </div>
             {% endif %}
         </div>
-    </div>
 
-    <!-- Lista de Criadores -->
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">👥 Criadores de Conteúdo</h5>
-            <div>
-                <button class="btn btn-sm btn-outline-primary" onclick="filterCreators('all')">Todos</button>
-                <button class="btn btn-sm btn-outline-success" onclick="filterCreators('active')">Ativos</button>
-                <button class="btn btn-sm btn-outline-warning" onclick="filterCreators('pending')">Com Saque Pendente</button>
-                <button class="btn btn-sm btn-outline-danger" onclick="filterCreators('blocked')">Bloqueados</button>
+        <!-- Creators List -->
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <h5 class="mb-0">
+                    <i class="bi bi-people"></i> Criadores de Conteudo
+                </h5>
+                <div class="d-flex gap-1 flex-wrap">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="filterCreators('all')" style="border-radius: 20px;">Todos</button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="filterCreators('active')" style="border-radius: 20px;">Ativos</button>
+                    <button class="btn btn-sm btn-outline-warning" onclick="filterCreators('pending')" style="border-radius: 20px;">Saque Pendente</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="filterCreators('blocked')" style="border-radius: 20px;">Bloqueados</button>
+                </div>
             </div>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover" id="creatorsTable">
-                    <thead>
-                        <tr>
-                            <th>Nome</th>
-                            <th>Email</th>
-                            <th>Username</th>
-                            <th>Grupos</th>
-                            <th>Assinantes</th>
-                            <th>Saldo</th>
-                            <th>Total Ganho</th>
-                            <th>Cadastro</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for creator in creators %}
-                        <tr data-status="{{ 'blocked' if creator.is_blocked else ('pending' if creator.pending_withdrawal else 'active') }}">
-                            <td>
-                                <strong>{{ creator.name }}</strong>
+
+            <div class="row-list" id="creatorsTable">
+                {% for creator in creators %}
+                <div class="row-item" data-status="{{ 'blocked' if creator.is_blocked else ('pending' if creator.pending_withdrawal else 'active') }}">
+                    <div class="row-item-left">
+                        <div class="row-icon {% if creator.is_blocked %}failed{% elif creator.pending_withdrawal %}pending{% else %}active{% endif %}">
+                            {% if creator.is_blocked %}
+                                <i class="bi bi-lock"></i>
+                            {% elif creator.pending_withdrawal %}
+                                <i class="bi bi-clock"></i>
+                            {% else %}
+                                <i class="bi bi-person"></i>
+                            {% endif %}
+                        </div>
+                        <div class="row-info">
+                            <div class="row-title">
+                                {{ creator.name }}
                                 {% if creator.is_blocked %}
-                                    <span class="badge bg-danger ms-1">Bloqueado</span>
+                                    <span class="badge bg-danger" style="font-size: 0.65rem;">Bloqueado</span>
                                 {% endif %}
                                 {% if creator.pending_withdrawal %}
-                                    <span class="badge bg-warning ms-1">Saque Pendente</span>
+                                    <span class="badge bg-warning" style="font-size: 0.65rem;">Saque</span>
                                 {% endif %}
-                            </td>
-                            <td>{{ creator.email }}</td>
-                            <td>@{{ creator.username }}</td>
-                            <td>{{ creator.groups.count() }}</td>
-                            <td>{{ creator.total_subscribers }}</td>
-                            <td class="fw-bold">R$ {{ "%.2f"|format(creator.display_balance) }}</td>
-                            <td>R$ {{ "%.2f"|format(creator.display_total_earned or 0) }}</td>
-                            <td>{{ creator.created_at.strftime('%d/%m/%Y') }}</td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <a href="{{ url_for('admin.view_creator_dashboard', creator_id=creator.id) }}" 
-                                       class="btn btn-primary" title="Ver Dashboard">
-                                        <i class="bi bi-speedometer2"></i>
-                                    </a>
-                                    <a href="{{ url_for('admin.creator_details', creator_id=creator.id) }}" 
-                                       class="btn btn-info" title="Detalhes">
-                                        <i class="bi bi-info-circle"></i>
-                                    </a>
-                                    <button class="btn btn-warning" onclick="sendMessage({{ creator.id }})"
-                                            title="Enviar Mensagem">
-                                        <i class="bi bi-envelope"></i>
-                                    </button>
-                                    <button class="btn btn-dark" onclick="openInvestigate({{ creator.id }}, '{{ creator.name }}')"
-                                            title="Investigar">
-                                        <i class="bi bi-search"></i>
-                                    </button>
-                                </div>
-                                {% if creator.is_blocked %}
-                                    <form method="POST" action="{{ url_for('admin.unblock_creator', creator_id=creator.id) }}" class="d-inline ms-1">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                        <button type="submit" class="btn btn-sm btn-success" title="Desbloquear"
-                                                onclick="return confirm('Desbloquear {{ creator.name }}?')">
-                                            <i class="bi bi-unlock"></i> Desbloquear
-                                        </button>
-                                    </form>
-                                {% else %}
-                                    <form method="POST" action="{{ url_for('admin.block_creator', creator_id=creator.id) }}" class="d-inline ms-1">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Bloquear"
-                                                onclick="return confirm('Bloquear {{ creator.name }}? O criador não poderá acessar o dashboard.')">
-                                            <i class="bi bi-lock"></i>
-                                        </button>
-                                    </form>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                            </div>
+                            <div class="row-sub">
+                                {{ creator.email }} &middot; @{{ creator.username }} &middot; {{ creator.created_at.strftime('%d/%m/%Y') }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row-item-right">
+                        <div class="row-metrics">
+                            <div class="row-metric">
+                                <span class="row-metric-value cyan">{{ creator.groups.count() }}</span>
+                                <span class="row-metric-label">grupos</span>
+                            </div>
+                            <div class="row-metric">
+                                <span class="row-metric-value green">{{ creator.total_subscribers }}</span>
+                                <span class="row-metric-label">assinantes</span>
+                            </div>
+                            <div class="row-metric">
+                                <span class="row-metric-value yellow">R$ {{ "%.2f"|format(creator.display_balance) }}</span>
+                                <span class="row-metric-label">saldo</span>
+                            </div>
+                        </div>
+                        <div class="row-actions">
+                            <a href="{{ url_for('admin.view_creator_dashboard', creator_id=creator.id) }}"
+                               class="row-action-btn" title="Ver Dashboard">
+                                <i class="bi bi-speedometer2"></i>
+                            </a>
+                            <a href="{{ url_for('admin.creator_details', creator_id=creator.id) }}"
+                               class="row-action-btn" title="Detalhes">
+                                <i class="bi bi-info-circle"></i>
+                            </a>
+                            <button class="row-action-btn" onclick="sendMessage({{ creator.id }})" title="Mensagem">
+                                <i class="bi bi-envelope"></i>
+                            </button>
+                            <button class="row-action-btn" onclick="openInvestigate({{ creator.id }}, '{{ creator.name }}')" title="Investigar">
+                                <i class="bi bi-search"></i>
+                            </button>
+                            {% if creator.is_blocked %}
+                            <form method="POST" action="{{ url_for('admin.unblock_creator', creator_id=creator.id) }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="row-action-btn" style="color: var(--galactic-success);" title="Desbloquear"
+                                        onclick="return confirm('Desbloquear {{ creator.name }}?')">
+                                    <i class="bi bi-unlock"></i>
+                                </button>
+                            </form>
+                            {% else %}
+                            <form method="POST" action="{{ url_for('admin.block_creator', creator_id=creator.id) }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="row-action-btn" style="color: var(--galactic-danger);" title="Bloquear"
+                                        onclick="return confirm('Bloquear {{ creator.name }}? O criador nao podera acessar o dashboard.')">
+                                    <i class="bi bi-lock"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
@@ -195,7 +224,9 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Enviar Mensagem</h5>
+                <h5 class="modal-title">
+                    <i class="bi bi-envelope"></i> Enviar Mensagem
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="messageForm" method="POST">
@@ -212,19 +243,24 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Enviar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send"></i> Enviar
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
 <!-- Modal Investigar -->
 <div class="modal fade" id="investigateModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title"><i class="bi bi-search"></i> Investigar: <span id="investigateCreatorName"></span></h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-search"></i> Investigar: <span id="investigateCreatorName"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <!-- Phase 1: Input -->
@@ -233,16 +269,16 @@
                         <label class="form-label fw-bold">Telegram User ID do Investigador</label>
                         <input type="text" id="investigatorUserId" class="form-control"
                                placeholder="Ex: 123456789" inputmode="numeric" pattern="[0-9]*">
-                        <div class="form-text">ID numérico do Telegram do investigador que entrará nos grupos.</div>
+                        <div class="form-text">ID numerico do Telegram do investigador que entrara nos grupos.</div>
                     </div>
-                    <button class="btn btn-dark w-100" onclick="submitInvestigate()">
+                    <button class="btn btn-primary w-100" onclick="submitInvestigate()">
                         <i class="bi bi-search"></i> Gerar Links de Convite
                     </button>
                 </div>
 
                 <!-- Phase 2: Loading -->
                 <div id="investigateLoading" class="text-center py-4" style="display:none;">
-                    <div class="spinner-border text-dark mb-3" role="status"></div>
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
                     <p class="text-muted">Gerando links de convite para cada grupo...</p>
                 </div>
 
@@ -250,19 +286,8 @@
                 <div id="investigateResults" style="display:none;">
                     <div id="investigateError" class="alert alert-danger" style="display:none;"></div>
                     <div id="investigateSuccess">
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Grupo</th>
-                                        <th>Status</th>
-                                        <th>Link</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="investigateResultsBody"></tbody>
-                            </table>
-                        </div>
-                        <button class="btn btn-outline-dark w-100 mt-2" onclick="copyAllLinks()">
+                        <div class="row-list" id="investigateResultsBody"></div>
+                        <button class="btn btn-outline-primary w-100 mt-3" onclick="copyAllLinks()">
                             <i class="bi bi-clipboard"></i> Copiar Todos os Links
                         </button>
                     </div>
@@ -276,8 +301,7 @@
 {% block extra_js %}
 <script>
 function filterCreators(status) {
-    const rows = document.querySelectorAll('#creatorsTable tbody tr');
-
+    const rows = document.querySelectorAll('#creatorsTable .row-item');
     rows.forEach(row => {
         if (status === 'all') {
             row.style.display = '';
@@ -315,7 +339,7 @@ function openInvestigate(creatorId, creatorName) {
 function submitInvestigate() {
     const userId = document.getElementById('investigatorUserId').value.trim();
     if (!userId || !/^\d+$/.test(userId)) {
-        alert('Informe um Telegram User ID numérico válido.');
+        alert('Informe um Telegram User ID numerico valido.');
         return;
     }
 
@@ -346,26 +370,51 @@ function submitInvestigate() {
         document.getElementById('investigateSuccess').style.display = '';
         collectedLinks = [];
 
-        const tbody = document.getElementById('investigateResultsBody');
-        tbody.innerHTML = '';
+        const container = document.getElementById('investigateResultsBody');
+        container.innerHTML = '';
 
         data.results.forEach(r => {
-            const tr = document.createElement('tr');
+            const item = document.createElement('div');
+            item.className = 'row-item';
             if (r.status === 'success') {
                 collectedLinks.push(r.invite_link);
-                tr.innerHTML = `<td>${r.group_name}</td>
-                    <td><span class="badge bg-success">OK</span></td>
-                    <td><a href="${r.invite_link}" target="_blank" class="text-break small">${r.invite_link}</a></td>`;
+                item.innerHTML = `
+                    <div class="row-item-left">
+                        <div class="row-icon completed"><i class="bi bi-check-lg"></i></div>
+                        <div class="row-info">
+                            <div class="row-title">${r.group_name}</div>
+                            <div class="row-sub"><a href="${r.invite_link}" target="_blank" class="text-break">${r.invite_link}</a></div>
+                        </div>
+                    </div>
+                    <div class="row-item-right">
+                        <span class="badge bg-success">OK</span>
+                    </div>`;
             } else if (r.status === 'skipped') {
-                tr.innerHTML = `<td>${r.group_name}</td>
-                    <td><span class="badge bg-secondary">Ignorado</span></td>
-                    <td class="text-muted small">${r.message}</td>`;
+                item.innerHTML = `
+                    <div class="row-item-left">
+                        <div class="row-icon inactive"><i class="bi bi-dash"></i></div>
+                        <div class="row-info">
+                            <div class="row-title">${r.group_name}</div>
+                            <div class="row-sub">${r.message}</div>
+                        </div>
+                    </div>
+                    <div class="row-item-right">
+                        <span class="badge bg-secondary">Ignorado</span>
+                    </div>`;
             } else {
-                tr.innerHTML = `<td>${r.group_name}</td>
-                    <td><span class="badge bg-danger">Erro</span></td>
-                    <td class="text-danger small">${r.message}</td>`;
+                item.innerHTML = `
+                    <div class="row-item-left">
+                        <div class="row-icon failed"><i class="bi bi-x-lg"></i></div>
+                        <div class="row-info">
+                            <div class="row-title">${r.group_name}</div>
+                            <div class="row-sub" style="color: var(--galactic-danger);">${r.message}</div>
+                        </div>
+                    </div>
+                    <div class="row-item-right">
+                        <span class="badge bg-danger">Erro</span>
+                    </div>`;
             }
-            tbody.appendChild(tr);
+            container.appendChild(item);
         });
     })
     .catch(err => {
@@ -386,10 +435,10 @@ function copyAllLinks() {
         const btn = event.target.closest('button');
         const original = btn.innerHTML;
         btn.innerHTML = '<i class="bi bi-check"></i> Copiado!';
-        btn.classList.replace('btn-outline-dark', 'btn-success');
+        btn.classList.replace('btn-outline-primary', 'btn-success');
         setTimeout(() => {
             btn.innerHTML = original;
-            btn.classList.replace('btn-success', 'btn-outline-dark');
+            btn.classList.replace('btn-success', 'btn-outline-primary');
         }, 2000);
     });
 }
