@@ -141,7 +141,7 @@
                         <i class="bi bi-rocket-takeoff"></i>
                         Criar Conta Grátis
                     </a>
-                    <a href="#demo" class="btn-hero-secondary">
+                    <a href="#" class="btn-hero-secondary" onclick="openDemoModal(event)">
                         <i class="bi bi-play-circle"></i>
                         Ver Demonstração
                     </a>
@@ -501,11 +501,11 @@
                         <i class="bi bi-tag-fill"></i> Taxa: R$ 0,99 + 9,99% por transação
                     </div>
                     <div class="social-links mt-3">
-                        <a href="#" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
-                        <a href="#" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
-                        <a href="#" aria-label="Twitter"><i class="bi bi-twitter"></i></a>
-                        <a href="#" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
-                        <a href="#" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
+                        <a href="#" aria-label="Facebook" onclick="openSocialModal(event)"><i class="bi bi-facebook"></i></a>
+                        <a href="#" aria-label="Instagram" onclick="openSocialModal(event)"><i class="bi bi-instagram"></i></a>
+                        <a href="#" aria-label="Twitter" onclick="openSocialModal(event)"><i class="bi bi-twitter"></i></a>
+                        <a href="#" aria-label="LinkedIn" onclick="openSocialModal(event)"><i class="bi bi-linkedin"></i></a>
+                        <a href="#" aria-label="YouTube" onclick="openSocialModal(event)"><i class="bi bi-youtube"></i></a>
                     </div>
                 </div>
 
@@ -602,6 +602,8 @@
     }
     </script>
     <script src="{{ url_for('static', filename='js/landing.js') }}?v=33"></script>
+
+    {% include 'partials/_space_modals.html' %}
 
     <!-- Cookie Banner -->
     <div id="cookieBanner" role="dialog" aria-label="Cookie consent" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:10000;

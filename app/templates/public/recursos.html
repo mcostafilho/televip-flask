@@ -737,11 +737,11 @@
                         <i class="bi bi-tag-fill"></i> Taxa: R$ 0,99 + 9,99% por transação
                     </div>
                     <div class="social-links mt-3">
-                        <a href="#"><i class="bi bi-facebook"></i></a>
-                        <a href="#"><i class="bi bi-instagram"></i></a>
-                        <a href="#"><i class="bi bi-twitter"></i></a>
-                        <a href="#"><i class="bi bi-linkedin"></i></a>
-                        <a href="#"><i class="bi bi-youtube"></i></a>
+                        <a href="#" onclick="openSocialModal(event)"><i class="bi bi-facebook"></i></a>
+                        <a href="#" onclick="openSocialModal(event)"><i class="bi bi-instagram"></i></a>
+                        <a href="#" onclick="openSocialModal(event)"><i class="bi bi-twitter"></i></a>
+                        <a href="#" onclick="openSocialModal(event)"><i class="bi bi-linkedin"></i></a>
+                        <a href="#" onclick="openSocialModal(event)"><i class="bi bi-youtube"></i></a>
                     </div>
                 </div>
 
@@ -830,6 +830,8 @@
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
     <script src="{{ url_for('static', filename='js/landing.js') }}?v=19"></script>
+
+    {% include 'partials/_space_modals.html' %}
 
     <!-- Cookie Banner -->
     <div id="cookieBanner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:10000;

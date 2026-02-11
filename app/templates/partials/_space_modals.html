@@ -1,0 +1,530 @@
+<!-- ===== Space Modals: Social Media + Demo ===== -->
+<style>
+/* Modal overlay */
+.sm-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 20000;
+    background: rgba(5, 6, 15, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    animation: sm-fade-in 0.3s ease;
+}
+.sm-overlay.active { display: flex; }
+@keyframes sm-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Modal card */
+.sm-card {
+    background: linear-gradient(145deg, rgba(26, 26, 50, 0.95), rgba(15, 15, 35, 0.98));
+    border: 1px solid rgba(124, 92, 252, 0.25);
+    border-radius: 20px;
+    padding: 40px 32px 32px;
+    max-width: 440px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(124, 92, 252, 0.08);
+    animation: sm-slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+}
+@keyframes sm-slide-up {
+    from { opacity: 0; transform: translateY(30px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Stars inside card */
+.sm-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        radial-gradient(1px 1px at 20% 15%, rgba(255,255,255,0.3) 50%, transparent 50%),
+        radial-gradient(1px 1px at 75% 25%, rgba(255,255,255,0.2) 50%, transparent 50%),
+        radial-gradient(1px 1px at 45% 80%, rgba(255,255,255,0.25) 50%, transparent 50%),
+        radial-gradient(1px 1px at 90% 60%, rgba(255,255,255,0.15) 50%, transparent 50%),
+        radial-gradient(1px 1px at 10% 70%, rgba(255,255,255,0.2) 50%, transparent 50%);
+    pointer-events: none;
+}
+
+/* Close button */
+.sm-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+    color: #8b8fa8;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    z-index: 1;
+}
+.sm-close:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+/* Icon badge */
+.sm-icon-badge {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7c5cfc, #38bdf8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 28px;
+    color: #fff;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(124, 92, 252, 0.3);
+}
+
+/* Title */
+.sm-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: #e2e8f0;
+    margin: 0 0 12px;
+    line-height: 1.3;
+}
+.sm-title .sm-gradient {
+    background: linear-gradient(135deg, #7c5cfc, #38bdf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Text */
+.sm-text {
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    color: #8b8fa8;
+    line-height: 1.7;
+    margin: 0 0 24px;
+}
+.sm-text strong {
+    color: #c4b5fd;
+}
+
+/* ===== Dancing Pixel Dev ===== */
+.sm-dancer {
+    position: relative;
+    width: 40px;
+    height: 56px;
+    margin: 0 auto 20px;
+    image-rendering: pixelated;
+}
+/* Head */
+.sm-dancer-head {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 14px;
+    height: 14px;
+    background: #f5d6c8;
+    border-radius: 3px;
+    animation: sm-head-bop 0.5s ease-in-out infinite alternate;
+}
+@keyframes sm-head-bop {
+    0% { transform: translateX(-50%) translateY(0) rotate(-3deg); }
+    100% { transform: translateX(-50%) translateY(-3px) rotate(3deg); }
+}
+/* Hair */
+.sm-dancer-head::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: #7c5cfc;
+    border-radius: 3px 3px 0 0;
+}
+
+/* Body */
+.sm-dancer-body {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 16px;
+    background: #7c5cfc;
+    border-radius: 2px;
+    animation: sm-body-bounce 0.5s ease-in-out infinite alternate;
+}
+@keyframes sm-body-bounce {
+    0% { transform: translateX(-50%) translateY(0); }
+    100% { transform: translateX(-50%) translateY(-2px); }
+}
+
+/* Arms */
+.sm-dancer-arm-l, .sm-dancer-arm-r {
+    position: absolute;
+    top: 16px;
+    width: 8px;
+    height: 6px;
+    border-radius: 2px;
+    background: #7c5cfc;
+}
+.sm-dancer-arm-l {
+    left: 1px;
+    animation: sm-arm-l 0.5s ease-in-out infinite alternate;
+    transform-origin: right center;
+}
+.sm-dancer-arm-r {
+    right: 1px;
+    animation: sm-arm-r 0.5s ease-in-out infinite alternate;
+    transform-origin: left center;
+}
+@keyframes sm-arm-l {
+    0% { transform: rotate(30deg) translateY(0); }
+    100% { transform: rotate(-50deg) translateY(-8px); }
+}
+@keyframes sm-arm-r {
+    0% { transform: rotate(-50deg) translateY(-8px); }
+    100% { transform: rotate(30deg) translateY(0); }
+}
+
+/* Legs */
+.sm-dancer-leg-l, .sm-dancer-leg-r {
+    position: absolute;
+    bottom: 0;
+    width: 8px;
+    height: 18px;
+    border-radius: 0 0 2px 2px;
+}
+.sm-dancer-leg-l {
+    left: 8px;
+    background: #2d2654;
+    animation: sm-leg-l 0.5s ease-in-out infinite alternate;
+    transform-origin: top center;
+}
+.sm-dancer-leg-r {
+    right: 8px;
+    background: #2d2654;
+    animation: sm-leg-r 0.5s ease-in-out infinite alternate;
+    transform-origin: top center;
+}
+@keyframes sm-leg-l {
+    0% { transform: rotate(-15deg); }
+    100% { transform: rotate(15deg); }
+}
+@keyframes sm-leg-r {
+    0% { transform: rotate(15deg); }
+    100% { transform: rotate(-15deg); }
+}
+
+/* Shadow under dancer */
+.sm-dancer-shadow {
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 6px;
+    background: rgba(124, 92, 252, 0.2);
+    border-radius: 50%;
+    animation: sm-shadow-pulse 0.5s ease-in-out infinite alternate;
+}
+@keyframes sm-shadow-pulse {
+    0% { transform: translateX(-50%) scale(1); opacity: 0.3; }
+    100% { transform: translateX(-50%) scale(0.8); opacity: 0.15; }
+}
+
+/* Music notes */
+.sm-notes {
+    position: absolute;
+    top: -5px;
+    right: -8px;
+    font-size: 14px;
+    animation: sm-note-float 1s ease-in-out infinite;
+    pointer-events: none;
+}
+@keyframes sm-note-float {
+    0%, 100% { opacity: 0.4; transform: translateY(0) rotate(0); }
+    50% { opacity: 1; transform: translateY(-8px) rotate(10deg); }
+}
+.sm-notes::after {
+    content: '🎵';
+    position: absolute;
+    top: 8px;
+    left: -20px;
+    font-size: 12px;
+    animation: sm-note-float2 1.2s ease-in-out infinite;
+}
+@keyframes sm-note-float2 {
+    0%, 100% { opacity: 0.3; transform: translateY(0) rotate(0); }
+    50% { opacity: 0.8; transform: translateY(-6px) rotate(-10deg); }
+}
+
+/* ===== Pixel Monitor (Demo modal) ===== */
+.sm-monitor {
+    position: relative;
+    width: 120px;
+    height: 80px;
+    margin: 0 auto 20px;
+}
+.sm-monitor-frame {
+    width: 120px;
+    height: 72px;
+    background: #1a1a2e;
+    border: 3px solid #4a4a6a;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+}
+.sm-monitor-screen {
+    width: 100%;
+    height: 100%;
+    background: #0d1117;
+    position: relative;
+    overflow: hidden;
+}
+/* Animated "dashboard" lines inside monitor */
+.sm-screen-line {
+    position: absolute;
+    left: 8px;
+    height: 3px;
+    border-radius: 2px;
+    animation: sm-screen-type 2s ease-in-out infinite;
+}
+@keyframes sm-screen-type {
+    0% { width: 0; opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+}
+.sm-screen-line:nth-child(1) { top: 8px; background: #7c5cfc; animation-delay: 0s; }
+.sm-screen-line:nth-child(2) { top: 16px; background: #38bdf8; animation-delay: 0.3s; }
+.sm-screen-line:nth-child(3) { top: 24px; background: #34d399; animation-delay: 0.6s; }
+.sm-screen-line:nth-child(4) { top: 32px; background: #fbbf24; animation-delay: 0.9s; }
+.sm-screen-line:nth-child(5) { top: 40px; background: #f093fb; animation-delay: 1.2s; }
+.sm-screen-line:nth-child(6) { top: 48px; background: #7c5cfc; animation-delay: 1.5s; }
+.sm-screen-line:nth-child(1) { animation-name: sm-line1; }
+.sm-screen-line:nth-child(2) { animation-name: sm-line2; }
+.sm-screen-line:nth-child(3) { animation-name: sm-line3; }
+.sm-screen-line:nth-child(4) { animation-name: sm-line4; }
+.sm-screen-line:nth-child(5) { animation-name: sm-line5; }
+.sm-screen-line:nth-child(6) { animation-name: sm-line6; }
+@keyframes sm-line1 { 0%{width:0}20%{width:60px}80%{width:60px}100%{width:0} }
+@keyframes sm-line2 { 0%{width:0}20%{width:80px}80%{width:80px}100%{width:0} }
+@keyframes sm-line3 { 0%{width:0}20%{width:45px}80%{width:45px}100%{width:0} }
+@keyframes sm-line4 { 0%{width:0}20%{width:70px}80%{width:70px}100%{width:0} }
+@keyframes sm-line5 { 0%{width:0}20%{width:55px}80%{width:55px}100%{width:0} }
+@keyframes sm-line6 { 0%{width:0}20%{width:40px}80%{width:40px}100%{width:0} }
+
+/* Cursor blinking on screen */
+.sm-screen-cursor {
+    position: absolute;
+    bottom: 8px;
+    right: 10px;
+    width: 6px;
+    height: 10px;
+    background: #7c5cfc;
+    animation: sm-cursor-blink 0.8s step-end infinite;
+}
+@keyframes sm-cursor-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* Monitor stand */
+.sm-monitor-stand {
+    width: 20px;
+    height: 10px;
+    background: #4a4a6a;
+    margin: 0 auto;
+    border-radius: 0 0 4px 4px;
+}
+.sm-monitor-base {
+    width: 40px;
+    height: 4px;
+    background: #4a4a6a;
+    margin: 0 auto;
+    border-radius: 2px;
+}
+
+/* CTA button inside modal */
+.sm-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #7c5cfc, #38bdf8);
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.sm-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(124, 92, 252, 0.3);
+    color: #fff;
+}
+
+/* Disco floor effect (subtle) */
+.sm-disco {
+    display: flex;
+    justify-content: center;
+    gap: 3px;
+    margin-bottom: 16px;
+}
+.sm-disco-tile {
+    width: 6px;
+    height: 6px;
+    border-radius: 1px;
+    animation: sm-disco-blink 1.5s ease-in-out infinite;
+}
+@keyframes sm-disco-blink {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.8; }
+}
+</style>
+
+<!-- Social Media Modal -->
+<div class="sm-overlay" id="smSocialModal" onclick="if(event.target===this)closeSocialModal()">
+    <div class="sm-card">
+        <button class="sm-close" onclick="closeSocialModal()" aria-label="Fechar">&times;</button>
+
+        <div class="sm-icon-badge">
+            <i class="bi bi-broadcast"></i>
+        </div>
+
+        <h3 class="sm-title">
+            Nossas redes sociais estão <span class="sm-gradient">a caminho!</span>
+        </h3>
+
+        <p class="sm-text">
+            Estamos preparando conteúdos <strong>incríveis</strong> para você:
+            dados exclusivos, tutoriais, bastidores do desenvolvimento
+            e quem sabe até a <strong>dancinha oficial da equipe</strong>...
+        </p>
+
+        <!-- Dancing pixel dev -->
+        <div class="sm-dancer">
+            <div class="sm-dancer-head"></div>
+            <div class="sm-dancer-body"></div>
+            <div class="sm-dancer-arm-l"></div>
+            <div class="sm-dancer-arm-r"></div>
+            <div class="sm-dancer-leg-l"></div>
+            <div class="sm-dancer-leg-r"></div>
+            <div class="sm-dancer-shadow"></div>
+            <div class="sm-notes">🎶</div>
+        </div>
+
+        <!-- Disco floor -->
+        <div class="sm-disco">
+            <div class="sm-disco-tile" style="background:#7c5cfc;animation-delay:0s;"></div>
+            <div class="sm-disco-tile" style="background:#38bdf8;animation-delay:0.2s;"></div>
+            <div class="sm-disco-tile" style="background:#34d399;animation-delay:0.4s;"></div>
+            <div class="sm-disco-tile" style="background:#fbbf24;animation-delay:0.6s;"></div>
+            <div class="sm-disco-tile" style="background:#f093fb;animation-delay:0.8s;"></div>
+            <div class="sm-disco-tile" style="background:#ef4444;animation-delay:1.0s;"></div>
+            <div class="sm-disco-tile" style="background:#7c5cfc;animation-delay:1.2s;"></div>
+            <div class="sm-disco-tile" style="background:#38bdf8;animation-delay:0.1s;"></div>
+            <div class="sm-disco-tile" style="background:#34d399;animation-delay:0.3s;"></div>
+            <div class="sm-disco-tile" style="background:#fbbf24;animation-delay:0.5s;"></div>
+        </div>
+
+        <p class="sm-text" style="margin-bottom:20px;font-size:13px;">
+            Fique de olho — em breve estaremos em todas as plataformas!
+        </p>
+
+        <button class="sm-btn" onclick="closeSocialModal()">
+            <i class="bi bi-hand-thumbs-up"></i> Mal posso esperar!
+        </button>
+    </div>
+</div>
+
+<!-- Demo Modal -->
+<div class="sm-overlay" id="smDemoModal" onclick="if(event.target===this)closeDemoModal()">
+    <div class="sm-card">
+        <button class="sm-close" onclick="closeDemoModal()" aria-label="Fechar">&times;</button>
+
+        <div class="sm-icon-badge">
+            <i class="bi bi-play-circle"></i>
+        </div>
+
+        <h3 class="sm-title">
+            A demonstração está sendo <span class="sm-gradient">preparada!</span>
+        </h3>
+
+        <p class="sm-text">
+            Nosso time está gravando um <strong>walkthrough completo</strong> da plataforma:
+            do cadastro ao primeiro pagamento, passando pelo dashboard,
+            gestão de membros e muito mais.
+        </p>
+
+        <!-- Pixel monitor with animated code -->
+        <div class="sm-monitor">
+            <div class="sm-monitor-frame">
+                <div class="sm-monitor-screen">
+                    <div class="sm-screen-line"></div>
+                    <div class="sm-screen-line"></div>
+                    <div class="sm-screen-line"></div>
+                    <div class="sm-screen-line"></div>
+                    <div class="sm-screen-line"></div>
+                    <div class="sm-screen-line"></div>
+                    <div class="sm-screen-cursor"></div>
+                </div>
+            </div>
+            <div class="sm-monitor-stand"></div>
+            <div class="sm-monitor-base"></div>
+        </div>
+
+        <p class="sm-text" style="margin-bottom:20px;font-size:13px;">
+            Enquanto isso, crie sua conta grátis e explore você mesmo!
+        </p>
+
+        <a href="{{ url_for('auth.register') }}" class="sm-btn">
+            <i class="bi bi-rocket-takeoff"></i> Criar Conta Grátis
+        </a>
+    </div>
+</div>
+
+<script>
+function openSocialModal(e){
+    if(e){ e.preventDefault(); e.stopPropagation(); }
+    document.getElementById('smSocialModal').classList.add('active');
+    document.body.style.overflow='hidden';
+}
+function closeSocialModal(){
+    document.getElementById('smSocialModal').classList.remove('active');
+    document.body.style.overflow='';
+}
+function openDemoModal(e){
+    if(e){ e.preventDefault(); e.stopPropagation(); }
+    document.getElementById('smDemoModal').classList.add('active');
+    document.body.style.overflow='hidden';
+}
+function closeDemoModal(){
+    document.getElementById('smDemoModal').classList.remove('active');
+    document.body.style.overflow='';
+}
+// Close on Escape
+document.addEventListener('keydown', function(e){
+    if(e.key==='Escape'){
+        closeSocialModal();
+        closeDemoModal();
+    }
+});
+</script>
