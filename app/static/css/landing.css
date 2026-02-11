@@ -26,17 +26,11 @@
     --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.3);
 }
 
-*,
-*::before,
-*::after {
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
-}
-
-html {
-    overflow-x: hidden;
 }
 
 /* Page Transition */
@@ -54,7 +48,6 @@ body {
     animation: pageEntrance 0.5s ease-out both;
     font-family: 'Poppins', sans-serif;
     overflow-x: hidden;
-    overscroll-behavior-y: none;
     color: var(--galactic-text-primary);
     line-height: 1.6;
 
