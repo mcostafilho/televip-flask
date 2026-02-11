@@ -135,46 +135,68 @@ def format_phone(phone: str) -> str:
         return phone
 
 
-def format_time_remaining(end_date: datetime) -> str:
+def format_remaining_text(end_date: datetime) -> str:
     """
-    Formatar tempo restante até uma data
-    
+    Formatar tempo restante como texto simples (sem emoji).
+    Mostra horas quando < 24h, dias caso contrário.
+
     Args:
         end_date: Data final
-        
+
     Returns:
-        String formatada (ex: 15 dias restantes, Expira hoje, Expirado)
+        String como '5 dias', '12 horas', '30 minutos', ou 'Expirado'
     """
     if not end_date:
         return "N/A"
-    
-    now = datetime.utcnow()
-    delta = end_date - now
-    
-    if delta.days < 0:
-        return "❌ Expirado"
-    elif delta.days == 0:
-        if delta.seconds > 0:
-            hours = delta.seconds // 3600
-            if hours > 0:
-                return f"⏰ Expira em {hours} {'hora' if hours == 1 else 'horas'}"
-            else:
-                return "⏰ Expira hoje"
-        else:
-            return "❌ Expirado"
-    elif delta.days == 1:
-        return "⏰ Expira amanhã"
-    elif delta.days <= 7:
-        return f"⏰ {delta.days} dias restantes"
-    elif delta.days <= 30:
-        weeks = delta.days // 7
-        return f"📅 {weeks} {'semana' if weeks == 1 else 'semanas'} restantes"
+
+    total_seconds = (end_date - datetime.utcnow()).total_seconds()
+
+    if total_seconds <= 0:
+        return "Expirado"
+
+    hours = int(total_seconds // 3600)
+
+    if hours >= 24:
+        days = hours // 24
+        return f"{days} {'dia' if days == 1 else 'dias'}"
+    elif hours >= 1:
+        return f"{hours} {'hora' if hours == 1 else 'horas'}"
     else:
-        months = delta.days // 30
-        if months == 1:
-            return "📅 1 mês restante"
-        else:
-            return f"📅 {months} meses restantes"
+        minutes = max(1, int(total_seconds // 60))
+        return f"{minutes} {'minuto' if minutes == 1 else 'minutos'}"
+
+
+def get_expiry_emoji(end_date: datetime) -> str:
+    """
+    Retorna emoji de urgência baseado no tempo restante.
+
+    Returns:
+        '❌' expirado, '🔴' <= 3 dias, '🟡' <= 7 dias, '🟢' > 7 dias
+    """
+    if not end_date:
+        return "❌"
+
+    total_hours = (end_date - datetime.utcnow()).total_seconds() / 3600
+
+    if total_hours <= 0:
+        return "❌"
+    elif total_hours <= 72:  # 3 days
+        return "🔴"
+    elif total_hours <= 168:  # 7 days
+        return "🟡"
+    else:
+        return "🟢"
+
+
+def format_time_remaining(end_date: datetime) -> str:
+    """
+    Formatar tempo restante com emoji (compatibilidade).
+    """
+    emoji = get_expiry_emoji(end_date)
+    text = format_remaining_text(end_date)
+    if text == "Expirado":
+        return f"❌ {text}"
+    return f"{emoji} {text} restantes"
 
 
 def escape_markdown(text: str) -> str:

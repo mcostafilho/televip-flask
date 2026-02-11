@@ -9,6 +9,7 @@ from telegram.constants import ParseMode
 from sqlalchemy import func
 
 from bot.utils.database import get_db_session
+from bot.utils.format_utils import format_remaining_text
 from app.models import Group, Creator, Subscription, Transaction, PricingPlan
 
 logger = logging.getLogger(__name__)
@@ -789,15 +790,15 @@ Se você já pagou, aguarde a confirmação ou entre em contato com o suporte.
             logger.info(f"Usuário {user.id} autorizado no grupo {chat.id}")
             
             # Mensagem de boas-vindas personalizada
-            days_left = (subscription.end_date - datetime.utcnow()).days
-            
+            remaining = format_remaining_text(subscription.end_date)
+
             try:
                 welcome_text = f"""
 🎉 Bem-vindo(a) ao grupo **{group.name}**, {user.first_name}!
 
 ✅ Sua assinatura está ativa
 📅 Plano: {subscription.plan.name}
-⏳ Dias restantes: {days_left}
+⏳ Tempo restante: {remaining}
 📆 Expira em: {subscription.end_date.strftime('%d/%m/%Y')}
 
 📌 **Regras do Grupo:**

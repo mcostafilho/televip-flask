@@ -12,6 +12,7 @@ import os
 
 from bot.utils.database import get_db_session
 from bot.keyboards.menus import get_renewal_keyboard
+from bot.utils.format_utils import format_remaining_text, get_expiry_emoji
 from app.models import Subscription, Group, Creator, PricingPlan, Transaction
 
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
@@ -83,17 +84,15 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 if is_lifetime:
                     emoji = "♾️"
                 else:
+                    remaining = format_remaining_text(sub.end_date)
+                    emoji = get_expiry_emoji(sub.end_date)
                     days_left = (sub.end_date - datetime.utcnow()).days
 
                     # Classificar urgência
                     if days_left <= 3:
-                        emoji = "🔴"
                         need_renewal_urgent.append(sub)
                     elif days_left <= 7:
-                        emoji = "🟡"
                         need_renewal_soon.append(sub)
-                    else:
-                        emoji = "🟢"
 
                 text += f"{i}. {emoji} **{group.name}**\n"
                 text += f"   👤 Criador: @{creator.username or creator.name}\n"
@@ -103,7 +102,7 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     text += f"   ♾️ **Acesso Vitalicio**\n"
                 else:
                     text += f"   📅 Expira: {sub.end_date.strftime('%d/%m/%Y')}\n"
-                    text += f"   ⏳ Restam: {days_left} dias\n"
+                    text += f"   ⏳ Restam: {remaining}\n"
 
                     # Subscription status info
                     if getattr(sub, 'cancel_at_period_end', False):
@@ -220,8 +219,8 @@ async def planos_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 if is_lifetime:
                     text += f"   Acesso vitalicio\n"
                 else:
-                    days_left = (sub.end_date - datetime.utcnow()).days
-                    text += f"   Expira em: {days_left} dias ({sub.end_date.strftime('%d/%m/%Y')})\n"
+                    remaining = format_remaining_text(sub.end_date)
+                    text += f"   Expira em: {remaining} ({sub.end_date.strftime('%d/%m/%Y')})\n"
 
                 text += "\n"
 
@@ -287,22 +286,20 @@ Nenhuma assinatura precisa ser renovada nos próximos 15 dias.
             for sub in expiring:
                 group = sub.group
                 plan = sub.plan
+                remaining = format_remaining_text(sub.end_date)
+                emoji = get_expiry_emoji(sub.end_date)
+
                 days_left = (sub.end_date - datetime.utcnow()).days
-                
-                # Emoji de urgência
                 if days_left <= 3:
-                    emoji = "🔴"
                     urgency = "URGENTE"
                 elif days_left <= 7:
-                    emoji = "🟡"
                     urgency = "Em breve"
                 else:
-                    emoji = "🟢"
                     urgency = "Disponível"
-                
+
                 text += f"{emoji} **{group.name}**\n"
                 text += f"   Status: {urgency}\n"
-                text += f"   Expira em: {days_left} dias\n"
+                text += f"   Expira em: {remaining}\n"
                 text += f"   Valor renovação: R$ {plan.price:.2f}\n\n"
                 
                 total_renewal += plan.price
@@ -353,15 +350,10 @@ async def show_urgent_renewals(update: Update, context: ContextTypes.DEFAULT_TYP
         for sub in urgent:
             group = sub.group
             plan = sub.plan
-            hours_left = int((sub.end_date - datetime.utcnow()).total_seconds() / 3600)
-            
-            if hours_left < 24:
-                time_text = f"{hours_left} horas"
-            else:
-                time_text = f"{hours_left // 24} dias"
-            
+            remaining = format_remaining_text(sub.end_date)
+
             text += f"🔴 **{group.name}**\n"
-            text += f"   ⏰ Expira em: {time_text}!\n"
+            text += f"   ⏰ Expira em: {remaining}!\n"
             text += f"   💰 Renovar por: R$ {plan.price:.2f}\n\n"
             
             keyboard.append([

@@ -11,6 +11,7 @@ from telegram.constants import ParseMode
 
 from bot.utils.database import get_db_session
 from bot.keyboards.menus import get_plans_menu
+from bot.utils.format_utils import format_remaining_text, get_expiry_emoji
 from app.models import Group, Creator, PricingPlan, Subscription, Transaction
 from bot.handlers.payment_verification import check_payment_from_start
 
@@ -126,13 +127,13 @@ Se não fez nenhum pagamento recentemente, pode continuar para o menu principal.
             text = f"👋 Olá {user.first_name}!\n\n"
 
             for sub in subscriptions[:5]:
-                days_left = (sub.end_date - datetime.utcnow()).days
-                status_emoji = "🟢" if days_left > 7 else "🟡" if days_left > 3 else "🔴"
+                remaining = format_remaining_text(sub.end_date)
+                status_emoji = get_expiry_emoji(sub.end_date)
 
                 if sub.group:
                     text += f"{status_emoji} **{sub.group.name}**\n"
                     text += f"   Plano: {sub.plan.name if sub.plan else 'N/A'}\n"
-                    text += f"   Expira em: {days_left} dias\n\n"
+                    text += f"   Expira em: {remaining}\n\n"
 
             if len(subscriptions) > 5:
                 text += f"... e mais {len(subscriptions) - 5} assinaturas\n\n"
@@ -196,13 +197,13 @@ async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_
         ).first()
         
         if existing_sub:
-            days_left = (existing_sub.end_date - datetime.utcnow()).days
+            remaining = format_remaining_text(existing_sub.end_date)
             text = f"""
 ✅ **Você já é assinante!**
 
 **Grupo:** {group.name}
 **Plano atual:** {existing_sub.plan.name if existing_sub.plan else 'N/A'}
-**Dias restantes:** {days_left}
+**Tempo restante:** {remaining}
 
 Sua assinatura expira em: {existing_sub.end_date.strftime('%d/%m/%Y')}
 """

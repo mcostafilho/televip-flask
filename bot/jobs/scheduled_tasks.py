@@ -64,23 +64,40 @@ async def send_reminders_loop():
 
 
 async def check_expired_subscriptions():
-    """Verificar e processar assinaturas expiradas (somente legacy/sem Stripe subscription)"""
+    """Verificar e processar assinaturas expiradas (todas as categorias)"""
     try:
         with get_db_session() as session:
-            # Only check legacy subscriptions — Stripe-managed ones are handled via webhooks
-            expired = session.query(Subscription).filter(
+            now = datetime.utcnow()
+            # Grace period for Stripe auto-renew subs (payment retry window)
+            grace_cutoff = now - timedelta(days=3)
+
+            # Fetch ALL active subscriptions past their end_date
+            all_expired = session.query(Subscription).filter(
                 Subscription.status == 'active',
-                Subscription.end_date < datetime.utcnow(),
-                (Subscription.stripe_subscription_id == None) | (Subscription.is_legacy == True)
+                Subscription.end_date < now
             ).all()
 
-            if not expired:
+            if not all_expired:
                 logger.info("Nenhuma assinatura expirada")
                 return
 
-            logger.info(f"Encontradas {len(expired)} assinaturas expiradas")
+            processed = 0
+            skipped = 0
 
-            for sub in expired:
+            for sub in all_expired:
+                is_stripe_managed = (
+                    sub.stripe_subscription_id
+                    and not sub.is_legacy
+                )
+
+                # For Stripe auto-renew subs, allow grace period for payment retry
+                # Stripe may still process a renewal or fire webhook
+                if (is_stripe_managed
+                        and not sub.cancel_at_period_end
+                        and sub.end_date > grace_cutoff):
+                    skipped += 1
+                    continue
+
                 sub.status = 'expired'
 
                 # Remover usuario do grupo
@@ -89,13 +106,18 @@ async def check_expired_subscriptions():
                 # Notificar usuario
                 await notify_expiration(sub)
 
+                sub_type = "legacy" if not is_stripe_managed else "stripe"
                 logger.info(
-                    f"Assinatura {sub.id} expirada - "
+                    f"Assinatura {sub.id} ({sub_type}) expirada - "
                     f"user {sub.telegram_user_id} removido do grupo {sub.group_id}"
                 )
+                processed += 1
 
             session.commit()
-            logger.info(f"{len(expired)} assinaturas processadas")
+            logger.info(
+                f"{processed} assinaturas processadas, "
+                f"{skipped} stripe auto-renew aguardando grace period"
+            )
 
     except Exception as e:
         logger.error(f"Erro ao verificar expiradas: {e}")
@@ -213,6 +235,9 @@ async def send_renewal_notification(subscription, days_left):
         user_id = int(subscription.telegram_user_id)
 
         from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+        from bot.utils.format_utils import format_remaining_text
+
+        remaining = format_remaining_text(subscription.end_date)
 
         is_stripe_managed = (
             subscription.stripe_subscription_id
@@ -223,7 +248,7 @@ async def send_renewal_notification(subscription, days_left):
             # User chose not to renew
             text = (
                 f"⚠️ Sua assinatura do grupo **{group.name}** "
-                f"encerra em **{days_left} dia(s)**.\n\n"
+                f"encerra em **{remaining}**.\n\n"
                 f"Voce optou por nao renovar. Apos essa data, voce perdera o acesso.\n\n"
                 f"Mudou de ideia? Reative a renovacao automatica!"
             )
@@ -245,7 +270,7 @@ async def send_renewal_notification(subscription, days_left):
             else:
                 text = (
                     f"🔄 Sua assinatura do grupo **{group.name}** "
-                    f"sera renovada automaticamente em **{days_left} dia(s)**.\n\n"
+                    f"sera renovada automaticamente em **{remaining}**.\n\n"
                     f"Valor: R$ {plan.price:.2f}\n\n"
                     f"Nenhuma acao necessaria. O cartao cadastrado sera cobrado automaticamente."
                 )
@@ -257,15 +282,15 @@ async def send_renewal_notification(subscription, days_left):
             ]]
         else:
             # Legacy subscription
-            if days_left == 1:
+            if days_left <= 1:
                 urgency = "🔴 ULTIMO DIA"
             else:
-                urgency = f"⚠️ {days_left} dias restantes"
+                urgency = f"⚠️ {remaining} restantes"
 
             text = (
                 f"{urgency}\n\n"
                 f"Sua assinatura do grupo **{group.name}** "
-                f"expira em **{days_left} dia(s)**.\n\n"
+                f"expira em **{remaining}**.\n\n"
                 f"Plano: {plan.name} - R$ {plan.price:.2f}\n\n"
                 f"Renove agora para nao perder o acesso!"
             )

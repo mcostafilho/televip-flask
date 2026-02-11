@@ -13,7 +13,7 @@ from bot.utils.stripe_integration import (
     get_or_create_stripe_customer, get_or_create_stripe_price,
     create_subscription_checkout
 )
-from bot.utils.format_utils import format_currency
+from bot.utils.format_utils import format_currency, format_remaining_text, get_expiry_emoji
 from app.models import Group, PricingPlan, Subscription, Transaction, Creator
 
 logger = logging.getLogger(__name__)
@@ -331,8 +331,8 @@ async def list_user_subscriptions(update: Update, context: ContextTypes.DEFAULT_
                 if is_lifetime:
                     expiry_text = "♾️ Acesso Vitalicio"
                 else:
-                    days_left = (sub.end_date - datetime.utcnow()).days
-                    expiry_text = f"Expira em: {days_left} dias ({sub.end_date.strftime('%d/%m/%Y')})"
+                    remaining = format_remaining_text(sub.end_date)
+                    expiry_text = f"Expira em: {remaining} ({sub.end_date.strftime('%d/%m/%Y')})"
 
                 text += f"""
 📌 **{group.name}**
