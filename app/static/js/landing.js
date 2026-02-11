@@ -731,6 +731,8 @@
     counters.forEach(function (counter) {
       var text = counter.innerText;
       // Extract numeric part and formatting
+      // Skip non-numeric values like "24/7"
+      if (/\//.test(text)) return;
       var raw = text.replace(/\D/g, '');
       var target = parseInt(raw, 10);
       if (isNaN(target) || target === 0) return;
