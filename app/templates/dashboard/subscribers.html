@@ -24,72 +24,96 @@
 
     <div class="dashboard-container">
         <!-- Header -->
-        <div class="dashboard-header">
-            <div class="row align-items-center">
-                <div class="col">
-                    <h1 class="h2 mb-1">
-                        <i class="bi bi-people-fill"></i> Assinantes de {{ group.name }}
-                    </h1>
-                    <p class="text-muted mb-0">Gerencie os assinantes do seu grupo VIP</p>
+        <div class="dashboard-header welcome-header">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="welcome-avatar">
+                        <i class="bi bi-people-fill" style="font-size: 1.2rem;"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 mb-1">Assinantes de {{ group.name }}</h1>
+                        <p class="text-muted mb-0">Gerencie os assinantes do seu grupo VIP</p>
+                    </div>
                 </div>
-                <div class="col-auto">
-                    <button class="btn export-btn" onclick="exportSubscribers()">
-                        <i class="bi bi-download"></i> Exportar Lista
+                <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-sm btn-outline-primary" onclick="exportSubscribers()">
+                        <i class="bi bi-download"></i> Exportar
                     </button>
                 </div>
             </div>
-            
+
             <!-- Link de Compartilhamento -->
             <div class="mt-3">
-                <label class="form-label text-muted small">Link de Assinatura:</label>
-                <div class="input-group">
-                    <input type="text" class="form-control" 
+                <label class="form-label text-muted small mb-1">Link de Assinatura:</label>
+                <div class="row-link-copy" style="max-width: 480px;">
+                    <input type="text" class="form-control form-control-sm"
                            value="https://t.me/{{ config.BOT_USERNAME or 'televipbra_bot' }}?start=g_{{ group.invite_slug }}"
                            id="shareLink" readonly>
-                    <button class="btn btn-primary" type="button" onclick="copyShareLink()">
-                        <i class="bi bi-clipboard"></i> Copiar Link
+                    <button class="btn-copy" type="button" onclick="copyShareLink()" title="Copiar link">
+                        <i class="bi bi-clipboard"></i>
                     </button>
                 </div>
-                <small class="text-muted">Compartilhe este link para novos assinantes entrarem no grupo</small>
+                <small class="text-muted">Compartilhe para novos assinantes entrarem</small>
             </div>
         </div>
 
-        <!-- Cards de Estatísticas -->
+        <!-- Stat Cards -->
         <div class="stats-grid">
-            <div class="stat-card primary">
-                <h3>{{ stats.total }}</h3>
-                <small class="text-muted">Total de Assinantes</small>
+            <div class="stat-card stat-primary">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon primary"><i class="bi bi-people-fill"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Total</p>
+                        <h3 class="mb-0">{{ stats.total }}</h3>
+                    </div>
+                </div>
             </div>
-            <div class="stat-card success">
-                <h3>{{ stats.active }}</h3>
-                <small class="text-muted">Ativos</small>
+            <div class="stat-card stat-success">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon success"><i class="bi bi-check-circle-fill"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Ativos</p>
+                        <h3 class="mb-0">{{ stats.active }}</h3>
+                    </div>
+                </div>
             </div>
-            <div class="stat-card warning">
-                <h3>{{ stats.expiring_soon }}</h3>
-                <small class="text-muted">Expirando (7 dias)</small>
+            <div class="stat-card stat-warning">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon warning"><i class="bi bi-clock-fill"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Expirando</p>
+                        <h3 class="mb-0">{{ stats.expiring_soon }}</h3>
+                        <small class="text-muted">próx. 7 dias</small>
+                    </div>
+                </div>
             </div>
-            <div class="stat-card danger">
-                <h3>{{ stats.expired }}</h3>
-                <small class="text-muted">Expirados</small>
+            <div class="stat-card stat-danger">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon danger"><i class="bi bi-x-circle-fill"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Expirados</p>
+                        <h3 class="mb-0">{{ stats.expired }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Filtros -->
-        <div class="filter-card">
-            <form method="GET" class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label">Status</label>
-                    <select name="status" class="form-select" onchange="this.form.submit()">
+        <div class="content-card mb-4" style="padding: 1.25rem 1.5rem;">
+            <form method="GET" class="row g-2 align-items-end">
+                <div class="col-md-3 col-6">
+                    <label class="form-label small mb-1">Status</label>
+                    <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
                         <option value="">Todos</option>
                         <option value="active" {{ 'selected' if request.args.get('status') == 'active' }}>Ativos</option>
                         <option value="expired" {{ 'selected' if request.args.get('status') == 'expired' }}>Expirados</option>
                         <option value="cancelled" {{ 'selected' if request.args.get('status') == 'cancelled' }}>Cancelados</option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label">Plano</label>
-                    <select name="plan_id" class="form-select" onchange="this.form.submit()">
-                        <option value="">Todos os Planos</option>
+                <div class="col-md-3 col-6">
+                    <label class="form-label small mb-1">Plano</label>
+                    <select name="plan_id" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">Todos</option>
                         {% for plan in group.pricing_plans %}
                         <option value="{{ plan.id }}" {{ 'selected' if request.args.get('plan_id')|int == plan.id }}>
                             {{ plan.name }}
@@ -98,124 +122,120 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Buscar</label>
-                    <input type="text" name="search" class="form-control" 
-                           placeholder="Username ou ID..." 
+                    <label class="form-label small mb-1">Buscar</label>
+                    <input type="text" name="search" class="form-control form-control-sm"
+                           placeholder="Username ou ID..."
                            value="{{ request.args.get('search', '') }}">
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary btn-sm w-100">
                         <i class="bi bi-search"></i> Filtrar
                     </button>
                 </div>
             </form>
         </div>
 
-        <!-- Tabela de Assinantes -->
-        <div class="table-card">
-            <div class="card-header">
+        <!-- Lista de Assinantes -->
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="mb-0">
                     <i class="bi bi-list"></i> Lista de Assinantes
                 </h5>
+                {% if subscribers %}
+                <small class="text-muted">{{ stats.total }} total</small>
+                {% endif %}
             </div>
-            
+
             {% if subscribers %}
-            <div class="custom-table">
-                <table class="table align-middle">
-                    <thead>
-                        <tr>
-                            <th>Usuário</th>
-                            <th>Plano</th>
-                            <th class="text-center">Status</th>
-                            <th class="text-center">Início</th>
-                            <th class="text-center">Expira em</th>
-                            <th class="text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for sub in subscribers %}
-                        <tr>
-                            <td>
-                                <div class="username">
-                                    @{{ sub.telegram_username or 'Sem username' }}
-                                </div>
-                                <div class="user-id">
-                                    ID: {{ sub.telegram_user_id }}
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge bg-primary">{{ sub.plan.name }}</span>
-                                <br>
-                                <small class="text-muted">R$ {{ "%.2f"|format(sub.plan.price) }}</small>
-                            </td>
-                            <td class="text-center">
-                                {% if sub.status == 'active' %}
-                                    {% if sub.end_date < now %}
-                                        <span class="badge bg-danger">
-                                            <i class="bi bi-x-circle"></i> Expirado
-                                        </span>
-                                    {% elif (sub.end_date - now).days <= 7 %}
-                                        <span class="badge bg-warning">
-                                            <i class="bi bi-clock"></i> Expirando
-                                        </span>
-                                    {% else %}
-                                        <span class="badge bg-success">
-                                            <i class="bi bi-check-circle"></i> Ativo
-                                        </span>
-                                    {% endif %}
-                                {% elif sub.status == 'cancelled' %}
-                                    <span class="badge bg-secondary">
-                                        <i class="bi bi-x-circle"></i> Cancelado
-                                    </span>
-                                {% else %}
-                                    <span class="badge bg-danger">
-                                        <i class="bi bi-x-circle"></i> {{ sub.status }}
-                                    </span>
+            <div class="row-list">
+                {% for sub in subscribers %}
+                <div class="row-item">
+                    <div class="row-item-left">
+                        <!-- Status icon -->
+                        {% if sub.status == 'active' and sub.end_date >= now %}
+                            {% if (sub.end_date - now).days <= 7 %}
+                            <div class="row-icon pending">
+                                <i class="bi bi-clock"></i>
+                            </div>
+                            {% else %}
+                            <div class="row-icon completed">
+                                <i class="bi bi-check-lg"></i>
+                            </div>
+                            {% endif %}
+                        {% elif sub.status == 'cancelled' %}
+                        <div class="row-icon inactive">
+                            <i class="bi bi-slash-circle"></i>
+                        </div>
+                        {% else %}
+                        <div class="row-icon failed">
+                            <i class="bi bi-x-lg"></i>
+                        </div>
+                        {% endif %}
+
+                        <div class="row-info">
+                            <div class="row-title">
+                                @{{ sub.telegram_username or 'Sem username' }}
+                                {% if sub.status == 'active' and sub.end_date >= now and (sub.end_date - now).days > 7 %}
+                                    <span class="glow-dot green"></span>
+                                {% elif sub.status == 'active' and sub.end_date >= now %}
+                                    <span class="glow-dot yellow"></span>
                                 {% endif %}
-                            </td>
-                            <td class="text-center">
-                                {{ sub.start_date.strftime('%d/%m/%Y') }}
-                            </td>
-                            <td class="text-center">
-                                {{ sub.end_date.strftime('%d/%m/%Y') }}
+                            </div>
+                            <div class="row-sub">
+                                {{ sub.plan.name }} &middot; R$ {{ "%.2f"|format(sub.plan.price) }}
+                                &middot; ID: {{ sub.telegram_user_id }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row-item-right">
+                        <div class="row-metrics">
+                            <div class="row-metric">
+                                <span class="row-metric-value" style="color: var(--galactic-text-bright); font-size: 0.82rem;">
+                                    {{ sub.start_date.strftime('%d/%m/%y') }}
+                                </span>
+                                <span class="row-metric-label">início</span>
+                            </div>
+                            <div class="row-metric">
                                 {% if sub.status == 'active' and sub.end_date > now %}
-                                    <br>
-                                    <small class="text-muted">
-                                        ({{ (sub.end_date - now).days }} dias)
-                                    </small>
+                                <span class="row-metric-value {% if (sub.end_date - now).days <= 7 %}yellow{% else %}green{% endif %}" style="font-size: 0.82rem;">
+                                    {{ (sub.end_date - now).days }}d restantes
+                                </span>
+                                {% else %}
+                                <span class="row-metric-value" style="color: var(--galactic-danger); font-size: 0.82rem;">
+                                    {{ sub.end_date.strftime('%d/%m/%y') }}
+                                </span>
                                 {% endif %}
-                            </td>
-                            <td class="text-center">
-                                <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-info" 
-                                            onclick="viewDetails({{ sub.id }})"
-                                            title="Ver Detalhes">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                    {% if sub.status == 'active' %}
-                                    <form method="POST"
-                                          action="{{ url_for('groups.subscribers', id=group.id) }}"
-                                          style="display: inline;">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                        <button type="submit" 
-                                                class="btn btn-outline-danger"
-                                                onclick="return confirm('Tem certeza que deseja cancelar esta assinatura?')"
-                                                title="Cancelar Assinatura">
-                                            <i class="bi bi-x-circle"></i>
-                                        </button>
-                                    </form>
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                <span class="row-metric-label">expira</span>
+                            </div>
+                        </div>
+                        <div class="row-actions">
+                            <button class="row-action-btn" onclick="viewDetails({{ sub.id }})" title="Detalhes">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            {% if sub.status == 'active' %}
+                            <form method="POST"
+                                  action="{{ url_for('groups.subscribers', id=group.id) }}"
+                                  style="display: inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit"
+                                        class="row-action-btn"
+                                        style="color: var(--galactic-danger);"
+                                        onclick="return confirm('Cancelar assinatura de @{{ sub.telegram_username }}?')"
+                                        title="Cancelar">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
-            
+
             <!-- Paginação -->
             {% if total_pages > 1 %}
-            <div class="card-footer bg-white">
+            <div class="pagination-wrapper">
                 <nav>
                     <ul class="pagination pagination-sm mb-0">
                         {% if page > 1 %}
@@ -225,7 +245,7 @@
                             </a>
                         </li>
                         {% endif %}
-                        
+
                         {% for p in range(1, total_pages + 1) %}
                             {% if p == page %}
                             <li class="page-item active">
@@ -241,7 +261,7 @@
                             </li>
                             {% endif %}
                         {% endfor %}
-                        
+
                         {% if page < total_pages %}
                         <li class="page-item">
                             <a class="page-link" href="?page={{ page + 1 }}&{{ request.query_string.decode() }}">
@@ -253,9 +273,10 @@
                 </nav>
             </div>
             {% endif %}
+
             {% else %}
-            <div class="empty-state">
-                <i class="bi bi-people"></i>
+            <div class="empty-state-v2">
+                <div class="empty-icon"><i class="bi bi-people"></i></div>
                 <h4>Nenhum assinante encontrado</h4>
                 <p>
                     {% if request.args.get('search') or request.args.get('status') or request.args.get('plan_id') %}
@@ -268,16 +289,25 @@
             {% endif %}
         </div>
 
-        <!-- Ações Adicionais -->
-        <div class="mt-4 text-center">
-            <a href="{{ url_for('groups.broadcast', group_id=group.id) }}" class="btn btn-primary">
-                <i class="bi bi-broadcast"></i> Enviar Mensagem
+        <!-- Ações -->
+        <div class="quick-actions mt-4" style="max-width: 480px; margin-left: auto; margin-right: auto;">
+            <a href="{{ url_for('groups.broadcast', group_id=group.id) }}" class="qa-tile">
+                <div class="qa-icon" style="background: rgba(124, 92, 252, 0.15); color: #7c5cfc;">
+                    <i class="bi bi-broadcast"></i>
+                </div>
+                <span>Mensagem</span>
             </a>
-            <a href="{{ url_for('groups.edit', id=group.id) }}" class="btn btn-outline-primary">
-                <i class="bi bi-gear"></i> Configurações do Grupo
+            <a href="{{ url_for('groups.edit', id=group.id) }}" class="qa-tile">
+                <div class="qa-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">
+                    <i class="bi bi-gear-fill"></i>
+                </div>
+                <span>Configurações</span>
             </a>
-            <a href="{{ url_for('groups.list') }}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> Voltar aos Grupos
+            <a href="{{ url_for('groups.list') }}" class="qa-tile">
+                <div class="qa-icon" style="background: rgba(255, 255, 255, 0.06); color: var(--galactic-text-secondary);">
+                    <i class="bi bi-arrow-left"></i>
+                </div>
+                <span>Voltar</span>
             </a>
         </div>
     </div>
@@ -305,53 +335,34 @@
 
 {% block extra_js %}
 <script>
-// Copiar link de compartilhamento
 function copyShareLink() {
     const input = document.getElementById('shareLink');
     input.select();
     navigator.clipboard.writeText(input.value).then(function() {
-        const btn = event.target.closest('button');
-        const originalHtml = btn.innerHTML;
-        btn.innerHTML = '<i class="bi bi-check"></i> Copiado!';
-        btn.classList.add('btn-success');
-        btn.classList.remove('btn-primary');
-        
-        setTimeout(() => {
-            btn.innerHTML = originalHtml;
-            btn.classList.remove('btn-success');
-            btn.classList.add('btn-primary');
-        }, 2000);
+        const btn = input.nextElementSibling;
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check"></i>';
+        btn.style.color = '#34d399';
+        setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 2000);
     });
 }
 
-// Exportar assinantes
 function exportSubscribers() {
     window.location.href = "{{ url_for('groups.export_subscribers', id=group.id) }}";
 }
 
-// Ver detalhes do assinante
 function viewDetails(subId) {
     const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
     modal.show();
-    
-    // Carregar detalhes via AJAX
     fetch(`/groups/{{ group.id }}/subscribers/${subId}/details`)
         .then(response => response.text())
         .then(html => {
             document.querySelector('#detailsModal .modal-body').innerHTML = html;
         })
         .catch(error => {
-            console.error('Erro ao carregar detalhes:', error);
-            document.querySelector('#detailsModal .modal-body').innerHTML = 
+            document.querySelector('#detailsModal .modal-body').innerHTML =
                 '<div class="alert alert-danger">Erro ao carregar detalhes</div>';
         });
 }
-
-// Auto-submit do formulário quando mudar os filtros
-document.querySelectorAll('select[name="status"], select[name="plan_id"]').forEach(select => {
-    select.addEventListener('change', function() {
-        this.closest('form').submit();
-    });
-});
 </script>
 {% endblock %}

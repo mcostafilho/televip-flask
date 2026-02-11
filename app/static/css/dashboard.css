@@ -171,6 +171,9 @@
 .stat-card.stat-info:hover {
     box-shadow: 0 10px 40px rgba(56, 189, 248, 0.12), 0 0 0 1px rgba(56, 189, 248, 0.15) inset;
 }
+.stat-card.stat-danger:hover {
+    box-shadow: 0 10px 40px rgba(248, 113, 113, 0.1), 0 0 0 1px rgba(248, 113, 113, 0.12) inset;
+}
 
 /* Top accent line per variant */
 .stat-card::before {
@@ -189,6 +192,7 @@
 .stat-card.stat-primary::before { background: linear-gradient(90deg, #7c5cfc, #a78bfa); }
 .stat-card.stat-warning::before { background: linear-gradient(90deg, #fbbf24, #fcd34d); }
 .stat-card.stat-info::before { background: linear-gradient(90deg, #38bdf8, #7dd3fc); }
+.stat-card.stat-danger::before { background: linear-gradient(90deg, #f87171, #fca5a5); }
 
 .stat-card::after {
     content: '';
@@ -293,6 +297,14 @@
 }
 .stat-card:hover .stat-icon.warning {
     box-shadow: 0 0 20px rgba(251, 191, 36, 0.2);
+}
+
+.stat-icon.danger {
+    background: rgba(248, 113, 113, 0.15);
+    color: var(--galactic-danger);
+}
+.stat-card:hover .stat-icon.danger {
+    box-shadow: 0 0 20px rgba(248, 113, 113, 0.2);
 }
 
 /* Mini sparkline bar in stat card */
@@ -693,6 +705,11 @@
     background: rgba(255, 255, 255, 0.25);
 }
 
+.glow-dot.yellow {
+    background: var(--galactic-warning);
+    box-shadow: 0 0 6px rgba(251, 191, 36, 0.5);
+}
+
 /* Copy link inline */
 .row-link-copy {
     display: flex;
@@ -748,8 +765,10 @@
     line-height: 1.2;
 }
 
-.row-metric-value.cyan  { color: var(--galactic-accent-2); }
-.row-metric-value.green { color: var(--galactic-success); }
+.row-metric-value.cyan   { color: var(--galactic-accent-2); }
+.row-metric-value.green  { color: var(--galactic-success); }
+.row-metric-value.yellow { color: var(--galactic-warning); }
+.row-metric-value.red    { color: var(--galactic-danger); }
 
 .row-metric-label {
     font-size: 0.68rem;
@@ -1257,6 +1276,15 @@
 .dashboard-wrapper .pagination .page-item.disabled .page-link {
     background: rgba(255, 255, 255, 0.02);
     color: var(--galactic-text-secondary);
+}
+
+/* Pagination wrapper inside content-card */
+.pagination-wrapper {
+    display: flex;
+    justify-content: center;
+    padding-top: 1.25rem;
+    margin-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 /* === Table responsive scroll === */

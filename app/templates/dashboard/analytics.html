@@ -10,13 +10,18 @@
 <div class="dashboard-wrapper analytics-page">
     <div class="dashboard-container">
         <!-- Header -->
-        <div class="dashboard-header">
-            <div class="row align-items-center">
-                <div class="col">
-                    <h1 class="h2 mb-1">Analytics</h1>
-                    <p class="text-muted mb-0">Análise detalhada do seu desempenho</p>
+        <div class="dashboard-header welcome-header">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="welcome-avatar">
+                        <i class="bi bi-bar-chart-line-fill" style="font-size: 1.2rem;"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 mb-1">Analytics</h1>
+                        <p class="text-muted mb-0">Análise detalhada do seu desempenho</p>
+                    </div>
                 </div>
-                <div class="col-auto">
+                <div>
                     <div class="period-selector">
                         <form method="GET" class="d-inline-flex align-items-center">
                             <i class="bi bi-calendar3 me-2 text-muted"></i>
@@ -31,97 +36,67 @@
             </div>
         </div>
 
-        <!-- Cards de Métricas Principais -->
+        <!-- Cards de Métricas -->
         <div class="analytics-grid">
-            <!-- Receita Total -->
-            <div class="stat-card">
+            <div class="stat-card stat-success">
                 <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="stat-icon success">
-                            <i class="bi bi-cash-stack"></i>
-                        </div>
-                    </div>
-                    <div class="flex-grow-1 ms-3">
+                    <div class="stat-icon success"><i class="bi bi-cash-stack"></i></div>
+                    <div class="ms-3">
                         <p class="text-muted mb-1 small">Receita Total</p>
-                        <h3 class="mb-0 text-success">R$ {{ "%.2f"|format(stats.total_revenue) }}</h3>
+                        <h3 class="mb-0">R$ <span class="countup" data-target="{{ "%.2f"|format(stats.total_revenue) }}">0,00</span></h3>
                         <small class="text-muted">no período selecionado</small>
                     </div>
                 </div>
             </div>
 
-            <!-- Total de Transações -->
-            <div class="stat-card">
+            <div class="stat-card stat-primary">
                 <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="stat-icon primary">
-                            <i class="bi bi-receipt"></i>
-                        </div>
-                    </div>
-                    <div class="flex-grow-1 ms-3">
-                        <p class="text-muted mb-1 small">Total de Transações</p>
-                        <h3 class="mb-0">{{ stats.total_transactions }}</h3>
+                    <div class="stat-icon primary"><i class="bi bi-receipt"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Transações</p>
+                        <h3 class="mb-0"><span class="countup" data-target="{{ stats.total_transactions }}" data-decimals="0">0</span></h3>
                         <small class="text-muted">pagamentos processados</small>
                     </div>
                 </div>
             </div>
 
-            <!-- Ticket Médio -->
-            <div class="stat-card">
+            <div class="stat-card stat-warning">
                 <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="stat-icon warning">
-                            <i class="bi bi-calculator"></i>
-                        </div>
-                    </div>
-                    <div class="flex-grow-1 ms-3">
+                    <div class="stat-icon warning"><i class="bi bi-calculator"></i></div>
+                    <div class="ms-3">
                         <p class="text-muted mb-1 small">Ticket Médio</p>
-                        <h3 class="mb-0 text-primary">R$ {{ "%.2f"|format(stats.average_ticket) }}</h3>
+                        <h3 class="mb-0">R$ <span class="countup" data-target="{{ "%.2f"|format(stats.average_ticket) }}">0,00</span></h3>
                         <small class="text-muted">por transação</small>
                     </div>
                 </div>
             </div>
 
-            <!-- Assinantes Ativos -->
-            <div class="stat-card">
+            <div class="stat-card stat-info">
                 <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="stat-icon info">
-                            <i class="bi bi-people-fill"></i>
-                        </div>
-                    </div>
-                    <div class="flex-grow-1 ms-3">
+                    <div class="stat-icon info"><i class="bi bi-people-fill"></i></div>
+                    <div class="ms-3">
                         <p class="text-muted mb-1 small">Assinantes Ativos</p>
-                        <h3 class="mb-0">{{ stats.total_subscribers }}</h3>
+                        <h3 class="mb-0"><span class="countup" data-target="{{ stats.total_subscribers }}" data-decimals="0">0</span></h3>
                         <small class="text-muted">em todos os grupos</small>
                     </div>
                 </div>
             </div>
 
-            <!-- Novos Assinantes -->
-            <div class="stat-card">
+            <div class="stat-card stat-info">
                 <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="stat-icon info">
-                            <i class="bi bi-person-plus-fill"></i>
-                        </div>
-                    </div>
-                    <div class="flex-grow-1 ms-3">
+                    <div class="stat-icon info"><i class="bi bi-person-plus-fill"></i></div>
+                    <div class="ms-3">
                         <p class="text-muted mb-1 small">Novos Assinantes</p>
-                        <h3 class="mb-0 text-info">{{ stats.new_subscribers }}</h3>
+                        <h3 class="mb-0"><span class="countup" data-target="{{ stats.new_subscribers }}" data-decimals="0">0</span></h3>
                         <small class="text-muted">no período</small>
                     </div>
                 </div>
             </div>
 
-            <!-- Taxa de Conversão -->
-            <div class="stat-card">
+            <div class="stat-card stat-success">
                 <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="stat-icon success">
-                            <i class="bi bi-percent"></i>
-                        </div>
-                    </div>
-                    <div class="flex-grow-1 ms-3">
+                    <div class="stat-icon success"><i class="bi bi-percent"></i></div>
+                    <div class="ms-3">
                         <p class="text-muted mb-1 small">Taxa de Conversão</p>
                         <h3 class="mb-0">
                             {% if stats.total_subscribers > 0 %}
@@ -138,124 +113,98 @@
 
         <!-- Gráficos -->
         <div class="row g-4 mb-4">
-            <!-- Receita por Dia -->
             <div class="col-lg-8">
-                <div class="chart-card">
-                    <div class="card-header">
-                        <i class="bi bi-graph-up text-success"></i> Receita por Dia
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container" style="height: 300px;">
-                            <canvas id="revenueChart"></canvas>
-                        </div>
+                <div class="content-card">
+                    <h5><i class="bi bi-graph-up"></i> Receita por Dia</h5>
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="revenueChart"></canvas>
                     </div>
                 </div>
             </div>
-            
-            <!-- Receita por Grupo -->
             <div class="col-lg-4">
-                <div class="chart-card">
-                    <div class="card-header">
-                        <i class="bi bi-pie-chart-fill text-primary"></i> Receita por Grupo
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container" style="height: 300px;">
-                            <canvas id="groupChart"></canvas>
-                        </div>
+                <div class="content-card">
+                    <h5><i class="bi bi-pie-chart-fill"></i> Receita por Grupo</h5>
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="groupChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="row g-4 mb-4">
-            <!-- Novos Assinantes -->
             <div class="col-lg-8">
-                <div class="chart-card">
-                    <div class="card-header">
-                        <i class="bi bi-bar-chart-fill text-info"></i> Novos Assinantes por Dia
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container" style="height: 300px;">
-                            <canvas id="subscribersChart"></canvas>
-                        </div>
+                <div class="content-card">
+                    <h5><i class="bi bi-bar-chart-fill"></i> Novos Assinantes por Dia</h5>
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="subscribersChart"></canvas>
                     </div>
                 </div>
             </div>
-            
-            <!-- Receita por Plano -->
             <div class="col-lg-4">
-                <div class="chart-card">
-                    <div class="card-header">
-                        <i class="bi bi-pie-chart text-warning"></i> Receita por Plano
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container" style="height: 300px;">
-                            <canvas id="planChart"></canvas>
-                        </div>
+                <div class="content-card">
+                    <h5><i class="bi bi-pie-chart"></i> Receita por Plano</h5>
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="planChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Tabela de Performance por Grupo -->
+        <!-- Performance por Grupo -->
         <div class="content-card">
-            <h5 class="mb-4">
-                <i class="bi bi-table"></i> Performance por Grupo
-            </h5>
-            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="bi bi-trophy"></i> Performance por Grupo</h5>
+                <a href="{{ url_for('groups.list') }}" class="link-see-all">
+                    Ver grupos <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+
             {% if groups %}
-            <div class="custom-table">
-                <table class="table table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th>Grupo</th>
-                            <th class="text-center">Assinantes</th>
-                            <th class="text-center">Receita (período)</th>
-                            <th class="text-center">Ticket Médio</th>
-                            <th class="text-center">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for group in groups %}
-                        <tr>
-                            <td>
-                                <div>
-                                    <strong>{{ group.name }}</strong>
-                                    {% if group.description %}
-                                    <br>
-                                    <small class="text-muted">{{ group.description[:50] }}...</small>
-                                    {% endif %}
-                                </div>
-                            </td>
-                            <td class="text-center">
-                                <span class="badge bg-info">{{ group.total_subscribers or 0 }}</span>
-                            </td>
-                            <td class="text-center">
-                                <strong class="text-success">R$ {{ "%.2f"|format(group.period_revenue or 0) }}</strong>
-                            </td>
-                            <td class="text-center">
-                                R$ {{ "%.2f"|format(group.average_ticket or 0) }}
-                            </td>
-                            <td class="text-center">
+            <div class="row-list">
+                {% for group in groups %}
+                <div class="row-item">
+                    <div class="row-item-left">
+                        <div class="row-icon {% if group.is_active %}active{% else %}inactive{% endif %}">
+                            <i class="bi bi-telegram"></i>
+                        </div>
+                        <div class="row-info">
+                            <div class="row-title">
+                                {{ group.name }}
                                 {% if group.is_active %}
-                                    <span class="badge bg-success">
-                                        <i class="bi bi-check-circle"></i> Ativo
-                                    </span>
+                                    <span class="glow-dot green"></span>
                                 {% else %}
-                                    <span class="badge bg-secondary">
-                                        <i class="bi bi-x-circle"></i> Inativo
-                                    </span>
+                                    <span class="glow-dot gray"></span>
                                 {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                            </div>
+                            {% if group.description %}
+                            <div class="row-sub">{{ group.description[:60] }}{% if group.description|length > 60 %}...{% endif %}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row-item-right">
+                        <div class="row-metrics">
+                            <div class="row-metric">
+                                <span class="row-metric-value cyan">{{ group.total_subscribers or 0 }}</span>
+                                <span class="row-metric-label">assinantes</span>
+                            </div>
+                            <div class="row-metric">
+                                <span class="row-metric-value green">R$ {{ "%.2f"|format(group.period_revenue or 0) }}</span>
+                                <span class="row-metric-label">receita</span>
+                            </div>
+                            <div class="row-metric">
+                                <span class="row-metric-value" style="color: var(--galactic-text-bright);">R$ {{ "%.2f"|format(group.average_ticket or 0) }}</span>
+                                <span class="row-metric-label">ticket médio</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
             {% else %}
-            <div class="empty-state py-5">
-                <i class="bi bi-bar-chart-line" style="font-size: 4rem; color: #dee2e6;"></i>
-                <p class="text-muted mt-3">Nenhum grupo criado ainda</p>
+            <div class="empty-state-v2">
+                <div class="empty-icon"><i class="bi bi-bar-chart-line"></i></div>
+                <h4>Nenhum grupo criado ainda</h4>
+                <p>Crie seu primeiro grupo para ver analytics</p>
                 <a href="{{ url_for('groups.create') }}" class="btn btn-primary">
                     <i class="bi bi-plus-circle"></i> Criar Primeiro Grupo
                 </a>
@@ -269,12 +218,11 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
-// Configuração padrão dos gráficos
-Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+// Galactic chart defaults
+Chart.defaults.font.family = "'Poppins', -apple-system, BlinkMacSystemFont, sans-serif";
 Chart.defaults.font.size = 12;
 Chart.defaults.color = '#8b8fad';
 
-// Galactic tooltip config
 const galacticTooltip = {
     backgroundColor: 'rgba(11, 14, 26, 0.95)',
     titleColor: '#e2e8f0',
@@ -285,7 +233,6 @@ const galacticTooltip = {
     cornerRadius: 8
 };
 
-// Galactic palette
 const galacticPalette = [
     'rgba(124, 92, 252, 0.8)',
     'rgba(56, 189, 248, 0.8)',
@@ -294,12 +241,10 @@ const galacticPalette = [
     'rgba(248, 113, 113, 0.8)'
 ];
 
-// Dados dos gráficos
 const chartsData = {{ charts_data | tojson }};
 
-// Gráfico de Receita por Dia
-const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-new Chart(revenueCtx, {
+// Revenue line chart
+new Chart(document.getElementById('revenueChart').getContext('2d'), {
     type: 'line',
     data: {
         labels: chartsData.revenue_by_day.labels,
@@ -307,7 +252,7 @@ new Chart(revenueCtx, {
             label: 'Receita (R$)',
             data: chartsData.revenue_by_day.data,
             borderColor: '#7c5cfc',
-            backgroundColor: 'rgba(124, 92, 252, 0.15)',
+            backgroundColor: 'rgba(124, 92, 252, 0.12)',
             borderWidth: 3,
             tension: 0.4,
             fill: true,
@@ -319,87 +264,48 @@ new Chart(revenueCtx, {
         }]
     },
     options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false,
         plugins: {
             legend: { display: false },
-            tooltip: {
-                ...galacticTooltip,
-                titleFont: { size: 14 },
-                bodyFont: { size: 13 },
-                callbacks: {
-                    label: function(context) {
-                        return 'Receita: R$ ' + context.parsed.y.toFixed(2);
-                    }
-                }
-            }
+            tooltip: { ...galacticTooltip, callbacks: { label: ctx => 'Receita: R$ ' + ctx.parsed.y.toFixed(2) } }
         },
         scales: {
-            x: {
-                grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                ticks: { color: '#8b8fad', font: { size: 11 } }
-            },
-            y: {
-                beginAtZero: true,
-                grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                ticks: {
-                    color: '#8b8fad',
-                    callback: function(value) {
-                        return 'R$ ' + value.toFixed(2);
-                    }
-                }
-            }
+            x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b8fad', font: { size: 11 } } },
+            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b8fad', callback: v => 'R$ ' + v.toFixed(0) } }
         }
     }
 });
 
-// Gráfico de Novos Assinantes
-const subscribersCtx = document.getElementById('subscribersChart').getContext('2d');
-new Chart(subscribersCtx, {
+// Subscribers bar chart
+new Chart(document.getElementById('subscribersChart').getContext('2d'), {
     type: 'bar',
     data: {
         labels: chartsData.subscribers_by_day.labels,
         datasets: [{
             label: 'Novos Assinantes',
             data: chartsData.subscribers_by_day.data,
-            backgroundColor: 'rgba(56, 189, 248, 0.6)',
+            backgroundColor: 'rgba(56, 189, 248, 0.5)',
             borderColor: '#38bdf8',
             borderWidth: 2,
             borderRadius: 8,
-            borderSkipped: false,
+            borderSkipped: false
         }]
     },
     options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false,
         plugins: {
             legend: { display: false },
-            tooltip: {
-                ...galacticTooltip,
-                callbacks: {
-                    label: function(context) {
-                        return 'Novos assinantes: ' + context.parsed.y;
-                    }
-                }
-            }
+            tooltip: { ...galacticTooltip, callbacks: { label: ctx => 'Novos: ' + ctx.parsed.y } }
         },
         scales: {
-            x: {
-                grid: { display: false },
-                ticks: { color: '#8b8fad' }
-            },
-            y: {
-                beginAtZero: true,
-                grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                ticks: { color: '#8b8fad', stepSize: 1, precision: 0 }
-            }
+            x: { grid: { display: false }, ticks: { color: '#8b8fad' } },
+            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b8fad', stepSize: 1, precision: 0 } }
         }
     }
 });
 
-// Gráfico de Receita por Grupo (Donut)
-const groupCtx = document.getElementById('groupChart').getContext('2d');
-new Chart(groupCtx, {
+// Revenue by Group doughnut
+new Chart(document.getElementById('groupChart').getContext('2d'), {
     type: 'doughnut',
     data: {
         labels: chartsData.revenue_by_group.labels.length > 0 ? chartsData.revenue_by_group.labels : ['Sem dados'],
@@ -411,79 +317,55 @@ new Chart(groupCtx, {
         }]
     },
     options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '65%',
+        responsive: true, maintainAspectRatio: false, cutout: '65%',
         plugins: {
-            legend: {
-                position: 'bottom',
-                labels: {
-                    color: '#8b8fad',
-                    padding: 15,
-                    usePointStyle: true,
-                    font: { size: 12 }
-                }
-            },
-            tooltip: {
-                ...galacticTooltip,
-                callbacks: {
-                    label: function(context) {
-                        const label = context.label || '';
-                        const value = 'R$ ' + context.parsed.toFixed(2);
-                        const percentage = ((context.parsed / context.dataset.data.reduce((a, b) => a + b, 0)) * 100).toFixed(1);
-                        return label + ': ' + value + ' (' + percentage + '%)';
-                    }
-                }
-            }
+            legend: { position: 'bottom', labels: { color: '#8b8fad', padding: 15, usePointStyle: true, font: { size: 11 } } },
+            tooltip: { ...galacticTooltip, callbacks: { label: ctx => { const pct = ((ctx.parsed / ctx.dataset.data.reduce((a,b)=>a+b,0))*100).toFixed(1); return ctx.label + ': R$ ' + ctx.parsed.toFixed(2) + ' (' + pct + '%)'; } } }
         }
     }
 });
 
-// Gráfico de Receita por Plano
-const planCtx = document.getElementById('planChart').getContext('2d');
-new Chart(planCtx, {
+// Revenue by Plan pie
+new Chart(document.getElementById('planChart').getContext('2d'), {
     type: 'pie',
     data: {
         labels: chartsData.revenue_by_plan.labels.length > 0 ? chartsData.revenue_by_plan.labels : ['Sem dados'],
         datasets: [{
             data: chartsData.revenue_by_plan.data.length > 0 ? chartsData.revenue_by_plan.data : [1],
-            backgroundColor: [
-                'rgba(251, 191, 36, 0.8)',
-                'rgba(248, 113, 113, 0.8)',
-                'rgba(124, 92, 252, 0.8)',
-                'rgba(52, 211, 153, 0.8)',
-                'rgba(56, 189, 248, 0.8)'
-            ],
+            backgroundColor: ['rgba(251,191,36,0.8)','rgba(248,113,113,0.8)','rgba(124,92,252,0.8)','rgba(52,211,153,0.8)','rgba(56,189,248,0.8)'],
             borderColor: 'rgba(11, 14, 26, 0.8)',
             borderWidth: 2
         }]
     },
     options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false,
         plugins: {
-            legend: {
-                position: 'bottom',
-                labels: {
-                    color: '#8b8fad',
-                    padding: 15,
-                    usePointStyle: true,
-                    font: { size: 12 }
-                }
-            },
-            tooltip: {
-                ...galacticTooltip,
-                callbacks: {
-                    label: function(context) {
-                        const label = context.label || '';
-                        const value = 'R$ ' + context.parsed.toFixed(2);
-                        const percentage = ((context.parsed / context.dataset.data.reduce((a, b) => a + b, 0)) * 100).toFixed(1);
-                        return label + ': ' + value + ' (' + percentage + '%)';
-                    }
-                }
-            }
+            legend: { position: 'bottom', labels: { color: '#8b8fad', padding: 15, usePointStyle: true, font: { size: 11 } } },
+            tooltip: { ...galacticTooltip, callbacks: { label: ctx => { const pct = ((ctx.parsed / ctx.dataset.data.reduce((a,b)=>a+b,0))*100).toFixed(1); return ctx.label + ': R$ ' + ctx.parsed.toFixed(2) + ' (' + pct + '%)'; } } }
         }
     }
+});
+
+// CountUp
+function animateCountUp(el) {
+    const raw = el.dataset.target;
+    const decimals = parseInt(el.dataset.decimals ?? '2');
+    const target = parseFloat(raw.replace(',', '.')) || 0;
+    const duration = 1200;
+    const start = performance.now();
+    function tick(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = (target * eased).toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+        if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+}
+document.addEventListener('DOMContentLoaded', function() {
+    const obs = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) { animateCountUp(e.target); obs.unobserve(e.target); } });
+    }, { threshold: 0.3 });
+    document.querySelectorAll('.countup').forEach(el => obs.observe(el));
 });
 </script>
 {% endblock %}
