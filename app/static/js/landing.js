@@ -322,39 +322,70 @@
       return reduced ? 0.6 : 0.78; // md
     }
 
-    // Landing zones: LEFT (3-18%) or RIGHT (82-97%) — never center
-    // Vertical: clamped 8-88% to avoid edge clipping
-    function landPos(side) {
-      var x, y;
-      if (side === 'left') {
-        x = 3 + Math.random() * 15;
-      } else {
-        x = 82 + Math.random() * 15;
+    // ── OVERLAP TRACKING ──
+    var active = []; // { x, y, id } of currently visible cards
+    var MIN_DIST = 14; // minimum % distance between cards
+
+    function isTooClose(x, y) {
+      for (var i = 0; i < active.length; i++) {
+        var dx = x - active[i].x;
+        var dy = y - active[i].y;
+        if (Math.sqrt(dx * dx + dy * dy) < MIN_DIST) return true;
       }
-      y = 8 + Math.random() * 80;
+      return false;
+    }
+
+    // ── SAFE LANDING ZONES ──
+    // Accounts for card width (~14% of field) so cards never:
+    //   - clip right edge
+    //   - invade center text (25%-75% is exclusion zone)
+    function landPos(side) {
+      var fieldW = field.offsetWidth || 1200;
+      var cardW = 14; // ~14% average card width
+      var x, y, attempts = 0;
+
+      do {
+        if (side === 'left') {
+          // Left edge: 1% to (25% - cardW) → card right edge stays under 25%
+          x = 1 + Math.random() * Math.max(5, 24 - cardW);
+        } else {
+          // Right edge: card left at 68-84%, right edge at 82-98%
+          var minX = 68;
+          var maxX = Math.min(84, 98 - cardW);
+          x = minX + Math.random() * (maxX - minX);
+        }
+        y = 10 + Math.random() * 76; // 10-86%, avoid top/bottom edges
+        attempts++;
+      } while (isTooClose(x, y) && attempts < 6);
+
       return { x: x, y: y };
     }
 
     function animateObj(obj, side) {
       var pos = landPos(side);
       var opa = getOpacity(obj);
+      var id = Math.random(); // unique ID for tracking
+
+      // Register position
+      var posEntry = { x: pos.x, y: pos.y, id: id };
+      active.push(posEntry);
 
       // Slide-in offset
       var slideX = side === 'left'
-        ? -(reduced ? 30 : 60 + Math.random() * 50)
-        : (reduced ? 30 : 60 + Math.random() * 50);
+        ? -(reduced ? 30 : 60 + Math.random() * 40)
+        : (reduced ? 30 : 60 + Math.random() * 40);
 
       // Drift while visible (upward + slight horizontal wander)
-      var driftX = (Math.random() - 0.5) * (reduced ? 12 : 35);
-      var driftY = -(reduced ? 8 : 20) - Math.random() * (reduced ? 10 : 30);
+      var driftX = (Math.random() - 0.5) * (reduced ? 10 : 28);
+      var driftY = -(reduced ? 6 : 14) - Math.random() * (reduced ? 8 : 22);
 
-      // Random slight rotation for character
-      var startRot = (Math.random() - 0.5) * (reduced ? 5 : 20);
-      var endRot = startRot + (Math.random() - 0.5) * (reduced ? 5 : 15);
+      // Slight rotation
+      var startRot = (Math.random() - 0.5) * (reduced ? 4 : 14);
+      var endRot = startRot + (Math.random() - 0.5) * (reduced ? 4 : 10);
 
       // Timing
       var enterDur = reduced ? 1.2 : 0.6 + Math.random() * 0.5;
-      var holdDur = reduced ? 4.5 : 3 + Math.random() * 3;
+      var holdDur = reduced ? 4.5 : 3 + Math.random() * 2.5;
       var exitDur = reduced ? 1.5 : 0.8 + Math.random() * 0.5;
 
       // Place at landing position, offset by slide distance
@@ -362,15 +393,17 @@
         left: pos.x + '%',
         top: pos.y + '%',
         x: slideX,
-        y: reduced ? 0 : 15,
+        y: reduced ? 0 : 12,
         opacity: 0,
-        scale: 0.4,
+        scale: 0.5,
         rotation: startRot
       });
 
       var tl = gsap.timeline({
         onComplete: function () {
-          gsap.set(obj, { opacity: 0, left: '-200px', top: '-200px' });
+          // Remove from active tracking
+          active = active.filter(function (a) { return a.id !== id; });
+          gsap.set(obj, { opacity: 0, left: '-300px', top: '-300px' });
           pool.push(obj);
         }
       });
@@ -397,32 +430,32 @@
       // 3. Exit: fade out + shrink
       tl.to(obj, {
         opacity: 0,
-        y: driftY - (reduced ? 8 : 20),
+        y: driftY - (reduced ? 6 : 16),
         scale: 0.3,
         duration: exitDur,
         ease: 'power2.in'
       });
     }
 
-    // Spawn wave: 1-3 objects from same side
+    // Spawn wave: 1-2 cards from same side (max 2 to reduce crowding)
     function spawnWave() {
       if (!pool.length) {
-        setTimeout(spawnWave, 500);
+        setTimeout(spawnWave, 600);
         return;
       }
 
       var side = pickSide();
-      var count = Math.min(pool.length, 1 + Math.floor(Math.random() * 3));
+      var count = Math.min(pool.length, 1 + Math.floor(Math.random() * 2)); // 1-2
 
       for (var i = 0; i < count; i++) {
         var obj = pool.shift();
         (function (o, delay) {
           setTimeout(function () { animateObj(o, side); }, delay);
-        })(obj, i * (200 + Math.random() * 300));
+        })(obj, i * (300 + Math.random() * 400));
       }
 
-      // Next wave 1.5-4s later
-      setTimeout(spawnWave, 1500 + Math.random() * 2500);
+      // Next wave 2-5s later (more breathing room)
+      setTimeout(spawnWave, 2000 + Math.random() * 3000);
     }
 
     // Start after hero entrance
