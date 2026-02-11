@@ -742,7 +742,6 @@ footer,
     inset: 0;
     pointer-events: none;
     z-index: 5;
-    overflow: hidden;
     display: none; /* Hidden on mobile */
 }
 
