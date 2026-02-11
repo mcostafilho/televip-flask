@@ -20,20 +20,44 @@
 {% endif %}
 <div class="dashboard-wrapper">
     <div class="dashboard-container">
-        <!-- Header -->
-        <div class="dashboard-header">
-            <h1 class="h2 mb-1">Dashboard</h1>
-            {% if admin_viewing %}
-            <p class="text-muted mb-0">Dados de {{ admin_viewing.name }}</p>
-            {% else %}
-            <p class="text-muted mb-0">Bem-vindo de volta, {{ current_user.name }}!</p>
-            {% endif %}
+        <!-- Welcome Header -->
+        <div class="dashboard-header welcome-header">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="welcome-avatar">
+                        {% if admin_viewing %}
+                            {{ admin_viewing.name[0]|upper }}
+                        {% else %}
+                            {{ current_user.name[0]|upper }}
+                        {% endif %}
+                    </div>
+                    <div>
+                        {% if admin_viewing %}
+                        <h1 class="h3 mb-1">Dados de {{ admin_viewing.name }}</h1>
+                        <p class="text-muted mb-0">Modo administrador</p>
+                        {% else %}
+                        <h1 class="h3 mb-1">
+                            <span id="greeting"></span>, {{ current_user.name.split(' ')[0] }}!
+                        </h1>
+                        <p class="text-muted mb-0">
+                            <i class="bi bi-calendar3 me-1"></i>
+                            <span id="currentDate"></span>
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="welcome-status d-none d-md-flex">
+                    <div class="status-pill online">
+                        <span class="status-dot"></span> Plataforma online
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Cards de Estatísticas -->
         <div class="stats-grid">
             <!-- Card Saldo Disponível -->
-            <div class="stat-card">
+            <div class="stat-card stat-success">
                 <div class="d-flex align-items-center">
                     <div class="flex-shrink-0">
                         <div class="stat-icon success">
@@ -42,49 +66,54 @@
                     </div>
                     <div class="flex-grow-1 ms-3">
                         <p class="text-muted mb-1 small">Saldo Disponível</p>
-                        <h3 class="mb-0">R$ {{ "%.2f"|format(available_balance|default(0)) }}</h3>
-                        
-                        <!-- Saldo Bloqueado -->
+                        <h3 class="mb-0">
+                            R$ <span class="countup" data-target="{{ "%.2f"|format(available_balance|default(0)) }}">0,00</span>
+                        </h3>
+
                         {% if blocked_balance|default(0) > 0 %}
                         <div class="mt-2">
                             <small class="text-warning">
-                                <i class="bi bi-lock"></i> R$ {{ "%.2f"|format(blocked_balance) }} bloqueado
+                                <i class="bi bi-lock-fill"></i> R$ {{ "%.2f"|format(blocked_balance) }} bloqueado
                             </small>
-                            <a href="#" class="text-decoration-none ms-1" data-bs-toggle="modal" data-bs-target="#balanceDetailsModal">
+                            <a href="#" class="text-decoration-none ms-1" data-bs-toggle="modal" data-bs-target="#balanceDetailsModal" title="Ver detalhes">
                                 <i class="bi bi-info-circle"></i>
                             </a>
                         </div>
                         {% endif %}
-                        
-                        <div class="mt-1">
-                            <a href="#" class="btn btn-sm btn-success mt-1" data-bs-toggle="modal" data-bs-target="#withdrawModal">
+
+                        <div class="mt-2">
+                            <a href="#" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#withdrawModal">
                                 <i class="bi bi-cash-stack"></i> Sacar
                             </a>
                         </div>
                     </div>
                 </div>
+                <div class="stat-sparkline" data-values="{{ chart_data|tojson }}" data-color="green"></div>
             </div>
 
             <!-- Card Total Receita -->
-            <div class="stat-card">
+            <div class="stat-card stat-primary">
                 <div class="d-flex align-items-center">
                     <div class="flex-shrink-0">
                         <div class="stat-icon primary">
-                            <i class="bi bi-graph-up"></i>
+                            <i class="bi bi-graph-up-arrow"></i>
                         </div>
                     </div>
                     <div class="flex-grow-1 ms-3">
                         <p class="text-muted mb-1 small">Receita Total</p>
-                        <h3 class="mb-0">R$ {{ "%.2f"|format(total_revenue) }}</h3>
+                        <h3 class="mb-0">
+                            R$ <span class="countup" data-target="{{ "%.2f"|format(total_revenue) }}">0,00</span>
+                        </h3>
                         <small class="text-muted">
                             Bruto (antes das taxas)
                         </small>
                     </div>
                 </div>
+                <div class="stat-sparkline" data-values="{{ chart_data|tojson }}" data-color="purple"></div>
             </div>
 
             <!-- Card Total de Taxas -->
-            <div class="stat-card">
+            <div class="stat-card stat-warning">
                 <div class="d-flex align-items-center">
                     <div class="flex-shrink-0">
                         <div class="stat-icon warning">
@@ -93,7 +122,9 @@
                     </div>
                     <div class="flex-grow-1 ms-3">
                         <p class="text-muted mb-1 small">Total de Taxas</p>
-                        <h3 class="mb-0">R$ {{ "%.2f"|format(total_fees|default(0)) }}</h3>
+                        <h3 class="mb-0">
+                            R$ <span class="countup" data-target="{{ "%.2f"|format(total_fees|default(0)) }}">0,00</span>
+                        </h3>
                         <small class="text-muted">
                             {{ transaction_count|default(0) }} transações
                         </small>
@@ -101,19 +132,21 @@
                 </div>
             </div>
 
-            <!-- Card Total de Grupos -->
-            <div class="stat-card">
+            <!-- Card Assinantes Ativos -->
+            <div class="stat-card stat-info">
                 <div class="d-flex align-items-center">
                     <div class="flex-shrink-0">
                         <div class="stat-icon info">
-                            <i class="bi bi-collection"></i>
+                            <i class="bi bi-people-fill"></i>
                         </div>
                     </div>
                     <div class="flex-grow-1 ms-3">
                         <p class="text-muted mb-1 small">Assinantes Ativos</p>
-                        <h3 class="mb-0">{{ total_subscribers }}</h3>
+                        <h3 class="mb-0">
+                            <span class="countup" data-target="{{ total_subscribers }}" data-decimals="0">0</span>
+                        </h3>
                         <small class="text-muted">
-                            Em {{ total_groups }} grupos
+                            Em {{ total_groups }} grupo{{ 's' if total_groups != 1 else '' }}
                         </small>
                     </div>
                 </div>
@@ -139,21 +172,33 @@
             <div class="col-lg-4">
                 <div class="content-card">
                     <h5>
-                        <i class="bi bi-lightning"></i> 
+                        <i class="bi bi-lightning-fill"></i>
                         Ações Rápidas
                     </h5>
-                    <div class="action-buttons">
-                        <a href="{{ url_for('groups.create') }}" class="btn btn-primary">
-                            <i class="bi bi-plus-circle"></i> Criar Novo Grupo
+                    <div class="quick-actions">
+                        <a href="{{ url_for('groups.create') }}" class="qa-tile">
+                            <div class="qa-icon" style="background: rgba(124, 92, 252, 0.15); color: #7c5cfc;">
+                                <i class="bi bi-plus-circle-fill"></i>
+                            </div>
+                            <span>Criar Grupo</span>
                         </a>
-                        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#withdrawModal">
-                            <i class="bi bi-cash-stack"></i> Solicitar Saque
+                        <button class="qa-tile" data-bs-toggle="modal" data-bs-target="#withdrawModal">
+                            <div class="qa-icon" style="background: rgba(52, 211, 153, 0.15); color: #34d399;">
+                                <i class="bi bi-cash-stack"></i>
+                            </div>
+                            <span>Sacar</span>
                         </button>
-                        <a href="{{ url_for('dashboard.profile') }}" class="btn btn-outline-primary">
-                            <i class="bi bi-person"></i> Meu Perfil
+                        <a href="{{ url_for('dashboard.profile') }}" class="qa-tile">
+                            <div class="qa-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                            <span>Perfil</span>
                         </a>
-                        <a href="{{ url_for('dashboard.analytics') }}" class="btn btn-outline-primary">
-                            <i class="bi bi-bar-chart-line"></i> Analytics Completo
+                        <a href="{{ url_for('dashboard.analytics') }}" class="qa-tile">
+                            <div class="qa-icon" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24;">
+                                <i class="bi bi-bar-chart-line-fill"></i>
+                            </div>
+                            <span>Analytics</span>
                         </a>
                     </div>
                 </div>
@@ -501,6 +546,24 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
+// ── Contextual greeting ──
+(function() {
+    const h = new Date().getHours();
+    const greetEl = document.getElementById('greeting');
+    const dateEl  = document.getElementById('currentDate');
+    if (greetEl) {
+        if (h < 6)       greetEl.textContent = 'Boa madrugada';
+        else if (h < 12) greetEl.textContent = 'Bom dia';
+        else if (h < 18) greetEl.textContent = 'Boa tarde';
+        else              greetEl.textContent = 'Boa noite';
+    }
+    if (dateEl) {
+        const now = new Date();
+        const opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+        dateEl.textContent = now.toLocaleDateString('pt-BR', opts);
+    }
+})();
+
 // Gráfico de Receita
 const ctx = document.getElementById('revenueChart').getContext('2d');
 const revenueChart = new Chart(ctx, {
@@ -593,7 +656,7 @@ function copyLink(inputId) {
         btn.innerHTML = '<i class="bi bi-check"></i>';
         btn.classList.add('btn-success');
         btn.classList.remove('btn-outline-secondary');
-        
+
         setTimeout(() => {
             btn.innerHTML = originalHtml;
             btn.classList.remove('btn-success');
@@ -601,5 +664,71 @@ function copyLink(inputId) {
         }, 2000);
     });
 }
+
+// ── CountUp animation ──
+function animateCountUp(el) {
+    const raw = el.dataset.target;
+    const decimals = parseInt(el.dataset.decimals ?? '2');
+    const target = parseFloat(raw.replace(',', '.')) || 0;
+    const duration = 1200;
+    const start = performance.now();
+
+    function tick(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);          // ease-out cubic
+        const current = target * eased;
+        el.textContent = current.toLocaleString('pt-BR', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
+        });
+        if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+}
+
+// ── Sparkline bars ──
+function renderSparklines() {
+    document.querySelectorAll('.stat-sparkline[data-values]').forEach(container => {
+        try {
+            const values = JSON.parse(container.dataset.values);
+            const color = container.dataset.color || 'purple';
+            const max = Math.max(...values, 1);
+            container.innerHTML = '';
+            values.forEach((v, i) => {
+                const bar = document.createElement('div');
+                bar.className = 'bar ' + color;
+                bar.style.height = '0%';
+                container.appendChild(bar);
+                // Animate with stagger
+                setTimeout(() => {
+                    bar.style.height = Math.max((v / max) * 100, 6) + '%';
+                }, 300 + i * 80);
+            });
+        } catch(e) { /* ignore */ }
+    });
+}
+
+// ── Init on DOM ready ──
+document.addEventListener('DOMContentLoaded', function() {
+    // CountUp - use IntersectionObserver for viewport trigger
+    const countEls = document.querySelectorAll('.countup');
+    if ('IntersectionObserver' in window) {
+        const obs = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    animateCountUp(e.target);
+                    obs.unobserve(e.target);
+                }
+            });
+        }, { threshold: 0.3 });
+        countEls.forEach(el => obs.observe(el));
+    } else {
+        countEls.forEach(animateCountUp);
+    }
+
+    // Sparklines
+    renderSparklines();
+});
 </script>
 {% endblock %}

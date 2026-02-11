@@ -41,44 +41,129 @@ main {
     flex: 1;
 }
 
-/* Navbar Styles */
+/* ========================================
+   Navbar Glassmorphic — Logged-in Area
+   ======================================== */
 .navbar-dark {
-    background: #0b0e1a !important;
-    border-bottom: 1px solid rgba(124, 92, 252, 0.2);
-    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+    background: rgba(11, 14, 26, 0.82) !important;
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border-bottom: none;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
     z-index: 9990;
-    position: relative;
+    position: sticky;
+    top: 0;
+    transition: background 0.3s ease;
+}
+
+/* Animated gradient border bottom */
+.navbar-dark::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        #7c5cfc 20%,
+        #38bdf8 50%,
+        #7c5cfc 80%,
+        transparent 100%);
+    background-size: 200% 100%;
+    animation: navBorderGlow 4s ease-in-out infinite;
+    opacity: 0.7;
+}
+
+@keyframes navBorderGlow {
+    0%, 100% { background-position: 0% 0; }
+    50% { background-position: 100% 0; }
 }
 
 .navbar-dark .navbar-brand {
     color: #ffffff;
     font-weight: 700;
+    font-size: 1.35rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: transform 0.2s ease;
+}
+
+.navbar-dark .navbar-brand:hover {
+    transform: scale(1.03);
 }
 
 .navbar-dark .navbar-brand i {
     color: #38bdf8;
+    filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.4));
 }
 
+/* Nav links with active pill */
 .navbar-dark .nav-link {
-    color: #c8cce0;
-    transition: color 0.2s ease;
+    color: #b0b4cc;
+    transition: color 0.25s ease, background 0.25s ease;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    position: relative;
+    font-weight: 500;
+    font-size: 0.92rem;
+}
+
+.navbar-dark .nav-link i {
+    font-size: 1rem;
+    margin-right: 0.25rem;
+    opacity: 0.8;
+    transition: opacity 0.25s ease;
 }
 
 .navbar-dark .nav-link:hover,
 .navbar-dark .nav-link:focus,
 .navbar-dark .nav-link:focus-visible {
     color: #ffffff;
+    background: rgba(124, 92, 252, 0.1);
+}
+
+.navbar-dark .nav-link:hover i {
+    opacity: 1;
 }
 
 .navbar-dark .nav-link:active {
     color: #ffffff !important;
-    background: rgba(124, 92, 252, 0.25);
-    border-radius: 8px;
+    background: rgba(124, 92, 252, 0.2);
+    border-radius: 10px;
 }
 
+/* Active page indicator — glowing pill */
 .navbar-dark .nav-link.active {
-    color: #a78bfa;
+    color: #ffffff;
     font-weight: 600;
+    background: rgba(124, 92, 252, 0.18);
+}
+
+.navbar-dark .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 2px;
+    background: linear-gradient(90deg, #7c5cfc, #38bdf8);
+    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(124, 92, 252, 0.6);
+}
+
+.navbar-dark .nav-link.active i {
+    opacity: 1;
+    filter: drop-shadow(0 0 4px rgba(124, 92, 252, 0.5));
+}
+
+/* User dropdown trigger */
+.navbar-dark .dropdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
 }
 
 .navbar-dark .dropdown-toggle:active,
@@ -86,17 +171,40 @@ main {
     color: #ffffff !important;
 }
 
+/* Glassmorphic dropdown */
 .navbar .dropdown-menu {
-    background: #0f1220;
+    background: rgba(15, 18, 32, 0.92);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     border: 1px solid rgba(124, 92, 252, 0.25);
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+    border-radius: 14px;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(124, 92, 252, 0.1) inset;
     z-index: 9999;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    animation: dropdownSlide 0.2s ease-out;
+}
+
+@keyframes dropdownSlide {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 .navbar .dropdown-item {
     color: #e2e8f0;
-    padding: 8px 16px;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.navbar .dropdown-item i {
+    width: 20px;
+    text-align: center;
+    margin-right: 0.5rem;
+    opacity: 0.7;
 }
 
 .navbar .dropdown-item:hover {
@@ -104,8 +212,66 @@ main {
     color: #ffffff;
 }
 
+.navbar .dropdown-item:hover i {
+    opacity: 1;
+}
+
 .navbar .dropdown-divider {
-    border-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.08);
+    margin: 0.3rem 0;
+}
+
+/* Mobile navbar tweaks */
+@media (max-width: 991px) {
+    .navbar-dark .navbar-collapse {
+        background: rgba(11, 14, 26, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 12px;
+        padding: 0.75rem;
+        margin-top: 0.5rem;
+        border: 1px solid rgba(124, 92, 252, 0.15);
+    }
+
+    .navbar-dark .nav-link {
+        padding: 0.65rem 1rem;
+    }
+
+    .navbar-dark .nav-link.active::after {
+        display: none;
+    }
+
+    .navbar-dark .nav-link.active {
+        background: rgba(124, 92, 252, 0.2);
+        border-left: 3px solid #7c5cfc;
+        border-radius: 0 10px 10px 0;
+    }
+}
+
+/* Nav avatar mini-circle */
+.nav-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7c5cfc, #38bdf8);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    margin-right: 0.3rem;
+    flex-shrink: 0;
+    box-shadow: 0 0 8px rgba(124, 92, 252, 0.4);
+}
+
+/* Navbar toggler galactic */
+.navbar-dark .navbar-toggler {
+    border-color: rgba(124, 92, 252, 0.3);
+    padding: 0.35rem 0.6rem;
+}
+
+.navbar-dark .navbar-toggler:focus {
+    box-shadow: 0 0 0 0.2rem rgba(124, 92, 252, 0.25);
 }
 
 /* ========================================
@@ -240,22 +406,7 @@ main {
     box-shadow: 0 5px 20px rgba(124, 92, 252, 0.1);
 }
 
-/* Stats Cards */
-.stat-card {
-    border-left: 4px solid var(--primary-color);
-}
-
-.stat-card.success {
-    border-left-color: var(--secondary-color);
-}
-
-.stat-card.danger {
-    border-left-color: var(--danger-color);
-}
-
-.stat-card.warning {
-    border-left-color: #fbbf24;
-}
+/* Stats Cards — legacy border-left removed; see dashboard.css for galactic variant */
 
 /* Dashboard Grid */
 .dashboard-grid {
@@ -453,4 +604,69 @@ main {
 
 .btn-primary:hover {
     box-shadow: 0 5px 20px rgba(124, 92, 252, 0.3);
+}
+
+/* ========================================
+   Dashboard Footer (authenticated area)
+   ======================================== */
+.dash-footer {
+    background: rgba(11, 14, 26, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(124, 92, 252, 0.12);
+    padding: 1.25rem 0;
+    position: relative;
+    z-index: 3;
+    margin-top: 3rem;
+}
+
+.dash-footer-brand {
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.dash-footer-brand i {
+    color: #38bdf8;
+    margin-right: 0.2rem;
+}
+
+.dash-footer-links {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.dash-footer-links a {
+    color: #b0b4cc;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.2s ease;
+}
+
+.dash-footer-links a:hover {
+    color: #7c5cfc;
+}
+
+.dash-footer-links .sep {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.dash-footer-copy {
+    color: #6b7094;
+    font-size: 0.8rem;
+}
+
+@media (max-width: 767px) {
+    .dash-footer .row {
+        text-align: center !important;
+    }
+    .dash-footer .text-md-end {
+        text-align: center !important;
+    }
 }

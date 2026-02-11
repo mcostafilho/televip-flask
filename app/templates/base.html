@@ -52,30 +52,34 @@
                 <ul class="navbar-nav ms-auto">
                     {% if current_user.is_authenticated %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('dashboard.index') }}">
+                            <a class="nav-link{% if request.endpoint == 'dashboard.index' %} active{% endif %}" href="{{ url_for('dashboard.index') }}">
                                 <i class="bi bi-speedometer2"></i> Dashboard
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('groups.list') }}">
+                            <a class="nav-link{% if request.endpoint and request.endpoint.startswith('groups.') %} active{% endif %}" href="{{ url_for('groups.list') }}">
                                 <i class="bi bi-collection"></i> Grupos
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('dashboard.analytics') }}">
+                            <a class="nav-link{% if request.endpoint == 'dashboard.analytics' %} active{% endif %}" href="{{ url_for('dashboard.analytics') }}">
                                 <i class="bi bi-graph-up"></i> Analytics
                             </a>
                         </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                                <i class="bi bi-person-circle"></i> {{ current_user.name }}
+                                <span class="nav-avatar">{{ current_user.name[0]|upper }}</span>
+                                {{ current_user.name }}
                                 {% if session.get('admin_mode') %}
                                     <span class="badge bg-warning text-dark">Admin</span>
                                 {% endif %}
                             </a>
-                            <ul class="dropdown-menu">
+                            <ul class="dropdown-menu dropdown-menu-end">
                                 <li><a class="dropdown-item" href="{{ url_for('dashboard.profile') }}">
                                     <i class="bi bi-person"></i> Perfil
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('dashboard.transactions') }}">
+                                    <i class="bi bi-receipt"></i> Transações
                                 </a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 {% if current_user.is_admin and not session.get('admin_mode') %}
@@ -136,16 +140,25 @@
     
     <!-- Footer -->
     {% if current_user.is_authenticated %}
-    <footer class="text-white py-4 mt-5" style="background: rgba(11, 14, 26, 0.95); border-top: 1px solid rgba(124, 92, 252, 0.15); position: relative; z-index: 3;">
+    <footer class="dash-footer">
         <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5><i class="bi bi-telegram" style="color: #38bdf8;"></i> TeleVIP</h5>
-                    <p class="mb-0" style="color: #b0b4cc;">A plataforma completa para monetização de grupos no Telegram.</p>
+            <div class="row align-items-center gy-3">
+                <div class="col-md-4">
+                    <span class="dash-footer-brand">
+                        <i class="bi bi-telegram"></i> TeleVIP
+                    </span>
                 </div>
-                <div class="col-md-6 text-md-end">
-                    <p class="mb-0" style="color: #b0b4cc;">© 2024 TeleVIP. Todos os direitos reservados.</p>
-                    <small style="color: #b0b4cc;">Feito com ❤️ no Brasil</small>
+                <div class="col-md-4 text-center">
+                    <div class="dash-footer-links">
+                        <a href="{{ url_for('dashboard.profile') }}">Perfil</a>
+                        <span class="sep"></span>
+                        <a href="{{ url_for('auth.terms') }}">Termos</a>
+                        <span class="sep"></span>
+                        <a href="{{ url_for('auth.privacy') }}">Privacidade</a>
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <small class="dash-footer-copy">&copy; 2024 TeleVIP &middot; Feito no Brasil</small>
                 </div>
             </div>
         </div>
@@ -178,28 +191,28 @@
                     <ul>
                         <li><a href="{{ url_for('auth.recursos') }}">Recursos</a></li>
                         <li><a href="{{ url_for('auth.precos') }}">Preços</a></li>
-                        <li><a href="#">API</a></li>
-                        <li><a href="#">Integrações</a></li>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">API</a></li>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">Integrações</a></li>
                     </ul>
                 </div>
 
                 <div class="col-lg-2 col-md-4 mb-4">
                     <h6>EMPRESA</h6>
                     <ul>
-                        <li><a href="#">Sobre</a></li>
-                        <li><a href="#">Blog</a></li>
-                        <li><a href="#">Carreiras</a></li>
-                        <li><a href="#">Afiliados</a></li>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">Sobre</a></li>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">Blog</a></li>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">Carreiras</a></li>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">Afiliados</a></li>
                     </ul>
                 </div>
 
                 <div class="col-lg-2 col-md-4 mb-4">
                     <h6>SUPORTE</h6>
                     <ul>
-                        <li><a href="#">Central de Ajuda</a></li>
-                        <li><a href="#">Contato</a></li>
-                        <li><a href="#">Status</a></li>
-                        <li><a href="#">Comunidade</a></li>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">Central de Ajuda</a></li>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">Contato</a></li>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">Status</a></li>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">Comunidade</a></li>
                     </ul>
                 </div>
 
@@ -208,7 +221,7 @@
                     <ul>
                         <li><a href="{{ url_for('auth.privacy') }}">Privacidade</a></li>
                         <li><a href="{{ url_for('auth.terms') }}">Termos</a></li>
-                        <li><a href="#">Cookies</a></li>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">Cookies</a></li>
                         <li><a href="{{ url_for('auth.report') }}">Denunciar Abuso</a></li>
                     </ul>
                 </div>

@@ -61,13 +61,74 @@
 
 .dashboard-header h1,
 .dashboard-header h2,
-.dashboard-header .h2 {
+.dashboard-header .h2,
+.dashboard-header .h3 {
     color: var(--galactic-text-bright);
 }
 
 .dashboard-header p,
 .dashboard-header .text-muted {
     color: var(--galactic-text-secondary) !important;
+}
+
+/* === Welcome Header === */
+.welcome-header {
+    padding: 1.75rem 2rem;
+}
+
+.welcome-avatar {
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--galactic-accent-1), var(--galactic-accent-2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    box-shadow: 0 4px 16px rgba(124, 92, 252, 0.35);
+}
+
+.welcome-header .h3 {
+    font-weight: 700;
+    font-size: 1.35rem;
+    letter-spacing: -0.01em;
+}
+
+.welcome-status {
+    align-items: center;
+}
+
+.status-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.status-pill.online {
+    background: rgba(52, 211, 153, 0.1);
+    color: var(--galactic-success);
+    border-color: rgba(52, 211, 153, 0.2);
+}
+
+.status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--galactic-success);
+    animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.5); }
+    50%      { box-shadow: 0 0 0 4px rgba(52, 211, 153, 0); }
 }
 
 /* === Grid de Estatisticas === */
@@ -86,7 +147,7 @@
     border: 1px solid var(--galactic-card-border);
     border-radius: var(--galactic-border-radius);
     padding: 1.5rem;
-    transition: all 0.3s ease;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
 }
@@ -94,9 +155,40 @@
 .stat-card:hover {
     transform: translateY(-5px);
     background: var(--galactic-card-hover);
-    box-shadow: 0 10px 40px rgba(124, 92, 252, 0.15);
-    border-color: rgba(124, 92, 252, 0.3);
+    border-color: rgba(124, 92, 252, 0.35);
 }
+
+/* Per-variant hover glows */
+.stat-card.stat-success:hover {
+    box-shadow: 0 10px 40px rgba(52, 211, 153, 0.12), 0 0 0 1px rgba(52, 211, 153, 0.15) inset;
+}
+.stat-card.stat-primary:hover {
+    box-shadow: 0 10px 40px rgba(124, 92, 252, 0.15), 0 0 0 1px rgba(124, 92, 252, 0.15) inset;
+}
+.stat-card.stat-warning:hover {
+    box-shadow: 0 10px 40px rgba(251, 191, 36, 0.1), 0 0 0 1px rgba(251, 191, 36, 0.12) inset;
+}
+.stat-card.stat-info:hover {
+    box-shadow: 0 10px 40px rgba(56, 189, 248, 0.12), 0 0 0 1px rgba(56, 189, 248, 0.15) inset;
+}
+
+/* Top accent line per variant */
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+.stat-card:hover::before { opacity: 1; }
+.stat-card.stat-success::before { background: linear-gradient(90deg, #34d399, #6ee7b7); }
+.stat-card.stat-primary::before { background: linear-gradient(90deg, #7c5cfc, #a78bfa); }
+.stat-card.stat-warning::before { background: linear-gradient(90deg, #fbbf24, #fcd34d); }
+.stat-card.stat-info::before { background: linear-gradient(90deg, #38bdf8, #7dd3fc); }
 
 .stat-card::after {
     content: '';
@@ -105,8 +197,9 @@
     right: 0;
     width: 100px;
     height: 100px;
-    background: linear-gradient(135deg, transparent 50%, rgba(124, 92, 252, 0.05) 50%);
+    background: linear-gradient(135deg, transparent 50%, rgba(124, 92, 252, 0.04) 50%);
     border-radius: 0 var(--galactic-border-radius) 0 0;
+    pointer-events: none;
 }
 
 .stat-card p,
@@ -120,37 +213,113 @@
 
 .stat-card h3 {
     color: var(--galactic-text-bright);
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
 }
 
+/* Trend indicator */
+.stat-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+}
+
+.stat-trend.up {
+    color: var(--galactic-success);
+    background: rgba(52, 211, 153, 0.12);
+}
+
+.stat-trend.down {
+    color: var(--galactic-danger);
+    background: rgba(248, 113, 113, 0.12);
+}
+
+.stat-trend.neutral {
+    color: var(--galactic-text-secondary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Stat icon */
 .stat-icon {
-    width: 60px;
-    height: 60px;
+    width: 56px;
+    height: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    font-size: 24px;
+    border-radius: 14px;
+    font-size: 22px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stat-card:hover .stat-icon {
+    transform: scale(1.08);
 }
 
 .stat-icon.success {
     background: rgba(52, 211, 153, 0.15);
     color: var(--galactic-success);
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
+}
+.stat-card:hover .stat-icon.success {
+    box-shadow: 0 0 20px rgba(52, 211, 153, 0.2);
 }
 
 .stat-icon.primary {
     background: rgba(124, 92, 252, 0.15);
     color: var(--galactic-accent-1);
 }
+.stat-card:hover .stat-icon.primary {
+    box-shadow: 0 0 20px rgba(124, 92, 252, 0.2);
+}
 
 .stat-icon.info {
     background: rgba(56, 189, 248, 0.15);
     color: var(--galactic-accent-2);
+}
+.stat-card:hover .stat-icon.info {
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
 }
 
 .stat-icon.warning {
     background: rgba(251, 191, 36, 0.15);
     color: var(--galactic-warning);
 }
+.stat-card:hover .stat-icon.warning {
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.2);
+}
+
+/* Mini sparkline bar in stat card */
+.stat-sparkline {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 28px;
+    margin-top: 0.6rem;
+}
+
+.stat-sparkline .bar {
+    flex: 1;
+    min-width: 3px;
+    border-radius: 2px 2px 0 0;
+    transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.5;
+}
+
+.stat-sparkline .bar:last-child {
+    opacity: 1;
+}
+
+.stat-sparkline .bar.green  { background: var(--galactic-success); }
+.stat-sparkline .bar.purple { background: var(--galactic-accent-1); }
+.stat-sparkline .bar.yellow { background: var(--galactic-warning); }
+.stat-sparkline .bar.cyan   { background: var(--galactic-accent-2); }
 
 /* === Cards de Conteudo === */
 .content-card {
@@ -241,7 +410,53 @@
     color: var(--galactic-text-bright);
 }
 
-/* === Botoes de Acao === */
+/* === Quick Action Tiles === */
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.qa-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 1.1rem 0.5rem;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    text-decoration: none;
+    color: var(--galactic-text-primary);
+    font-size: 0.82rem;
+    font-weight: 500;
+    transition: all 0.25s ease;
+    cursor: pointer;
+}
+
+.qa-tile:hover {
+    background: rgba(124, 92, 252, 0.08);
+    border-color: rgba(124, 92, 252, 0.25);
+    color: var(--galactic-text-bright);
+    transform: translateY(-2px);
+}
+
+.qa-icon {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 1.15rem;
+    transition: transform 0.25s ease;
+}
+
+.qa-tile:hover .qa-icon {
+    transform: scale(1.1);
+}
+
+/* Legacy fallback */
 .action-buttons {
     display: grid;
     gap: 0.75rem;
@@ -1561,6 +1776,37 @@
 
     .action-buttons {
         gap: 0.5rem;
+    }
+
+    .quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+
+    .qa-tile {
+        padding: 0.85rem 0.4rem;
+        font-size: 0.78rem;
+    }
+
+    .qa-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+
+    .welcome-header {
+        padding: 1.25rem 1.5rem;
+    }
+
+    .welcome-avatar {
+        width: 44px;
+        height: 44px;
+        font-size: 1.15rem;
+        border-radius: 12px;
+    }
+
+    .welcome-header .h3 {
+        font-size: 1.1rem;
     }
 
     .custom-table {
