@@ -640,36 +640,100 @@
     starfield.appendChild(frag);
   }
 
-  // ── 13. AMBIENT NEBULA — Cinematic Pulses ──
-  // Space image revealed in random bursts across the viewport.
-  // 3 independent pulse layers, staggered, like light through a cosmic film.
+  // ── 13. AMBIENT NEBULA — Organic Cinematic Pulses ──
+  // Space image revealed in irregular bursts across the viewport.
+  // SVG feTurbulence warps edges into organic blob shapes.
   function initMouseReveal() {
+    // Inject SVG filter for organic edge distortion
+    var svgNS = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('width', '0');
+    svg.setAttribute('height', '0');
+    svg.style.position = 'absolute';
+    var defs = document.createElementNS(svgNS, 'defs');
+    var filter = document.createElementNS(svgNS, 'filter');
+    filter.setAttribute('id', 'nebula-warp');
+    filter.setAttribute('x', '-20%');
+    filter.setAttribute('y', '-20%');
+    filter.setAttribute('width', '140%');
+    filter.setAttribute('height', '140%');
+    var turb = document.createElementNS(svgNS, 'feTurbulence');
+    turb.setAttribute('type', 'fractalNoise');
+    turb.setAttribute('baseFrequency', '0.015 0.009');
+    turb.setAttribute('numOctaves', '4');
+    turb.setAttribute('seed', '3');
+    turb.setAttribute('result', 'warp');
+    var disp = document.createElementNS(svgNS, 'feDisplacementMap');
+    disp.setAttribute('in', 'SourceGraphic');
+    disp.setAttribute('in2', 'warp');
+    disp.setAttribute('scale', '45');
+    disp.setAttribute('xChannelSelector', 'R');
+    disp.setAttribute('yChannelSelector', 'G');
+    filter.appendChild(turb);
+    filter.appendChild(disp);
+    defs.appendChild(filter);
+    svg.appendChild(defs);
+    document.body.appendChild(svg);
+
+    // Wrapper (holds SVG filter) → inner reveal (holds mask)
+    var wrap = document.createElement('div');
+    wrap.className = 'space-reveal-wrap';
+    wrap.setAttribute('aria-hidden', 'true');
     var reveal = document.createElement('div');
     reveal.className = 'space-reveal';
-    reveal.setAttribute('aria-hidden', 'true');
-    document.body.appendChild(reveal);
+    wrap.appendChild(reveal);
+    document.body.appendChild(wrap);
 
-    // 3 independent pulse states
     function pulse(n) {
-      var xProp = '--x' + n, yProp = '--y' + n, rProp = '--r' + n;
-      var maxR = isMobile ? 120 : (180 + Math.random() * 220); // 180–400px
+      var xProp = '--x' + n, yProp = '--y' + n;
+      var rxProp = '--rx' + n, ryProp = '--ry' + n;
 
-      // Random position
-      reveal.style.setProperty(xProp, (8 + Math.random() * 84) + '%');
-      reveal.style.setProperty(yProp, (8 + Math.random() * 84) + '%');
+      // Random elongation — ellipse, never a perfect circle
+      var baseR = 200 + Math.random() * 180;
+      var stretch = 1.4 + Math.random() * 1.1;
+      var maxRx, maxRy;
+      if (Math.random() > 0.5) {
+        maxRx = Math.round(baseR * stretch);
+        maxRy = Math.round(baseR);
+      } else {
+        maxRx = Math.round(baseR);
+        maxRy = Math.round(baseR * stretch);
+      }
 
-      var obj = { r: 0 };
-      // Grow
+      // Random position + drift target
+      var cx = 8 + Math.random() * 84;
+      var cy = 8 + Math.random() * 84;
+      reveal.style.setProperty(xProp, cx + '%');
+      reveal.style.setProperty(yProp, cy + '%');
+
+      var obj = { rx: 0, ry: 0, dx: 0, dy: 0 };
+
+      // Grow with subtle drift
       gsap.to(obj, {
-        r: maxR, duration: 2 + Math.random(), ease: 'power2.out',
-        onUpdate: function () { reveal.style.setProperty(rProp, obj.r + 'px'); },
+        rx: maxRx, ry: maxRy,
+        dx: (Math.random() - 0.5) * 6,
+        dy: (Math.random() - 0.5) * 6,
+        duration: 2 + Math.random(), ease: 'power2.out',
+        onUpdate: function () {
+          reveal.style.setProperty(rxProp, obj.rx + 'px');
+          reveal.style.setProperty(ryProp, obj.ry + 'px');
+          reveal.style.setProperty(xProp, (cx + obj.dx) + '%');
+          reveal.style.setProperty(yProp, (cy + obj.dy) + '%');
+        },
         onComplete: function () {
-          // Shrink
+          // Shrink with drift
           gsap.to(obj, {
-            r: 0, duration: 2.5 + Math.random(), ease: 'power2.in',
-            onUpdate: function () { reveal.style.setProperty(rProp, obj.r + 'px'); },
+            rx: 0, ry: 0,
+            dx: (Math.random() - 0.5) * 4,
+            dy: (Math.random() - 0.5) * 4,
+            duration: 2.5 + Math.random(), ease: 'power2.in',
+            onUpdate: function () {
+              reveal.style.setProperty(rxProp, obj.rx + 'px');
+              reveal.style.setProperty(ryProp, obj.ry + 'px');
+              reveal.style.setProperty(xProp, (cx + obj.dx) + '%');
+              reveal.style.setProperty(yProp, (cy + obj.dy) + '%');
+            },
             onComplete: function () {
-              // Next pulse — 1 to 2.5s random delay
               setTimeout(function () { pulse(n); }, 1000 + Math.random() * 1500);
             }
           });
