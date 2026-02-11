@@ -1702,11 +1702,9 @@ button:focus {
         display: none;
     }
 
-    /* Static starfield on mobile — kill continuous CSS animations */
-    .starfield .star {
-        animation: none;
-        opacity: 0.4;
-        box-shadow: none;
+    /* Hide starfield entirely — saves a fixed compositing layer + 18 DOM nodes */
+    .starfield {
+        display: none;
     }
 
     /* Remove backdrop-filter on mobile — saves compositing layers */

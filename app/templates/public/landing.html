@@ -32,7 +32,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"></noscript>
-    <link href="{{ url_for('static', filename='css/landing.css') }}?v=31" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/landing.css') }}?v=32" rel="stylesheet">
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
@@ -590,18 +590,18 @@
         </a>
     </div>
 
-    <!-- Animation Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-    <!-- Lenis + Three.js: desktop only (saves ~630 KiB on mobile) -->
+    <!-- Animation Libraries — desktop only (saves ~720 KiB parse + eliminates rAF loop on mobile) -->
     <script>
     if(!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)&&window.innerWidth>=768){
-      ['https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js',
-       'https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js'
-      ].forEach(function(s){var e=document.createElement('script');e.src=s;document.head.appendChild(e)})
+      document.write(
+        '<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"><\/script>'+
+        '<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"><\/script>'+
+        '<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js"><\/script>'+
+        '<script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"><\/script>'
+      );
     }
     </script>
-    <script src="{{ url_for('static', filename='js/landing.js') }}?v=32"></script>
+    <script src="{{ url_for('static', filename='js/landing.js') }}?v=33"></script>
 
     <!-- Cookie Banner -->
     <div id="cookieBanner" role="dialog" aria-label="Cookie consent" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:10000;
