@@ -46,21 +46,21 @@ class Creator(UserMixin, db.Model):
         """Descriptografa a PIX key ao acessar"""
         if not self._pix_key_encrypted:
             return None
-        try:
-            from app.utils.security import decrypt_data
-            return decrypt_data(self._pix_key_encrypted)
-        except Exception:
-            return self._pix_key_encrypted  # Fallback para dados antigos nao encriptados
+        from app.utils.security import decrypt_data
+        decrypted = decrypt_data(self._pix_key_encrypted)
+        if decrypted is None:
+            import logging
+            logging.getLogger(__name__).warning(
+                'Failed to decrypt PIX key for creator %s', self.id
+            )
+        return decrypted
 
     @pix_key.setter
     def pix_key(self, value):
         """Encripta a PIX key ao salvar"""
         if value:
-            try:
-                from app.utils.security import encrypt_data
-                self._pix_key_encrypted = encrypt_data(value)
-            except Exception:
-                self._pix_key_encrypted = value
+            from app.utils.security import encrypt_data
+            self._pix_key_encrypted = encrypt_data(value)
         else:
             self._pix_key_encrypted = None
 

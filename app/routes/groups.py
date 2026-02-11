@@ -1,4 +1,5 @@
 # app/routes/groups.py
+from markupsafe import escape
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, Response, session, current_app
 from flask_login import login_required, current_user
 from app import db, limiter
@@ -95,6 +96,12 @@ def create():
         telegram_id = request.form.get('telegram_id', '').replace(' ', '').replace('\t', '').strip()
         invite_link = request.form.get('invite_link', '').strip()
         
+        # Validar formato do telegram_id (deve ser numerico, opcionalmente com -)
+        if telegram_id and not telegram_id.lstrip('-').isdigit():
+            flash('ID do Telegram deve ser numerico.', 'error')
+            return render_template('dashboard/group_form.html',
+                                 group=None, show_success_modal=False)
+
         # Verificar se deve validar no Telegram
         skip_validation = request.form.get('skip_validation') == 'on'
         
@@ -133,8 +140,8 @@ def create():
                                              show_success_modal=False)
                     
                     if not data.get('ok'):
-                        error_msg = data.get('description', 'Erro desconhecido')
-                        flash(f'❌ Telegram: {error_msg}', 'error')
+                        error_msg = str(escape(data.get('description', 'Erro desconhecido')))
+                        flash(f'Telegram: {error_msg}', 'error')
                         return render_template('dashboard/group_form.html', 
                                              group=None,
                                              show_success_modal=False)
@@ -557,50 +564,9 @@ def subscriber_details(id, sub_id):
 
     transactions = sub.transactions.order_by(Transaction.created_at.desc()).limit(10).all()
 
-    html = f'''
-    <div class="row">
-        <div class="col-md-6">
-            <h6 class="text-muted mb-3">Informações do Assinante</h6>
-            <p><strong>Username:</strong> @{sub.telegram_username or "Sem username"}</p>
-            <p><strong>Telegram ID:</strong> {sub.telegram_user_id}</p>
-            <p><strong>Status:</strong>
-                <span class="badge bg-{"success" if sub.status == "active" and sub.end_date > now else "danger"}">
-                    {sub.status.capitalize()}
-                </span>
-            </p>
-        </div>
-        <div class="col-md-6">
-            <h6 class="text-muted mb-3">Assinatura</h6>
-            <p><strong>Plano:</strong> {sub.plan.name} - R$ {sub.plan.price:.2f}</p>
-            <p><strong>Início:</strong> {sub.start_date.strftime("%d/%m/%Y")}</p>
-            <p><strong>Expira:</strong> {sub.end_date.strftime("%d/%m/%Y")}
-                {f" ({days_left} dias)" if sub.status == "active" and days_left > 0 else ""}
-            </p>
-            <p><strong>Renovação auto:</strong> {"Sim" if sub.auto_renew else "Não"}</p>
-        </div>
-    </div>
-    '''
-
-    if transactions:
-        html += '''
-        <hr>
-        <h6 class="text-muted mb-3">Histórico de Pagamentos</h6>
-        <table class="table table-sm">
-            <thead><tr><th>Data</th><th>Valor</th><th>Status</th></tr></thead>
-            <tbody>
-        '''
-        for t in transactions:
-            status_class = "success" if t.status == "completed" else "warning" if t.status == "pending" else "danger"
-            html += f'''
-            <tr>
-                <td>{t.created_at.strftime("%d/%m/%Y %H:%M")}</td>
-                <td>R$ {t.amount:.2f}</td>
-                <td><span class="badge bg-{status_class}">{t.status.capitalize()}</span></td>
-            </tr>
-            '''
-        html += '</tbody></table>'
-
-    return html
+    return render_template('dashboard/_subscriber_details.html',
+                           sub=sub, now=now, days_left=days_left,
+                           transactions=transactions)
 
 
 @bp.route('/<int:id>/export-subscribers')

@@ -14,10 +14,16 @@ logger = logging.getLogger(__name__)
 
 
 def _regenerate_session():
-    """Regenera o session ID mantendo os dados (previne session fixation)"""
+    """Regenera o session ID mantendo os dados (previne session fixation).
+
+    Flask cookie-based sessions don't have a server-side ID, but clearing
+    and re-setting with a fresh nonce forces a new signed cookie to be issued.
+    """
     data = dict(session)
     session.clear()
     session.update(data)
+    # Add a random nonce to guarantee the cookie value changes
+    session['_csrf_nonce'] = secrets.token_hex(8)
 
 @bp.route('/')
 def index():
@@ -38,6 +44,13 @@ def login():
         remember = request.form.get('remember', False)
 
         user = Creator.query.filter_by(email=email).first()
+        if not user:
+            # Dummy check to prevent timing-based email enumeration
+            from werkzeug.security import check_password_hash
+            check_password_hash(
+                'scrypt:32768:8:1$dummy$0000000000000000000000000000000000000000000000000000000000000000',
+                password
+            )
         if user and user.check_password(password):
             if not user.is_verified:
                 flash('Confirme seu email antes de fazer login. Verifique sua caixa de entrada.', 'warning')
@@ -211,6 +224,7 @@ def reset_password(token):
     return render_template('auth/reset_password.html', token=token)
 
 @bp.route('/confirm-email/<token>')
+@limiter.limit("10 per minute")
 def confirm_email(token):
     """Confirmar email via token"""
     email = verify_confirmation_token(token)

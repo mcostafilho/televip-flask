@@ -46,6 +46,7 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(hours=2)  # Expira após 2h de inatividade
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SECURE = os.environ.get('FLASK_ENV') == 'production'
     
     # Configurações de upload
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
@@ -83,6 +84,7 @@ class Config:
     # Remember-me cookie
     REMEMBER_COOKIE_HTTPONLY = True
     REMEMBER_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_SECURE = os.environ.get('FLASK_ENV') == 'production'
     
     # Configurações de desenvolvimento
     DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() in ['true', '1', 'on']

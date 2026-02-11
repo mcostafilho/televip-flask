@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session, jsonify
 from flask_login import login_required, current_user
-from app import db
+from app import db, limiter
 from app.models import Creator, Group, Subscription, Transaction
 from app.utils.decorators import admin_required
 from datetime import datetime, timedelta
@@ -251,6 +251,7 @@ def unblock_creator(creator_id):
 @bp.route('/creator/<int:creator_id>/investigate', methods=['POST'])
 @login_required
 @admin_required
+@limiter.limit("10 per hour")
 def investigate_creator(creator_id):
     """Gerar links de convite para investigador infiltrar grupos do criador"""
     creator = Creator.query.get_or_404(creator_id)

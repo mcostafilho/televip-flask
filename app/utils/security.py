@@ -51,7 +51,7 @@ def generate_reset_token(user_id: int, password_hash: str = None, expires_in: in
 
     # Embed password hash prefix for single-use enforcement
     if password_hash:
-        payload['phash'] = password_hash[:8]
+        payload['phash'] = password_hash[:16]
 
     token = jwt.encode(
         payload,
@@ -90,7 +90,9 @@ def verify_reset_token(token: str, current_password_hash: str = None) -> Optiona
         # Verify password hash hasn't changed (token reuse prevention)
         token_phash = payload.get('phash')
         if token_phash and current_password_hash:
-            if current_password_hash[:8] != token_phash:
+            # Support both old 8-char and new 16-char tokens
+            prefix_len = len(token_phash)
+            if current_password_hash[:prefix_len] != token_phash:
                 return None
 
         return payload.get('user_id')
@@ -344,40 +346,46 @@ def verify_csrf_token(token: str, session_token: str) -> bool:
     """
     return secrets.compare_digest(token, session_token)
 
-def _derive_fernet_key(secret: str) -> bytes:
+_LEGACY_SALT = b'televip-salt'
+
+
+def _derive_fernet_key(secret: str, salt: bytes = _LEGACY_SALT) -> bytes:
     """Derive a proper Fernet key from a secret using PBKDF2."""
     import base64
     key_bytes = hashlib.pbkdf2_hmac(
-        'sha256', secret.encode('utf-8'), b'televip-salt', 100000
+        'sha256', secret.encode('utf-8'), salt, 100000
     )
     return base64.urlsafe_b64encode(key_bytes)
 
 
 def encrypt_data(data: str, key: Optional[str] = None) -> str:
     """
-    Criptografar dados sensíveis
+    Criptografar dados sensíveis com salt aleatório por valor.
+
+    Formato: salt_hex$ciphertext
 
     Args:
         data: Dados para criptografar
         key: Chave de criptografia (usa SECRET_KEY se não fornecida)
 
     Returns:
-        Dados criptografados em base64
+        Dados criptografados no formato salt_hex$ciphertext
     """
     from cryptography.fernet import Fernet
 
     if not key:
         key = _get_secret_key()
 
-    fernet_key = _derive_fernet_key(key)
+    salt = os.urandom(16)
+    fernet_key = _derive_fernet_key(key, salt)
     fernet = Fernet(fernet_key)
     encrypted = fernet.encrypt(data.encode('utf-8'))
 
-    return encrypted.decode('utf-8')
+    return salt.hex() + '$' + encrypted.decode('utf-8')
 
 def decrypt_data(encrypted_data: str, key: Optional[str] = None) -> Optional[str]:
     """
-    Descriptografar dados
+    Descriptografar dados. Suporta formato novo (salt$ciphertext) e legado.
 
     Args:
         encrypted_data: Dados criptografados
@@ -392,12 +400,19 @@ def decrypt_data(encrypted_data: str, key: Optional[str] = None) -> Optional[str
         key = _get_secret_key()
 
     try:
-        fernet_key = _derive_fernet_key(key)
-        fernet = Fernet(fernet_key)
-        decrypted = fernet.decrypt(encrypted_data.encode('utf-8'))
+        # Novo formato: salt_hex$ciphertext
+        if '$' in encrypted_data:
+            salt_hex, ciphertext = encrypted_data.split('$', 1)
+            salt = bytes.fromhex(salt_hex)
+            fernet_key = _derive_fernet_key(key, salt)
+            fernet = Fernet(fernet_key)
+            return fernet.decrypt(ciphertext.encode('utf-8')).decode('utf-8')
 
-        return decrypted.decode('utf-8')
-    except (InvalidToken, Exception):
+        # Formato legado: salt fixo
+        fernet_key = _derive_fernet_key(key, _LEGACY_SALT)
+        fernet = Fernet(fernet_key)
+        return fernet.decrypt(encrypted_data.encode('utf-8')).decode('utf-8')
+    except (InvalidToken, ValueError, Exception):
         return None
 
 def mask_sensitive_data(data: str, visible_chars: int = 4) -> str:
