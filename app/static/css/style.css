@@ -17,9 +17,23 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background-color: #0b0e1a;
     color: #e2e8f0;
     animation: pageEntrance 0.4s ease-out both;
+
+    /* Same galaxy background as landing.css — loaded here so ALL pages
+       (including base.html pages) render the nebula from the first CSS file */
+    background-color: #050816;
+    background-image:
+        radial-gradient(ellipse 80% 60% at 20% 50%, rgba(26, 10, 62, 0.7) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 50% at 82% 18%, rgba(56, 189, 248, 0.12) 0%, transparent 50%),
+        radial-gradient(ellipse 70% 60% at 75% 75%, rgba(124, 92, 252, 0.18) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 50% at 45% 25%, rgba(240, 147, 251, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 40% at 10% 85%, rgba(52, 211, 153, 0.06) 0%, transparent 45%),
+        radial-gradient(ellipse 40% 30% at 95% 45%, rgba(251, 191, 36, 0.04) 0%, transparent 40%),
+        radial-gradient(ellipse 90% 70% at 50% 50%, rgba(18, 8, 46, 0.5) 0%, rgba(11, 14, 26, 0.8) 50%, transparent 80%),
+        linear-gradient(180deg, #050816 0%, #0a0d1f 15%, #0b0e1a 30%, #1a0a3e 50%, #0d1b2a 70%, #080b16 85%, #050816 100%);
+    background-attachment: fixed;
+    background-size: cover;
 }
 
 main {
