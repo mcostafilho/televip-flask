@@ -26,11 +26,17 @@
     --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.3);
 }
 
-* {
+*,
+*::before,
+*::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
+}
+
+html {
+    overflow-x: hidden;
 }
 
 /* Page Transition */
@@ -1680,18 +1686,25 @@ button:focus {
    Mobile Performance — reduce GPU-heavy effects
    ======================================== */
 @media (max-width: 767px) {
-    /* Lighter nebula blur + kill animation on mobile GPU */
+    /* Kill fixed background — forces full-page repaint on every scroll frame on Android */
+    body {
+        background-attachment: scroll;
+    }
+
+    /* Hide nebula glows entirely — 4 fixed layers with blur are too expensive */
     .nebula-glow {
-        filter: blur(40px);
-        opacity: 0.3;
-        animation: none;
+        display: none;
     }
 
     /* No will-change on mobile (saves memory) */
     .starfield,
-    .nebula-glow,
     .shooting-star {
         will-change: auto;
+    }
+
+    /* Kill star box-shadow — 40 blur layers cause repaints */
+    .starfield .star {
+        box-shadow: none;
     }
 
     /* Remove backdrop-filter on mobile — saves compositing layers */

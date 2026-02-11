@@ -787,7 +787,7 @@
   function initStarfield() {
     var starfield = document.getElementById('starfield');
     if (!starfield) return;
-    var count = isMobile ? 40 : 350;
+    var count = isMobile ? 18 : 350;
     var frag = document.createDocumentFragment();
     for (var i = 0; i < count; i++) {
       var star = document.createElement('div');
@@ -811,16 +811,16 @@
       var c = Math.random();
       if (c < 0.08) {
         star.style.background = '#7c5cfc';
-        star.style.boxShadow = '0 0 8px rgba(124, 92, 252, 0.9)';
+        if (!isMobile) star.style.boxShadow = '0 0 8px rgba(124, 92, 252, 0.9)';
       } else if (c < 0.15) {
         star.style.background = '#38bdf8';
-        star.style.boxShadow = '0 0 8px rgba(56, 189, 248, 0.9)';
+        if (!isMobile) star.style.boxShadow = '0 0 8px rgba(56, 189, 248, 0.9)';
       } else if (c < 0.20) {
         star.style.background = '#f093fb';
-        star.style.boxShadow = '0 0 6px rgba(240, 147, 251, 0.7)';
+        if (!isMobile) star.style.boxShadow = '0 0 6px rgba(240, 147, 251, 0.7)';
       } else if (c < 0.25) {
         star.style.background = '#fbbf24';
-        star.style.boxShadow = '0 0 5px rgba(251, 191, 36, 0.6)';
+        if (!isMobile) star.style.boxShadow = '0 0 5px rgba(251, 191, 36, 0.6)';
       }
       frag.appendChild(star);
     }
