@@ -1733,7 +1733,6 @@ button:focus {
     .starfield .star,
     .shooting-star,
     .nebula-glow,
-    .orbit-card,
     .btn-hero-primary::before,
     .btn-pricing::before,
     .btn-cta::before,
@@ -1748,11 +1747,7 @@ button:focus {
     #hero-canvas {
         display: none !important;
     }
-    /* Ensure all content is visible when animations disabled */
-    .orbit-card {
-        opacity: 1 !important;
-        filter: none !important;
-    }
+    /* Orbit cards: GSAP handles reduced-motion internally, don't override */
     .hero-content, .hero-content * ,
     .feature-card, .feature-card-ext,
     .pricing-card, .main-pricing-card,

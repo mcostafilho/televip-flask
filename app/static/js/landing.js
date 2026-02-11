@@ -276,21 +276,16 @@
   // Cards appear in random groups (1-3), slide in from random edges,
   // float upward with gentle drift, fade out, then recycle.
   function initOrbitCards() {
-    console.log('[OrbitCards] init start', { isLanding: isLanding, prefersReduced: prefersReduced });
-    if (!isLanding || prefersReduced) { console.log('[OrbitCards] SKIP: landing/reduced'); return; }
+    if (!isLanding) return;
     var field = document.querySelector('.orbit-field');
-    console.log('[OrbitCards] field:', field, field ? getComputedStyle(field).display : 'N/A');
     if (!field) return;
-    // Only run if orbit-field is visible (tablet+)
-    if (getComputedStyle(field).display === 'none') { console.log('[OrbitCards] SKIP: field hidden'); return; }
+    if (getComputedStyle(field).display === 'none') return;
 
     var allCards = [];
     field.querySelectorAll('.orbit-card').forEach(function (c) {
-      // Skip cards hidden by CSS nth-child rule
       if (getComputedStyle(c).display !== 'none') allCards.push(c);
     });
-    console.log('[OrbitCards] visible cards:', allCards.length);
-    if (!allCards.length) { console.log('[OrbitCards] SKIP: no visible cards'); return; }
+    if (!allCards.length) return;
 
     // Shuffle for initial randomness
     for (var i = allCards.length - 1; i > 0; i--) {
@@ -322,6 +317,13 @@
       return s;
     }
 
+    // Reduced motion: softer easing, less movement, but cards still cycle
+    var reduced = prefersReduced;
+    var enterEase = reduced ? 'power2.out' : 'back.out(1.3)';
+    var slideRange = reduced ? 30 : 80;
+    var driftRange = reduced ? 10 : 40;
+    var driftYRange = reduced ? [5, 15] : [15, 35];
+
     // Animate one card: appear from side → drift up → fade out → recycle
     function animateCard(card, side) {
       var depth = card.dataset.depth || '1';
@@ -337,25 +339,25 @@
       landY = 12 + Math.random() * 65;       // 12-77%
 
       // Slide-in offset (px) from the chosen side
-      var startX = side === 'left' ? -(80 + Math.random() * 60) : (80 + Math.random() * 60);
+      var startX = side === 'left' ? -(slideRange + Math.random() * 60) : (slideRange + Math.random() * 60);
 
       // Drift while visible
-      var driftX = (Math.random() - 0.5) * 40;
-      var driftY = -(15 + Math.random() * 35);
+      var driftX = (Math.random() - 0.5) * driftRange;
+      var driftY = -(driftYRange[0] + Math.random() * driftYRange[1]);
 
-      // Timing
-      var enterDur = 0.7 + Math.random() * 0.4;
-      var holdDur = 2.5 + Math.random() * 3;
-      var exitDur = 0.8 + Math.random() * 0.5;
+      // Timing (longer when reduced motion)
+      var enterDur = reduced ? 1.2 : (0.7 + Math.random() * 0.4);
+      var holdDur = reduced ? 4 : (2.5 + Math.random() * 3);
+      var exitDur = reduced ? 1.5 : (0.8 + Math.random() * 0.5);
 
       // Position at landing spot, offset to the side
       gsap.set(card, {
         left: landX + '%',
         top: landY + '%',
         x: startX,
-        y: 20,
+        y: reduced ? 0 : 20,
         opacity: 0,
-        scale: cfg.scale * 0.7
+        scale: cfg.scale
       });
 
       var tl = gsap.timeline({
@@ -371,7 +373,7 @@
         opacity: cfg.opacity,
         scale: cfg.scale,
         duration: enterDur,
-        ease: 'back.out(1.3)'
+        ease: enterEase
       });
 
       // 2. Float upward with gentle sideways drift
@@ -385,17 +387,15 @@
       // 3. Fade out while still drifting
       tl.to(card, {
         opacity: 0,
-        y: driftY - 25,
-        scale: cfg.scale * 0.6,
+        y: driftY - (reduced ? 10 : 25),
+        scale: cfg.scale * (reduced ? 0.9 : 0.6),
         duration: exitDur,
         ease: 'power2.in'
       });
     }
 
     // Spawn a wave: 1-3 cards from the same side
-    console.log('[OrbitCards] ready, pool size:', pool.length);
     function spawnWave() {
-      console.log('[OrbitCards] spawnWave, pool:', pool.length);
       if (!pool.length) {
         setTimeout(spawnWave, 600);
         return;
