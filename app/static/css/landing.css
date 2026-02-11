@@ -524,7 +524,9 @@ footer,
 .nav-link:active,
 .nav-link:focus,
 .nav-link:focus-visible {
-    color: #a78bfa !important;
+    color: #ffffff !important;
+    background: rgba(124, 92, 252, 0.25);
+    border-radius: 8px;
     text-shadow: 0 0 12px rgba(124, 92, 252, 0.5);
 }
 
@@ -552,6 +554,12 @@ footer,
     box-shadow: 0 4px 24px rgba(124, 92, 252, 0.6);
     color: #ffffff;
     transform: translateY(-1px);
+}
+
+.btn-nav-cta:active {
+    transform: scale(0.96);
+    box-shadow: 0 1px 8px rgba(124, 92, 252, 0.8);
+    color: #ffffff !important;
 }
 
 @media (min-width: 992px) {

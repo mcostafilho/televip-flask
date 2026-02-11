@@ -30,9 +30,9 @@
     {% endif %}
     
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+    <nav class="navbar navbar-expand-lg {% if current_user.is_authenticated %}navbar-dark shadow-sm{% else %}navbar-custom{% endif %}">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="/">
+            <a class="navbar-brand{% if current_user.is_authenticated %} fw-bold{% endif %}" href="/">
                 <i class="bi bi-telegram"></i> TeleVIP
             </a>
             {% if not request.path.startswith('/admin') %}
@@ -93,11 +93,20 @@
                         </li>
                     {% else %}
                         <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('auth.recursos') }}">Recursos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('auth.precos') }}">Preços</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('auth.index') }}#testimonials">Depoimentos</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
                         </li>
                         <li class="nav-item">
-                            <a class="btn btn-light ms-2" href="{{ url_for('auth.register') }}">
-                                <i class="bi bi-person-plus"></i> Criar Conta
+                            <a class="btn-nav-cta" href="{{ url_for('auth.register') }}">
+                                Começar Grátis
                             </a>
                         </li>
                     {% endif %}
@@ -123,6 +132,7 @@
     {% block content %}{% endblock %}
     
     <!-- Footer -->
+    {% if current_user.is_authenticated %}
     <footer class="text-white py-4 mt-5" style="background: rgba(11, 14, 26, 0.95); border-top: 1px solid rgba(124, 92, 252, 0.15); position: relative; z-index: 3;">
         <div class="container">
             <div class="row">
@@ -137,6 +147,87 @@
             </div>
         </div>
     </footer>
+    {% else %}
+    <footer class="footer" style="position: relative; z-index: 3;">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h5 class="text-gradient">
+                        <i class="bi bi-telegram"></i> TeleVIP
+                    </h5>
+                    <p class="text-muted">
+                        A plataforma definitiva para monetização de grupos no Telegram.
+                    </p>
+                    <div class="badge bg-warning text-dark p-2 mt-2">
+                        <i class="bi bi-tag-fill"></i> Taxa: R$ 0,99 + 9,99% por transação
+                    </div>
+                    <div class="social-links mt-3">
+                        <a href="#"><i class="bi bi-facebook"></i></a>
+                        <a href="#"><i class="bi bi-instagram"></i></a>
+                        <a href="#"><i class="bi bi-twitter"></i></a>
+                        <a href="#"><i class="bi bi-linkedin"></i></a>
+                        <a href="#"><i class="bi bi-youtube"></i></a>
+                    </div>
+                </div>
+
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h6>PRODUTO</h6>
+                    <ul>
+                        <li><a href="{{ url_for('auth.recursos') }}">Recursos</a></li>
+                        <li><a href="{{ url_for('auth.precos') }}">Preços</a></li>
+                        <li><a href="#">API</a></li>
+                        <li><a href="#">Integrações</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h6>EMPRESA</h6>
+                    <ul>
+                        <li><a href="#">Sobre</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Carreiras</a></li>
+                        <li><a href="#">Afiliados</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h6>SUPORTE</h6>
+                    <ul>
+                        <li><a href="#">Central de Ajuda</a></li>
+                        <li><a href="#">Contato</a></li>
+                        <li><a href="#">Status</a></li>
+                        <li><a href="#">Comunidade</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h6>LEGAL</h6>
+                    <ul>
+                        <li><a href="{{ url_for('auth.privacy') }}">Privacidade</a></li>
+                        <li><a href="{{ url_for('auth.terms') }}">Termos</a></li>
+                        <li><a href="#">Cookies</a></li>
+                        <li><a href="{{ url_for('auth.report') }}">Denunciar Abuso</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <hr class="my-4 border-secondary">
+
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted">
+                        © 2024 TeleVIP. Todos os direitos reservados.
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0 text-muted">
+                        Feito com ❤️ no Brasil
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    {% endif %}
     
     {% if not request.path.startswith('/admin') %}
     <!-- Floating WhatsApp Button (hidden on mobile, shown in navbar instead) -->

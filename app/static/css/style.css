@@ -56,7 +56,9 @@ main {
 }
 
 .navbar-dark .nav-link:active {
-    color: #a78bfa !important;
+    color: #ffffff !important;
+    background: rgba(124, 92, 252, 0.25);
+    border-radius: 8px;
 }
 
 .navbar-dark .nav-link.active {
