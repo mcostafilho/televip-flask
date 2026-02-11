@@ -272,140 +272,157 @@
 
   }
 
-  // ── 5b. ORBIT CARDS — Space-themed floating cards ─────
+  // ── 5b. ORBIT CARDS — Continuous spawn system ─────────
+  // Cards appear in random groups (1-3), slide in from random edges,
+  // float upward with gentle drift, fade out, then recycle.
   function initOrbitCards() {
-    if (!isLanding) return;
-    var cards = document.querySelectorAll('.orbit-card');
-    if (!cards.length) return;
+    if (!isLanding || prefersReduced) return;
+    var allCards = Array.from(document.querySelectorAll('.orbit-card'));
+    if (!allCards.length) return;
 
-    // Depth config: opacity targets, scale, blur handled by CSS
-    var depthConfig = {
-      '1': { opacity: 1, scale: 1, amplitude: 1 },
-      '2': { opacity: 0.7, scale: 0.9, amplitude: 0.7 },
-      '3': { opacity: 0.45, scale: 0.75, amplitude: 0.45 }
+    var heroEl = document.getElementById('home');
+    if (!heroEl) return;
+
+    // Pool of available cards (not currently animating)
+    var pool = allCards.slice();
+    // Shuffle pool for initial randomness
+    for (var i = pool.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+    }
+
+    // Depth config
+    var depthCfg = {
+      '1': { opacity: 1, scale: 1 },
+      '2': { opacity: 0.7, scale: 0.9 },
+      '3': { opacity: 0.45, scale: 0.75 }
     };
 
-    // ── ENTRANCE: radial burst with elastic ease ──
-    if (!prefersReduced) {
-      cards.forEach(function (card) {
-        var depth = card.dataset.depth || '1';
-        var cfg = depthConfig[depth];
-        // Calculate radial entrance direction from center of hero
-        var rect = card.getBoundingClientRect();
-        var heroEl = document.getElementById('home');
-        var heroRect = heroEl ? heroEl.getBoundingClientRect() : { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
-        var cx = heroRect.left + heroRect.width / 2;
-        var cy = heroRect.top + heroRect.height / 2;
-        var cardCx = rect.left + rect.width / 2;
-        var cardCy = rect.top + rect.height / 2;
-        var angle = Math.atan2(cardCy - cy, cardCx - cx);
-        var dist = 120 + Math.random() * 80;
+    // Hide all cards initially
+    allCards.forEach(function (c) { gsap.set(c, { opacity: 0, x: 0, y: 0 }); });
 
-        gsap.set(card, {
-          opacity: 0,
-          x: Math.cos(angle) * dist,
-          y: Math.sin(angle) * dist,
-          scale: cfg.scale * 0.5,
-          filter: depth === '1' ? 'blur(0px)' : depth === '2' ? 'blur(0.5px)' : 'blur(1px)'
-        });
-      });
+    // Sides: 'left', 'right', 'top', 'bottom'
+    var sides = ['left', 'right', 'left', 'right', 'top', 'bottom'];
+    var lastSide = '';
 
-      // Staggered entrance after hero text loads
-      gsap.to(cards, {
-        opacity: function (i) {
-          var d = cards[i].dataset.depth || '1';
-          return depthConfig[d].opacity;
-        },
-        x: 0, y: 0,
-        scale: function (i) {
-          var d = cards[i].dataset.depth || '1';
-          return depthConfig[d].scale;
-        },
-        duration: 1.2,
-        stagger: 0.12,
-        ease: 'elastic.out(1, 0.6)',
-        delay: 1.4,
-        onComplete: function () { startOrbitLoops(cards, depthConfig); }
-      });
-    } else {
-      // Reduced motion: just show them static
-      cards.forEach(function (card) {
-        var depth = card.dataset.depth || '1';
-        var cfg = depthConfig[depth];
-        gsap.set(card, { opacity: cfg.opacity, scale: cfg.scale });
-      });
+    function pickSide() {
+      var s;
+      do { s = sides[Math.floor(Math.random() * sides.length)]; } while (s === lastSide);
+      lastSide = s;
+      return s;
     }
 
-    function startOrbitLoops(cards, depthConfig) {
-      cards.forEach(function (card) {
-        var type = card.dataset.orbit || 'drift';
-        var depth = card.dataset.depth || '1';
-        var amp = depthConfig[depth].amplitude;
-
-        if (type === 'drift') orbitDrift(card, amp);
-        else if (type === 'ellipse') orbitEllipse(card, amp);
-        else if (type === 'wave') orbitWave(card, amp);
-      });
-    }
-
-    // ── DRIFT: organic Brownian wandering ──
-    function orbitDrift(card, amp) {
-      function step() {
-        var dx = (Math.random() - 0.5) * 30 * amp;
-        var dy = (Math.random() - 0.5) * 24 * amp;
-        var dur = 3 + Math.random() * 3;
-        gsap.to(card, {
-          x: dx, y: dy,
-          duration: dur,
-          ease: 'sine.inOut',
-          onComplete: step
-        });
+    // Target rest position (%) — somewhere along hero edges (not center)
+    function restPos(side) {
+      var x, y;
+      if (side === 'left') {
+        x = 3 + Math.random() * 15;   // left 3-18%
+        y = 10 + Math.random() * 75;
+      } else if (side === 'right') {
+        x = 78 + Math.random() * 18;  // right 78-96%
+        y = 10 + Math.random() * 75;
+      } else if (side === 'top') {
+        x = 10 + Math.random() * 80;
+        y = 5 + Math.random() * 20;
+      } else {
+        x = 10 + Math.random() * 80;
+        y = 70 + Math.random() * 22;
       }
-      step();
+      return { x: x, y: y };
     }
 
-    // ── ELLIPSE: satellite-like continuous orbit ──
-    function orbitEllipse(card, amp) {
-      var rx = (20 + Math.random() * 20) * amp;
-      var ry = (12 + Math.random() * 14) * amp;
-      var dur = 6 + Math.random() * 4;
-      var startAngle = Math.random() * Math.PI * 2;
-      var obj = { angle: startAngle };
+    // Animate a single card: slide in → float & drift → fade out → return to pool
+    function animateCard(card) {
+      var depth = card.dataset.depth || '1';
+      var cfg = depthCfg[depth];
+      var side = pickSide();
+      var rest = restPos(side);
 
-      gsap.to(obj, {
-        angle: startAngle + Math.PI * 2,
-        duration: dur,
-        ease: 'none',
-        repeat: -1,
-        onUpdate: function () {
-          var x = Math.cos(obj.angle) * rx;
-          var y = Math.sin(obj.angle) * ry;
-          gsap.set(card, { x: x, y: y });
+      // Offset from rest position (px) — card slides FROM this offset TO 0
+      var offsetX = 0, offsetY = 0;
+      if (side === 'left')   offsetX = -(120 + Math.random() * 60);
+      if (side === 'right')  offsetX = 120 + Math.random() * 60;
+      if (side === 'top')    offsetY = -(100 + Math.random() * 50);
+      if (side === 'bottom') offsetY = 100 + Math.random() * 50;
+
+      // Random float direction while visible (gentle upward + sideways drift)
+      var driftX = (Math.random() - 0.5) * 50;
+      var driftY = -(20 + Math.random() * 40); // always drifts upward
+
+      // Timing
+      var enterDur = 0.8 + Math.random() * 0.5;
+      var holdDur = 3 + Math.random() * 3;
+      var exitDur = 1 + Math.random() * 0.6;
+
+      // Place card at rest position, offset by slide-in distance
+      gsap.set(card, {
+        left: rest.x + '%',
+        top: rest.y + '%',
+        x: offsetX,
+        y: offsetY,
+        opacity: 0,
+        scale: cfg.scale * 0.6,
+        filter: depth === '3' ? 'blur(1px)' : depth === '2' ? 'blur(0.5px)' : 'blur(0px)'
+      });
+
+      var tl = gsap.timeline({
+        onComplete: function () {
+          gsap.set(card, { opacity: 0 });
+          pool.push(card);
         }
+      });
+
+      // Enter: slide in from edge to rest position
+      tl.to(card, {
+        x: 0, y: 0,
+        opacity: cfg.opacity,
+        scale: cfg.scale,
+        duration: enterDur,
+        ease: 'back.out(1.4)'
+      });
+
+      // Float: gentle drift upward + sideways
+      tl.to(card, {
+        x: driftX,
+        y: driftY,
+        duration: holdDur,
+        ease: 'sine.inOut'
+      });
+
+      // Exit: fade out while still drifting up
+      tl.to(card, {
+        opacity: 0,
+        y: driftY - 30,
+        scale: cfg.scale * 0.7,
+        duration: exitDur,
+        ease: 'power2.in'
       });
     }
 
-    // ── WAVE: Lissajous sine pattern ──
-    function orbitWave(card, amp) {
-      var freqX = 1 + Math.random() * 0.5;
-      var freqY = 1.3 + Math.random() * 0.7;
-      var ampX = (18 + Math.random() * 16) * amp;
-      var ampY = (14 + Math.random() * 12) * amp;
-      var dur = 8 + Math.random() * 4;
-      var obj = { t: 0 };
+    // Spawn a wave: pick 1-3 cards from pool and animate them
+    function spawnWave() {
+      if (!pool.length) {
+        // All cards busy, retry soon
+        setTimeout(spawnWave, 800);
+        return;
+      }
 
-      gsap.to(obj, {
-        t: Math.PI * 2,
-        duration: dur,
-        ease: 'none',
-        repeat: -1,
-        onUpdate: function () {
-          var x = Math.sin(obj.t * freqX) * ampX;
-          var y = Math.sin(obj.t * freqY) * ampY;
-          gsap.set(card, { x: x, y: y });
-        }
-      });
+      var count = Math.min(pool.length, 1 + Math.floor(Math.random() * 3)); // 1-3 cards
+      for (var i = 0; i < count; i++) {
+        var card = pool.shift();
+        // Slight stagger within the wave
+        (function (c, delay) {
+          setTimeout(function () { animateCard(c); }, delay);
+        })(card, i * (200 + Math.random() * 300));
+      }
+
+      // Next wave after a random interval
+      var nextDelay = 2000 + Math.random() * 3000; // 2-5s between waves
+      setTimeout(spawnWave, nextDelay);
     }
+
+    // Start first wave after hero text entrance
+    setTimeout(spawnWave, 1600);
   }
 
   // ── 6. SCROLL TRIGGER ANIMATIONS ──────────────────────

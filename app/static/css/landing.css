@@ -776,10 +776,10 @@ footer,
 .orbit-sm { padding: 8px 12px; font-size: 12px; }
 .orbit-sm i { font-size: 14px; }
 
-/* Depth layers */
-.orbit-depth-1 { opacity: 0; }
-.orbit-depth-2 { opacity: 0; filter: blur(0.5px); transform: scale(0.9); }
-.orbit-depth-3 { opacity: 0; filter: blur(1px); transform: scale(0.75); }
+/* All cards start invisible — JS controls entrance */
+.orbit-depth-1,
+.orbit-depth-2,
+.orbit-depth-3 { opacity: 0; }
 
 /* Category colors */
 .orbit-money {
