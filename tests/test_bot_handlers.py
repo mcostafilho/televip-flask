@@ -1635,99 +1635,6 @@ class TestStatusCommand:
 # 9. DISCOVERY TESTS
 # ===========================================================================
 
-class TestDiscovery:
-    """Testes do sistema de descoberta de grupos"""
-
-    def test_discover_shows_active_groups(self, app_ctx, group_a, group_b,
-                                          plan_a_monthly, plan_b_monthly):
-        """Descoberta mostra grupos ativos"""
-        from bot.handlers.discovery import show_popular_groups
-
-        user = make_user(800)
-        update = make_update(user=user)
-        ctx = make_context()
-
-        import asyncio
-        asyncio.get_event_loop().run_until_complete(show_popular_groups(update, ctx))
-
-        text = update.message.reply_text.call_args[0][0]
-        assert 'Alpha Premium' in text
-        assert 'Beta VIP' in text
-
-    def test_discover_excludes_blocked_creator(self, app_ctx, group_a, group_blocked,
-                                                plan_a_monthly):
-        """Grupos de criadores bloqueados nao aparecem"""
-        from bot.handlers.discovery import show_popular_groups
-
-        # Plan for blocked group
-        plan_blocked = PricingPlan(
-            group_id=group_blocked.id, name='Blocked Plan',
-            duration_days=30, price=Decimal('9.90'), is_active=True,
-        )
-        _db.session.add(plan_blocked)
-        _db.session.commit()
-
-        user = make_user(801)
-        update = make_update(user=user)
-        ctx = make_context()
-
-        import asyncio
-        asyncio.get_event_loop().run_until_complete(show_popular_groups(update, ctx))
-
-        text = update.message.reply_text.call_args[0][0]
-        assert 'Alpha Premium' in text
-        assert 'Criador Bloqueado' not in text
-
-    def test_discover_excludes_inactive_groups(self, app_ctx, group_a, group_inactive,
-                                                plan_a_monthly):
-        """Grupos inativos nao aparecem"""
-        from bot.handlers.discovery import show_popular_groups
-
-        user = make_user(802)
-        update = make_update(user=user)
-        ctx = make_context()
-
-        import asyncio
-        asyncio.get_event_loop().run_until_complete(show_popular_groups(update, ctx))
-
-        text = update.message.reply_text.call_args[0][0]
-        assert 'Grupo Inativo' not in text
-
-    def test_discover_no_groups(self, app_ctx):
-        """Sem grupos mostra mensagem vazia"""
-        from bot.handlers.discovery import show_popular_groups
-
-        user = make_user(803)
-        update = make_update(user=user)
-        ctx = make_context()
-
-        import asyncio
-        asyncio.get_event_loop().run_until_complete(show_popular_groups(update, ctx))
-
-        text = update.message.reply_text.call_args[0][0]
-        assert 'Nenhum' in text
-
-    def test_discover_uses_slugs_in_links(self, app_ctx, group_a, plan_a_monthly):
-        """Links de grupos usam invite_slug, nao IDs"""
-        from bot.handlers.discovery import show_popular_groups
-
-        user = make_user(804)
-        update = make_update(user=user)
-        ctx = make_context()
-
-        import asyncio
-        asyncio.get_event_loop().run_until_complete(show_popular_groups(update, ctx))
-
-        # Verificar que o keyboard contem o slug
-        call_kwargs = update.message.reply_text.call_args[1]
-        markup = call_kwargs.get('reply_markup')
-        if markup:
-            for row in markup.inline_keyboard:
-                for button in row:
-                    if button.url and 'start=' in button.url:
-                        assert f'g_{group_a.invite_slug}' in button.url
-                        assert f'g_{group_a.id}' not in button.url
-
 
 # ===========================================================================
 # 10. SCHEDULED TASKS TESTS
@@ -2053,24 +1960,6 @@ class TestRenewalFlow:
 # ===========================================================================
 # 12. HELP COMMAND
 # ===========================================================================
-
-class TestHelpCommand:
-    """Testes do comando /help"""
-
-    def test_help_shows_commands(self, app_ctx):
-        from bot.handlers.start import help_command
-
-        user = make_user(1100)
-        update = make_update(user=user)
-        ctx = make_context()
-
-        import asyncio
-        asyncio.get_event_loop().run_until_complete(help_command(update, ctx))
-
-        text = update.message.reply_text.call_args[0][0]
-        assert '/start' in text
-        assert '/status' in text
-        assert '/help' in text
 
 
 # ===========================================================================
@@ -2535,75 +2424,6 @@ class TestFullUserJourney:
 # ===========================================================================
 # 15. PLANOS COMMAND TESTS
 # ===========================================================================
-
-class TestPlanosCommand:
-    """Testes do comando /planos"""
-
-    def test_planos_shows_active_plans(self, app_ctx, group_a, plan_a_monthly):
-        """Mostra planos ativos com valor mensal"""
-        from bot.handlers.subscription import planos_command
-
-        user_id = 1400
-        sub = Subscription(
-            group_id=group_a.id, plan_id=plan_a_monthly.id,
-            telegram_user_id=str(user_id), telegram_username='planosuser',
-            start_date=datetime.utcnow(),
-            end_date=datetime.utcnow() + timedelta(days=20),
-            status='active',
-        )
-        _db.session.add(sub)
-        _db.session.commit()
-
-        user = make_user(user_id)
-        update = make_update(user=user)
-        ctx = make_context()
-
-        import asyncio
-        asyncio.get_event_loop().run_until_complete(planos_command(update, ctx))
-
-        text = update.message.reply_text.call_args[0][0]
-        assert 'Alpha Premium' in text
-        assert 'Mensal Alpha' in text
-        assert '29.90' in text
-
-    def test_planos_empty(self, app_ctx):
-        """Sem planos ativos mostra mensagem vazia"""
-        from bot.handlers.subscription import planos_command
-
-        user = make_user(1401)
-        update = make_update(user=user)
-        ctx = make_context()
-
-        import asyncio
-        asyncio.get_event_loop().run_until_complete(planos_command(update, ctx))
-
-        text = update.message.reply_text.call_args[0][0]
-        assert 'não possui' in text.lower() or 'Você não' in text
-
-    def test_planos_lifetime_plan(self, app_ctx, group_b, plan_b_lifetime):
-        """Plano vitalicio mostra corretamente"""
-        from bot.handlers.subscription import planos_command
-
-        user_id = 1402
-        sub = Subscription(
-            group_id=group_b.id, plan_id=plan_b_lifetime.id,
-            telegram_user_id=str(user_id), telegram_username='lifetimeuser',
-            start_date=datetime.utcnow(),
-            end_date=datetime(2099, 12, 31),
-            status='active',
-        )
-        _db.session.add(sub)
-        _db.session.commit()
-
-        user = make_user(user_id)
-        update = make_update(user=user)
-        ctx = make_context()
-
-        import asyncio
-        asyncio.get_event_loop().run_until_complete(planos_command(update, ctx))
-
-        text = update.message.reply_text.call_args[0][0]
-        assert 'Vitalicio' in text
 
 
 # ===========================================================================

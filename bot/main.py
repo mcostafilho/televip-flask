@@ -29,14 +29,14 @@ from telegram.ext import (
 )
 
 # Importar handlers
-from bot.handlers.start import start_command, help_command, show_user_dashboard
+from bot.handlers.start import start_command, show_user_dashboard
 from bot.handlers.payment import (
     start_payment, handle_payment_method,
     list_user_subscriptions, handle_payment_success,
     check_payment_status, handle_payment_error
 )
 from bot.handlers.subscription import (
-    status_command, planos_command, handle_renewal,
+    status_command, handle_renewal,
     cancel_subscription, confirm_cancel_subscription,
     reactivate_subscription
 )
@@ -148,9 +148,8 @@ def setup_handlers(application: Application) -> None:
     
     # Comandos principais
     application.add_handler(CommandHandler("start", start_command))
-    application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("status", status_command))
-    application.add_handler(CommandHandler("planos", planos_command))
+
     # Comandos administrativos
     application.add_handler(CommandHandler("setup", setup_command))
     application.add_handler(CommandHandler("stats", stats_command))

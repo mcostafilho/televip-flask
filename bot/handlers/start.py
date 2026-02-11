@@ -181,19 +181,14 @@ async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_
             logger.warning(f"Grupo não encontrado - identificador: {group_identifier}")
 
             await update.message.reply_text(
-                "❌ Grupo não encontrado.\n\n"
-                "Possíveis causas:\n"
-                "• Link expirado ou inválido\n"
-                "• Grupo foi removido\n\n"
-                "Use /descobrir para ver grupos disponíveis."
+                "❌ Grupo não encontrado. O link pode estar expirado ou inválido."
             )
             return
 
         if not group.is_active:
             logger.warning(f"Grupo inativo: {group.name} (ID: {group.id})")
             await update.message.reply_text(
-                "❌ Este grupo está temporariamente indisponível.\n\n"
-                "Entre em contato com o criador ou use /descobrir para ver outros grupos."
+                "❌ Este grupo está temporariamente indisponível."
             )
             return
 
@@ -202,8 +197,7 @@ async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_
         if creator and getattr(creator, 'is_blocked', False):
             logger.warning(f"Criador bloqueado: {creator.name} (grupo: {group.name})")
             await update.message.reply_text(
-                "❌ Este grupo está temporariamente indisponível.\n\n"
-                "Use /descobrir para ver outros grupos."
+                "❌ Este grupo está temporariamente indisponível."
             )
             return
         
@@ -290,28 +284,6 @@ Sua assinatura expira em: {existing_sub.end_date.strftime('%d/%m/%Y')}
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Comando de ajuda"""
-    help_text = """
-**Comandos:**
-/start - Suas assinaturas
-/status - Detalhes das assinaturas
-/planos - Resumo dos seus planos
-/help - Ajuda
-
-**Como assino um grupo?**
-Use o link de convite fornecido pelo criador.
-
-**Como cancelo?**
-Use /status e clique em "Cancelar".
-
-**Suporte:** @suporte_televip
-"""
-
-    await update.message.reply_text(
-        help_text,
-        parse_mode=ParseMode.MARKDOWN
-    )
 
 async def handle_payment_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler para pagamento cancelado"""
