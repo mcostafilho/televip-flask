@@ -17,7 +17,7 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background: #0b0e1a;
+    background-color: #0b0e1a;
     color: #e2e8f0;
     animation: pageEntrance 0.4s ease-out both;
 }
