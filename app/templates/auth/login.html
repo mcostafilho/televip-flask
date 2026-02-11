@@ -10,14 +10,19 @@
         <span>Voltar</span>
     </a>
 
+    <!-- Canvas Starfield -->
+    <canvas id="starCanvas"></canvas>
+
     <!-- Nebula Orbs -->
     <div class="nebula-orb nebula-orb--1"></div>
     <div class="nebula-orb nebula-orb--2"></div>
     <div class="nebula-orb nebula-orb--3"></div>
+    <div class="nebula-orb nebula-orb--4"></div>
 
     <!-- Shooting Stars -->
-    <div class="shooting-star" id="ss1"></div>
-    <div class="shooting-star" id="ss2"></div>
+    <div class="shooting-star shooting-star--1" id="ss1"></div>
+    <div class="shooting-star shooting-star--2" id="ss2"></div>
+    <div class="shooting-star shooting-star--3" id="ss3"></div>
 
     <div class="auth-card">
         <div class="auth-header">
@@ -54,14 +59,12 @@
 
         <form method="POST" class="auth-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <!-- Email -->
             <div class="input-group">
                 <i class="bi bi-envelope input-icon"></i>
                 <input type="email" name="email" class="form-control with-icon"
                        placeholder="Email" required autofocus>
             </div>
 
-            <!-- Senha -->
             <div class="input-group password-field">
                 <i class="bi bi-lock input-icon"></i>
                 <input type="password" name="password" class="form-control with-icon"
@@ -74,13 +77,9 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div class="form-check">
                     <input type="checkbox" name="remember" class="form-check-input" id="remember">
-                    <label class="form-check-label" for="remember">
-                        Lembrar de mim
-                    </label>
+                    <label class="form-check-label" for="remember">Lembrar de mim</label>
                 </div>
-                <a href="{{ url_for('auth.forgot_password') }}" class="auth-link small">
-                    Esqueceu a senha?
-                </a>
+                <a href="{{ url_for('auth.forgot_password') }}" class="auth-link small">Esqueceu a senha?</a>
             </div>
 
             <button type="submit" class="btn btn-primary">
@@ -89,9 +88,7 @@
             </button>
         </form>
 
-        <div class="divider">
-            <span>ou</span>
-        </div>
+        <div class="divider"><span>ou</span></div>
 
         <a href="{{ url_for('auth.google_login') }}" class="btn btn-secondary">
             <img src="https://www.google.com/favicon.ico" width="20" height="20">
@@ -100,9 +97,7 @@
 
         <div class="auth-footer">
             <p>Não tem uma conta?
-                <a href="{{ url_for('auth.register') }}" class="auth-link fw-bold">
-                    Criar conta grátis
-                </a>
+                <a href="{{ url_for('auth.register') }}" class="auth-link fw-bold">Criar conta grátis</a>
             </p>
         </div>
     </div>
@@ -112,84 +107,184 @@
 function togglePassword(fieldId) {
     var f = document.getElementById(fieldId);
     var e = document.getElementById(fieldId + '-eye');
-    if (f.type === 'password') {
-        f.type = 'text';
-        e.classList.remove('bi-eye');
-        e.classList.add('bi-eye-slash');
-    } else {
-        f.type = 'password';
-        e.classList.remove('bi-eye-slash');
-        e.classList.add('bi-eye');
-    }
+    if (f.type === 'password') { f.type = 'text'; e.classList.remove('bi-eye'); e.classList.add('bi-eye-slash'); }
+    else { f.type = 'password'; e.classList.remove('bi-eye-slash'); e.classList.add('bi-eye'); }
 }
 
 (function() {
     var container = document.querySelector('.auth-container');
     if (!container || typeof gsap === 'undefined') return;
 
-    /* ---- Stars ---- */
-    for (var i = 0; i < 60; i++) {
-        var s = document.createElement('div');
-        var sizes = ['star--sm','star--sm','star--md','star--lg'];
-        s.className = 'star ' + sizes[Math.floor(Math.random() * sizes.length)];
-        s.style.left = Math.random() * 100 + '%';
-        s.style.top = Math.random() * 100 + '%';
-        s.style.opacity = (0.15 + Math.random() * 0.5).toString();
-        s.style.animation = 'twinkle ' + (2 + Math.random() * 4) + 's ease-in-out ' + (Math.random() * 3) + 's infinite';
-        container.appendChild(s);
+    /* ================================================================
+       CANVAS STARFIELD - 3 depth layers, moving stars
+       ================================================================ */
+    var canvas = document.getElementById('starCanvas');
+    var ctx = canvas.getContext('2d');
+    var stars = [];
+    var STAR_COUNT = 200;
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Create stars with 3 depth layers
+    for (var i = 0; i < STAR_COUNT; i++) {
+        var depth = Math.random();
+        var hue = Math.random() > 0.7 ? (200 + Math.random() * 60) : 0; // some blue/cyan tinted
+        stars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: 0.3 + depth * 2,
+            speed: 0.02 + depth * 0.15,
+            opacity: 0.2 + depth * 0.6,
+            twinkleSpeed: 0.5 + Math.random() * 2,
+            twinkleOffset: Math.random() * Math.PI * 2,
+            hue: hue
+        });
     }
 
-    /* ---- Nebula orbs float ---- */
+    var animFrame;
+    function drawStars(time) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (var i = 0; i < stars.length; i++) {
+            var s = stars[i];
+            // Move upward slowly
+            s.y -= s.speed;
+            if (s.y < -5) { s.y = canvas.height + 5; s.x = Math.random() * canvas.width; }
+
+            // Twinkle
+            var twinkle = 0.5 + 0.5 * Math.sin(time * 0.001 * s.twinkleSpeed + s.twinkleOffset);
+            var alpha = s.opacity * twinkle;
+
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+            if (s.hue > 0) {
+                ctx.fillStyle = 'hsla(' + s.hue + ', 80%, 75%, ' + alpha + ')';
+            } else {
+                ctx.fillStyle = 'rgba(255, 255, 255, ' + alpha + ')';
+            }
+            ctx.fill();
+
+            // Glow for large stars
+            if (s.size > 1.5) {
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.size * 3, 0, Math.PI * 2);
+                if (s.hue > 0) {
+                    ctx.fillStyle = 'hsla(' + s.hue + ', 80%, 75%, ' + (alpha * 0.08) + ')';
+                } else {
+                    ctx.fillStyle = 'rgba(255, 255, 255, ' + (alpha * 0.08) + ')';
+                }
+                ctx.fill();
+            }
+        }
+        animFrame = requestAnimationFrame(drawStars);
+    }
+    animFrame = requestAnimationFrame(drawStars);
+
+    /* ================================================================
+       FLOATING PARTICLES
+       ================================================================ */
+    var particleColors = [
+        'rgba(124, 92, 252, 0.6)',
+        'rgba(0, 240, 255, 0.5)',
+        'rgba(240, 147, 251, 0.5)',
+        'rgba(56, 189, 248, 0.4)',
+        'rgba(255, 255, 255, 0.3)'
+    ];
+    for (var p = 0; p < 20; p++) {
+        var dot = document.createElement('div');
+        dot.className = 'particle';
+        var sz = 2 + Math.random() * 4;
+        dot.style.width = sz + 'px';
+        dot.style.height = sz + 'px';
+        dot.style.background = particleColors[Math.floor(Math.random() * particleColors.length)];
+        dot.style.left = Math.random() * 100 + '%';
+        dot.style.top = Math.random() * 100 + '%';
+        dot.style.opacity = '0';
+        container.appendChild(dot);
+
+        gsap.to(dot, { opacity: 0.4 + Math.random() * 0.4, duration: 1 + Math.random(), delay: Math.random() * 2 });
+        gsap.to(dot, {
+            y: -80 - Math.random() * 120,
+            x: (Math.random() - 0.5) * 100,
+            duration: 8 + Math.random() * 12,
+            repeat: -1, yoyo: true, ease: 'sine.inOut',
+            delay: Math.random() * 3
+        });
+    }
+
+    /* ================================================================
+       NEBULA ORBS - Breathing + drifting
+       ================================================================ */
     var orbs = document.querySelectorAll('.nebula-orb');
     orbs.forEach(function(orb, idx) {
-        gsap.to(orb, { opacity: 1, duration: 2, delay: 0.3 * idx, ease: 'power2.out' });
+        gsap.to(orb, { opacity: 0.8, duration: 2.5, delay: 0.4 * idx, ease: 'power2.out' });
+        // Drift
         gsap.to(orb, {
-            x: function() { return (Math.random() - 0.5) * 60; },
-            y: function() { return (Math.random() - 0.5) * 40; },
-            duration: function() { return 6 + Math.random() * 4; },
+            x: function() { return (Math.random() - 0.5) * 80; },
+            y: function() { return (Math.random() - 0.5) * 60; },
+            duration: function() { return 8 + Math.random() * 6; },
+            repeat: -1, yoyo: true, ease: 'sine.inOut', delay: idx * 0.8
+        });
+        // Breathing scale
+        gsap.to(orb, {
+            scale: 1.15 + Math.random() * 0.1,
+            duration: 4 + Math.random() * 3,
             repeat: -1, yoyo: true, ease: 'sine.inOut', delay: idx * 0.5
         });
     });
 
-    /* ---- Shooting stars ---- */
+    /* ================================================================
+       SHOOTING STARS - colored trails
+       ================================================================ */
     function shootStar(el) {
-        var startX = -100;
-        var startY = Math.random() * window.innerHeight * 0.6;
-        var angle = -15 + Math.random() * 10;
+        var startX = -150;
+        var startY = Math.random() * window.innerHeight * 0.5;
+        var angle = -20 + Math.random() * 15;
         gsap.set(el, { x: startX, y: startY, rotation: angle, opacity: 0 });
         gsap.to(el, {
             x: window.innerWidth + 200,
-            y: startY + Math.tan(angle * Math.PI / 180) * (window.innerWidth + 300),
-            opacity: 0.8, duration: 0.8, ease: 'power1.in',
+            y: startY + Math.tan(angle * Math.PI / 180) * (window.innerWidth + 350),
+            opacity: 1, duration: 0.6 + Math.random() * 0.4, ease: 'power1.in',
             onComplete: function() {
-                gsap.to(el, { opacity: 0, duration: 0.2, onComplete: function() {
-                    setTimeout(function() { shootStar(el); }, 3000 + Math.random() * 8000);
+                gsap.to(el, { opacity: 0, duration: 0.15, onComplete: function() {
+                    setTimeout(function() { shootStar(el); }, 2000 + Math.random() * 6000);
                 }});
             }
         });
     }
-    setTimeout(function() { shootStar(document.getElementById('ss1')); }, 2000);
-    setTimeout(function() { shootStar(document.getElementById('ss2')); }, 6000);
+    setTimeout(function() { shootStar(document.getElementById('ss1')); }, 1500);
+    setTimeout(function() { shootStar(document.getElementById('ss2')); }, 4000);
+    setTimeout(function() { shootStar(document.getElementById('ss3')); }, 7000);
 
-    /* ---- Card + form entrance ---- */
+    /* ================================================================
+       CARD ENTRANCE - Cinematic
+       ================================================================ */
     var card = document.querySelector('.auth-card');
     var tl = gsap.timeline({ defaults: { ease: 'back.out(1.4)' } });
-    tl.from(card, { y: 40, opacity: 0, duration: 0.7 })
-      .from('.auth-logo', { scale: 0, rotation: -180, duration: 0.5 }, '-=0.3')
-      .from('.gradient-text', { y: 20, opacity: 0, duration: 0.4 }, '-=0.2')
-      .from('.subtitle', { y: 10, opacity: 0, duration: 0.3 }, '-=0.15')
-      .from('.auth-form .input-group', { x: -30, opacity: 0, duration: 0.4, stagger: 0.1 }, '-=0.1')
-      .from('.auth-form .d-flex', { opacity: 0, duration: 0.3 }, '-=0.1')
-      .from('.auth-form .btn-primary', { y: 15, opacity: 0, duration: 0.4 }, '-=0.1')
-      .from('.divider', { scaleX: 0, opacity: 0, duration: 0.3 }, '-=0.1')
-      .from('.btn-secondary', { y: 10, opacity: 0, duration: 0.3 }, '-=0.1')
-      .from('.auth-footer', { opacity: 0, duration: 0.3 }, '-=0.1');
+    tl.from(card, { y: 50, opacity: 0, scale: 0.95, duration: 0.8 })
+      .from('.auth-logo', { scale: 0, rotation: -180, duration: 0.6 }, '-=0.4')
+      .from('.gradient-text', { y: 25, opacity: 0, duration: 0.5 }, '-=0.25')
+      .from('.subtitle', { y: 12, opacity: 0, duration: 0.35 }, '-=0.15')
+      .from('.auth-form .input-group', { x: -40, opacity: 0, duration: 0.45, stagger: 0.12 }, '-=0.15')
+      .from('.auth-form .d-flex', { opacity: 0, duration: 0.35 }, '-=0.1')
+      .from('.auth-form .btn-primary', { y: 20, opacity: 0, scale: 0.9, duration: 0.45 }, '-=0.1')
+      .from('.divider', { scaleX: 0, opacity: 0, duration: 0.35 }, '-=0.1')
+      .from('.btn-secondary', { y: 12, opacity: 0, duration: 0.35 }, '-=0.1')
+      .from('.auth-footer', { opacity: 0, duration: 0.35 }, '-=0.1');
 
-    /* ---- Focus glow on inputs ---- */
-    var inputs = document.querySelectorAll('.form-control');
-    inputs.forEach(function(inp) {
+    /* ================================================================
+       FOCUS GLOW - Cyan glow on inputs
+       ================================================================ */
+    document.querySelectorAll('.form-control').forEach(function(inp) {
         inp.addEventListener('focus', function() {
-            gsap.to(this.closest('.input-group'), { boxShadow: '0 0 20px rgba(124,92,252,0.15)', duration: 0.3 });
+            gsap.to(this.closest('.input-group'), {
+                boxShadow: '0 0 25px rgba(0,240,255,0.12), 0 0 4px rgba(0,240,255,0.08)',
+                duration: 0.3
+            });
         });
         inp.addEventListener('blur', function() {
             gsap.to(this.closest('.input-group'), { boxShadow: 'none', duration: 0.3 });

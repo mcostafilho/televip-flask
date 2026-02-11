@@ -1,25 +1,23 @@
 /* ========================================
-   TeleVIP Auth - Galactic Dark Glass v2
+   TeleVIP Auth - Deep Space v3
    ======================================== */
 
-/* Reset e Base */
 * {
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
 }
 
-/* Variaveis CSS */
 :root {
     --primary-color: #7c5cfc;
     --secondary-color: #38bdf8;
+    --accent-pink: #f093fb;
+    --accent-cyan: #00f0ff;
     --success-color: #34d399;
     --danger-color: #f87171;
+    --text-light: #ffffff;
     --text-dark: #e2e8f0;
-    --text-muted: #8b8fad;
-    --border-color: rgba(124, 92, 252, 0.2);
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
+    --text-muted: #9ca3c2;
+    --border-color: rgba(124, 92, 252, 0.25);
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 20px;
@@ -35,7 +33,7 @@ html, body {
 }
 
 /* ========================================
-   Container + Starfield Background
+   Container - Deep Space
    ======================================== */
 .auth-container {
     min-height: 100vh;
@@ -44,7 +42,7 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #0b0e1a;
+    background: #050714;
     padding: 16px;
     padding-top: calc(16px + var(--safe-area-inset-top));
     padding-bottom: calc(16px + var(--safe-area-inset-bottom));
@@ -52,66 +50,133 @@ html, body {
     overflow: hidden;
 }
 
-/* Nebula gradient layer */
+/* Vibrant multi-layer nebula */
 .auth-container::before {
     content: '';
     position: absolute;
     inset: 0;
     background:
-        radial-gradient(ellipse 80% 60% at 20% 80%, rgba(124, 92, 252, 0.15) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 50% at 80% 20%, rgba(56, 189, 248, 0.12) 0%, transparent 55%),
-        radial-gradient(ellipse 50% 40% at 50% 50%, rgba(240, 147, 251, 0.06) 0%, transparent 50%);
+        radial-gradient(ellipse 120% 80% at 15% 85%, rgba(124, 60, 252, 0.35) 0%, transparent 55%),
+        radial-gradient(ellipse 100% 70% at 85% 15%, rgba(0, 160, 255, 0.28) 0%, transparent 50%),
+        radial-gradient(ellipse 80% 60% at 50% 40%, rgba(240, 147, 251, 0.15) 0%, transparent 45%),
+        radial-gradient(ellipse 60% 50% at 70% 70%, rgba(0, 240, 255, 0.1) 0%, transparent 40%),
+        radial-gradient(ellipse 50% 40% at 30% 20%, rgba(255, 100, 150, 0.08) 0%, transparent 35%);
     z-index: 0;
     pointer-events: none;
+    animation: nebulaShift 20s ease-in-out infinite alternate;
 }
 
-/* Starfield canvas placeholder */
-.auth-starfield {
+@keyframes nebulaShift {
+    0%   { opacity: 0.9; transform: scale(1) rotate(0deg); }
+    100% { opacity: 1;   transform: scale(1.05) rotate(1deg); }
+}
+
+/* Secondary nebula layer for depth */
+.auth-container::after {
+    content: '';
+    position: absolute;
+    inset: -20%;
+    background:
+        radial-gradient(circle 400px at 20% 30%, rgba(100, 50, 255, 0.2) 0%, transparent 70%),
+        radial-gradient(circle 300px at 80% 70%, rgba(0, 200, 255, 0.15) 0%, transparent 70%),
+        radial-gradient(circle 250px at 60% 20%, rgba(255, 50, 150, 0.1) 0%, transparent 70%);
+    z-index: 0;
+    pointer-events: none;
+    animation: nebulaFloat 15s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes nebulaFloat {
+    0%   { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(30px, -20px) scale(1.08); }
+}
+
+/* Canvas starfield */
+#starCanvas {
     position: absolute;
     inset: 0;
-    z-index: 0;
+    z-index: 1;
     pointer-events: none;
 }
 
-/* Floating nebula orbs */
+/* Floating nebula orbs - much more vibrant */
 .nebula-orb {
     position: absolute;
     border-radius: 50%;
-    filter: blur(60px);
-    opacity: 0;
     pointer-events: none;
-    z-index: 1;
+    z-index: 2;
     will-change: transform, opacity;
+    opacity: 0;
 }
 .nebula-orb--1 {
-    width: 300px; height: 300px;
-    background: radial-gradient(circle, rgba(124,92,252,0.3), transparent 70%);
-    top: 10%; left: -5%;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(124,60,252,0.5) 0%, rgba(124,60,252,0.1) 40%, transparent 70%);
+    filter: blur(40px);
+    top: 5%; left: -10%;
 }
 .nebula-orb--2 {
-    width: 250px; height: 250px;
-    background: radial-gradient(circle, rgba(56,189,248,0.25), transparent 70%);
-    bottom: 5%; right: -5%;
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, rgba(0,180,255,0.45) 0%, rgba(0,180,255,0.08) 40%, transparent 70%);
+    filter: blur(35px);
+    bottom: 0%; right: -8%;
 }
 .nebula-orb--3 {
+    width: 280px; height: 280px;
+    background: radial-gradient(circle, rgba(240,100,251,0.4) 0%, rgba(240,100,251,0.06) 40%, transparent 70%);
+    filter: blur(45px);
+    top: 40%; left: 55%;
+}
+.nebula-orb--4 {
     width: 200px; height: 200px;
-    background: radial-gradient(circle, rgba(240,147,251,0.2), transparent 70%);
-    top: 50%; left: 60%;
+    background: radial-gradient(circle, rgba(0,240,200,0.3) 0%, transparent 60%);
+    filter: blur(50px);
+    top: 70%; left: 20%;
+}
+
+/* Shooting stars */
+.shooting-star {
+    position: absolute;
+    height: 2px;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    will-change: transform, opacity;
+}
+.shooting-star--1 {
+    width: 120px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.9), rgba(124,92,252,0.3), transparent);
+}
+.shooting-star--2 {
+    width: 80px;
+    background: linear-gradient(90deg, rgba(0,240,255,0.9), rgba(56,189,248,0.3), transparent);
+}
+.shooting-star--3 {
+    width: 100px;
+    background: linear-gradient(90deg, rgba(240,147,251,0.9), rgba(240,147,251,0.2), transparent);
+}
+
+/* Floating particles */
+.particle {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 2;
+    will-change: transform, opacity;
 }
 
 /* ========================================
-   Auth Card - Premium Glass
+   Auth Card - Transparent Glass
    ======================================== */
 .auth-card {
-    background: rgba(15, 18, 35, 0.75);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(124, 92, 252, 0.18);
+    background: rgba(8, 10, 25, 0.55);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border: 1px solid rgba(124, 92, 252, 0.2);
     border-radius: var(--radius-lg);
     box-shadow:
-        0 25px 50px rgba(0, 0, 0, 0.5),
-        0 0 80px rgba(124, 92, 252, 0.05),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        0 30px 60px rgba(0, 0, 0, 0.5),
+        0 0 100px rgba(124, 92, 252, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
     width: 100%;
     max-width: 400px;
     padding: 24px 20px;
@@ -122,14 +187,15 @@ html, body {
     -webkit-overflow-scrolling: touch;
 }
 
-/* Card top glow line */
+/* Top glow line */
 .auth-card::before {
     content: '';
     position: absolute;
-    top: 0; left: 20%; right: 20%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(124,92,252,0.6), rgba(56,189,248,0.6), transparent);
-    border-radius: 1px;
+    top: -1px; left: 15%; right: 15%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--primary-color), var(--accent-cyan), var(--accent-pink), transparent);
+    border-radius: 2px;
+    opacity: 0.7;
 }
 
 /* ========================================
@@ -147,31 +213,30 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-cyan));
     border-radius: 50%;
     color: white;
     font-size: 28px;
-    box-shadow: 0 0 30px rgba(124, 92, 252, 0.3);
+    box-shadow: 0 0 40px rgba(124, 92, 252, 0.4), 0 0 80px rgba(0, 240, 255, 0.15);
     position: relative;
 }
 
-/* Logo pulse ring */
 .auth-logo::after {
     content: '';
     position: absolute;
-    inset: -4px;
+    inset: -6px;
     border-radius: 50%;
-    border: 2px solid rgba(124, 92, 252, 0.3);
-    animation: logoPulse 3s ease-in-out infinite;
+    border: 2px solid rgba(0, 240, 255, 0.3);
+    animation: logoPulse 2.5s ease-in-out infinite;
 }
 
 @keyframes logoPulse {
-    0%, 100% { transform: scale(1); opacity: 0.5; }
-    50% { transform: scale(1.15); opacity: 0; }
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.2); opacity: 0; }
 }
 
 .gradient-text {
-    background: linear-gradient(135deg, #7c5cfc 0%, #38bdf8 50%, #f093fb 100%);
+    background: linear-gradient(135deg, #a78bfa 0%, #38bdf8 40%, #f093fb 70%, #00f0ff 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -179,13 +244,14 @@ html, body {
     font-size: 24px;
     margin-bottom: 8px;
     line-height: 1.2;
-    background-size: 200% 100%;
-    animation: gradientShift 4s ease infinite;
+    background-size: 300% 100%;
+    animation: gradientShift 5s ease infinite;
 }
 
 @keyframes gradientShift {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 .subtitle {
@@ -222,7 +288,7 @@ html, body {
     background: var(--primary-color);
     color: white;
     transform: scale(1.1);
-    box-shadow: 0 0 20px rgba(124, 92, 252, 0.4);
+    box-shadow: 0 0 25px rgba(124, 92, 252, 0.5);
 }
 
 .step.completed {
@@ -269,7 +335,7 @@ html, body {
     font-size: 18px;
     pointer-events: none;
     z-index: 1;
-    transition: color 0.3s ease;
+    transition: color 0.3s ease, text-shadow 0.3s ease;
 }
 
 .form-control {
@@ -277,11 +343,11 @@ html, body {
     padding: 16px;
     font-size: 16px;
     font-family: inherit;
-    border: 1px solid rgba(124, 92, 252, 0.15);
+    border: 1px solid rgba(124, 92, 252, 0.2);
     border-radius: var(--radius-md);
     transition: all 0.3s ease;
-    background: rgba(255, 255, 255, 0.04);
-    color: var(--text-dark);
+    background: rgba(10, 12, 30, 0.6);
+    color: #ffffff;
     -webkit-appearance: none;
 }
 
@@ -291,22 +357,34 @@ html, body {
 
 .form-control:focus {
     outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.15), 0 0 20px rgba(124, 92, 252, 0.08);
-    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.12), 0 0 25px rgba(0, 240, 255, 0.1);
+    background: rgba(10, 12, 30, 0.8);
+    color: #ffffff;
 }
 
 .form-control:focus ~ .input-icon {
-    color: var(--primary-color);
+    color: var(--accent-cyan);
+    text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
 }
 
 .form-control::placeholder {
-    color: #6b7280;
+    color: #5a6082;
     opacity: 1;
 }
 
 .form-control:focus::placeholder {
-    opacity: 0.6;
+    color: #6a70a0;
+}
+
+/* Autofill override - keep our dark style */
+.form-control:-webkit-autofill,
+.form-control:-webkit-autofill:hover,
+.form-control:-webkit-autofill:focus {
+    -webkit-text-fill-color: #ffffff !important;
+    -webkit-box-shadow: 0 0 0 1000px rgba(10, 12, 30, 0.9) inset !important;
+    border-color: rgba(124, 92, 252, 0.3) !important;
+    transition: background-color 5000s ease-in-out 0s;
 }
 
 .form-floating {
@@ -335,7 +413,7 @@ html, body {
 }
 
 .password-field .password-toggle:hover {
-    color: var(--primary-color);
+    color: var(--accent-cyan);
 }
 
 .password-field .form-control {
@@ -375,29 +453,29 @@ html, body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, #00c8ff 100%);
     color: white;
     margin-top: 8px;
+    box-shadow: 0 4px 20px rgba(124, 92, 252, 0.3);
 }
 
-/* Shimmer sweep on primary button */
 .btn-primary::after {
     content: '';
     position: absolute;
     top: 0; left: -100%;
     width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-    animation: btnShimmer 3s ease-in-out infinite;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    animation: btnShimmer 2.5s ease-in-out infinite;
 }
 
 @keyframes btnShimmer {
     0% { left: -100%; }
-    50%, 100% { left: 100%; }
+    60%, 100% { left: 100%; }
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(124, 92, 252, 0.4);
+    box-shadow: 0 8px 30px rgba(124, 92, 252, 0.5), 0 0 40px rgba(0, 200, 255, 0.2);
 }
 
 .btn-primary:active {
@@ -412,7 +490,7 @@ html, body {
 
 .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(124, 92, 252, 0.3);
+    border-color: rgba(124, 92, 252, 0.4);
 }
 
 .btn-secondary:active {
@@ -436,7 +514,7 @@ html, body {
     content: '';
     flex: 1;
     height: 1px;
-    background: var(--border-color);
+    background: linear-gradient(90deg, transparent, var(--border-color), transparent);
 }
 
 .divider span {
@@ -478,14 +556,14 @@ html, body {
 }
 
 .form-check-label a {
-    color: var(--primary-color);
+    color: var(--accent-cyan);
 }
 
 /* ========================================
    Links
    ======================================== */
 .auth-link {
-    color: var(--primary-color);
+    color: var(--accent-cyan);
     text-decoration: none;
     font-weight: 500;
     font-size: 14px;
@@ -493,7 +571,7 @@ html, body {
 
 .auth-link:hover {
     text-decoration: underline;
-    color: var(--secondary-color);
+    color: #5af0ff;
 }
 
 .auth-link:active {
@@ -507,7 +585,7 @@ html, body {
     text-align: center;
     margin-top: 24px;
     padding-top: 24px;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid rgba(124, 92, 252, 0.15);
     font-size: 14px;
     color: var(--text-muted);
 }
@@ -526,22 +604,22 @@ html, body {
 }
 
 .alert-success {
-    background: rgba(52, 211, 153, 0.1);
+    background: rgba(52, 211, 153, 0.12);
     color: #34d399;
-    border: 1px solid rgba(52, 211, 153, 0.2);
+    border: 1px solid rgba(52, 211, 153, 0.25);
 }
 
 .alert-error,
 .alert-danger {
-    background: rgba(248, 113, 113, 0.1);
+    background: rgba(248, 113, 113, 0.12);
     color: #f87171;
-    border: 1px solid rgba(248, 113, 113, 0.2);
+    border: 1px solid rgba(248, 113, 113, 0.25);
 }
 
 .alert-info {
-    background: rgba(56, 189, 248, 0.1);
+    background: rgba(56, 189, 248, 0.12);
     color: #38bdf8;
-    border: 1px solid rgba(56, 189, 248, 0.2);
+    border: 1px solid rgba(56, 189, 248, 0.25);
 }
 
 .alert .btn-close {
@@ -561,7 +639,7 @@ html, body {
 }
 
 /* ========================================
-   Loading State
+   Loading / Spinner
    ======================================== */
 .btn-loading {
     position: relative;
@@ -594,7 +672,7 @@ html, body {
 
 .strength-bar {
     height: 4px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 2px;
     overflow: hidden;
     margin-bottom: 8px;
@@ -605,6 +683,7 @@ html, body {
     width: 0;
     background: var(--danger-color);
     transition: all 0.3s ease;
+    border-radius: 2px;
 }
 
 .strength-text {
@@ -628,17 +707,18 @@ html, body {
     padding: 8px 16px;
     background: rgba(255, 255, 255, 0.06);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(124, 92, 252, 0.15);
+    border: 1px solid rgba(124, 92, 252, 0.2);
     border-radius: 25px;
     transition: all 0.3s ease;
     z-index: 100;
 }
 
 .btn-back:hover {
-    background: rgba(124, 92, 252, 0.15);
-    border-color: rgba(124, 92, 252, 0.3);
+    background: rgba(124, 92, 252, 0.2);
+    border-color: rgba(0, 240, 255, 0.3);
     color: white;
     transform: translateX(-5px);
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.1);
 }
 
 .btn-back i {
@@ -655,41 +735,6 @@ html, body {
     .btn-back span {
         display: none;
     }
-}
-
-/* ========================================
-   Starfield (CSS fallback stars)
-   ======================================== */
-.star {
-    position: absolute;
-    border-radius: 50%;
-    background: white;
-    pointer-events: none;
-    z-index: 0;
-}
-
-.star--sm { width: 1px; height: 1px; }
-.star--md { width: 2px; height: 2px; }
-.star--lg { width: 3px; height: 3px; }
-
-@keyframes twinkle {
-    0%, 100% { opacity: 0.2; }
-    50% { opacity: 1; }
-}
-
-/* ========================================
-   Shooting stars
-   ======================================== */
-.shooting-star {
-    position: absolute;
-    width: 80px;
-    height: 1px;
-    background: linear-gradient(90deg, rgba(255,255,255,0.8), transparent);
-    border-radius: 1px;
-    pointer-events: none;
-    z-index: 1;
-    opacity: 0;
-    will-change: transform, opacity;
 }
 
 /* ========================================
@@ -809,19 +854,21 @@ html, body {
 }
 
 /* ========================================
-   Acessibilidade e Performance
+   Accessibility
    ======================================== */
 @media (prefers-reduced-motion: reduce) {
     .gradient-text { animation: none; }
     .btn-primary::after { animation: none; }
     .auth-logo::after { animation: none; }
-    .star { animation: none !important; }
+    .auth-container::before { animation: none; }
+    .auth-container::after { animation: none; }
     .shooting-star { display: none; }
+    .particle { display: none; }
 }
 
 .form-control:focus-visible,
 .btn:focus-visible,
 .auth-link:focus-visible {
-    outline: 2px solid var(--primary-color);
+    outline: 2px solid var(--accent-cyan);
     outline-offset: 2px;
 }
