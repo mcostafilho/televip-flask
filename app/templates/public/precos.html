@@ -29,7 +29,6 @@
     <!-- CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/landing.css') }}" rel="stylesheet">
 
     <!-- Favicon -->
@@ -417,7 +416,7 @@
     <!-- Hero Section -->
     <section class="precos-hero">
         <div class="container">
-            <div data-aos="fade-up">
+            <div>
                 <h1>Preços simples e <span class="text-gradient">transparentes</span></h1>
                 <p class="lead">
                     Sem mensalidade, sem surpresas. Você só paga quando recebe. Simples assim.
@@ -430,7 +429,7 @@
     <section style="padding: 80px 0;">
         <div class="container">
             <div class="row justify-content-center">
-                <div class="col-lg-6" data-aos="zoom-in">
+                <div class="col-lg-6">
                     <div class="main-pricing-card">
                         <div class="badge-top">PLANO ÚNICO - PARA SEMPRE</div>
 
@@ -488,12 +487,12 @@
     <!-- Fee Calculator -->
     <section class="calculator-section">
         <div class="container">
-            <div class="text-center mb-5" data-aos="fade-up">
+            <div class="text-center mb-5">
                 <h2 class="display-5 fw-bold">Calculadora de <span class="text-gradient">taxas</span></h2>
                 <p class="lead text-muted">Simule quanto você recebe em cada venda</p>
             </div>
 
-            <div data-aos="fade-up">
+            <div>
                 <div class="calculator-card">
                     <div class="calculator-input">
                         <label for="saleValue">Valor da venda</label>
@@ -536,12 +535,12 @@
     <!-- Comparison Table -->
     <section class="comparison-section">
         <div class="container">
-            <div class="text-center mb-5" data-aos="fade-up">
+            <div class="text-center mb-5">
                 <h2 class="display-5 fw-bold">Compare e <span class="text-gradient">economize</span></h2>
                 <p class="lead text-muted">Veja por que o TeleVIP é a melhor escolha</p>
             </div>
 
-            <div class="row justify-content-center" data-aos="fade-up">
+            <div class="row justify-content-center">
                 <div class="col-lg-10">
                     <div class="comparison-table">
                         <table>
@@ -607,12 +606,12 @@
     <!-- What's Included -->
     <section class="included-section">
         <div class="container">
-            <div class="text-center mb-5" data-aos="fade-up">
+            <div class="text-center mb-5">
                 <h2 class="display-5 fw-bold">Tudo <span class="text-gradient">incluso</span></h2>
                 <p class="lead text-muted">Sem planos diferentes. Você tem acesso a tudo.</p>
             </div>
 
-            <div class="included-grid" data-aos="fade-up">
+            <div class="included-grid">
                 <div class="included-item">
                     <i class="bi bi-check-circle-fill"></i>
                     <span>Grupos ilimitados</span>
@@ -676,14 +675,14 @@
     <!-- Pricing FAQ -->
     <section class="pricing-faq">
         <div class="container">
-            <div class="text-center mb-5" data-aos="fade-up">
+            <div class="text-center mb-5">
                 <h2 class="display-5 fw-bold">Dúvidas sobre <span class="text-gradient">preços</span></h2>
                 <p class="lead text-muted">Respostas para as perguntas mais comuns</p>
             </div>
 
             <div class="row justify-content-center">
                 <div class="col-lg-8">
-                    <div class="accordion" id="pricingFaq" data-aos="fade-up">
+                    <div class="accordion" id="pricingFaq">
                         <div class="accordion-item">
                             <h2 class="accordion-header">
                                 <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#pfaq1">
@@ -770,7 +769,7 @@
     <!-- CTA Section -->
     <section class="cta">
         <div class="container">
-            <div data-aos="zoom-in">
+            <div>
                 <h2>Pronto para começar a lucrar?</h2>
                 <p class="lead">
                     Crie sua conta gratuita agora e comece a monetizar seu Telegram com a menor taxa do mercado.
@@ -868,7 +867,6 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 
     <!-- Floating WhatsApp Button -->
     <div id="whatsapp-float" class="d-none d-lg-flex" style="position: fixed; bottom: 24px; right: 24px; z-index: 9999; align-items: center; gap: 12px;">
@@ -888,32 +886,11 @@
             <i class="bi bi-whatsapp"></i>
         </a>
     </div>
-    <style>
-        @keyframes whatsapp-pulse {
-            0% { box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4); }
-            50% { box-shadow: 0 4px 24px rgba(37, 211, 102, 0.7); }
-            100% { box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4); }
-        }
-    </style>
 
+    <!-- Fee Calculator (must load before landing.js) -->
     <script>
-        AOS.init({ duration: 1000, once: true, offset: 100 });
-
-        if (window.innerWidth > 768) {
-            const cursor = document.querySelector('.cursor');
-            const cursor2 = document.querySelector('.cursor2');
-            document.addEventListener('mousemove', e => {
-                cursor.style.left = e.clientX + 'px';
-                cursor.style.top = e.clientY + 'px';
-                cursor2.style.left = e.clientX + 'px';
-                cursor2.style.top = e.clientY + 'px';
-            });
-        }
-
-        // Fee Calculator
         function calculate() {
             var raw = document.getElementById('saleValue').value || '0';
-            // Remove spaces, R$, dots as thousand sep, then comma to dot
             raw = raw.replace(/\s/g, '').replace('R$', '');
             if (raw.indexOf(',') > -1 && raw.indexOf('.') > -1) {
                 raw = raw.replace(/\./g, '').replace(',', '.');
@@ -939,6 +916,12 @@
         }
         calculate();
     </script>
+
+    <!-- Animation Libraries -->
+    <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="{{ url_for('static', filename='js/landing.js') }}"></script>
 
     <!-- Cookie Banner -->
     <div id="cookieBanner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:10000;

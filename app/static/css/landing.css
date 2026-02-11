@@ -1338,9 +1338,40 @@ h2, h3, h4, h5 {
     animation: pulse 2s ease-in-out infinite;
 }
 
-/* Smooth scroll */
-html {
-    scroll-behavior: smooth;
+/* ========================================
+   Three.js Hero Canvas
+   ======================================== */
+#hero-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Hide canvas on mobile (CSS starfield fallback) */
+@media (max-width: 767px) {
+    #hero-canvas {
+        display: none;
+    }
+}
+
+/* Word split helper */
+.word {
+    display: inline-block;
+}
+
+/* 3D tilt cards */
+.feature-card,
+.feature-card-ext,
+.testimonial-card,
+.stat-card,
+.comparison-card,
+.pricing-card,
+.main-pricing-card {
+    transform-style: preserve-3d;
 }
 
 /* Focus states for accessibility */
@@ -1371,12 +1402,6 @@ button:focus {
 }
 
 /* Performance optimizations */
-.feature-card,
-.pricing-card,
-.testimonial-card {
-    will-change: transform;
-}
-
 .starfield,
 .nebula-glow,
 .shooting-star {
@@ -1412,5 +1437,20 @@ button:focus {
     }
     .hero h1 .text-gradient {
         animation: none !important;
+    }
+    #hero-canvas {
+        display: none !important;
+    }
+    /* Ensure all content is visible when animations disabled */
+    .hero-content, .hero-content * ,
+    .feature-card, .feature-card-ext,
+    .pricing-card, .main-pricing-card,
+    .testimonial-card, .comparison-card,
+    .stat-card, .cta *, .step-card,
+    .detail-block, .included-item,
+    .accordion-item, .footer * {
+        opacity: 1 !important;
+        transform: none !important;
+        clip-path: none !important;
     }
 }
