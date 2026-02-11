@@ -651,27 +651,23 @@
     var mouseX = window.innerWidth / 2;
     var mouseY = window.innerHeight / 2;
     var curX = mouseX, curY = mouseY;
-    var curSize = 0, targetSize = 0;
+    var active = false;
 
     document.addEventListener('mousemove', function (e) {
       mouseX = e.clientX;
       mouseY = e.clientY;
+      if (!active) {
+        active = true;
+        reveal.style.opacity = '1';
+      }
     });
 
-    // Grow reveal after hero entrance
-    setTimeout(function () { targetSize = 300; }, 2000);
-
+    // Smooth trailing via GSAP ticker — just move left/top
     gsap.ticker.add(function () {
-      curX += (mouseX - curX) * 0.1;
-      curY += (mouseY - curY) * 0.1;
-      curSize += (targetSize - curSize) * 0.05;
-
-      if (curSize < 2) return;
-
-      reveal.style.opacity = '1';
-      var cp = 'circle(' + Math.round(curSize) + 'px at ' + Math.round(curX) + 'px ' + Math.round(curY) + 'px)';
-      reveal.style.webkitClipPath = cp;
-      reveal.style.clipPath = cp;
+      curX += (mouseX - curX) * 0.12;
+      curY += (mouseY - curY) * 0.12;
+      reveal.style.left = curX + 'px';
+      reveal.style.top = curY + 'px';
     });
   }
 
