@@ -31,7 +31,6 @@
         radial-gradient(ellipse 40% 40% at 10% 90%, rgba(16, 185, 129, 0.06) 0%, transparent 50%),
         radial-gradient(ellipse 30% 30% at 50% 50%, rgba(124, 92, 252, 0.06) 0%, transparent 50%),
         linear-gradient(135deg, #0b0e1a 0%, #1a1040 50%, #0d1b2a 100%);
-    background-attachment: fixed;
     padding: 2rem 0;
     color: var(--galactic-text-primary);
     position: relative;
