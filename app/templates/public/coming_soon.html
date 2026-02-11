@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#7c5cfc">
     {% include 'partials/_analytics.html' %}
     <title>Em Breve - TeleVIP</title>
-    <meta name="description" content="Estamos construindo algo incrivel. Fique ligado nas novidades do TeleVIP!">
+    <meta name="description" content="Estamos construindo algo incrível. Fique ligado nas novidades do TeleVIP!">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -33,32 +33,41 @@
     <!-- Main -->
     <main class="cs-main">
         <div class="cs-badge">
-            <i class="bi bi-cone-striped"></i> Em Construcao
+            <i class="bi bi-cone-striped"></i> Em Construção
         </div>
 
         <h1 class="cs-title">
-            Estamos construindo algo <span class="cs-gradient">incrivel</span>
+            Estamos construindo algo <span class="cs-gradient">incrível</span>
         </h1>
         <p class="cs-subtitle">
-            Nossa equipe esta trabalhando duro para trazer este recurso ate voce. Clique nos devs para anima-los!
+            Nossa equipe está trabalhando duro nesta funcionalidade.
+            Enquanto isso, ajude os devs eliminando os bugs que aparecem na estação!
         </p>
 
         <!-- Pixel Art Scene -->
         <div class="cs-scene" id="csScene">
+            <!-- Station Wall -->
+            <div class="cs-wall"></div>
+
             <!-- Space Window -->
             <div class="cs-window">
-                <div class="cs-window-star" style="top:12px;left:20px;"></div>
-                <div class="cs-window-star" style="top:25px;left:60px;animation-delay:.5s;"></div>
-                <div class="cs-window-star" style="top:8px;left:100px;animation-delay:1s;"></div>
-                <div class="cs-window-star" style="top:35px;left:130px;animation-delay:1.5s;"></div>
-                <div class="cs-window-star" style="top:18px;left:45px;animation-delay:.8s;width:1px;height:1px;"></div>
-                <div class="cs-window-star" style="top:30px;left:90px;animation-delay:1.2s;width:1px;height:1px;"></div>
+                <div class="cs-window-star" style="top:10px;left:18px;"></div>
+                <div class="cs-window-star" style="top:22px;left:55px;animation-delay:.5s;"></div>
+                <div class="cs-window-star" style="top:6px;left:90px;animation-delay:1s;"></div>
+                <div class="cs-window-star" style="top:30px;left:120px;animation-delay:1.5s;"></div>
+                <div class="cs-window-star" style="top:16px;left:40px;animation-delay:.8s;width:1px;height:1px;"></div>
+                <div class="cs-window-star" style="top:28px;left:80px;animation-delay:1.2s;width:1px;height:1px;"></div>
+                <!-- Planet -->
+                <div class="cs-planet">
+                    <div class="cs-planet-ring"></div>
+                </div>
             </div>
 
-            <!-- Dev 1 -->
-            <div class="cs-desk" style="left:24px;" id="desk1">
+            <!-- Dev 1 (purple) -->
+            <div class="cs-desk" style="left:16px;">
                 <div class="cs-desk-leg left"></div>
                 <div class="cs-desk-leg right"></div>
+                <div class="cs-mug" style="right:8px;"></div>
                 <div class="cs-monitor">
                     <div class="cs-monitor-screen">
                         <div class="cs-code-line"></div>
@@ -68,7 +77,7 @@
                     <div class="cs-monitor-stand"></div>
                 </div>
             </div>
-            <div class="cs-dev" data-color="purple" data-clicks="0" style="left:34px;" onclick="clickDev(this)">
+            <div class="cs-dev" data-color="purple" data-clicks="0" style="left:28px;" onclick="clickDev(this)">
                 <div class="cs-dev-head"></div>
                 <div class="cs-dev-body"></div>
                 <div class="cs-dev-arm left"></div>
@@ -79,8 +88,8 @@
                 </div>
             </div>
 
-            <!-- Dev 2 -->
-            <div class="cs-desk" style="left:50%;transform:translateX(-50%);" id="desk2">
+            <!-- Dev 2 (cyan) -->
+            <div class="cs-desk" style="left:33%;transform:translateX(-50%);">
                 <div class="cs-desk-leg left"></div>
                 <div class="cs-desk-leg right"></div>
                 <div class="cs-monitor">
@@ -93,7 +102,7 @@
                     <div class="cs-monitor-stand"></div>
                 </div>
             </div>
-            <div class="cs-dev" data-color="cyan" data-clicks="0" style="left:50%;transform:translateX(-50%);" onclick="clickDev(this)">
+            <div class="cs-dev" data-color="cyan" data-clicks="0" style="left:33%;transform:translateX(-50%);" onclick="clickDev(this)">
                 <div class="cs-dev-head"></div>
                 <div class="cs-dev-body"></div>
                 <div class="cs-dev-arm left" style="animation-delay:.15s;"></div>
@@ -104,8 +113,33 @@
                 </div>
             </div>
 
-            <!-- Dev 3 -->
-            <div class="cs-desk" style="right:24px;" id="desk3">
+            <!-- Dev 3 (green) -->
+            <div class="cs-desk" style="left:66%;transform:translateX(-50%);">
+                <div class="cs-desk-leg left"></div>
+                <div class="cs-desk-leg right"></div>
+                <div class="cs-mug" style="left:8px;"></div>
+                <div class="cs-monitor">
+                    <div class="cs-monitor-screen">
+                        <div class="cs-code-line"></div>
+                        <div class="cs-code-line"></div>
+                        <div class="cs-code-line"></div>
+                    </div>
+                    <div class="cs-monitor-stand"></div>
+                </div>
+            </div>
+            <div class="cs-dev" data-color="green" data-clicks="0" style="left:66%;transform:translateX(-50%);" onclick="clickDev(this)">
+                <div class="cs-dev-head"></div>
+                <div class="cs-dev-body"></div>
+                <div class="cs-dev-arm left" style="animation-delay:.25s;"></div>
+                <div class="cs-dev-arm right" style="animation-delay:.55s;"></div>
+                <div class="cs-dev-legs">
+                    <div class="cs-dev-leg" style="background:#1a3a2e;"></div>
+                    <div class="cs-dev-leg" style="background:#1a3a2e;"></div>
+                </div>
+            </div>
+
+            <!-- Dev 4 (pink) -->
+            <div class="cs-desk" style="right:16px;">
                 <div class="cs-desk-leg left"></div>
                 <div class="cs-desk-leg right"></div>
                 <div class="cs-monitor">
@@ -117,14 +151,14 @@
                     <div class="cs-monitor-stand"></div>
                 </div>
             </div>
-            <div class="cs-dev" data-color="green" data-clicks="0" style="right:34px;" onclick="clickDev(this)">
+            <div class="cs-dev" data-color="pink" data-clicks="0" style="right:28px;" onclick="clickDev(this)">
                 <div class="cs-dev-head"></div>
                 <div class="cs-dev-body"></div>
-                <div class="cs-dev-arm left" style="animation-delay:.25s;"></div>
-                <div class="cs-dev-arm right" style="animation-delay:.55s;"></div>
+                <div class="cs-dev-arm left" style="animation-delay:.35s;"></div>
+                <div class="cs-dev-arm right" style="animation-delay:.65s;"></div>
                 <div class="cs-dev-legs">
-                    <div class="cs-dev-leg" style="background:#1a3a2e;"></div>
-                    <div class="cs-dev-leg" style="background:#1a3a2e;"></div>
+                    <div class="cs-dev-leg" style="background:#4a2050;"></div>
+                    <div class="cs-dev-leg" style="background:#4a2050;"></div>
                 </div>
             </div>
 
@@ -132,15 +166,41 @@
             <div class="cs-floor"></div>
         </div>
 
-        <!-- Code counter -->
-        <div class="cs-counter">
-            <i class="bi bi-code-slash"></i>
-            <span><span class="cs-counter-num" id="csCount">0</span> linhas de codigo escritas</span>
+        <!-- Game hint -->
+        <p class="cs-hint" id="csHint">
+            <i class="bi bi-bug"></i> Clique nos bugs para eliminá-los! Clique nos devs para animá-los.
+        </p>
+
+        <!-- Stats -->
+        <div class="cs-stats">
+            <div class="cs-stat">
+                <i class="bi bi-code-slash"></i>
+                <span><span class="cs-stat-num green" id="csLines">0</span> linhas</span>
+            </div>
+            <div class="cs-stat">
+                <i class="bi bi-bug"></i>
+                <span><span class="cs-stat-num yellow" id="csBugs">0</span> bugs corrigidos</span>
+            </div>
+            <div class="cs-stat">
+                <i class="bi bi-trophy"></i>
+                <span><span class="cs-stat-num pink" id="csLevel">1</span> nível</span>
+            </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="cs-progress">
+            <div class="cs-progress-label">
+                <span>Progresso da construção</span>
+                <span id="csPercent">0%</span>
+            </div>
+            <div class="cs-progress-bar">
+                <div class="cs-progress-fill" id="csProgressFill"></div>
+            </div>
         </div>
 
         <!-- CTA -->
         <a href="{{ url_for('auth.index') }}" class="cs-btn">
-            <i class="bi bi-house"></i> Voltar a Home
+            <i class="bi bi-house"></i> Voltar à Home
         </a>
     </main>
 
@@ -152,9 +212,26 @@
     <!-- Vanilla JS -->
     <script>
     (function(){
-        // Generate stars
+        var scene = document.getElementById('csScene');
+        var devs = scene.querySelectorAll('.cs-dev');
+        var elLines = document.getElementById('csLines');
+        var elBugs = document.getElementById('csBugs');
+        var elLevel = document.getElementById('csLevel');
+        var elPercent = document.getElementById('csPercent');
+        var elFill = document.getElementById('csProgressFill');
+        var elHint = document.getElementById('csHint');
+
+        // State
+        var lines = Math.floor(Math.random()*5000) + 10000;
+        var bugsKilled = 0;
+        var level = 1;
+        var progress = 0;
+        var bugColors = ['#ef4444','#f97316','#eab308','#a855f7','#ec4899'];
+        var emojis = ['🚀','💻','⚡','🔥','✨','🎯','💜','🛸','☕','🎮'];
+
+        // Stars
         var sf = document.getElementById('csStars');
-        for(var i = 0; i < 60; i++){
+        for(var i = 0; i < 70; i++){
             var s = document.createElement('div');
             s.className = 'cs-star';
             s.style.left = Math.random()*100 + '%';
@@ -162,50 +239,234 @@
             s.style.setProperty('--dur', (2+Math.random()*4)+'s');
             s.style.setProperty('--bright', (0.4+Math.random()*0.6).toString());
             s.style.animationDelay = (Math.random()*4)+'s';
+            if(Math.random()>0.7){ s.style.width='1px'; s.style.height='1px'; }
             sf.appendChild(s);
         }
 
+        // Shooting stars
+        function shootingStar(){
+            var ss = document.createElement('div');
+            ss.className = 'cs-shooting-star';
+            ss.style.left = Math.random()*60 + '%';
+            ss.style.top = Math.random()*40 + '%';
+            ss.style.setProperty('--dx', (150+Math.random()*200)+'px');
+            ss.style.setProperty('--dy', (100+Math.random()*150)+'px');
+            ss.style.setProperty('--shoot-dur', (0.8+Math.random()*0.6)+'s');
+            sf.appendChild(ss);
+            setTimeout(function(){ ss.remove(); }, 2000);
+        }
+        setInterval(shootingStar, 4000 + Math.random()*3000);
+        setTimeout(shootingStar, 1500);
+
         // Code counter
-        var count = Math.floor(Math.random()*5000) + 10000;
-        var el = document.getElementById('csCount');
-        el.textContent = count.toLocaleString('pt-BR');
+        elLines.textContent = lines.toLocaleString('pt-BR');
         setInterval(function(){
-            count += Math.floor(Math.random()*3) + 1;
-            el.textContent = count.toLocaleString('pt-BR');
-        }, 800);
-    })();
+            lines += Math.floor(Math.random()*3) + 1;
+            elLines.textContent = lines.toLocaleString('pt-BR');
+        }, 600);
 
-    var emojis = ['🚀','💻','⚡','🔥','✨','🎯','💜','🛸'];
+        // Progress bar (slowly fills, bugs speed it up)
+        function updateProgress(){
+            if(progress > 100) progress = 100;
+            elFill.style.width = progress + '%';
+            elPercent.textContent = Math.floor(progress) + '%';
+        }
+        setInterval(function(){
+            progress += 0.05;
+            updateProgress();
+        }, 500);
 
-    function clickDev(dev){
-        // Jump
-        dev.classList.remove('jump');
-        void dev.offsetWidth;
-        dev.classList.add('jump');
+        // ===== BUG SPAWN =====
+        function spawnBug(){
+            var bug = document.createElement('div');
+            bug.className = 'cs-bug';
+            var color = bugColors[Math.floor(Math.random()*bugColors.length)];
+            bug.style.setProperty('--bug-color', color);
 
-        // Emoji
-        var em = document.createElement('div');
-        em.className = 'cs-emoji';
-        em.textContent = emojis[Math.floor(Math.random()*emojis.length)];
-        dev.appendChild(em);
-        setTimeout(function(){ em.remove(); }, 800);
+            // Start position: random along edges of scene
+            var sceneW = scene.offsetWidth;
+            var sceneH = scene.offsetHeight;
+            var side = Math.floor(Math.random()*3); // 0=left, 1=right, 2=top
+            var startX, startY;
+            if(side === 0){ startX = 0; startY = 40 + Math.random()*(sceneH - 90); }
+            else if(side === 1){ startX = sceneW - 14; startY = 40 + Math.random()*(sceneH - 90); }
+            else { startX = 20 + Math.random()*(sceneW - 40); startY = 70; }
 
-        // Easter egg: 5 clicks
-        var c = parseInt(dev.getAttribute('data-clicks') || '0') + 1;
-        dev.setAttribute('data-clicks', c);
-        if(c >= 5){
-            dev.setAttribute('data-clicks', '0');
+            bug.style.left = startX + 'px';
+            bug.style.top = startY + 'px';
+
+            // Crawl direction
+            var dx = (Math.random()-0.5) * 200;
+            var dy = (Math.random()-0.3) * 120;
+            var dur = 3 + Math.random()*4 - level*0.3;
+            if(dur < 1.5) dur = 1.5;
+            bug.style.setProperty('--dx', dx+'px');
+            bug.style.setProperty('--dy', dy+'px');
+            bug.style.setProperty('--crawl-dur', dur+'s');
+
+            // Rotation based on movement direction
+            var angle = Math.atan2(dy, dx) * (180/Math.PI);
+            bug.querySelector || null; // no-op
+            var inner = document.createElement('div');
+            inner.className = 'cs-bug-body';
+            inner.style.transform = 'rotate('+angle+'deg)';
+            bug.appendChild(inner);
+
+            // Click to squash
+            bug.addEventListener('click', function(e){
+                e.stopPropagation();
+                squashBug(bug, color);
+            });
+
+            scene.appendChild(bug);
+
+            // Auto-remove if not clicked
+            setTimeout(function(){
+                if(bug.parentNode) bug.remove();
+            }, dur*1000 + 500);
+        }
+
+        function squashBug(bug, color){
+            var rect = bug.getBoundingClientRect();
+            var sceneRect = scene.getBoundingClientRect();
+            var x = rect.left - sceneRect.left + rect.width/2;
+            var y = rect.top - sceneRect.top + rect.height/2;
+
+            // Remove bug
+            bug.remove();
+
+            // Splat
+            var splat = document.createElement('div');
+            splat.className = 'cs-splat';
+            splat.style.left = (x-8) + 'px';
+            splat.style.top = (y-8) + 'px';
+            splat.style.setProperty('--bug-color', color);
+            scene.appendChild(splat);
+            setTimeout(function(){ splat.remove(); }, 500);
+
+            // Score popup
+            var pop = document.createElement('div');
+            pop.className = 'cs-score-pop';
+            pop.style.left = x + 'px';
+            pop.style.top = (y-10) + 'px';
+            pop.textContent = '+1';
+            scene.appendChild(pop);
+            setTimeout(function(){ pop.remove(); }, 700);
+
+            // Screen shake
+            scene.classList.remove('shake');
+            void scene.offsetWidth;
+            scene.classList.add('shake');
+
+            // Update score
+            bugsKilled++;
+            elBugs.textContent = bugsKilled;
+            progress += 0.5;
+            updateProgress();
+
+            // Level up every 10 bugs
+            var newLevel = Math.floor(bugsKilled / 10) + 1;
+            if(newLevel > level){
+                level = newLevel;
+                elLevel.textContent = level;
+                celebrateDevs();
+                if(level <= 3) spawnConfetti();
+                // Update hint
+                var hints = [
+                    '',
+                    'Nível 2! Os bugs estão mais rápidos!',
+                    'Nível 3! Você é um caçador de bugs nato!',
+                    'Nível ' + level + '! Lendário!'
+                ];
+                elHint.innerHTML = '<i class="bi bi-star-fill" style="color:#fbbf24"></i> ' +
+                    (hints[Math.min(level-1, hints.length-1)] || hints[hints.length-1]);
+            }
+
+            // Random dev celebrates
+            if(bugsKilled % 5 === 0){
+                var d = devs[Math.floor(Math.random()*devs.length)];
+                d.classList.remove('jump');
+                void d.offsetWidth;
+                d.classList.add('jump');
+            }
+        }
+
+        // Spawn bugs at interval (faster at higher levels)
+        function bugLoop(){
+            spawnBug();
+            var delay = Math.max(1200, 3500 - level*400) + Math.random()*1500;
+            setTimeout(bugLoop, delay);
+        }
+        setTimeout(bugLoop, 2000);
+
+        // Celebrate all devs
+        function celebrateDevs(){
+            devs.forEach(function(d){
+                d.classList.remove('jump','celebrate');
+                void d.offsetWidth;
+                d.classList.add('jump');
+                d.classList.add('celebrate');
+                setTimeout(function(){ d.classList.remove('celebrate'); }, 2500);
+            });
             launchRocket();
         }
-    }
 
-    function launchRocket(){
-        var r = document.createElement('div');
-        r.className = 'cs-rocket';
-        r.textContent = '🚀';
-        document.body.appendChild(r);
-        setTimeout(function(){ r.remove(); }, 2200);
-    }
+        // Confetti burst
+        function spawnConfetti(){
+            var colors = ['#7c5cfc','#38bdf8','#34d399','#fbbf24','#f093fb','#ef4444'];
+            for(var i = 0; i < 30; i++){
+                var c = document.createElement('div');
+                c.className = 'cs-confetti';
+                c.style.background = colors[Math.floor(Math.random()*colors.length)];
+                c.style.left = (40+Math.random()*20) + 'vw';
+                c.style.top = (30+Math.random()*10) + 'vh';
+                c.style.setProperty('--cx', (Math.random()-0.5)*300 + 'px');
+                c.style.setProperty('--cy', 100+Math.random()*200 + 'px');
+                c.style.setProperty('--cr', Math.random()*720-360 + 'deg');
+                c.style.setProperty('--fall-dur', 1+Math.random()*1 + 's');
+                c.style.animationDelay = Math.random()*0.3 + 's';
+                c.style.width = (4+Math.random()*6) + 'px';
+                c.style.height = (4+Math.random()*6) + 'px';
+                document.body.appendChild(c);
+                (function(el){ setTimeout(function(){ el.remove(); }, 2500); })(c);
+            }
+        }
+
+        // ===== DEV CLICK =====
+        window.clickDev = function(dev){
+            dev.classList.remove('jump');
+            void dev.offsetWidth;
+            dev.classList.add('jump');
+
+            // Emoji
+            var em = document.createElement('div');
+            em.className = 'cs-emoji';
+            em.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+            dev.appendChild(em);
+            setTimeout(function(){ em.remove(); }, 800);
+
+            // Boost lines
+            lines += Math.floor(Math.random()*50) + 20;
+            elLines.textContent = lines.toLocaleString('pt-BR');
+
+            // Easter egg: 5 clicks on same dev
+            var c = parseInt(dev.getAttribute('data-clicks') || '0') + 1;
+            dev.setAttribute('data-clicks', c);
+            if(c >= 5){
+                dev.setAttribute('data-clicks', '0');
+                launchRocket();
+                spawnConfetti();
+            }
+        };
+
+        function launchRocket(){
+            var r = document.createElement('div');
+            r.className = 'cs-rocket';
+            r.textContent = '🚀';
+            document.body.appendChild(r);
+            setTimeout(function(){ r.remove(); }, 2200);
+        }
+    })();
     </script>
 </body>
 </html>

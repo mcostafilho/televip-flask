@@ -1,4 +1,4 @@
-/* ===== Coming Soon — Space Station Pixel Art ===== */
+/* ===== Coming Soon — Space Station Pixel Art + Bug Hunt ===== */
 
 /* Background */
 .cs-body {
@@ -30,6 +30,33 @@
 @keyframes cs-twinkle {
     0%   { opacity: 0.1; transform: scale(0.8); }
     100% { opacity: var(--bright, 0.8); transform: scale(1.2); }
+}
+
+/* Shooting star */
+.cs-shooting-star {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 6px 2px rgba(255,255,255,0.4);
+    animation: cs-shoot var(--shoot-dur, 1.2s) linear forwards;
+    pointer-events: none;
+    z-index: 1;
+}
+.cs-shooting-star::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 100%;
+    width: 40px;
+    height: 1px;
+    background: linear-gradient(to left, rgba(255,255,255,0.6), transparent);
+    transform: translateY(-50%);
+}
+@keyframes cs-shoot {
+    0%   { opacity: 1; transform: translate(0, 0); }
+    100% { opacity: 0; transform: translate(var(--dx, 200px), var(--dy, 200px)); }
 }
 
 /* Navbar */
@@ -130,8 +157,8 @@
 .cs-subtitle {
     font-size: 16px;
     color: #8b8fa8;
-    max-width: 480px;
-    margin: 0 auto 40px;
+    max-width: 500px;
+    margin: 0 auto 32px;
     line-height: 1.6;
 }
 @media (min-width: 768px) {
@@ -142,38 +169,55 @@
 /* ===== Pixel Art Scene ===== */
 .cs-scene {
     position: relative;
-    width: 320px;
-    height: 200px;
-    margin: 0 auto 32px;
-    /* Scale pixel art crisp */
+    width: 340px;
+    height: 220px;
+    margin: 0 auto 24px;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
 }
 @media (min-width: 768px) {
     .cs-scene {
-        width: 480px;
-        height: 280px;
+        width: 540px;
+        height: 300px;
     }
+}
+
+/* Station wall */
+.cs-wall {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 50px;
+    background: linear-gradient(180deg, #151530 0%, #1a1a35 100%);
+    border: 3px solid #2a2a4a;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+}
+@media (min-width: 768px) {
+    .cs-wall { bottom: 65px; }
 }
 
 /* Space window */
 .cs-window {
     position: absolute;
-    top: 0;
+    top: 10px;
     left: 50%;
     transform: translateX(-50%);
-    width: 160px;
-    height: 70px;
-    border-radius: 70px 70px 0 0;
-    background: linear-gradient(180deg, #0a0520 0%, #150840 100%);
+    width: 140px;
+    height: 55px;
+    border-radius: 55px 55px 0 0;
+    background: linear-gradient(180deg, #060318 0%, #100630 100%);
     border: 3px solid #3a3a5c;
     border-bottom: none;
     overflow: hidden;
+    z-index: 2;
 }
 @media (min-width: 768px) {
     .cs-window {
-        width: 220px;
-        height: 95px;
+        width: 200px;
+        height: 75px;
+        top: 12px;
     }
 }
 .cs-window-star {
@@ -183,6 +227,27 @@
     background: #fff;
     border-radius: 50%;
     animation: cs-twinkle 2s ease-in-out infinite alternate;
+}
+/* Planet in window */
+.cs-planet {
+    position: absolute;
+    bottom: -10px;
+    right: 15px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #6366f1, #312e81);
+    box-shadow: 0 0 8px rgba(99, 102, 241, 0.4);
+}
+.cs-planet-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotateX(65deg);
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 2px solid rgba(165, 143, 255, 0.4);
 }
 
 /* Floor */
@@ -194,62 +259,112 @@
     height: 50px;
     background: #1a1a2e;
     border-top: 3px solid #2a2a4a;
+    z-index: 3;
 }
 @media (min-width: 768px) {
     .cs-floor { height: 65px; }
+}
+/* Floor tiles */
+.cs-floor::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: repeating-linear-gradient(90deg, transparent, transparent 20px, #2a2a4a 20px, #2a2a4a 21px);
+    opacity: 0.5;
 }
 
 /* Desk */
 .cs-desk {
     position: absolute;
     bottom: 45px;
-    width: 64px;
-    height: 28px;
+    width: 60px;
+    height: 24px;
     background: #3d2f1e;
     border-radius: 2px;
+    z-index: 4;
 }
 @media (min-width: 768px) {
     .cs-desk {
         bottom: 60px;
-        width: 88px;
-        height: 36px;
+        width: 84px;
+        height: 32px;
     }
 }
 .cs-desk-leg {
     position: absolute;
-    bottom: -16px;
+    bottom: -14px;
     width: 4px;
-    height: 16px;
+    height: 14px;
     background: #3d2f1e;
 }
 @media (min-width: 768px) {
     .cs-desk-leg {
-        bottom: -22px;
+        bottom: -20px;
         width: 5px;
-        height: 22px;
+        height: 20px;
     }
 }
 .cs-desk-leg.left  { left: 6px; }
 .cs-desk-leg.right { right: 6px; }
 
+/* Coffee mug on desk */
+.cs-mug {
+    position: absolute;
+    top: -8px;
+    width: 6px;
+    height: 7px;
+    background: #e2e8f0;
+    border-radius: 0 0 2px 2px;
+    z-index: 5;
+}
+.cs-mug::after {
+    content: '';
+    position: absolute;
+    top: 1px;
+    right: -3px;
+    width: 3px;
+    height: 4px;
+    border: 1px solid #e2e8f0;
+    border-left: none;
+    border-radius: 0 3px 3px 0;
+}
+/* Steam */
+.cs-mug::before {
+    content: '~';
+    position: absolute;
+    top: -10px;
+    left: 0;
+    font-size: 8px;
+    color: rgba(255,255,255,0.3);
+    animation: cs-steam 1.5s ease-in-out infinite;
+}
+@keyframes cs-steam {
+    0%, 100% { opacity: 0.2; transform: translateY(0); }
+    50% { opacity: 0.5; transform: translateY(-3px); }
+}
+
 /* Monitor */
 .cs-monitor {
     position: absolute;
-    top: -24px;
+    top: -22px;
     left: 50%;
     transform: translateX(-50%);
-    width: 32px;
-    height: 22px;
+    width: 30px;
+    height: 20px;
     background: #1a1a2e;
     border: 2px solid #4a4a6a;
     border-radius: 2px;
     overflow: hidden;
+    z-index: 5;
 }
 @media (min-width: 768px) {
     .cs-monitor {
-        top: -30px;
-        width: 42px;
-        height: 28px;
+        top: -28px;
+        width: 40px;
+        height: 26px;
     }
 }
 .cs-monitor-screen {
@@ -259,7 +374,6 @@
     position: relative;
     overflow: hidden;
 }
-/* Code lines inside monitor */
 .cs-code-line {
     position: absolute;
     left: 2px;
@@ -276,7 +390,6 @@
 .cs-code-line:nth-child(3) { top: 11px; width: 10px; background: #34d399; animation-delay: 0.6s; }
 .cs-code-line:nth-child(4) { top: 15px; width: 14px; background: #fbbf24; animation-delay: 0.9s; }
 
-/* Monitor stand */
 .cs-monitor-stand {
     position: absolute;
     top: -2px;
@@ -290,25 +403,25 @@
 /* ===== Pixel Dev Character ===== */
 .cs-dev {
     position: absolute;
-    bottom: 70px;
+    bottom: 66px;
     width: 20px;
     height: 28px;
     cursor: pointer;
     transition: filter 0.15s;
     user-select: none;
     -webkit-user-select: none;
+    z-index: 5;
 }
 @media (min-width: 768px) {
     .cs-dev {
-        bottom: 92px;
+        bottom: 88px;
         width: 26px;
         height: 36px;
     }
 }
-.cs-dev:hover { filter: brightness(1.2); }
-.cs-dev:active { filter: brightness(1.4); }
+.cs-dev:hover { filter: brightness(1.3) drop-shadow(0 0 4px rgba(124,92,252,0.4)); }
+.cs-dev:active { filter: brightness(1.5); }
 
-/* Head */
 .cs-dev-head {
     position: absolute;
     top: 0;
@@ -319,13 +432,9 @@
     border-radius: 2px;
 }
 @media (min-width: 768px) {
-    .cs-dev-head {
-        width: 12px;
-        height: 12px;
-    }
+    .cs-dev-head { width: 12px; height: 12px; }
 }
 
-/* Body */
 .cs-dev-body {
     position: absolute;
     top: 10px;
@@ -336,14 +445,9 @@
     border-radius: 1px;
 }
 @media (min-width: 768px) {
-    .cs-dev-body {
-        top: 12px;
-        width: 18px;
-        height: 12px;
-    }
+    .cs-dev-body { top: 12px; width: 18px; height: 12px; }
 }
 
-/* Arm (typing animation) */
 .cs-dev-arm {
     position: absolute;
     top: 14px;
@@ -353,11 +457,7 @@
     animation: cs-type 0.6s ease-in-out infinite alternate;
 }
 @media (min-width: 768px) {
-    .cs-dev-arm {
-        top: 17px;
-        width: 8px;
-        height: 5px;
-    }
+    .cs-dev-arm { top: 17px; width: 8px; height: 5px; }
 }
 .cs-dev-arm.left  { left: 0; animation-delay: 0s; }
 .cs-dev-arm.right { right: 0; animation-delay: 0.3s; }
@@ -366,7 +466,6 @@
     100% { transform: translateY(-2px); }
 }
 
-/* Legs */
 .cs-dev-legs {
     position: absolute;
     bottom: 0;
@@ -379,10 +478,7 @@
     justify-content: center;
 }
 @media (min-width: 768px) {
-    .cs-dev-legs {
-        width: 16px;
-        height: 10px;
-    }
+    .cs-dev-legs { width: 16px; height: 10px; }
 }
 .cs-dev-leg {
     width: 4px;
@@ -390,19 +486,24 @@
     border-radius: 0 0 1px 1px;
 }
 @media (min-width: 768px) {
-    .cs-dev-leg {
-        width: 6px;
-    }
+    .cs-dev-leg { width: 6px; }
 }
 
 /* Jump reaction */
-.cs-dev.jump {
-    animation: cs-jump 0.4s ease-out;
-}
+.cs-dev.jump { animation: cs-jump 0.4s ease-out; }
 @keyframes cs-jump {
     0%   { transform: translateY(0); }
     40%  { transform: translateY(-16px); }
     100% { transform: translateY(0); }
+}
+
+/* Celebrate — dev stands and waves */
+.cs-dev.celebrate .cs-dev-arm.left {
+    animation: cs-wave 0.3s ease-in-out 4 alternate;
+}
+@keyframes cs-wave {
+    0%   { transform: translateY(0) rotate(0); }
+    100% { transform: translateY(-6px) rotate(-20deg); }
 }
 
 /* Emoji popup on click */
@@ -436,24 +537,175 @@
     100% { bottom: 110vh; left: 110vw; opacity: 0; transform: rotate(-45deg); }
 }
 
-/* Code counter */
-.cs-counter {
+/* ===== BUG HUNT MINI-GAME ===== */
+.cs-bug {
+    position: absolute;
+    width: 12px;
+    height: 10px;
+    cursor: pointer;
+    z-index: 6;
+    transition: transform 0.1s;
+    animation: cs-bug-crawl var(--crawl-dur, 4s) linear forwards;
+}
+.cs-bug:hover { transform: scale(1.2); }
+/* Bug body */
+.cs-bug-body {
+    width: 10px;
+    height: 8px;
+    background: var(--bug-color, #ef4444);
+    border-radius: 50%;
+    position: relative;
+    margin: 0 auto;
+}
+/* Bug head */
+.cs-bug-body::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 5px;
+    height: 4px;
+    background: var(--bug-color, #ef4444);
+    border-radius: 50%;
+    filter: brightness(0.8);
+}
+/* Bug legs (via box-shadow) */
+.cs-bug-body::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: -2px;
+    width: 2px;
+    height: 1px;
+    background: var(--bug-color, #ef4444);
+    filter: brightness(0.6);
+    box-shadow:
+        0 3px 0 var(--bug-color, #ef4444),
+        12px 0 0 var(--bug-color, #ef4444),
+        12px 3px 0 var(--bug-color, #ef4444),
+        -1px -1px 0 var(--bug-color, #ef4444),
+        13px -1px 0 var(--bug-color, #ef4444);
+}
+/* Bug wiggle while crawling */
+.cs-bug .cs-bug-body {
+    animation: cs-bug-wiggle 0.3s ease-in-out infinite alternate;
+}
+@keyframes cs-bug-wiggle {
+    0%   { transform: rotate(-3deg); }
+    100% { transform: rotate(3deg); }
+}
+@keyframes cs-bug-crawl {
+    0%   { transform: translate(0, 0); }
+    100% { transform: translate(var(--dx, 100px), var(--dy, 50px)); }
+}
+
+/* Splat effect */
+.cs-splat {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+    z-index: 7;
+    animation: cs-splat-pop 0.4s ease-out forwards;
+}
+.cs-splat::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--bug-color, #ef4444);
+    border-radius: 50%;
+    opacity: 0.6;
+    filter: blur(2px);
+}
+@keyframes cs-splat-pop {
+    0%   { opacity: 1; transform: scale(0.5); }
+    50%  { opacity: 0.8; transform: scale(1.4); }
+    100% { opacity: 0; transform: scale(0.2); }
+}
+
+/* Score popup when squashing */
+.cs-score-pop {
+    position: absolute;
+    font-size: 14px;
+    font-weight: 800;
+    color: #fbbf24;
+    pointer-events: none;
+    z-index: 8;
+    animation: cs-score-up 0.6s ease-out forwards;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+@keyframes cs-score-up {
+    0%   { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-24px) scale(1.2); }
+}
+
+/* Stats bar */
+.cs-stats {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+.cs-stat {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px 24px;
+    gap: 8px;
+    padding: 10px 20px;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(124, 92, 252, 0.15);
-    font-size: 14px;
+    font-size: 13px;
     color: #8b8fa8;
-    margin-bottom: 32px;
 }
-.cs-counter-num {
+.cs-stat-num {
     font-weight: 700;
-    font-size: 18px;
-    color: #34d399;
+    font-size: 16px;
     font-variant-numeric: tabular-nums;
+}
+.cs-stat-num.green { color: #34d399; }
+.cs-stat-num.yellow { color: #fbbf24; }
+.cs-stat-num.pink { color: #f093fb; }
+
+/* Progress bar */
+.cs-progress {
+    width: 200px;
+    max-width: 80vw;
+    margin: 0 auto 28px;
+}
+.cs-progress-label {
+    font-size: 12px;
+    color: #6b6f8a;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+}
+.cs-progress-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.08);
+    overflow: hidden;
+}
+.cs-progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #7c5cfc, #38bdf8);
+    transition: width 0.5s ease;
+    width: 0%;
+}
+
+/* Game hint */
+.cs-hint {
+    font-size: 13px;
+    color: #4a4a6a;
+    margin-bottom: 20px;
+    animation: cs-hint-pulse 2s ease-in-out infinite;
+}
+@keyframes cs-hint-pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
 }
 
 /* CTA button */
@@ -494,22 +746,43 @@
 .cs-footer a:hover { text-decoration: underline; }
 
 /* Dev color themes */
-.cs-dev[data-color="purple"] .cs-dev-head  { background: #f5d6c8; }
-.cs-dev[data-color="purple"] .cs-dev-body  { background: #7c5cfc; }
-.cs-dev[data-color="purple"] .cs-dev-arm   { background: #7c5cfc; }
-.cs-dev[data-color="purple"] .cs-dev-leg   { background: #2d2654; }
+.cs-dev[data-color="purple"] .cs-dev-head { background: #f5d6c8; }
+.cs-dev[data-color="purple"] .cs-dev-body { background: #7c5cfc; }
+.cs-dev[data-color="purple"] .cs-dev-arm  { background: #7c5cfc; }
 
-.cs-dev[data-color="cyan"] .cs-dev-head    { background: #e8c8a0; }
-.cs-dev[data-color="cyan"] .cs-dev-body    { background: #38bdf8; }
-.cs-dev[data-color="cyan"] .cs-dev-arm     { background: #38bdf8; }
-.cs-dev[data-color="cyan"] .cs-dev-leg     { background: #1e3a5f; }
+.cs-dev[data-color="cyan"] .cs-dev-head   { background: #e8c8a0; }
+.cs-dev[data-color="cyan"] .cs-dev-body   { background: #38bdf8; }
+.cs-dev[data-color="cyan"] .cs-dev-arm    { background: #38bdf8; }
 
-.cs-dev[data-color="green"] .cs-dev-head   { background: #d4a98a; }
-.cs-dev[data-color="green"] .cs-dev-body   { background: #34d399; }
-.cs-dev[data-color="green"] .cs-dev-arm    { background: #34d399; }
-.cs-dev[data-color="green"] .cs-dev-leg    { background: #1a3a2e; }
+.cs-dev[data-color="green"] .cs-dev-head  { background: #d4a98a; }
+.cs-dev[data-color="green"] .cs-dev-body  { background: #34d399; }
+.cs-dev[data-color="green"] .cs-dev-arm   { background: #34d399; }
 
-.cs-dev[data-color="pink"] .cs-dev-head    { background: #f0d0c0; }
-.cs-dev[data-color="pink"] .cs-dev-body    { background: #f093fb; }
-.cs-dev[data-color="pink"] .cs-dev-arm     { background: #f093fb; }
-.cs-dev[data-color="pink"] .cs-dev-leg     { background: #4a2050; }
+.cs-dev[data-color="pink"] .cs-dev-head   { background: #f0d0c0; }
+.cs-dev[data-color="pink"] .cs-dev-body   { background: #f093fb; }
+.cs-dev[data-color="pink"] .cs-dev-arm    { background: #f093fb; }
+
+/* Confetti burst */
+.cs-confetti {
+    position: fixed;
+    pointer-events: none;
+    z-index: 300;
+    width: 8px;
+    height: 8px;
+    border-radius: 1px;
+    animation: cs-confetti-fall var(--fall-dur, 1.5s) ease-out forwards;
+}
+@keyframes cs-confetti-fall {
+    0%   { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+    100% { opacity: 0; transform: translate(var(--cx, 30px), var(--cy, 200px)) rotate(var(--cr, 360deg)); }
+}
+
+/* Scene shake on bug squash */
+.cs-scene.shake {
+    animation: cs-shake 0.15s ease-out;
+}
+@keyframes cs-shake {
+    0%, 100% { transform: translateX(0); }
+    25%  { transform: translateX(-3px); }
+    75%  { transform: translateX(3px); }
+}
