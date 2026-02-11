@@ -65,15 +65,17 @@
     var colorWhite = new THREE.Color(0xffffff);
     var colorPurple = new THREE.Color(0x7c5cfc);
     var colorCyan = new THREE.Color(0x38bdf8);
+    var colorPink = new THREE.Color(0xf093fb);
+    var colorWarm = new THREE.Color(0xfbbf24);
 
     for (var i = 0; i < count; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 30;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 30;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 20;
-      sizes[i] = Math.random() * 3 + 1;
+      positions[i * 3] = (Math.random() - 0.5) * 35;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 35;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 25;
+      sizes[i] = Math.random() * 3.5 + 0.5;
 
       var r = Math.random();
-      var c = r < 0.7 ? colorWhite : r < 0.85 ? colorPurple : colorCyan;
+      var c = r < 0.6 ? colorWhite : r < 0.75 ? colorPurple : r < 0.88 ? colorCyan : r < 0.95 ? colorPink : colorWarm;
       colors[i * 3] = c.r;
       colors[i * 3 + 1] = c.g;
       colors[i * 3 + 2] = c.b;
@@ -584,28 +586,44 @@
   function initStarfield() {
     var starfield = document.getElementById('starfield');
     if (!starfield) return;
-    var count = 200;
+    var count = 350;
+    var frag = document.createDocumentFragment();
     for (var i = 0; i < count; i++) {
       var star = document.createElement('div');
       star.classList.add('star');
       star.style.left = Math.random() * 100 + '%';
       star.style.top = Math.random() * 100 + '%';
-      star.style.setProperty('--duration', (1.5 + Math.random() * 4) + 's');
-      star.style.setProperty('--max-opacity', (0.5 + Math.random() * 0.5).toFixed(2));
-      star.style.animationDelay = (Math.random() * 5) + 's';
-      var size = (1 + Math.random() * 3) + 'px';
+      star.style.setProperty('--duration', (1.5 + Math.random() * 5) + 's');
+      star.style.setProperty('--max-opacity', (0.4 + Math.random() * 0.6).toFixed(2));
+      star.style.animationDelay = (Math.random() * 6) + 's';
+
+      // Varied star sizes — mostly tiny, some bright focal points
+      var r = Math.random();
+      var size;
+      if (r < 0.7) size = (1 + Math.random() * 1.5) + 'px';       // tiny stars (70%)
+      else if (r < 0.9) size = (2 + Math.random() * 2) + 'px';     // medium (20%)
+      else size = (3 + Math.random() * 2.5) + 'px';                  // bright focal (10%)
       star.style.width = size;
       star.style.height = size;
-      // Add colored stars (20%)
-      if (Math.random() < 0.1) {
+
+      // Colored stars (25%) — purple, cyan, pink, warm
+      var c = Math.random();
+      if (c < 0.08) {
         star.style.background = '#7c5cfc';
-        star.style.boxShadow = '0 0 6px rgba(124, 92, 252, 0.8)';
-      } else if (Math.random() < 0.15) {
+        star.style.boxShadow = '0 0 8px rgba(124, 92, 252, 0.9)';
+      } else if (c < 0.15) {
         star.style.background = '#38bdf8';
-        star.style.boxShadow = '0 0 6px rgba(56, 189, 248, 0.8)';
+        star.style.boxShadow = '0 0 8px rgba(56, 189, 248, 0.9)';
+      } else if (c < 0.20) {
+        star.style.background = '#f093fb';
+        star.style.boxShadow = '0 0 6px rgba(240, 147, 251, 0.7)';
+      } else if (c < 0.25) {
+        star.style.background = '#fbbf24';
+        star.style.boxShadow = '0 0 5px rgba(251, 191, 36, 0.6)';
       }
-      starfield.appendChild(star);
+      frag.appendChild(star);
     }
+    starfield.appendChild(frag);
   }
 
   // ── 13. PAGE TRANSITIONS ──────────────────────────────
