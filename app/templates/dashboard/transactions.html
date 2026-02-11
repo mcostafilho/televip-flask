@@ -10,107 +10,159 @@
 <div class="dashboard-wrapper">
     <div class="dashboard-container">
         <!-- Header -->
-        <div class="dashboard-header">
-            <div class="row align-items-center">
-                <div class="col">
-                    <h1 class="h2 mb-1">
-                        <i class="bi bi-receipt"></i> Transações
-                    </h1>
-                    <p class="text-muted mb-0">Histórico completo de pagamentos</p>
+        <div class="dashboard-header welcome-header">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="welcome-avatar">
+                        <i class="bi bi-receipt" style="font-size: 1.2rem;"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 mb-1">Transações</h1>
+                        <p class="text-muted mb-0">Histórico completo de pagamentos</p>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Filtros -->
-        <div class="filter-card">
-            <form method="GET" class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">Grupo</label>
-                    <select name="group_id" class="form-select" onchange="this.form.submit()">
+        <div class="content-card mb-4" style="padding: 1.25rem 1.5rem;">
+            <form method="GET" class="row g-2 align-items-end">
+                <div class="col-md-4 col-8">
+                    <label class="form-label small mb-1">Grupo</label>
+                    <select name="group_id" class="form-select form-select-sm" onchange="this.form.submit()">
                         <option value="">Todos os grupos</option>
                         {% for group in groups %}
                         <option value="{{ group.id }}" {{ 'selected' if request.args.get('group_id')|int == group.id }}>{{ group.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
+                <div class="col-md-2 col-4">
+                    <button type="submit" class="btn btn-primary btn-sm w-100">
+                        <i class="bi bi-funnel"></i> Filtrar
+                    </button>
+                </div>
             </form>
         </div>
 
-        <!-- Tabela -->
-        <div class="table-card">
-            <div class="card-header">
+        <!-- Lista de Transações -->
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="mb-0">
                     <i class="bi bi-list"></i> Lista de Transações
                 </h5>
+                {% if transactions.items %}
+                <small class="text-muted">{{ transactions.total }} total</small>
+                {% endif %}
             </div>
 
             {% if transactions.items %}
-            <div class="custom-table">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Assinante</th>
-                                <th>Grupo</th>
-                                <th class="text-end">Valor</th>
-                                <th class="text-end">Taxa</th>
-                                <th class="text-end">Líquido</th>
-                                <th class="text-center">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for txn in transactions.items %}
-                            <tr>
-                                <td>{{ txn.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                                <td>{{ txn.subscription.telegram_username or txn.subscription.telegram_user_id }}</td>
-                                <td>{{ txn.subscription.group.name }}</td>
-                                <td class="text-end">R$ {{ "%.2f"|format(txn.amount) }}</td>
-                                <td class="text-end">R$ {{ "%.2f"|format(txn.total_fee) }}</td>
-                                <td class="text-end"><strong class="text-success">R$ {{ "%.2f"|format(txn.net_amount) }}</strong></td>
-                                <td class="text-center">
-                                    {% if txn.status == 'completed' %}
-                                    <span class="badge bg-success">
-                                        <i class="bi bi-check-circle"></i> Pago
-                                    </span>
-                                    {% elif txn.status == 'pending' %}
-                                    <span class="badge bg-warning">
-                                        <i class="bi bi-clock"></i> Pendente
-                                    </span>
-                                    {% else %}
-                                    <span class="badge bg-danger">{{ txn.status }}</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+            <div class="row-list">
+                {% for txn in transactions.items %}
+                <div class="row-item">
+                    <div class="row-item-left">
+                        <div class="row-icon {% if txn.status == 'completed' %}completed{% elif txn.status == 'pending' %}pending{% else %}failed{% endif %}">
+                            {% if txn.status == 'completed' %}
+                                <i class="bi bi-check-lg"></i>
+                            {% elif txn.status == 'pending' %}
+                                <i class="bi bi-clock"></i>
+                            {% else %}
+                                <i class="bi bi-x-lg"></i>
+                            {% endif %}
+                        </div>
+                        <div class="row-info">
+                            <div class="row-title">
+                                @{{ txn.subscription.telegram_username or txn.subscription.telegram_user_id }}
+                                {% if txn.status == 'completed' %}
+                                    <span class="glow-dot green"></span>
+                                {% elif txn.status == 'pending' %}
+                                    <span class="glow-dot yellow"></span>
+                                {% endif %}
+                            </div>
+                            <div class="row-sub">
+                                {{ txn.subscription.group.name }} &middot; {{ txn.subscription.plan.name }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row-item-right">
+                        <div class="row-metrics">
+                            <div class="row-metric">
+                                <span class="row-metric-value green">+R$ {{ "%.2f"|format(txn.amount) }}</span>
+                                <span class="row-metric-label">bruto</span>
+                            </div>
+                            <div class="row-metric">
+                                <span class="row-metric-value yellow">-R$ {{ "%.2f"|format(txn.total_fee) }}</span>
+                                <span class="row-metric-label">taxa</span>
+                            </div>
+                            <div class="row-metric">
+                                <span class="row-metric-value cyan">R$ {{ "%.2f"|format(txn.net_amount) }}</span>
+                                <span class="row-metric-label">líquido</span>
+                            </div>
+                            <div class="row-metric">
+                                <span class="row-metric-value" style="color: var(--galactic-text-bright); font-size: 0.82rem;">
+                                    {{ txn.created_at.strftime('%d/%m/%y') }}
+                                </span>
+                                <span class="row-metric-label">{{ txn.created_at.strftime('%H:%M') }}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+                {% endfor %}
             </div>
 
             <!-- Paginação -->
             {% if transactions.pages > 1 %}
-            <div class="card-footer">
+            <div class="pagination-wrapper">
                 <nav>
-                    <ul class="pagination pagination-sm justify-content-center mb-0">
-                        {% for p in transactions.iter_pages() %}
-                        {% if p %}
-                        <li class="page-item {{ 'active' if p == transactions.page }}">
-                            <a class="page-link" href="?page={{ p }}&group_id={{ request.args.get('group_id', '') }}">{{ p }}</a>
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if transactions.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ transactions.prev_num }}&group_id={{ request.args.get('group_id', '') }}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
                         </li>
-                        {% else %}
-                        <li class="page-item disabled"><span class="page-link">...</span></li>
                         {% endif %}
+
+                        {% for p in transactions.iter_pages() %}
+                            {% if p %}
+                                {% if p == transactions.page %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ p }}</span>
+                                </li>
+                                {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ p }}&group_id={{ request.args.get('group_id', '') }}">{{ p }}</a>
+                                </li>
+                                {% endif %}
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                            {% endif %}
                         {% endfor %}
+
+                        {% if transactions.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ transactions.next_num }}&group_id={{ request.args.get('group_id', '') }}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
                     </ul>
                 </nav>
             </div>
             {% endif %}
+
             {% else %}
-            <div class="empty-state">
-                <i class="bi bi-receipt"></i>
+            <div class="empty-state-v2">
+                <div class="empty-icon"><i class="bi bi-receipt"></i></div>
                 <h4>Nenhuma transação encontrada</h4>
-                <p>As transações aparecerão aqui quando seus assinantes realizarem pagamentos.</p>
+                <p>
+                    {% if request.args.get('group_id') %}
+                        Tente ajustar os filtros de busca
+                    {% else %}
+                        As transações aparecerão aqui quando seus assinantes realizarem pagamentos
+                    {% endif %}
+                </p>
             </div>
             {% endif %}
         </div>

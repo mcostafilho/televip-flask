@@ -11,11 +11,20 @@
     <div class="dashboard-wrapper">
         <div class="dashboard-container">
             <!-- Header -->
-            <div class="dashboard-header">
-                <h1 class="h2 mb-1">
-                    <i class="bi bi-person-circle"></i> Meu Perfil
-                </h1>
-                <p class="text-muted mb-0">Gerencie suas informações pessoais e configurações</p>
+            <div class="dashboard-header welcome-header">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="welcome-avatar">
+                        {{ user.name[0]|upper if user.name else 'U' }}
+                    </div>
+                    <div>
+                        <h1 class="h3 mb-1">{{ user.name }}</h1>
+                        <p class="text-muted mb-0">
+                            <i class="bi bi-envelope me-1"></i>{{ user.email }}
+                            <span class="mx-2">&middot;</span>
+                            <i class="bi bi-calendar3 me-1"></i>Membro desde {{ stats.member_since }}
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <!-- Alertas -->
@@ -39,10 +48,7 @@
                         </div>
                         <h4 class="mb-1">{{ user.name }}</h4>
                         <p class="text-muted mb-2">{{ user.email }}</p>
-                        <small class="text-muted">
-                            <i class="bi bi-calendar3"></i> Membro desde {{ stats.member_since }}
-                        </small>
-                        
+
                         <div class="profile-stats mt-3">
                             <div class="profile-stat">
                                 <h5>{{ stats.total_groups }}</h5>
@@ -60,12 +66,12 @@
                         <h5 class="mb-3">
                             <i class="bi bi-wallet2"></i> Resumo Financeiro
                         </h5>
-                        
+
                         <div class="financial-summary">
                             <h3 class="text-center">R$ {{ "%.2f"|format(stats.balance) }}</h3>
                             <p class="text-center text-muted mb-0">Saldo disponível</p>
                         </div>
-                        
+
                         <div class="financial-item">
                             <span>Total ganho</span>
                             <span class="text-success">R$ {{ "%.2f"|format(stats.total_earned) }}</span>
@@ -74,7 +80,7 @@
                             <span>Total sacado</span>
                             <span>R$ {{ "%.2f"|format(stats.total_withdrawn) }}</span>
                         </div>
-                        
+
                         <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary btn-sm w-100 mt-3">
                             <i class="bi bi-cash-stack"></i> Solicitar Saque
                         </a>
@@ -88,21 +94,21 @@
                         <h5 class="mb-3">
                             <i class="bi bi-gear"></i> Informações Pessoais
                         </h5>
-                        
+
                         <form method="POST" action="{{ url_for('dashboard.update_profile') }}" class="profile-form">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label">Nome Completo</label>
-                                    <input type="text" class="form-control" name="name" 
+                                    <input type="text" class="form-control" name="name"
                                            value="{{ user.name }}" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Email</label>
-                                    <input type="email" class="form-control" name="email" 
+                                    <input type="email" class="form-control" name="email"
                                            value="{{ user.email }}" required>
                                 </div>
-                                
+
                                 <!-- Dados para Saque -->
                                 <div class="col-12">
                                     <hr class="my-3">
@@ -113,7 +119,7 @@
 
                                 <div class="col-md-4">
                                     <label class="form-label">Tipo de Chave PIX</label>
-                                    <select class="form-select" name="pix_key_type" id="pixKeyType" style="padding: 0.5rem 0.75rem; font-size: 0.875rem;">
+                                    <select class="form-select" name="pix_key_type" id="pixKeyType">
                                         <option value="">Selecione...</option>
                                         <option value="cpf" {% if user.pix_key and user.pix_key.startswith('cpf:') %}selected{% endif %}>CPF</option>
                                         <option value="cnpj" {% if user.pix_key and user.pix_key.startswith('cnpj:') %}selected{% endif %}>CNPJ</option>
@@ -177,7 +183,7 @@
                                         <input type="password" class="form-control" name="current_password"
                                                placeholder="Digite sua senha atual">
                                         <div class="mt-2 text-end">
-                                            <a href="#" id="forgotPasswordLink" class="small text-decoration-none">
+                                            <a href="#" id="forgotPasswordLink" class="small text-decoration-none" style="color: var(--galactic-accent-2);">
                                                 <i class="bi bi-key"></i> Esqueceu a senha?
                                             </a>
                                         </div>
@@ -207,56 +213,46 @@
 
                     <!-- Transações Recentes -->
                     <div class="profile-card">
-                        <h5 class="mb-3">
-                            <i class="bi bi-clock-history"></i> Transações Recentes
-                        </h5>
-                        
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">
+                                <i class="bi bi-clock-history"></i> Transações Recentes
+                            </h5>
+                            {% if recent_transactions %}
+                            <a href="{{ url_for('dashboard.transactions') }}" class="link-see-all">
+                                Ver todas <i class="bi bi-arrow-right"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+
                         {% if recent_transactions %}
-                            <div class="profile-table">
-                                <table class="table table-sm table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Data</th>
-                                            <th>Descrição</th>
-                                            <th class="text-end">Valor</th>
-                                            <th class="text-center">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for transaction in recent_transactions[:5] %}
-                                        <tr>
-                                            <td>{{ transaction.created_at.strftime('%d/%m') }}</td>
-                                            <td>
-                                                <small>
-                                                    Assinatura - {{ transaction.subscription.group.name }}
-                                                    <br>
-                                                    <span class="text-muted">@{{ transaction.subscription.telegram_username }}</span>
-                                                </small>
-                                            </td>
-                                            <td class="text-end">
-                                                <strong class="text-success">R$ {{ "%.2f"|format(transaction.amount) }}</strong>
-                                            </td>
-                                            <td class="text-center">
-                                                <span class="badge bg-success">
-                                                    <i class="bi bi-check-circle"></i> Pago
-                                                </span>
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
+                        <div class="row-list">
+                            {% for transaction in recent_transactions[:5] %}
+                            <div class="row-item">
+                                <div class="row-item-left">
+                                    <div class="row-icon completed">
+                                        <i class="bi bi-check-lg"></i>
+                                    </div>
+                                    <div class="row-info">
+                                        <div class="row-title">
+                                            @{{ transaction.subscription.telegram_username }}
+                                        </div>
+                                        <div class="row-sub">
+                                            {{ transaction.subscription.group.name }} &middot; {{ transaction.subscription.plan.name }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row-item-right">
+                                    <div class="tx-amount green">+R$ {{ "%.2f"|format(transaction.amount) }}</div>
+                                    <div class="tx-date">{{ transaction.created_at.strftime('%d/%m %H:%M') }}</div>
+                                </div>
                             </div>
-                            
-                            <div class="text-center mt-3">
-                                <a href="{{ url_for('dashboard.transactions') }}" class="btn btn-outline-primary btn-sm">
-                                    Ver Todas as Transações
-                                </a>
-                            </div>
+                            {% endfor %}
+                        </div>
                         {% else %}
-                            <div class="empty-state">
-                                <i class="bi bi-receipt"></i>
-                                <p class="text-muted mb-0">Nenhuma transação ainda</p>
-                            </div>
+                        <div class="empty-state-v2">
+                            <div class="empty-icon"><i class="bi bi-receipt"></i></div>
+                            <p class="text-muted mb-0">Nenhuma transação ainda</p>
+                        </div>
                         {% endif %}
                     </div>
 
@@ -266,40 +262,46 @@
                         <h5 class="mb-3">
                             <i class="bi bi-bank"></i> Histórico de Saques
                         </h5>
-                        
-                        <div class="profile-table">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Data</th>
-                                        <th>Valor</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for withdrawal in recent_withdrawals[:3] %}
-                                    <tr>
-                                        <td>{{ withdrawal.created_at.strftime('%d/%m/%Y') }}</td>
-                                        <td>R$ {{ "%.2f"|format(withdrawal.amount) }}</td>
-                                        <td>
+
+                        <div class="row-list">
+                            {% for withdrawal in recent_withdrawals[:3] %}
+                            <div class="row-item">
+                                <div class="row-item-left">
+                                    <div class="row-icon {% if withdrawal.status == 'completed' %}completed{% elif withdrawal.status == 'pending' %}pending{% else %}inactive{% endif %}">
+                                        {% if withdrawal.status == 'completed' %}
+                                            <i class="bi bi-check-lg"></i>
+                                        {% elif withdrawal.status == 'pending' %}
+                                            <i class="bi bi-clock"></i>
+                                        {% else %}
+                                            <i class="bi bi-dash"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="row-info">
+                                        <div class="row-title">
+                                            Saque via PIX
                                             {% if withdrawal.status == 'completed' %}
-                                                <span class="badge bg-success">Concluído</span>
+                                                <span class="glow-dot green"></span>
                                             {% elif withdrawal.status == 'pending' %}
-                                                <span class="badge bg-warning">Pendente</span>
-                                            {% else %}
-                                                <span class="badge bg-secondary">{{ withdrawal.status }}</span>
+                                                <span class="glow-dot yellow"></span>
                                             {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                                        </div>
+                                        <div class="row-sub">{{ withdrawal.created_at.strftime('%d/%m/%Y') }}</div>
+                                    </div>
+                                </div>
+                                <div class="row-item-right">
+                                    <div class="tx-amount {% if withdrawal.status == 'completed' %}green{% elif withdrawal.status == 'pending' %}yellow{% else %}red{% endif %}">
+                                        R$ {{ "%.2f"|format(withdrawal.amount) }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
                         </div>
                     </div>
                     {% endif %}
+
                     <!-- Excluir Conta (LGPD) -->
-                    <div class="profile-card">
-                        <h5 class="mb-3 text-danger">
+                    <div class="profile-card" style="border-color: rgba(248, 113, 113, 0.2);">
+                        <h5 class="mb-3" style="color: var(--galactic-danger);">
                             <i class="bi bi-exclamation-triangle"></i> Zona de Perigo
                         </h5>
                         <p class="text-muted mb-3">
@@ -325,7 +327,7 @@
 <div class="modal fade" id="deleteAccountModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
+            <div class="modal-header bg-danger">
                 <h5 class="modal-title">
                     <i class="bi bi-exclamation-triangle"></i> Excluir Conta
                 </h5>

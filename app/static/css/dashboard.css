@@ -1118,7 +1118,7 @@
     border: 1px solid rgba(124, 92, 252, 0.25);
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
-    z-index: 9999;
+    z-index: 1035;
 }
 
 .dashboard-wrapper .dropdown-item {
@@ -1140,22 +1140,60 @@
 }
 
 /* === Modal Customizado === */
+.modal {
+    z-index: 1055;
+}
+
+.modal-backdrop {
+    z-index: 1050;
+}
+
+.modal-dialog {
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from { opacity: 0; transform: translateY(-20px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .modal-content {
     background: rgba(15, 18, 32, 0.98);
-    backdrop-filter: var(--galactic-glass-blur);
-    -webkit-backdrop-filter: var(--galactic-glass-blur);
+    backdrop-filter: blur(24px) saturate(1.2);
+    -webkit-backdrop-filter: blur(24px) saturate(1.2);
     border: 1px solid var(--galactic-card-border);
     border-radius: var(--galactic-border-radius);
     color: var(--galactic-text-primary);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(124, 92, 252, 0.08) inset;
+    overflow: hidden;
+}
+
+.modal-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--galactic-accent-1), var(--galactic-accent-2));
+    opacity: 0.7;
 }
 
 .modal-header {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 1.25rem 1.5rem;
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .modal-header .modal-title {
     color: var(--galactic-text-bright);
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+.modal-header .modal-title i {
+    margin-right: 0.4rem;
+    opacity: 0.85;
 }
 
 .modal-body {
@@ -1164,8 +1202,20 @@
 }
 
 .modal-footer {
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    padding: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 1rem 1.5rem;
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.modal-footer .btn-secondary {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--galactic-text-secondary);
+}
+
+.modal-footer .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--galactic-text-bright);
 }
 
 .modal-content .form-control,
@@ -1185,6 +1235,15 @@
 
 .modal-content .form-label {
     color: var(--galactic-text-primary);
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.modal-content .input-group-text {
+    background: rgba(124, 92, 252, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--galactic-accent-1);
+    font-weight: 600;
 }
 
 .modal-content .text-muted {
@@ -1192,30 +1251,33 @@
 }
 
 .modal-content .alert-info {
-    background: rgba(56, 189, 248, 0.1);
-    border-color: rgba(56, 189, 248, 0.2);
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.18);
     color: var(--galactic-accent-2);
+    border-radius: 12px;
 }
 
 .modal-content .alert-warning {
-    background: rgba(251, 191, 36, 0.1);
-    border-color: rgba(251, 191, 36, 0.2);
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.18);
     color: var(--galactic-warning);
+    border-radius: 12px;
 }
 
 .modal-content .alert-danger {
-    background: rgba(248, 113, 113, 0.1);
-    border-color: rgba(248, 113, 113, 0.2);
+    background: rgba(248, 113, 113, 0.08);
+    border: 1px solid rgba(248, 113, 113, 0.18);
     color: var(--galactic-danger);
+    border-radius: 12px;
 }
 
 .modal-header.bg-success {
-    background: rgba(52, 211, 153, 0.15) !important;
+    background: rgba(52, 211, 153, 0.12) !important;
     border-bottom-color: rgba(52, 211, 153, 0.2);
 }
 
 .modal-header.bg-danger {
-    background: rgba(248, 113, 113, 0.15) !important;
+    background: rgba(248, 113, 113, 0.12) !important;
     border-bottom-color: rgba(248, 113, 113, 0.2);
 }
 
@@ -1224,14 +1286,25 @@
     color: var(--galactic-text-bright);
 }
 
+.modal-header.bg-danger .modal-title i,
+.modal-header.bg-success .modal-title i {
+    opacity: 1;
+}
+
 .modal-content .card {
-    background: var(--galactic-card);
-    border: 1px solid var(--galactic-card-border);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     color: var(--galactic-text-primary);
+    border-radius: 12px;
+}
+
+.modal-content .card-body {
+    padding: 1.25rem;
 }
 
 .modal-content .card h4 {
     color: var(--galactic-text-bright);
+    font-weight: 700;
 }
 
 .modal-content .card h6.text-success {
@@ -1252,6 +1325,11 @@
 
 .modal-content strong {
     color: var(--galactic-text-bright);
+}
+
+.modal-content .progress {
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
 }
 
 /* === Pagination === */
@@ -2270,4 +2348,134 @@
 /* === Btn close white for dark modals === */
 .modal-content .btn-close {
     filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* === Global Dark Form Overrides === */
+.dashboard-wrapper .form-control,
+.dashboard-wrapper .form-select,
+.profile-page .form-control,
+.profile-page .form-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--galactic-text-primary);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.dashboard-wrapper .form-control:focus,
+.dashboard-wrapper .form-select:focus,
+.profile-page .form-control:focus,
+.profile-page .form-select:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--galactic-accent-1);
+    box-shadow: 0 0 0 0.2rem rgba(124, 92, 252, 0.2);
+    color: var(--galactic-text-bright);
+}
+
+.dashboard-wrapper .form-control::placeholder,
+.profile-page .form-control::placeholder {
+    color: rgba(176, 180, 204, 0.5);
+}
+
+.dashboard-wrapper .input-group-text,
+.profile-page .input-group-text {
+    background: rgba(124, 92, 252, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--galactic-accent-1);
+    font-weight: 600;
+}
+
+.dashboard-wrapper .form-label,
+.profile-page .form-label {
+    color: var(--galactic-text-primary);
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.dashboard-wrapper .form-text,
+.profile-page .form-text {
+    color: var(--galactic-text-secondary);
+}
+
+/* Secondary button dark */
+.dashboard-wrapper .btn-secondary,
+.profile-page .btn-secondary {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--galactic-text-secondary);
+}
+
+.dashboard-wrapper .btn-secondary:hover,
+.profile-page .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--galactic-text-bright);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Outline buttons dark */
+.dashboard-wrapper .btn-outline-secondary,
+.profile-page .btn-outline-secondary {
+    border-color: rgba(255, 255, 255, 0.15);
+    color: var(--galactic-text-secondary);
+}
+
+.dashboard-wrapper .btn-outline-secondary:hover,
+.profile-page .btn-outline-secondary:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: var(--galactic-text-bright);
+}
+
+.dashboard-wrapper .btn-outline-primary,
+.profile-page .btn-outline-primary {
+    border-color: rgba(124, 92, 252, 0.4);
+    color: var(--galactic-accent-1);
+}
+
+.dashboard-wrapper .btn-outline-primary:hover,
+.profile-page .btn-outline-primary:hover {
+    background: rgba(124, 92, 252, 0.15);
+    border-color: var(--galactic-accent-1);
+    color: var(--galactic-text-bright);
+}
+
+.dashboard-wrapper .btn-outline-danger,
+.profile-page .btn-outline-danger {
+    border-color: rgba(248, 113, 113, 0.4);
+    color: var(--galactic-danger);
+}
+
+.dashboard-wrapper .btn-outline-danger:hover,
+.profile-page .btn-outline-danger:hover {
+    background: rgba(248, 113, 113, 0.15);
+    border-color: var(--galactic-danger);
+    color: var(--galactic-text-bright);
+}
+
+/* Badge dark overrides */
+.dashboard-wrapper .badge.bg-success,
+.profile-page .badge.bg-success {
+    background: rgba(52, 211, 153, 0.15) !important;
+    color: var(--galactic-success) !important;
+    border: 1px solid rgba(52, 211, 153, 0.25);
+}
+
+.dashboard-wrapper .badge.bg-warning,
+.profile-page .badge.bg-warning {
+    background: rgba(251, 191, 36, 0.15) !important;
+    color: var(--galactic-warning) !important;
+    border: 1px solid rgba(251, 191, 36, 0.25);
+}
+
+.dashboard-wrapper .badge.bg-danger,
+.profile-page .badge.bg-danger {
+    background: rgba(248, 113, 113, 0.15) !important;
+    color: var(--galactic-danger) !important;
+    border: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+.dashboard-wrapper .badge.bg-secondary,
+.profile-page .badge.bg-secondary {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: var(--galactic-text-secondary) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12);
 }

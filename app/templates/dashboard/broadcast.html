@@ -8,18 +8,35 @@
 
 {% block content %}
 <div class="dashboard-wrapper broadcast-page">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-nav">
+        <div class="dashboard-container">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('groups.list') }}">Grupos</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('groups.subscribers', id=group.id) }}">{{ group.name }}</a></li>
+                    <li class="breadcrumb-item active">Enviar Mensagem</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
     <div class="dashboard-container">
         <!-- Header -->
-        <div class="dashboard-header">
-            <div class="row align-items-center">
-                <div class="col">
-                    <h1 class="h2 mb-1">
-                        <i class="bi bi-broadcast"></i> Enviar Mensagem
-                    </h1>
-                    <p class="text-muted mb-0">Envie uma mensagem para os assinantes de {{ group.name }}</p>
+        <div class="dashboard-header welcome-header">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="welcome-avatar">
+                        <i class="bi bi-broadcast" style="font-size: 1.2rem;"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 mb-1">Enviar Mensagem</h1>
+                        <p class="text-muted mb-0">Envie uma mensagem para os assinantes de {{ group.name }}</p>
+                    </div>
                 </div>
-                <div class="col-auto">
-                    <a href="{{ url_for('groups.subscribers', id=group.id) }}" class="btn btn-outline-secondary">
+                <div>
+                    <a href="{{ url_for('groups.subscribers', id=group.id) }}" class="btn btn-outline-secondary btn-sm">
                         <i class="bi bi-arrow-left"></i> Voltar
                     </a>
                 </div>
@@ -35,7 +52,7 @@
 
             <form method="POST" action="{{ url_for('groups.broadcast', group_id=group.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                <div class="form-group">
+                <div class="mb-4">
                     <label class="form-label" for="message">Mensagem</label>
                     <textarea
                         class="form-control"
@@ -51,9 +68,9 @@
                     </small>
                 </div>
 
-                <div class="form-group">
+                <div class="mb-4">
                     <label class="form-label">Pré-visualização:</label>
-                    <div class="border rounded p-3" id="preview">
+                    <div class="content-card" id="preview" style="padding: 1rem 1.25rem; min-height: 60px; border: 1px dashed rgba(255,255,255,0.1);">
                         <em class="text-muted">A pré-visualização aparecerá aqui...</em>
                     </div>
                 </div>

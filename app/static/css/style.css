@@ -50,7 +50,7 @@ main {
     -webkit-backdrop-filter: blur(24px) saturate(1.4);
     border-bottom: none;
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
-    z-index: 9990;
+    z-index: 1030;
     position: sticky;
     top: 0;
     transition: background 0.3s ease;
@@ -181,7 +181,7 @@ main {
     box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.6),
         0 0 0 1px rgba(124, 92, 252, 0.1) inset;
-    z-index: 9999;
+    z-index: 1035;
     padding: 0.5rem;
     margin-top: 0.5rem;
     animation: dropdownSlide 0.2s ease-out;
@@ -287,7 +287,7 @@ main {
     position: fixed;
     width: 100%;
     top: 0;
-    z-index: 9990;
+    z-index: 1030;
     transition: all 0.3s ease;
 }
 

@@ -8,18 +8,35 @@
 
 {% block content %}
 <div class="dashboard-wrapper">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-nav">
+        <div class="dashboard-container">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('groups.list') }}">Grupos</a></li>
+                    <li class="breadcrumb-item">{{ group.name }}</li>
+                    <li class="breadcrumb-item active">Estatísticas</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
     <div class="dashboard-container">
         <!-- Header -->
-        <div class="dashboard-header">
-            <div class="row align-items-center">
-                <div class="col">
-                    <h1 class="h2 mb-1">
-                        <i class="bi bi-bar-chart-line"></i> Estatísticas: {{ group.name }}
-                    </h1>
-                    <p class="text-muted mb-0">Desempenho detalhado do grupo</p>
+        <div class="dashboard-header welcome-header">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="welcome-avatar">
+                        <i class="bi bi-bar-chart-line" style="font-size: 1.2rem;"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 mb-1">Estatísticas: {{ group.name }}</h1>
+                        <p class="text-muted mb-0">Desempenho detalhado do grupo</p>
+                    </div>
                 </div>
-                <div class="col-auto">
-                    <a href="{{ url_for('groups.list') }}" class="btn btn-outline-secondary">
+                <div>
+                    <a href="{{ url_for('groups.list') }}" class="btn btn-outline-secondary btn-sm">
                         <i class="bi bi-arrow-left"></i> Voltar
                     </a>
                 </div>
@@ -28,53 +45,45 @@
 
         <!-- Cards de Estatisticas -->
         <div class="stats-grid">
-            <div class="stat-card">
+            <div class="stat-card stat-primary">
                 <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="stat-icon primary">
-                            <i class="bi bi-people-fill"></i>
-                        </div>
+                    <div class="stat-icon primary">
+                        <i class="bi bi-people-fill"></i>
                     </div>
-                    <div class="flex-grow-1 ms-3">
+                    <div class="ms-3">
                         <p class="text-muted mb-1 small">Total Assinantes</p>
                         <h3 class="mb-0">{{ stats.total_subscribers }}</h3>
                     </div>
                 </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card stat-success">
                 <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="stat-icon success">
-                            <i class="bi bi-check-circle-fill"></i>
-                        </div>
+                    <div class="stat-icon success">
+                        <i class="bi bi-check-circle-fill"></i>
                     </div>
-                    <div class="flex-grow-1 ms-3">
+                    <div class="ms-3">
                         <p class="text-muted mb-1 small">Ativos</p>
-                        <h3 class="mb-0 text-success">{{ stats.active_subscribers }}</h3>
+                        <h3 class="mb-0">{{ stats.active_subscribers }}</h3>
                     </div>
                 </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card stat-warning">
                 <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="stat-icon warning">
-                            <i class="bi bi-cash-stack"></i>
-                        </div>
+                    <div class="stat-icon warning">
+                        <i class="bi bi-cash-stack"></i>
                     </div>
-                    <div class="flex-grow-1 ms-3">
+                    <div class="ms-3">
                         <p class="text-muted mb-1 small">Receita Total</p>
                         <h3 class="mb-0">R$ {{ "%.2f"|format(stats.total_revenue) }}</h3>
                     </div>
                 </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card stat-danger">
                 <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="stat-icon info">
-                            <i class="bi bi-arrow-repeat"></i>
-                        </div>
+                    <div class="stat-icon danger">
+                        <i class="bi bi-arrow-repeat"></i>
                     </div>
-                    <div class="flex-grow-1 ms-3">
+                    <div class="ms-3">
                         <p class="text-muted mb-1 small">Taxa de Churn</p>
                         <h3 class="mb-0">{{ "%.1f"|format(stats.churn_rate) }}%</h3>
                     </div>
@@ -85,35 +94,56 @@
         <!-- Graficos -->
         <div class="row g-4">
             <div class="col-md-6">
-                <div class="chart-card">
-                    <div class="card-header">
-                        <i class="bi bi-graph-up text-success"></i> Receita Diária (30 dias)
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container">
-                            <canvas id="revenueChart"></canvas>
-                        </div>
+                <div class="content-card">
+                    <h5><i class="bi bi-graph-up"></i> Receita Diária (30 dias)</h5>
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="revenueChart"></canvas>
                     </div>
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="chart-card">
-                    <div class="card-header">
-                        <i class="bi bi-bar-chart-fill text-info"></i> Novas Assinaturas (30 dias)
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container">
-                            <canvas id="subsChart"></canvas>
-                        </div>
+                <div class="content-card">
+                    <h5><i class="bi bi-bar-chart-fill"></i> Novas Assinaturas (30 dias)</h5>
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="subsChart"></canvas>
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions mt-4" style="max-width: 480px; margin-left: auto; margin-right: auto;">
+            <a href="{{ url_for('groups.subscribers', id=group.id) }}" class="qa-tile">
+                <div class="qa-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <span>Assinantes</span>
+            </a>
+            <a href="{{ url_for('groups.edit', id=group.id) }}" class="qa-tile">
+                <div class="qa-icon" style="background: rgba(124, 92, 252, 0.15); color: #7c5cfc;">
+                    <i class="bi bi-gear-fill"></i>
+                </div>
+                <span>Configurações</span>
+            </a>
+            <a href="{{ url_for('groups.broadcast', group_id=group.id) }}" class="qa-tile">
+                <div class="qa-icon" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24;">
+                    <i class="bi bi-broadcast"></i>
+                </div>
+                <span>Mensagem</span>
+            </a>
+            <a href="{{ url_for('groups.list') }}" class="qa-tile">
+                <div class="qa-icon" style="background: rgba(255, 255, 255, 0.06); color: var(--galactic-text-secondary);">
+                    <i class="bi bi-arrow-left"></i>
+                </div>
+                <span>Voltar</span>
+            </a>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
 const revenueData = {{ daily_revenue | tojson }};
 const subsData = {{ daily_subscriptions | tojson }};
@@ -137,7 +167,7 @@ if (document.getElementById('revenueChart')) {
                 label: 'Receita (R$)',
                 data: revenueData.map(d => d.revenue),
                 borderColor: '#7c5cfc',
-                backgroundColor: 'rgba(124, 92, 252, 0.15)',
+                backgroundColor: 'rgba(124, 92, 252, 0.12)',
                 borderWidth: 3,
                 tension: 0.4,
                 fill: true,
@@ -153,11 +183,11 @@ if (document.getElementById('revenueChart')) {
             maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
-                tooltip: galacticTooltip
+                tooltip: { ...galacticTooltip, callbacks: { label: ctx => 'Receita: R$ ' + ctx.parsed.y.toFixed(2) } }
             },
             scales: {
-                x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#8b8fad' } },
-                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#8b8fad' } }
+                x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b8fad', font: { size: 11 } } },
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b8fad', callback: v => 'R$ ' + v.toFixed(0) } }
             }
         }
     });
@@ -171,7 +201,7 @@ if (document.getElementById('subsChart')) {
             datasets: [{
                 label: 'Novas Assinaturas',
                 data: subsData.map(d => d.count),
-                backgroundColor: 'rgba(56, 189, 248, 0.6)',
+                backgroundColor: 'rgba(56, 189, 248, 0.5)',
                 borderColor: '#38bdf8',
                 borderWidth: 2,
                 borderRadius: 8,
@@ -183,11 +213,11 @@ if (document.getElementById('subsChart')) {
             maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
-                tooltip: galacticTooltip
+                tooltip: { ...galacticTooltip, callbacks: { label: ctx => 'Novos: ' + ctx.parsed.y } }
             },
             scales: {
                 x: { grid: { display: false }, ticks: { color: '#8b8fad' } },
-                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#8b8fad', stepSize: 1, precision: 0 } }
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b8fad', stepSize: 1, precision: 0 } }
             }
         }
     });
