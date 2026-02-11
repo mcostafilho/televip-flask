@@ -14,7 +14,7 @@
     --galactic-warning: #fbbf24;
     --galactic-danger: #f87171;
     --galactic-text-primary: #e2e8f0;
-    --galactic-text-secondary: #8b8fad;
+    --galactic-text-secondary: #b0b4cc;
     --galactic-text-bright: #ffffff;
     --galactic-glass-blur: blur(20px);
     --galactic-border-radius: 16px;
@@ -582,19 +582,21 @@
 
 /* === Dropdown menus === */
 .dashboard-wrapper .dropdown-menu {
-    background: rgba(11, 14, 26, 0.95);
-    backdrop-filter: var(--galactic-glass-blur);
-    border: 1px solid var(--galactic-card-border);
+    background: #0f1220;
+    border: 1px solid rgba(124, 92, 252, 0.25);
     border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+    z-index: 9999;
 }
 
 .dashboard-wrapper .dropdown-item {
-    color: var(--galactic-text-primary);
+    color: #e2e8f0;
+    padding: 8px 16px;
 }
 
 .dashboard-wrapper .dropdown-item:hover {
-    background: rgba(124, 92, 252, 0.1);
-    color: var(--galactic-text-bright);
+    background: rgba(124, 92, 252, 0.15);
+    color: #ffffff;
 }
 
 .dashboard-wrapper .dropdown-item.text-danger {
@@ -602,7 +604,7 @@
 }
 
 .dashboard-wrapper .dropdown-divider {
-    border-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 /* === Modal Customizado === */

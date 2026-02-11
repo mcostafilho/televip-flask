@@ -22,10 +22,11 @@ main {
 
 /* Navbar Styles */
 .navbar-dark {
-    background: rgba(11, 14, 26, 0.95) !important;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(124, 92, 252, 0.15);
+    background: #0b0e1a !important;
+    border-bottom: 1px solid rgba(124, 92, 252, 0.2);
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+    z-index: 9990;
+    position: relative;
 }
 
 .navbar-dark .navbar-brand {
@@ -38,37 +39,40 @@ main {
 }
 
 .navbar-dark .nav-link {
-    color: #8b8fad;
+    color: #c8cce0;
     transition: color 0.2s ease;
 }
 
 .navbar-dark .nav-link:hover,
 .navbar-dark .nav-link:focus {
-    color: #e2e8f0;
-}
-
-.navbar-dark .nav-link.active {
     color: #ffffff;
 }
 
+.navbar-dark .nav-link.active {
+    color: #a78bfa;
+    font-weight: 600;
+}
+
 .navbar .dropdown-menu {
-    background: rgba(11, 14, 26, 0.95);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(124, 92, 252, 0.15);
+    background: #0f1220;
+    border: 1px solid rgba(124, 92, 252, 0.25);
     border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+    z-index: 9999;
 }
 
 .navbar .dropdown-item {
     color: #e2e8f0;
+    padding: 8px 16px;
 }
 
 .navbar .dropdown-item:hover {
-    background: rgba(124, 92, 252, 0.1);
+    background: rgba(124, 92, 252, 0.15);
     color: #ffffff;
 }
 
 .navbar .dropdown-divider {
-    border-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Card Animations */

@@ -38,10 +38,10 @@ body {
     overflow-x: hidden;
     background: var(--dark);
     background-image:
-        linear-gradient(180deg, rgba(11, 14, 26, 0.55) 0%, rgba(11, 14, 26, 0.45) 40%, rgba(11, 14, 26, 0.60) 100%),
+        linear-gradient(180deg, rgba(11, 14, 26, 0.82) 0%, rgba(11, 14, 26, 0.70) 30%, rgba(18, 8, 46, 0.75) 60%, rgba(11, 14, 26, 0.85) 100%),
         url('https://assets.science.nasa.gov/dynamicimage/assets/science/missions/webb/science/2022/07/STScI-01GA6KKWG229B16K4Q38CH3BXS.png?w=1920');
     background-size: cover, cover;
-    background-position: center, center;
+    background-position: center, center top;
     background-attachment: fixed, fixed;
     background-repeat: no-repeat, no-repeat;
     color: var(--galactic-text-primary);
