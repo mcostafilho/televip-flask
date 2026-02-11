@@ -8,12 +8,18 @@
     --light-bg: #0d1b2a;
 }
 
+@keyframes pageEntrance {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     background: #0b0e1a;
     color: #e2e8f0;
+    animation: pageEntrance 0.4s ease-out both;
 }
 
 main {
@@ -44,13 +50,23 @@ main {
 }
 
 .navbar-dark .nav-link:hover,
-.navbar-dark .nav-link:focus {
+.navbar-dark .nav-link:focus,
+.navbar-dark .nav-link:focus-visible {
     color: #ffffff;
+}
+
+.navbar-dark .nav-link:active {
+    color: #a78bfa !important;
 }
 
 .navbar-dark .nav-link.active {
     color: #a78bfa;
     font-weight: 600;
+}
+
+.navbar-dark .dropdown-toggle:active,
+.navbar-dark .dropdown-toggle:focus {
+    color: #ffffff !important;
 }
 
 .navbar .dropdown-menu {
@@ -78,8 +94,8 @@ main {
 /* Card Animations */
 .card {
     transition: transform 0.2s, box-shadow 0.2s;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(124, 92, 252, 0.15);
+    background: rgba(15, 18, 32, 0.88);
+    border: 1px solid rgba(124, 92, 252, 0.2);
     color: #e2e8f0;
 }
 
@@ -202,7 +218,7 @@ main {
 .empty-state {
     text-align: center;
     padding: 3rem;
-    color: #8b8fad;
+    color: #b0b4cc;
 }
 
 .empty-state i {

@@ -33,15 +33,27 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+/* Page Transition */
+@keyframes pageEntrance {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pageExit {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-12px); }
+}
+
 body {
+    animation: pageEntrance 0.5s ease-out both;
     font-family: 'Poppins', sans-serif;
     overflow-x: hidden;
     background: var(--dark);
     background-image:
-        linear-gradient(180deg, rgba(11, 14, 26, 0.82) 0%, rgba(11, 14, 26, 0.70) 30%, rgba(18, 8, 46, 0.75) 60%, rgba(11, 14, 26, 0.85) 100%),
+        linear-gradient(180deg, rgba(11, 14, 26, 0.90) 0%, rgba(11, 14, 26, 0.80) 25%, rgba(18, 8, 46, 0.82) 50%, rgba(11, 14, 26, 0.88) 75%, rgba(11, 14, 26, 0.92) 100%),
         url('https://assets.science.nasa.gov/dynamicimage/assets/science/missions/webb/science/2022/07/STScI-01GA6KKWG229B16K4Q38CH3BXS.png?w=1920');
     background-size: cover, cover;
-    background-position: center, center top;
+    background-position: center, center 20%;
     background-attachment: fixed, fixed;
     background-repeat: no-repeat, no-repeat;
     color: var(--galactic-text-primary);
@@ -81,11 +93,12 @@ body {
 /* Shooting stars */
 .shooting-star {
     position: absolute;
-    width: 150px;
+    width: 200px;
     height: 2px;
-    background: linear-gradient(90deg, rgba(124, 92, 252, 1), rgba(56, 189, 248, 0.6), transparent);
+    background: linear-gradient(90deg, rgba(124, 92, 252, 1), rgba(56, 189, 248, 0.8), rgba(255, 255, 255, 0.4), transparent);
     animation: shoot 3s linear infinite;
     opacity: 0;
+    filter: drop-shadow(0 0 6px rgba(124, 92, 252, 0.6));
 }
 
 .shooting-star:nth-child(1) {
@@ -150,12 +163,21 @@ body {
 }
 
 .nebula-glow.pink {
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(240, 147, 251, 0.25), transparent 70%);
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(240, 147, 251, 0.3), transparent 70%);
     top: 40%;
     right: 20%;
     animation: nebulaDrift 18s ease-in-out infinite alternate;
+}
+
+.nebula-glow.deep {
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, rgba(124, 92, 252, 0.15), rgba(56, 189, 248, 0.08), transparent 70%);
+    top: 60%;
+    left: 30%;
+    animation: nebulaDrift 30s ease-in-out infinite alternate;
 }
 
 @keyframes nebulaDrift {
@@ -163,6 +185,35 @@ body {
     33% { transform: translate(30px, -20px) scale(1.1); }
     66% { transform: translate(-20px, 30px) scale(0.95); }
     100% { transform: translate(10px, -10px) scale(1.05); }
+}
+
+/* ========================================
+   Hero Glow Rings (cinematic depth)
+   ======================================== */
+.hero::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 600px;
+    height: 600px;
+    transform: translate(-50%, -55%);
+    background: radial-gradient(circle, rgba(124, 92, 252, 0.12) 0%, rgba(56, 189, 248, 0.06) 40%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: heroGlowPulse 6s ease-in-out infinite alternate;
+    z-index: 2;
+}
+
+@keyframes heroGlowPulse {
+    0% { transform: translate(-50%, -55%) scale(0.9); opacity: 0.5; }
+    50% { transform: translate(-50%, -55%) scale(1.15); opacity: 1; }
+    100% { transform: translate(-50%, -55%) scale(1.0); opacity: 0.7; }
+}
+
+/* Hero H1 glow behind text */
+.hero h1 {
+    text-shadow: 0 0 40px rgba(124, 92, 252, 0.25), 0 2px 20px rgba(0, 0, 0, 0.5);
 }
 
 /* ========================================
@@ -280,7 +331,14 @@ body {
 
 /* Feature Card Glow on Hover */
 .feature-card:hover .feature-icon {
-    box-shadow: 0 0 30px rgba(124, 92, 252, 0.4);
+    box-shadow: 0 0 30px rgba(124, 92, 252, 0.5), 0 0 60px rgba(124, 92, 252, 0.2);
+    transform: scale(1.1);
+    transition: all 0.3s ease;
+}
+
+.feature-icon {
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(124, 92, 252, 0.2);
 }
 
 /* ========================================
@@ -294,11 +352,17 @@ body {
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 200px;
+    width: 250px;
     height: 2px;
     background: var(--gradient-primary);
     border-radius: 2px;
-    box-shadow: 0 0 20px rgba(124, 92, 252, 0.5);
+    box-shadow: 0 0 30px rgba(124, 92, 252, 0.6), 0 0 60px rgba(56, 189, 248, 0.3);
+    animation: dividerPulse 3s ease-in-out infinite alternate;
+}
+
+@keyframes dividerPulse {
+    0% { width: 200px; box-shadow: 0 0 20px rgba(124, 92, 252, 0.4); opacity: 0.7; }
+    100% { width: 300px; box-shadow: 0 0 40px rgba(124, 92, 252, 0.8), 0 0 80px rgba(56, 189, 248, 0.4); opacity: 1; }
 }
 
 /* Ensure ALL sections stay below fixed navbar (GSAP transforms create stacking contexts) */
@@ -396,6 +460,13 @@ footer,
 
 .nav-link:hover {
     color: #ffffff;
+}
+
+.nav-link:active,
+.nav-link:focus,
+.nav-link:focus-visible {
+    color: #a78bfa !important;
+    text-shadow: 0 0 12px rgba(124, 92, 252, 0.5);
 }
 
 .nav-link.active {
@@ -875,7 +946,8 @@ footer,
 
 .testimonial-card:hover {
     background: var(--galactic-card-hover);
-    border-color: rgba(124, 92, 252, 0.3);
+    border-color: rgba(124, 92, 252, 0.4);
+    box-shadow: 0 8px 30px rgba(124, 92, 252, 0.12), 0 0 0 1px rgba(124, 92, 252, 0.2);
 }
 
 .testimonial-card p {
@@ -964,11 +1036,13 @@ footer,
    ======================================== */
 .cta {
     padding: 80px 0;
-    background: var(--gradient-primary);
+    background: linear-gradient(135deg, #1a0a3e 0%, #2d1b69 30%, #0f1b3d 70%, #0b0e1a 100%);
     color: white;
     text-align: center;
     position: relative;
     overflow: hidden;
+    border-top: 1px solid rgba(124, 92, 252, 0.2);
+    border-bottom: 1px solid rgba(124, 92, 252, 0.2);
 }
 
 .cta::before {
@@ -978,8 +1052,14 @@ footer,
     left: 0;
     right: 0;
     bottom: 0;
-    background: radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    background: radial-gradient(ellipse at 50% 30%, rgba(124, 92, 252, 0.25) 0%, rgba(56, 189, 248, 0.08) 40%, transparent 70%);
     pointer-events: none;
+    animation: ctaGlow 4s ease-in-out infinite alternate;
+}
+
+@keyframes ctaGlow {
+    0% { opacity: 0.6; }
+    100% { opacity: 1; }
 }
 
 .cta h2 {
@@ -997,7 +1077,7 @@ footer,
 }
 
 .btn-cta {
-    background: #ffffff;
+    background: linear-gradient(135deg, #ffffff 0%, #e8e0ff 100%);
     color: #4c2fb8;
     padding: 16px 40px;
     border-radius: 30px;
@@ -1006,13 +1086,19 @@ footer,
     text-decoration: none;
     display: inline-block;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3), 0 0 40px rgba(124, 92, 252, 0.2);
     position: relative;
+    animation: ctaBtnPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes ctaBtnPulse {
+    0%, 100% { box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3), 0 0 30px rgba(124, 92, 252, 0.15); }
+    50% { box-shadow: 0 4px 30px rgba(255, 255, 255, 0.5), 0 0 60px rgba(124, 92, 252, 0.3); }
 }
 
 .btn-cta:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 30px rgba(255, 255, 255, 0.4);
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 8px 30px rgba(255, 255, 255, 0.5), 0 0 60px rgba(124, 92, 252, 0.35);
     color: #4c2fb8;
 }
 
@@ -1419,12 +1505,21 @@ button:focus {
 
 /* Floating card glow */
 .floating-card {
-    animation: float 3s ease-in-out infinite, cardGlow 4s ease-in-out infinite alternate;
+    animation: float 4s ease-in-out infinite, cardGlow 5s ease-in-out infinite alternate;
+    border: 1px solid rgba(124, 92, 252, 0.25);
+}
+
+.floating-card:nth-child(2) {
+    animation-delay: -1.5s;
+}
+
+.floating-card:nth-child(3) {
+    animation-delay: -3s;
 }
 
 @keyframes cardGlow {
-    0% { box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3); }
-    100% { box-shadow: 0 10px 30px rgba(124, 92, 252, 0.2), 0 0 15px rgba(124, 92, 252, 0.1); }
+    0% { box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3), 0 0 0 rgba(124, 92, 252, 0); }
+    100% { box-shadow: 0 10px 40px rgba(124, 92, 252, 0.25), 0 0 20px rgba(124, 92, 252, 0.15); }
 }
 
 /* Performance optimizations */
@@ -1452,13 +1547,19 @@ button:focus {
 
 /* Reduce motion for accessibility */
 @media (prefers-reduced-motion: reduce) {
+    body {
+        animation: none !important;
+    }
     .starfield .star,
     .shooting-star,
     .nebula-glow,
     .floating-card,
     .btn-hero-primary::before,
     .btn-pricing::before,
-    .btn-cta::before {
+    .btn-cta::before,
+    .btn-cta,
+    .hero::after,
+    .cta::before {
         animation: none !important;
     }
     .hero h1 .text-gradient {

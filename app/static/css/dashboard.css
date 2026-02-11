@@ -5,9 +5,9 @@
 /* === CSS Variables === */
 :root {
     --galactic-bg: linear-gradient(135deg, #0b0e1a 0%, #1a1040 50%, #0d1b2a 100%);
-    --galactic-card: rgba(255, 255, 255, 0.05);
-    --galactic-card-border: rgba(124, 92, 252, 0.15);
-    --galactic-card-hover: rgba(255, 255, 255, 0.08);
+    --galactic-card: rgba(15, 18, 32, 0.88);
+    --galactic-card-border: rgba(124, 92, 252, 0.2);
+    --galactic-card-hover: rgba(20, 24, 42, 0.92);
     --galactic-accent-1: #7c5cfc;
     --galactic-accent-2: #38bdf8;
     --galactic-success: #34d399;

@@ -85,10 +85,10 @@
     geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
 
     var material = new THREE.PointsMaterial({
-      size: 0.15,
+      size: 0.2,
       vertexColors: true,
       transparent: true,
-      opacity: 0.9,
+      opacity: 0.95,
       sizeAttenuation: true,
       blending: THREE.AdditiveBlending,
       depthWrite: false
@@ -121,12 +121,16 @@
       requestAnimationFrame(animate);
       if (!heroVisible) return;
 
-      points.rotation.y += 0.0005;
-      points.rotation.x += 0.0002;
+      points.rotation.y += 0.0006;
+      points.rotation.x += 0.00025;
+
+      // Breathing opacity — subtle pulse
+      var breath = 0.85 + Math.sin(Date.now() * 0.001) * 0.1;
+      material.opacity = breath;
 
       // Smooth camera follow — dramatic parallax
-      camera.position.x += (mouseX * 1.5 - camera.position.x) * 0.03;
-      camera.position.y += (-mouseY * 1.0 - camera.position.y) * 0.03;
+      camera.position.x += (mouseX * 2.0 - camera.position.x) * 0.035;
+      camera.position.y += (-mouseY * 1.5 - camera.position.y) * 0.035;
       camera.lookAt(scene.position);
 
       renderer.render(scene, camera);
@@ -222,52 +226,55 @@
     // Split H1 words
     var words = h1 ? splitWords(h1) : [];
 
-    var tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+    var tl = gsap.timeline({ defaults: { ease: 'power3.out' }, delay: 0.2 });
 
-    // Words reveal
+    // Words reveal — dramatic staggered from below with slight scale
     if (words.length) {
-      gsap.set(words, { y: 60, opacity: 0 });
-      tl.to(words, { y: 0, opacity: 1, duration: 0.8, stagger: 0.06 }, 0);
+      gsap.set(words, { y: 80, opacity: 0, scale: 0.9, rotateX: 15 });
+      tl.to(words, { y: 0, opacity: 1, scale: 1, rotateX: 0, duration: 0.9, stagger: 0.05, ease: 'back.out(1.2)' }, 0);
     }
 
-    // Lead text
+    // Lead text — fade up with slight blur effect
     if (lead) {
-      gsap.set(lead, { y: 30, opacity: 0 });
-      tl.to(lead, { y: 0, opacity: 1, duration: 0.6 }, 0.4);
+      gsap.set(lead, { y: 40, opacity: 0 });
+      tl.to(lead, { y: 0, opacity: 1, duration: 0.7 }, 0.5);
     }
 
-    // Alert
+    // Alert — scale bounce
     if (alert) {
-      gsap.set(alert, { y: 20, opacity: 0 });
-      tl.to(alert, { y: 0, opacity: 1, duration: 0.5 }, 0.6);
+      gsap.set(alert, { y: 20, opacity: 0, scale: 0.9 });
+      tl.to(alert, { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.5)' }, 0.7);
     }
 
-    // Stats with bounce
+    // Stats with dramatic bounce cascade
     if (stats.length) {
-      gsap.set(stats, { scale: 0.5, opacity: 0 });
+      gsap.set(stats, { scale: 0.3, opacity: 0, y: 30 });
       tl.to(stats, {
-        scale: 1, opacity: 1, duration: 0.6,
-        stagger: 0.1, ease: 'back.out(1.7)'
-      }, 0.7);
+        scale: 1, opacity: 1, y: 0, duration: 0.7,
+        stagger: 0.12, ease: 'back.out(2)'
+      }, 0.8);
     }
 
-    // Buttons
+    // Buttons — slide up with elastic
     if (buttons) {
-      gsap.set(buttons, { y: 20, opacity: 0 });
-      tl.to(buttons, { y: 0, opacity: 1, duration: 0.5 }, 1.0);
+      gsap.set(buttons, { y: 30, opacity: 0 });
+      tl.to(buttons, { y: 0, opacity: 1, duration: 0.6, ease: 'back.out(1.3)' }, 1.1);
     }
 
     // Subtext
     if (subtext) {
       gsap.set(subtext, { opacity: 0 });
-      tl.to(subtext, { opacity: 1, duration: 0.5 }, 1.2);
+      tl.to(subtext, { opacity: 1, duration: 0.6 }, 1.3);
     }
 
-    // Floating cards
+    // Floating cards — stagger from different sides
     var floats = document.querySelectorAll('.floating-card');
     if (floats.length) {
-      gsap.set(floats, { opacity: 0, y: 40 });
-      tl.to(floats, { opacity: 1, y: 0, duration: 0.8, stagger: 0.2 }, 1.0);
+      floats.forEach(function (card, i) {
+        var fromX = i % 2 === 0 ? -60 : 60;
+        gsap.set(card, { opacity: 0, x: fromX, y: 30, scale: 0.8 });
+      });
+      tl.to(floats, { opacity: 1, x: 0, y: 0, scale: 1, duration: 1, stagger: 0.25, ease: 'elastic.out(1, 0.6)' }, 1.2);
     }
   }
 
@@ -283,13 +290,14 @@
       });
     });
 
-    // Feature cards (fade-up with slight rotateX)
+    // Feature cards — dramatic reveal with perspective flip
     gsap.utils.toArray('.feature-card, .feature-card-ext').forEach(function (card, i) {
       gsap.from(card, {
-        scrollTrigger: { trigger: card, start: 'top 85%', once: true },
-        y: 60, opacity: 0, rotateX: 8, duration: 0.7,
-        delay: (i % 3) * 0.15,
-        ease: 'power3.out'
+        scrollTrigger: { trigger: card, start: 'top 88%', once: true },
+        y: 80, opacity: 0, rotateX: 12, scale: 0.9, duration: 0.8,
+        delay: (i % 3) * 0.18,
+        ease: 'back.out(1.2)',
+        transformPerspective: 800
       });
     });
 
@@ -301,22 +309,25 @@
       });
     });
 
-    // Testimonial cards — alternate slide-in direction
+    // Testimonial cards — dramatic alternate slide-in with rotation
     gsap.utils.toArray('.testimonial-card').forEach(function (card, i) {
-      var dir = i % 2 === 0 ? -60 : 60;
+      var dir = i % 2 === 0 ? -80 : 80;
+      var rot = i % 2 === 0 ? -5 : 5;
       gsap.from(card, {
-        scrollTrigger: { trigger: card, start: 'top 85%', once: true },
-        x: dir, opacity: 0, duration: 0.7,
-        ease: 'power3.out'
+        scrollTrigger: { trigger: card, start: 'top 88%', once: true },
+        x: dir, opacity: 0, rotateY: rot, scale: 0.9, duration: 0.9,
+        ease: 'back.out(1.1)',
+        transformPerspective: 800
       });
     });
 
-    // CTA section — clip-path reveal for h2
+    // CTA section — dramatic clip-path reveal for h2
     var ctaH2 = document.querySelector('.cta h2');
     if (ctaH2) {
       gsap.from(ctaH2, {
-        scrollTrigger: { trigger: ctaH2, start: 'top 85%', once: true },
-        clipPath: 'inset(0 100% 0 0)', opacity: 0, duration: 1,
+        scrollTrigger: { trigger: ctaH2, start: 'top 88%', once: true },
+        clipPath: 'inset(0 100% 0 0)', opacity: 0, duration: 1.2,
+        scale: 0.95, y: 20,
         ease: 'power4.out'
       });
     }
@@ -597,7 +608,25 @@
     }
   }
 
-  // ── 13. INIT ORCHESTRATOR ──────────────────────────────
+  // ── 13. PAGE TRANSITIONS ──────────────────────────────
+  function initPageTransitions() {
+    // Intercept internal navigation links for smooth page exit
+    document.addEventListener('click', function (e) {
+      var link = e.target.closest('a[href]');
+      if (!link) return;
+      var href = link.getAttribute('href');
+      // Skip anchors, external, new-tab, javascript
+      if (!href || href.startsWith('#') || href.startsWith('javascript') || href.startsWith('mailto') || href.startsWith('http') || link.target === '_blank') return;
+      // Skip if modifier key pressed
+      if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+
+      e.preventDefault();
+      document.body.style.animation = 'pageExit 0.35s ease-in forwards';
+      setTimeout(function () { window.location.href = href; }, 300);
+    });
+  }
+
+  // ── 14. INIT ORCHESTRATOR ──────────────────────────────
   function init() {
     // Register GSAP plugin
     if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
@@ -616,6 +645,7 @@
     initCursor();
     initCounters();
     initNavbar();
+    initPageTransitions();
   }
 
   // Run on DOMContentLoaded if not ready, else immediately
