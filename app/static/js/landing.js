@@ -270,14 +270,141 @@
       tl.to(subtext, { opacity: 1, duration: 0.6 }, 1.3);
     }
 
-    // Floating cards — stagger from different sides
-    var floats = document.querySelectorAll('.floating-card');
-    if (floats.length) {
-      floats.forEach(function (card, i) {
-        var fromX = i % 2 === 0 ? -60 : 60;
-        gsap.set(card, { opacity: 0, x: fromX, y: 30, scale: 0.8 });
+  }
+
+  // ── 5b. ORBIT CARDS — Space-themed floating cards ─────
+  function initOrbitCards() {
+    if (!isLanding) return;
+    var cards = document.querySelectorAll('.orbit-card');
+    if (!cards.length) return;
+
+    // Depth config: opacity targets, scale, blur handled by CSS
+    var depthConfig = {
+      '1': { opacity: 1, scale: 1, amplitude: 1 },
+      '2': { opacity: 0.7, scale: 0.9, amplitude: 0.7 },
+      '3': { opacity: 0.45, scale: 0.75, amplitude: 0.45 }
+    };
+
+    // ── ENTRANCE: radial burst with elastic ease ──
+    if (!prefersReduced) {
+      cards.forEach(function (card) {
+        var depth = card.dataset.depth || '1';
+        var cfg = depthConfig[depth];
+        // Calculate radial entrance direction from center of hero
+        var rect = card.getBoundingClientRect();
+        var heroEl = document.getElementById('home');
+        var heroRect = heroEl ? heroEl.getBoundingClientRect() : { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
+        var cx = heroRect.left + heroRect.width / 2;
+        var cy = heroRect.top + heroRect.height / 2;
+        var cardCx = rect.left + rect.width / 2;
+        var cardCy = rect.top + rect.height / 2;
+        var angle = Math.atan2(cardCy - cy, cardCx - cx);
+        var dist = 120 + Math.random() * 80;
+
+        gsap.set(card, {
+          opacity: 0,
+          x: Math.cos(angle) * dist,
+          y: Math.sin(angle) * dist,
+          scale: cfg.scale * 0.5,
+          filter: depth === '1' ? 'blur(0px)' : depth === '2' ? 'blur(0.5px)' : 'blur(1px)'
+        });
       });
-      tl.to(floats, { opacity: 1, x: 0, y: 0, scale: 1, duration: 1, stagger: 0.25, ease: 'elastic.out(1, 0.6)' }, 1.2);
+
+      // Staggered entrance after hero text loads
+      gsap.to(cards, {
+        opacity: function (i) {
+          var d = cards[i].dataset.depth || '1';
+          return depthConfig[d].opacity;
+        },
+        x: 0, y: 0,
+        scale: function (i) {
+          var d = cards[i].dataset.depth || '1';
+          return depthConfig[d].scale;
+        },
+        duration: 1.2,
+        stagger: 0.12,
+        ease: 'elastic.out(1, 0.6)',
+        delay: 1.4,
+        onComplete: function () { startOrbitLoops(cards, depthConfig); }
+      });
+    } else {
+      // Reduced motion: just show them static
+      cards.forEach(function (card) {
+        var depth = card.dataset.depth || '1';
+        var cfg = depthConfig[depth];
+        gsap.set(card, { opacity: cfg.opacity, scale: cfg.scale });
+      });
+    }
+
+    function startOrbitLoops(cards, depthConfig) {
+      cards.forEach(function (card) {
+        var type = card.dataset.orbit || 'drift';
+        var depth = card.dataset.depth || '1';
+        var amp = depthConfig[depth].amplitude;
+
+        if (type === 'drift') orbitDrift(card, amp);
+        else if (type === 'ellipse') orbitEllipse(card, amp);
+        else if (type === 'wave') orbitWave(card, amp);
+      });
+    }
+
+    // ── DRIFT: organic Brownian wandering ──
+    function orbitDrift(card, amp) {
+      function step() {
+        var dx = (Math.random() - 0.5) * 30 * amp;
+        var dy = (Math.random() - 0.5) * 24 * amp;
+        var dur = 3 + Math.random() * 3;
+        gsap.to(card, {
+          x: dx, y: dy,
+          duration: dur,
+          ease: 'sine.inOut',
+          onComplete: step
+        });
+      }
+      step();
+    }
+
+    // ── ELLIPSE: satellite-like continuous orbit ──
+    function orbitEllipse(card, amp) {
+      var rx = (20 + Math.random() * 20) * amp;
+      var ry = (12 + Math.random() * 14) * amp;
+      var dur = 6 + Math.random() * 4;
+      var startAngle = Math.random() * Math.PI * 2;
+      var obj = { angle: startAngle };
+
+      gsap.to(obj, {
+        angle: startAngle + Math.PI * 2,
+        duration: dur,
+        ease: 'none',
+        repeat: -1,
+        onUpdate: function () {
+          var x = Math.cos(obj.angle) * rx;
+          var y = Math.sin(obj.angle) * ry;
+          gsap.set(card, { x: x, y: y });
+        }
+      });
+    }
+
+    // ── WAVE: Lissajous sine pattern ──
+    function orbitWave(card, amp) {
+      var freqX = 1 + Math.random() * 0.5;
+      var freqY = 1.3 + Math.random() * 0.7;
+      var ampX = (18 + Math.random() * 16) * amp;
+      var ampY = (14 + Math.random() * 12) * amp;
+      var dur = 8 + Math.random() * 4;
+      var obj = { t: 0 };
+
+      gsap.to(obj, {
+        t: Math.PI * 2,
+        duration: dur,
+        ease: 'none',
+        repeat: -1,
+        onUpdate: function () {
+          var x = Math.sin(obj.t * freqX) * ampX;
+          var y = Math.sin(obj.t * freqY) * ampY;
+          gsap.set(card, { x: x, y: y });
+        }
+      });
     }
   }
 
@@ -784,6 +911,7 @@
     safe(initCosmicParticles);
     safe(initMouseReveal);
     safe(initHeroEntrance);
+    safe(initOrbitCards);
     safe(initScrollAnimations);
     safe(initMagneticButtons);
     safe(initTiltCards);
