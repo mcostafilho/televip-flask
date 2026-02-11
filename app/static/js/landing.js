@@ -640,43 +640,47 @@
     starfield.appendChild(frag);
   }
 
-  // ── 13. MOUSE REVEAL — Cosmic Halo (desktop only) ──
-  // Full-screen overlay; ring-shaped mask (transparent center) grows on first move.
+  // ── 13. AMBIENT NEBULA — Cinematic Pulses ──
+  // Space image revealed in random bursts across the viewport.
+  // 3 independent pulse layers, staggered, like light through a cosmic film.
   function initMouseReveal() {
-    if (isMobile) return;
-
     var reveal = document.createElement('div');
     reveal.className = 'space-reveal';
     reveal.setAttribute('aria-hidden', 'true');
     document.body.appendChild(reveal);
 
-    var mouseX = window.innerWidth / 2;
-    var mouseY = window.innerHeight / 2;
-    var curX = mouseX, curY = mouseY;
-    var active = false;
-    var size = { r: 0 };  // animated by GSAP
+    // 3 independent pulse states
+    function pulse(n) {
+      var xProp = '--x' + n, yProp = '--y' + n, rProp = '--r' + n;
+      var maxR = isMobile ? 120 : (180 + Math.random() * 220); // 180–400px
 
-    document.addEventListener('mousemove', function (e) {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-      if (!active) {
-        active = true;
-        reveal.style.opacity = '1';
-        // Grow from 0 → 450px — larger because center is empty (ring shape)
-        gsap.to(size, {
-          r: 450, duration: 1.6, ease: 'power3.out'
-        });
-      }
-    });
+      // Random position
+      reveal.style.setProperty(xProp, (8 + Math.random() * 84) + '%');
+      reveal.style.setProperty(yProp, (8 + Math.random() * 84) + '%');
 
-    // Smooth trailing — update CSS custom properties each frame
-    gsap.ticker.add(function () {
-      curX += (mouseX - curX) * 0.09;
-      curY += (mouseY - curY) * 0.09;
-      reveal.style.setProperty('--mx', curX + 'px');
-      reveal.style.setProperty('--my', curY + 'px');
-      reveal.style.setProperty('--r', size.r + 'px');
-    });
+      var obj = { r: 0 };
+      // Grow
+      gsap.to(obj, {
+        r: maxR, duration: 2 + Math.random(), ease: 'power2.out',
+        onUpdate: function () { reveal.style.setProperty(rProp, obj.r + 'px'); },
+        onComplete: function () {
+          // Shrink
+          gsap.to(obj, {
+            r: 0, duration: 2.5 + Math.random(), ease: 'power2.in',
+            onUpdate: function () { reveal.style.setProperty(rProp, obj.r + 'px'); },
+            onComplete: function () {
+              // Next pulse — 1 to 2.5s random delay
+              setTimeout(function () { pulse(n); }, 1000 + Math.random() * 1500);
+            }
+          });
+        }
+      });
+    }
+
+    // Stagger the 3 layers so they overlap naturally
+    setTimeout(function () { pulse(1); }, 300);
+    setTimeout(function () { pulse(2); }, 1600);
+    setTimeout(function () { pulse(3); }, 3000);
   }
 
   // ── 14. PAGE TRANSITIONS ──────────────────────────────

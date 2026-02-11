@@ -75,9 +75,10 @@ body {
 }
 
 /* ========================================
-   Mouse Reveal — Cosmic Halo
-   Ring-shaped aura: center stays transparent
-   so content/buttons remain usable.
+   Ambient Nebula — Cinematic Pulses
+   Space image revealed in random bursts,
+   like light rays through a cosmic film.
+   3 independent mask layers, staggered.
    ======================================== */
 .space-reveal {
     position: fixed;
@@ -86,30 +87,22 @@ body {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 2;
-    /* CSS nebula — no photo, full control, brand-matched colors */
-    background:
-        radial-gradient(ellipse 70% 55% at 25% 35%, rgba(124, 92, 252, 0.35) 0%, transparent 60%),
-        radial-gradient(ellipse 55% 70% at 75% 65%, rgba(56, 189, 248, 0.28) 0%, transparent 55%),
-        radial-gradient(ellipse 60% 50% at 55% 30%, rgba(240, 147, 251, 0.12) 0%, transparent 50%),
-        radial-gradient(ellipse 45% 55% at 40% 75%, rgba(52, 211, 153, 0.10) 0%, transparent 50%);
-    background-attachment: fixed;
-    opacity: 0;
-    transition: opacity 1.6s cubic-bezier(.16,1,.3,1);
-    /* Ring mask — transparent center, visible ring, fades out */
-    --mx: 50%;
-    --my: 50%;
-    --r: 0px;
-    -webkit-mask-image: radial-gradient(circle var(--r) at var(--mx) var(--my),
-        transparent 0%, transparent 20%,
-        rgba(0,0,0,0.45) 40%,
-        rgba(0,0,0,0.25) 60%,
-        transparent 80%);
-    mask-image: radial-gradient(circle var(--r) at var(--mx) var(--my),
-        transparent 0%, transparent 20%,
-        rgba(0,0,0,0.45) 40%,
-        rgba(0,0,0,0.25) 60%,
-        transparent 80%);
+    z-index: 1;
+    background: url('/static/img/space-bg.jpg') center / cover no-repeat;
+    /* 3 independent pulse masks — each controlled by its own CSS vars */
+    --x1: 50%; --y1: 50%; --r1: 0px;
+    --x2: 50%; --y2: 50%; --r2: 0px;
+    --x3: 50%; --y3: 50%; --r3: 0px;
+    -webkit-mask-image:
+        radial-gradient(circle var(--r1) at var(--x1) var(--y1), rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.2) 50%, transparent 100%),
+        radial-gradient(circle var(--r2) at var(--x2) var(--y2), rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.2) 50%, transparent 100%),
+        radial-gradient(circle var(--r3) at var(--x3) var(--y3), rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.2) 50%, transparent 100%);
+    -webkit-mask-composite: source-over;
+    mask-image:
+        radial-gradient(circle var(--r1) at var(--x1) var(--y1), rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.2) 50%, transparent 100%),
+        radial-gradient(circle var(--r2) at var(--x2) var(--y2), rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.2) 50%, transparent 100%),
+        radial-gradient(circle var(--r3) at var(--x3) var(--y3), rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.2) 50%, transparent 100%);
+    mask-composite: add;
 }
 
 @media (max-width: 767px) {
@@ -1594,7 +1587,7 @@ button:focus {
 }
 
 .space-reveal {
-    will-change: left, top, opacity;
+    will-change: mask-image, -webkit-mask-image;
 }
 
 /* ========================================
