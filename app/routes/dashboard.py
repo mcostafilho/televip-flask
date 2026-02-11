@@ -7,6 +7,7 @@ from app.models import Group, Transaction, Subscription, Creator, PricingPlan
 from app.services.payment_service import PaymentService
 from app.utils.security import generate_reset_token
 from app.utils.email import send_password_reset_email
+from app.utils.admin_helpers import get_effective_creator, is_admin_viewing
 
 logger = logging.getLogger(__name__)
 from sqlalchemy import func, and_, desc
@@ -112,17 +113,19 @@ def calculate_balance(creator_id):
 @login_required
 def index():
     """Dashboard principal do criador"""
+    effective = get_effective_creator()
+
     # Calcular saldo com as taxas corretas
-    balance_info = calculate_balance(current_user.id)
-    
+    balance_info = calculate_balance(effective.id)
+
     # Buscar grupos do criador
-    groups = Group.query.filter_by(creator_id=current_user.id).all()
-    
+    groups = Group.query.filter_by(creator_id=effective.id).all()
+
     # Calcular estatísticas
     total_groups = len(groups)
     active_groups = 0
     total_subscribers = 0
-    
+
     for group in groups:
         # Receita do grupo (valor bruto)
         group_revenue = db.session.query(func.sum(Transaction.amount)).join(
@@ -131,43 +134,42 @@ def index():
             Subscription.group_id == group.id,
             Transaction.status == 'completed'
         ).scalar() or 0
-        
+
         group.total_revenue = float(group_revenue)
-        
+
         # Assinantes ativos
         active_subs = Subscription.query.filter_by(
             group_id=group.id,
             status='active'
         ).count()
-        
+
         group.total_subscribers = active_subs
         total_subscribers += active_subs
-        
+
         # Grupos ativos
         if group.is_active:
             active_groups += 1
-    
+
     # Transações recentes
     recent_transactions = Transaction.query.join(
         Subscription
     ).join(
         Group
     ).filter(
-        Group.creator_id == current_user.id,
+        Group.creator_id == effective.id,
         Transaction.status == 'completed'
     ).order_by(
         Transaction.created_at.desc()
     ).limit(10).all()
-    
-            # Dados para gráfico (últimos 7 dias) - CORREÇÃO DEFINITIVA
+
+    # Dados para gráfico (últimos 7 dias)
     end_date = datetime.utcnow()
     start_date = end_date - timedelta(days=6)
-    
-    # Query usando SQL direto para evitar problemas de timezone
+
     from sqlalchemy import text
-    
+
     daily_revenue_query = text("""
-        SELECT DATE(t.created_at) as date, 
+        SELECT DATE(t.created_at) as date,
                CAST(SUM(t.amount) AS FLOAT) as total
         FROM transactions t
         JOIN subscriptions s ON t.subscription_id = s.id
@@ -178,60 +180,50 @@ def index():
           AND DATE(t.created_at) <= :end_date
         GROUP BY DATE(t.created_at)
     """)
-    
+
     daily_revenue_result = db.session.execute(daily_revenue_query, {
-        'creator_id': current_user.id,
+        'creator_id': effective.id,
         'start_date': start_date.strftime('%Y-%m-%d'),
         'end_date': end_date.strftime('%Y-%m-%d')
     })
-    
+
     # Converter resultado para dicionário
     revenue_by_date = {}
     for row in daily_revenue_result:
-        # Garantir que a data seja string no formato correto
         date_str = row.date
         if hasattr(row.date, 'strftime'):
             date_str = row.date.strftime('%Y-%m-%d')
         revenue_by_date[date_str] = float(row.total)
-    
+
     # Preparar dados do gráfico
     chart_labels = []
     chart_data = []
-    
+
     current_date = start_date
     while current_date <= end_date:
-        # Label no formato dd/mm
         label = current_date.strftime('%d/%m')
         chart_labels.append(label)
-        
-        # Buscar valor usando string da data
+
         date_key = current_date.strftime('%Y-%m-%d')
         value = revenue_by_date.get(date_key, 0.0)
-        
-        # Garantir que é float
         chart_data.append(float(value))
 
         current_date += timedelta(days=1)
-    
+
     return render_template('dashboard/index.html',
-        # Saldo e taxas
         available_balance=balance_info['available_balance'],
         blocked_balance=balance_info['blocked_balance'],
         blocked_by_days=balance_info['blocked_by_days'],
         total_balance=balance_info['total_balance'],
-        balance=balance_info['available_balance'],  # Compatibilidade
+        balance=balance_info['available_balance'],
         total_fees=balance_info['total_fees'],
         transaction_count=balance_info['transaction_count'],
-        
-        # Estatísticas gerais
         total_groups=total_groups,
         active_groups=active_groups,
-        total_revenue=balance_info['total_received'],  # Receita bruta
+        total_revenue=balance_info['total_received'],
         total_subscribers=total_subscribers,
         groups=groups,
         recent_transactions=recent_transactions,
-        
-        # Dados do gráfico
         chart_labels=chart_labels,
         chart_data=chart_data
     )
@@ -240,36 +232,37 @@ def index():
 @login_required
 def transactions():
     """Listar todas as transações"""
+    effective = get_effective_creator()
     page = request.args.get('page', 1, type=int)
     per_page = 20
-    
+
     # Query base
     query = Transaction.query.join(
         Subscription
     ).join(
         Group
     ).filter(
-        Group.creator_id == current_user.id
+        Group.creator_id == effective.id
     )
-    
+
     # Filtros
     status = request.args.get('status')
     if status:
         query = query.filter(Transaction.status == status)
-    
+
     group_id = request.args.get('group_id', type=int)
     if group_id:
         query = query.filter(Subscription.group_id == group_id)
-    
+
     # Ordenar por data
     query = query.order_by(Transaction.created_at.desc())
-    
+
     # Paginar
     transactions = query.paginate(page=page, per_page=per_page, error_out=False)
-    
+
     # Buscar grupos para filtro
-    groups = Group.query.filter_by(creator_id=current_user.id).all()
-    
+    groups = Group.query.filter_by(creator_id=effective.id).all()
+
     return render_template('dashboard/transactions.html',
         transactions=transactions,
         groups=groups
@@ -287,6 +280,10 @@ def withdrawals():
 @limiter.limit("5 per hour")
 def withdraw():
     """Solicitar saque com validação de saldo"""
+    if is_admin_viewing():
+        flash('Acao nao permitida no modo admin.', 'warning')
+        return redirect(url_for('dashboard.index'))
+
     from app.models import Withdrawal
 
     amount = request.form.get('amount', type=float)
@@ -346,47 +343,49 @@ def withdraw():
 @login_required
 def profile():
     """Perfil do criador"""
+    effective = get_effective_creator()
+
     # Calcular estatísticas do usuário
     total_earned = db.session.query(func.sum(Transaction.amount)).join(
         Subscription
     ).join(
         Group
     ).filter(
-        Group.creator_id == current_user.id,
+        Group.creator_id == effective.id,
         Transaction.status == 'completed'
     ).scalar() or 0
-    
+
     # Total de assinantes ativos
     total_subscribers = db.session.query(func.count(Subscription.id)).join(
         Group
     ).filter(
-        Group.creator_id == current_user.id,
+        Group.creator_id == effective.id,
         Subscription.status == 'active'
     ).scalar() or 0
-    
+
     # Total de grupos
-    total_groups = Group.query.filter_by(creator_id=current_user.id).count()
-    
-    # Total sacado (assumindo que não há modelo Withdrawal ainda)
+    total_groups = Group.query.filter_by(creator_id=effective.id).count()
+
+    # Total sacado
     total_withdrawn = 0
-    
+
     # Calcular saldo disponível
     balance = total_earned - total_withdrawn
-    
+
     # Data de cadastro formatada
-    member_since = current_user.created_at.strftime('%d/%m/%Y') if current_user.created_at else 'N/A'
-    
+    member_since = effective.created_at.strftime('%d/%m/%Y') if effective.created_at else 'N/A'
+
     # Buscar transações recentes
     recent_transactions = Transaction.query.join(
         Subscription
     ).join(
         Group
     ).filter(
-        Group.creator_id == current_user.id
+        Group.creator_id == effective.id
     ).order_by(
         Transaction.created_at.desc()
     ).limit(10).all()
-    
+
     # Preparar dados das estatísticas
     stats = {
         'total_earned': total_earned,
@@ -396,12 +395,12 @@ def profile():
         'total_subscribers': total_subscribers,
         'member_since': member_since
     }
-    
+
     return render_template('dashboard/profile.html',
-        user=current_user,
+        user=effective,
         stats=stats,
         recent_transactions=recent_transactions,
-        has_password=bool(current_user.password_hash)
+        has_password=bool(effective.password_hash)
     )
 
 
@@ -410,6 +409,10 @@ def profile():
 @limiter.limit("3 per hour")
 def profile_reset_password():
     """Enviar email de redefinição de senha para o usuário logado"""
+    if is_admin_viewing():
+        flash('Acao nao permitida no modo admin.', 'warning')
+        return redirect(url_for('dashboard.profile'))
+
     if not current_user.password_hash:
         flash('Sua conta não possui senha. Use o formulário acima para definir uma.', 'info')
         return redirect(url_for('dashboard.profile'))
@@ -429,6 +432,10 @@ def profile_reset_password():
 @login_required
 def update_profile():
     """Atualizar perfil"""
+    if is_admin_viewing():
+        flash('Acao nao permitida no modo admin.', 'warning')
+        return redirect(url_for('dashboard.profile'))
+
     name = request.form.get('name')
     email = request.form.get('email')
     phone = request.form.get('phone', '').strip()
@@ -514,6 +521,10 @@ def update_profile():
 @limiter.limit("3 per hour")
 def delete_account():
     """Excluir conta (LGPD) - soft delete com anonimização"""
+    if is_admin_viewing():
+        flash('Acao nao permitida no modo admin.', 'warning')
+        return redirect(url_for('dashboard.profile'))
+
     from flask_login import logout_user
 
     password = request.form.get('password')
@@ -548,56 +559,57 @@ def delete_account():
 @login_required
 def analytics():
     """Analytics avançado - versão corrigida"""
+    effective = get_effective_creator()
     from datetime import datetime, timedelta, date
     from sqlalchemy import func, desc
-    
+
     # Período selecionado
     period = request.args.get('period', '30')
     days = int(period) if period in ['7', '30', '90'] else 30
-    
+
     # Usar utcnow() pois created_at no banco usa UTC
     end_date = datetime.utcnow()
     start_date = end_date - timedelta(days=days)
-    
+
     # Buscar grupos
-    groups = Group.query.filter_by(creator_id=current_user.id).all()
-    
+    groups = Group.query.filter_by(creator_id=effective.id).all()
+
     # Estatísticas gerais
     total_revenue = db.session.query(func.sum(Transaction.amount)).join(
         Subscription
     ).join(
         Group
     ).filter(
-        Group.creator_id == current_user.id,
+        Group.creator_id == effective.id,
         Transaction.status == 'completed',
         Transaction.created_at >= start_date,
         Transaction.created_at <= end_date
     ).scalar() or 0
-    
+
     total_transactions = Transaction.query.join(
         Subscription
     ).join(
         Group
     ).filter(
-        Group.creator_id == current_user.id,
+        Group.creator_id == effective.id,
         Transaction.status == 'completed',
         Transaction.created_at >= start_date,
         Transaction.created_at <= end_date
     ).count()
-    
+
     average_ticket = float(total_revenue) / total_transactions if total_transactions > 0 else 0
-    
+
     total_subscribers = Subscription.query.join(
         Group
     ).filter(
-        Group.creator_id == current_user.id,
+        Group.creator_id == effective.id,
         Subscription.status == 'active'
     ).count()
-    
+
     new_subscribers = Subscription.query.join(
         Group
     ).filter(
-        Group.creator_id == current_user.id,
+        Group.creator_id == effective.id,
         Subscription.created_at >= start_date,
         Subscription.created_at <= end_date
     ).count()
@@ -618,7 +630,7 @@ def analytics():
     
     subscribers_labels = revenue_labels.copy()
     
-    # 1. Buscar receita por dia - CORREÇÃO AQUI
+    # 1. Buscar receita por dia
     daily_revenue = db.session.query(
         func.date(Transaction.created_at).label('date'),
         func.sum(Transaction.amount).label('total')
@@ -627,10 +639,10 @@ def analytics():
     ).join(
         Group
     ).filter(
-        Group.creator_id == current_user.id,
+        Group.creator_id == effective.id,
         Transaction.status == 'completed',
-        func.date(Transaction.created_at) >= start_date.date(),  # Comparar apenas datas
-        func.date(Transaction.created_at) <= end_date.date()     # Comparar apenas datas
+        func.date(Transaction.created_at) >= start_date.date(),
+        func.date(Transaction.created_at) <= end_date.date()
     ).group_by(
         func.date(Transaction.created_at)
     ).all()
@@ -658,7 +670,7 @@ def analytics():
     ).join(
         Group
     ).filter(
-        Group.creator_id == current_user.id,
+        Group.creator_id == effective.id,
         func.date(Subscription.created_at) >= start_date.date(),
         func.date(Subscription.created_at) <= end_date.date()
     ).group_by(
@@ -689,7 +701,7 @@ def analytics():
     ).join(
         Transaction, Transaction.subscription_id == Subscription.id
     ).filter(
-        Group.creator_id == current_user.id,
+        Group.creator_id == effective.id,
         Transaction.status == 'completed',
         Transaction.created_at >= start_date,
         Transaction.created_at <= end_date
@@ -718,7 +730,7 @@ def analytics():
     ).join(
         Group, Group.id == Subscription.group_id
     ).filter(
-        Group.creator_id == current_user.id,
+        Group.creator_id == effective.id,
         Transaction.status == 'completed',
         Transaction.created_at >= start_date,
         Transaction.created_at <= end_date

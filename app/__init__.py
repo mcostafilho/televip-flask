@@ -68,6 +68,15 @@ def create_app():
     # Exempt webhooks from CSRF (uses Stripe signature verification)
     csrf.exempt(webhooks.bp)
 
+    # Context processor: inject admin_viewing into all templates
+    @app.context_processor
+    def inject_admin_viewing():
+        if current_user.is_authenticated and current_user.is_admin and session.get('admin_viewing_id'):
+            from app.models.user import Creator as _Creator
+            creator = _Creator.query.get(session['admin_viewing_id'])
+            return {'admin_viewing': creator, 'is_admin_viewing': True}
+        return {'admin_viewing': None, 'is_admin_viewing': False}
+
     # Custom error pages
     @app.errorhandler(404)
     def page_not_found(e):

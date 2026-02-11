@@ -7,17 +7,6 @@
 {% endblock %}
 
 {% block content %}
-{% if admin_viewing %}
-<div class="alert alert-danger d-flex align-items-center justify-content-between m-3" role="alert" style="position: sticky; top: 0; z-index: 1050;">
-    <div>
-        <i class="bi bi-shield-lock-fill me-2"></i>
-        <strong>Modo Admin:</strong> Visualizando dashboard de <strong>{{ admin_viewing.name }}</strong> ({{ admin_viewing.email }})
-    </div>
-    <a href="{{ url_for('admin.creator_details', creator_id=admin_viewing.id) }}" class="btn btn-outline-danger btn-sm">
-        <i class="bi bi-arrow-left"></i> Voltar para Detalhes
-    </a>
-</div>
-{% endif %}
 <div class="dashboard-wrapper">
     <div class="dashboard-container">
         <!-- Welcome Header -->

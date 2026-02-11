@@ -95,6 +95,38 @@
                             <i class="bi bi-gear"></i> Informações Pessoais
                         </h5>
 
+                        {% if is_admin_viewing %}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nome Completo</label>
+                                <input type="text" class="form-control" value="{{ user.name }}" disabled>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" value="{{ user.email }}" disabled>
+                            </div>
+                            <div class="col-12">
+                                <hr class="my-3">
+                                <h6 class="text-muted mb-3">
+                                    <i class="bi bi-bank"></i> Dados para Saque
+                                </h6>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Tipo de Chave PIX</label>
+                                <input type="text" class="form-control"
+                                       value="{{ user.pix_key.split(':', 1)[0] if user.pix_key and ':' in user.pix_key else '' }}" disabled>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Chave PIX</label>
+                                <input type="text" class="form-control"
+                                       value="{{ user.pix_key.split(':', 1)[1] if user.pix_key and ':' in user.pix_key else (user.pix_key or 'Nao cadastrada') }}" disabled>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Telefone / WhatsApp</label>
+                                <input type="text" class="form-control" value="{{ user.phone or 'Nao informado' }}" disabled>
+                            </div>
+                        </div>
+                        {% else %}
                         <form method="POST" action="{{ url_for('dashboard.update_profile') }}" class="profile-form">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                             <div class="row g-3">
@@ -209,6 +241,7 @@
                                 </div>
                             </div>
                         </form>
+                        {% endif %}
                     </div>
 
                     <!-- Transações Recentes -->
@@ -299,6 +332,7 @@
                     </div>
                     {% endif %}
 
+                    {% if not is_admin_viewing %}
                     <!-- Excluir Conta (LGPD) -->
                     <div class="profile-card" style="border-color: rgba(248, 113, 113, 0.2);">
                         <h5 class="mb-3" style="color: var(--galactic-danger);">
@@ -312,12 +346,14 @@
                             <i class="bi bi-trash"></i> Excluir Minha Conta
                         </button>
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+{% if not is_admin_viewing %}
 <!-- Form oculto para reset de senha (fora do form principal) -->
 <form method="POST" action="{{ url_for('dashboard.profile_reset_password') }}" id="forgotPasswordForm" class="d-none">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -367,9 +403,11 @@
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
+{% if not is_admin_viewing %}
 <script>
 // Forgot password - submit hidden form outside main form
 var forgotLink = document.getElementById('forgotPasswordLink');
@@ -411,4 +449,5 @@ phoneInput.addEventListener('input', function() {
     }
 });
 </script>
+{% endif %}
 {% endblock %}

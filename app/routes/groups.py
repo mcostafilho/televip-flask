@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from app import db, limiter
 from app.models import Group, PricingPlan, Subscription, Transaction
+from app.utils.admin_helpers import get_effective_creator, is_admin_viewing
 from datetime import datetime, timedelta
 from sqlalchemy import func
 import requests
@@ -58,7 +59,8 @@ def _escape_ilike(search_term):
 @login_required
 def list():
     """Lista todos os grupos do criador"""
-    groups = current_user.groups.all()
+    effective = get_effective_creator()
+    groups = Group.query.filter_by(creator_id=effective.id).all()
     
     # Atualizar contador de assinantes para cada grupo
     for group in groups:
@@ -82,6 +84,10 @@ def list():
 @limiter.limit("20 per hour", methods=["POST"])
 def create():
     """Criar novo grupo"""
+    if is_admin_viewing():
+        flash('Acao nao permitida no modo admin.', 'warning')
+        return redirect(url_for('groups.list'))
+
     if request.method == 'POST':
         # Dados básicos do grupo
         name = request.form.get('name', '').strip()
@@ -272,9 +278,13 @@ def clear_success_modal():
 @login_required
 def edit(id):
     """Editar grupo existente"""
-    group = Group.query.filter_by(id=id, creator_id=current_user.id).first_or_404()
-    
+    effective = get_effective_creator()
+    group = Group.query.filter_by(id=id, creator_id=effective.id).first_or_404()
+
     if request.method == 'POST':
+        if is_admin_viewing():
+            flash('Acao nao permitida no modo admin.', 'warning')
+            return redirect(url_for('groups.list'))
         # Atualizar dados básicos
         group.name = request.form.get('name')
         group.description = request.form.get('description')
@@ -332,7 +342,12 @@ def edit(id):
 @login_required
 def delete(id):
     """Deletar grupo"""
-    group = Group.query.filter_by(id=id, creator_id=current_user.id).first_or_404()
+    if is_admin_viewing():
+        flash('Acao nao permitida no modo admin.', 'warning')
+        return redirect(url_for('groups.list'))
+
+    effective = get_effective_creator()
+    group = Group.query.filter_by(id=id, creator_id=effective.id).first_or_404()
     
     # Verificar se há assinaturas ativas
     active_subs = Subscription.query.filter_by(
@@ -360,6 +375,10 @@ def delete(id):
 @login_required
 def toggle(id):
     """Ativar/Desativar grupo"""
+    if is_admin_viewing():
+        flash('Acao nao permitida no modo admin.', 'warning')
+        return redirect(url_for('groups.list'))
+
     group = Group.query.filter_by(id=id, creator_id=current_user.id).first_or_404()
     
     group.is_active = not group.is_active
@@ -377,6 +396,10 @@ def toggle(id):
 @limiter.limit("10 per hour")
 def broadcast(group_id):
     """Enviar mensagem para todos os assinantes do grupo"""
+    if is_admin_viewing():
+        flash('Acao nao permitida no modo admin.', 'warning')
+        return redirect(url_for('groups.list'))
+
     group = Group.query.filter_by(id=group_id, creator_id=current_user.id).first_or_404()
 
     if request.method == 'POST':
@@ -456,7 +479,8 @@ def broadcast(group_id):
 @login_required
 def subscribers(id):
     """Listar assinantes do grupo"""
-    group = Group.query.filter_by(id=id, creator_id=current_user.id).first_or_404()
+    effective = get_effective_creator()
+    group = Group.query.filter_by(id=id, creator_id=effective.id).first_or_404()
 
     now = datetime.utcnow()
 
@@ -524,7 +548,8 @@ def subscribers(id):
 @login_required
 def subscriber_details(id, sub_id):
     """Retornar HTML parcial com detalhes de um assinante (para modal AJAX)"""
-    group = Group.query.filter_by(id=id, creator_id=current_user.id).first_or_404()
+    effective = get_effective_creator()
+    group = Group.query.filter_by(id=id, creator_id=effective.id).first_or_404()
     sub = Subscription.query.filter_by(id=sub_id, group_id=group.id).first_or_404()
 
     now = datetime.utcnow()
@@ -583,7 +608,8 @@ def subscriber_details(id, sub_id):
 @limiter.limit("30 per hour")
 def export_subscribers(id):
     """Exportar lista de assinantes em CSV"""
-    group = Group.query.filter_by(id=id, creator_id=current_user.id).first_or_404()
+    effective = get_effective_creator()
+    group = Group.query.filter_by(id=id, creator_id=effective.id).first_or_404()
 
     # Buscar todos os assinantes
     subscribers = Subscription.query.filter_by(group_id=id).all()
@@ -638,7 +664,8 @@ def export_subscribers(id):
 @login_required
 def stats(id):
     """Estatísticas detalhadas do grupo"""
-    group = Group.query.filter_by(id=id, creator_id=current_user.id).first_or_404()
+    effective = get_effective_creator()
+    group = Group.query.filter_by(id=id, creator_id=effective.id).first_or_404()
     
     # Estatísticas gerais
     stats = {
@@ -732,7 +759,8 @@ def stats(id):
 @login_required
 def get_link(id):
     """Obter link do bot para o grupo"""
-    group = Group.query.filter_by(id=id, creator_id=current_user.id).first_or_404()
+    effective = get_effective_creator()
+    group = Group.query.filter_by(id=id, creator_id=effective.id).first_or_404()
     
     # CORREÇÃO: Usar group.id ao invés de telegram_id
     bot_username = os.getenv('TELEGRAM_BOT_USERNAME') or os.getenv('BOT_USERNAME', 'televipbra_bot')

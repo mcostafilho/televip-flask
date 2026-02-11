@@ -18,12 +18,12 @@
 </head>
 <body{% if not current_user.is_authenticated %} style="padding-top: 80px;"{% endif %}>
     <!-- Admin Viewing Banner -->
-    {% if session.get('admin_mode') %}
-    <div class="bg-warning text-dark py-2 text-center">
+    {% if admin_viewing %}
+    <div class="bg-warning text-dark py-2 text-center" style="position: sticky; top: 0; z-index: 1050;">
         <div class="container">
             <strong>
-                <i class="bi bi-eye"></i> 
-                Modo Admin: Visualizando como {{ current_user.name }}
+                <i class="bi bi-eye"></i>
+                Modo Admin: Visualizando como {{ admin_viewing.name }}
             </strong>
             <a href="{{ url_for('admin.exit_creator_view') }}" class="btn btn-sm btn-dark ms-3">
                 <i class="bi bi-arrow-left"></i> Voltar ao Admin
@@ -70,7 +70,7 @@
                             <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
                                 <span class="nav-avatar">{{ current_user.name[0]|upper }}</span>
                                 {{ current_user.name }}
-                                {% if session.get('admin_mode') %}
+                                {% if admin_viewing %}
                                     <span class="badge bg-warning text-dark">Admin</span>
                                 {% endif %}
                             </a>
@@ -82,7 +82,7 @@
                                     <i class="bi bi-receipt"></i> Transações
                                 </a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                {% if current_user.is_admin and not session.get('admin_mode') %}
+                                {% if current_user.is_admin and not admin_viewing %}
                                 <li><a class="dropdown-item text-danger" href="{{ url_for('admin.index') }}">
                                     <i class="bi bi-shield-lock"></i> Admin
                                 </a></li>
