@@ -640,8 +640,8 @@
     starfield.appendChild(frag);
   }
 
-  // ── 13. MOUSE REVEAL — Crescente Portal (desktop only) ──
-  // Full-screen overlay; CSS-var-driven radial mask grows on first move.
+  // ── 13. MOUSE REVEAL — Cosmic Halo (desktop only) ──
+  // Full-screen overlay; ring-shaped mask (transparent center) grows on first move.
   function initMouseReveal() {
     if (isMobile) return;
 
@@ -662,9 +662,9 @@
       if (!active) {
         active = true;
         reveal.style.opacity = '1';
-        // Grow from 0 → 320px with elastic ease
+        // Grow from 0 → 450px — larger because center is empty (ring shape)
         gsap.to(size, {
-          r: 320, duration: 1.4, ease: 'power3.out'
+          r: 450, duration: 1.6, ease: 'power3.out'
         });
       }
     });
