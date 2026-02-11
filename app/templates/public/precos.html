@@ -38,7 +38,7 @@
         /* Precos Page Specific Styles - Galactic Dark */
         .precos-hero {
             padding: 140px 0 80px;
-            background: linear-gradient(135deg, #0b0e1a 0%, #1a1040 50%, #0d1b2a 100%);
+            background: rgba(11, 14, 26, 0.6);
             text-align: center;
             position: relative;
         }
@@ -140,7 +140,7 @@
         /* Fee Calculator - Dark Glass */
         .calculator-section {
             padding: 80px 0;
-            background: rgba(11, 14, 26, 0.95);
+            background: rgba(11, 14, 26, 0.75);
         }
         .calculator-card {
             background: rgba(255, 255, 255, 0.05);
@@ -232,7 +232,7 @@
         /* Comparison Table - Dark */
         .comparison-section {
             padding: 80px 0;
-            background: linear-gradient(135deg, #0b0e1a 0%, #1a1040 50%, #0d1b2a 100%);
+            background: rgba(26, 16, 64, 0.6);
         }
         .comparison-table {
             background: rgba(255, 255, 255, 0.05);
@@ -291,7 +291,7 @@
         /* What's Included - Dark */
         .included-section {
             padding: 80px 0;
-            background: rgba(11, 14, 26, 0.95);
+            background: rgba(11, 14, 26, 0.75);
         }
         .included-grid {
             display: grid;
@@ -331,7 +331,7 @@
         /* Pricing FAQ - Dark */
         .pricing-faq {
             padding: 80px 0;
-            background: linear-gradient(135deg, #0b0e1a 0%, #1a1040 50%, #0d1b2a 100%);
+            background: rgba(26, 16, 64, 0.5);
         }
         .pricing-faq .accordion-item {
             border: none;
@@ -367,13 +367,25 @@
             padding: 0 24px 20px;
         }
 
-        /* Section backgrounds for non-classed sections */
+        /* Section backgrounds - semi-transparent to show starfield */
         section[style*="background: white"] {
-            background: linear-gradient(135deg, #0b0e1a 0%, #1a1040 50%, #0d1b2a 100%) !important;
+            background: rgba(11, 14, 26, 0.7) !important;
         }
     </style>
 </head>
 <body>
+    <!-- Animated Starfield Background -->
+    <div class="starfield" id="starfield">
+        <div class="shooting-star"></div>
+        <div class="shooting-star"></div>
+        <div class="shooting-star"></div>
+    </div>
+
+    <!-- Nebula Glow Overlays -->
+    <div class="nebula-glow purple"></div>
+    <div class="nebula-glow cyan"></div>
+    <div class="nebula-glow pink"></div>
+
     <!-- Cursor Animation (Desktop Only) -->
     <div class="cursor"></div>
     <div class="cursor2"></div>

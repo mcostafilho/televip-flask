@@ -38,7 +38,7 @@
         /* Recursos Page Specific Styles - Galactic Dark */
         .recursos-hero {
             padding: 140px 0 80px;
-            background: linear-gradient(135deg, #0b0e1a 0%, #1a1040 50%, #0d1b2a 100%);
+            background: rgba(11, 14, 26, 0.6);
             text-align: center;
             position: relative;
         }
@@ -225,7 +225,7 @@
         /* FAQ - Dark */
         .faq-section {
             padding: 80px 0;
-            background: rgba(11, 14, 26, 0.95);
+            background: rgba(11, 14, 26, 0.75);
         }
         .faq-section .accordion-item {
             border: 1px solid rgba(124, 92, 252, 0.1);
@@ -260,14 +260,26 @@
             padding: 0 24px 20px;
         }
 
-        /* Override inline white/light backgrounds */
+        /* Override inline white/light backgrounds - semi-transparent to show starfield */
         section[style*="background: white"],
         section[style*="background: #f8f9fa"] {
-            background: linear-gradient(135deg, #0b0e1a 0%, #1a1040 50%, #0d1b2a 100%) !important;
+            background: rgba(11, 14, 26, 0.7) !important;
         }
     </style>
 </head>
 <body>
+    <!-- Animated Starfield Background -->
+    <div class="starfield" id="starfield">
+        <div class="shooting-star"></div>
+        <div class="shooting-star"></div>
+        <div class="shooting-star"></div>
+    </div>
+
+    <!-- Nebula Glow Overlays -->
+    <div class="nebula-glow purple"></div>
+    <div class="nebula-glow cyan"></div>
+    <div class="nebula-glow pink"></div>
+
     <!-- Cursor Animation (Desktop Only) -->
     <div class="cursor"></div>
     <div class="cursor2"></div>

@@ -57,7 +57,7 @@
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
     // Particles
-    var count = 2000;
+    var count = 3000;
     var positions = new Float32Array(count * 3);
     var colors = new Float32Array(count * 3);
     var sizes = new Float32Array(count);
@@ -67,9 +67,9 @@
     var colorCyan = new THREE.Color(0x38bdf8);
 
     for (var i = 0; i < count; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 20;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 20;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 15;
+      positions[i * 3] = (Math.random() - 0.5) * 30;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 30;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 20;
       sizes[i] = Math.random() * 3 + 1;
 
       var r = Math.random();
@@ -85,10 +85,10 @@
     geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
 
     var material = new THREE.PointsMaterial({
-      size: 0.04,
+      size: 0.15,
       vertexColors: true,
       transparent: true,
-      opacity: 0.8,
+      opacity: 0.9,
       sizeAttenuation: true,
       blending: THREE.AdditiveBlending,
       depthWrite: false
@@ -121,12 +121,12 @@
       requestAnimationFrame(animate);
       if (!heroVisible) return;
 
-      points.rotation.y += 0.0003;
-      points.rotation.x += 0.0001;
+      points.rotation.y += 0.0005;
+      points.rotation.x += 0.0002;
 
-      // Smooth camera follow
-      camera.position.x += (mouseX * 0.5 - camera.position.x) * 0.02;
-      camera.position.y += (-mouseY * 0.3 - camera.position.y) * 0.02;
+      // Smooth camera follow — dramatic parallax
+      camera.position.x += (mouseX * 1.5 - camera.position.x) * 0.03;
+      camera.position.y += (-mouseY * 1.0 - camera.position.y) * 0.03;
       camera.lookAt(scene.position);
 
       renderer.render(scene, camera);
@@ -573,17 +573,26 @@
   function initStarfield() {
     var starfield = document.getElementById('starfield');
     if (!starfield) return;
-    var count = 80;
+    var count = 200;
     for (var i = 0; i < count; i++) {
       var star = document.createElement('div');
       star.classList.add('star');
       star.style.left = Math.random() * 100 + '%';
       star.style.top = Math.random() * 100 + '%';
-      star.style.setProperty('--duration', (2 + Math.random() * 4) + 's');
-      star.style.setProperty('--max-opacity', (0.3 + Math.random() * 0.7).toFixed(2));
+      star.style.setProperty('--duration', (1.5 + Math.random() * 4) + 's');
+      star.style.setProperty('--max-opacity', (0.5 + Math.random() * 0.5).toFixed(2));
       star.style.animationDelay = (Math.random() * 5) + 's';
-      star.style.width = (1 + Math.random() * 2) + 'px';
-      star.style.height = star.style.width;
+      var size = (1 + Math.random() * 3) + 'px';
+      star.style.width = size;
+      star.style.height = size;
+      // Add colored stars (20%)
+      if (Math.random() < 0.1) {
+        star.style.background = '#7c5cfc';
+        star.style.boxShadow = '0 0 6px rgba(124, 92, 252, 0.8)';
+      } else if (Math.random() < 0.15) {
+        star.style.background = '#38bdf8';
+        star.style.boxShadow = '0 0 6px rgba(56, 189, 248, 0.8)';
+      }
       starfield.appendChild(star);
     }
   }

@@ -73,9 +73,9 @@ body {
 /* Shooting stars */
 .shooting-star {
     position: absolute;
-    width: 100px;
-    height: 1px;
-    background: linear-gradient(90deg, rgba(124, 92, 252, 0.8), transparent);
+    width: 150px;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(124, 92, 252, 1), rgba(56, 189, 248, 0.6), transparent);
     animation: shoot 3s linear infinite;
     opacity: 0;
 }
@@ -117,34 +117,34 @@ body {
 .nebula-glow {
     position: fixed;
     border-radius: 50%;
-    filter: blur(120px);
+    filter: blur(100px);
     pointer-events: none;
     z-index: 0;
-    opacity: 0.4;
+    opacity: 0.6;
 }
 
 .nebula-glow.purple {
-    width: 500px;
-    height: 500px;
-    background: radial-gradient(circle, rgba(124, 92, 252, 0.3), transparent 70%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(124, 92, 252, 0.45), transparent 70%);
     top: -10%;
     left: -5%;
     animation: nebulaDrift 20s ease-in-out infinite alternate;
 }
 
 .nebula-glow.cyan {
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(56, 189, 248, 0.2), transparent 70%);
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.3), transparent 70%);
     bottom: -10%;
     right: -5%;
     animation: nebulaDrift 25s ease-in-out infinite alternate-reverse;
 }
 
 .nebula-glow.pink {
-    width: 300px;
-    height: 300px;
-    background: radial-gradient(circle, rgba(240, 147, 251, 0.15), transparent 70%);
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(240, 147, 251, 0.25), transparent 70%);
     top: 40%;
     right: 20%;
     animation: nebulaDrift 18s ease-in-out infinite alternate;
@@ -293,7 +293,9 @@ body {
     box-shadow: 0 0 20px rgba(124, 92, 252, 0.5);
 }
 
-/* Ensure sections stay below fixed navbar (GSAP transforms create stacking contexts) */
+/* Ensure ALL sections stay below fixed navbar (GSAP transforms create stacking contexts) */
+section,
+footer,
 .hero,
 .features,
 .pricing,
@@ -433,7 +435,7 @@ body {
     display: flex;
     align-items: center;
     padding: 80px 0 40px;
-    background: var(--galactic-bg);
+    background: rgba(11, 14, 26, 0.5);
     position: relative;
     overflow: hidden;
 }
@@ -589,7 +591,7 @@ body {
    ======================================== */
 .features {
     padding: 60px 0;
-    background: rgba(11, 14, 26, 0.95);
+    background: rgba(11, 14, 26, 0.8);
     position: relative;
 }
 
@@ -708,7 +710,7 @@ body {
    ======================================== */
 .pricing {
     padding: 60px 0;
-    background: var(--galactic-bg);
+    background: rgba(26, 16, 64, 0.5);
 }
 
 .pricing-card {
@@ -838,7 +840,7 @@ body {
    ======================================== */
 .testimonials {
     padding: 60px 0;
-    background: rgba(11, 14, 26, 0.95);
+    background: rgba(11, 14, 26, 0.8);
 }
 
 .testimonial-card {
@@ -999,7 +1001,7 @@ body {
    Mobile First Footer - Dark Galactic
    ======================================== */
 .footer {
-    background: #0b0e1a;
+    background: rgba(11, 14, 26, 0.9);
     border-top: 1px solid var(--galactic-card-border);
     color: var(--galactic-text-primary);
     padding: 40px 0 20px;
