@@ -18,7 +18,7 @@
     --galactic-card-border: rgba(124, 92, 252, 0.15);
     --galactic-card-hover: rgba(255, 255, 255, 0.08);
     --galactic-text-primary: #e2e8f0;
-    --galactic-text-secondary: #8b8fad;
+    --galactic-text-secondary: #b0b4cc;
     --galactic-glass-blur: blur(20px);
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
@@ -37,6 +37,13 @@ body {
     font-family: 'Poppins', sans-serif;
     overflow-x: hidden;
     background: var(--dark);
+    background-image:
+        radial-gradient(ellipse at 15% 10%, rgba(124, 92, 252, 0.18) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 30%, rgba(56, 189, 248, 0.12) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 70%, rgba(240, 147, 251, 0.10) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 90%, rgba(124, 92, 252, 0.08) 0%, transparent 40%),
+        linear-gradient(180deg, #0b0e1a 0%, #12082e 25%, #1a1040 50%, #0d1b2a 75%, #0b0e1a 100%);
+    background-attachment: fixed;
     color: var(--galactic-text-primary);
     line-height: 1.6;
 }
@@ -61,6 +68,7 @@ body {
     height: 2px;
     background: white;
     border-radius: 50%;
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
     animation: twinkle var(--duration, 3s) ease-in-out infinite;
     opacity: 0;
 }
@@ -318,16 +326,16 @@ footer,
    Mobile First Navbar - Dark Glass
    ======================================== */
 .navbar-custom {
-    background: rgba(11, 14, 26, 0.9);
+    background: rgba(11, 14, 26, 0.95);
     backdrop-filter: var(--galactic-glass-blur);
     -webkit-backdrop-filter: var(--galactic-glass-blur);
-    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
     border-bottom: 1px solid var(--galactic-card-border);
     padding: 12px 0;
     position: fixed;
     width: 100%;
     top: 0;
-    z-index: 1000;
+    z-index: 9990;
     transition: all 0.3s ease;
 }
 
@@ -379,6 +387,8 @@ footer,
         border-radius: 12px;
         border: 1px solid var(--galactic-card-border);
         box-shadow: var(--shadow-lg);
+        position: relative;
+        z-index: 9991;
     }
 }
 
