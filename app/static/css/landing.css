@@ -38,12 +38,12 @@ body {
     overflow-x: hidden;
     background: var(--dark);
     background-image:
-        radial-gradient(ellipse at 15% 10%, rgba(124, 92, 252, 0.18) 0%, transparent 50%),
-        radial-gradient(ellipse at 85% 30%, rgba(56, 189, 248, 0.12) 0%, transparent 45%),
-        radial-gradient(ellipse at 50% 70%, rgba(240, 147, 251, 0.10) 0%, transparent 50%),
-        radial-gradient(ellipse at 70% 90%, rgba(124, 92, 252, 0.08) 0%, transparent 40%),
-        linear-gradient(180deg, #0b0e1a 0%, #12082e 25%, #1a1040 50%, #0d1b2a 75%, #0b0e1a 100%);
-    background-attachment: fixed;
+        linear-gradient(180deg, rgba(11, 14, 26, 0.55) 0%, rgba(11, 14, 26, 0.45) 40%, rgba(11, 14, 26, 0.60) 100%),
+        url('https://assets.science.nasa.gov/dynamicimage/assets/science/missions/webb/science/2022/07/STScI-01GA6KKWG229B16K4Q38CH3BXS.png?w=1920');
+    background-size: cover, cover;
+    background-position: center, center;
+    background-attachment: fixed, fixed;
+    background-repeat: no-repeat, no-repeat;
     color: var(--galactic-text-primary);
     line-height: 1.6;
 }
@@ -326,10 +326,8 @@ footer,
    Mobile First Navbar - Dark Glass
    ======================================== */
 .navbar-custom {
-    background: rgba(11, 14, 26, 0.95);
-    backdrop-filter: var(--galactic-glass-blur);
-    -webkit-backdrop-filter: var(--galactic-glass-blur);
-    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+    background: #0b0e1a;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.6), 0 0 40px rgba(124, 92, 252, 0.08);
     border-bottom: 1px solid var(--galactic-card-border);
     padding: 12px 0;
     position: fixed;
@@ -341,7 +339,8 @@ footer,
 
 .navbar-custom.scrolled {
     padding: 8px 0;
-    background: rgba(11, 14, 26, 0.98);
+    background: #080b16;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.8);
 }
 
 .navbar-custom .container {
@@ -379,47 +378,50 @@ footer,
 /* Mobile Menu */
 @media (max-width: 991px) {
     .navbar-collapse {
-        background: rgba(15, 18, 32, 0.98);
-        backdrop-filter: var(--galactic-glass-blur);
-        -webkit-backdrop-filter: var(--galactic-glass-blur);
+        background: #0f1220;
         margin-top: 12px;
         padding: 20px;
         border-radius: 12px;
-        border: 1px solid var(--galactic-card-border);
-        box-shadow: var(--shadow-lg);
-        position: relative;
-        z-index: 9991;
+        border: 1px solid rgba(124, 92, 252, 0.25);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
     }
 }
 
 .nav-link {
-    color: var(--galactic-text-secondary);
+    color: #c8cce0;
     font-weight: 500;
     padding: 10px 16px;
     transition: all 0.3s ease;
 }
 
-.nav-link:hover,
+.nav-link:hover {
+    color: #ffffff;
+}
+
 .nav-link.active {
-    color: var(--primary);
+    color: #a78bfa;
+    text-shadow: 0 0 12px rgba(124, 92, 252, 0.5);
 }
 
 .btn-nav-cta {
     background: var(--gradient-primary);
-    color: white;
+    color: #ffffff;
     border: none;
     padding: 10px 24px;
     border-radius: 25px;
-    font-weight: 600;
+    font-weight: 700;
     transition: all 0.3s ease;
     text-decoration: none;
     display: inline-block;
     margin-top: 10px;
+    box-shadow: 0 2px 12px rgba(124, 92, 252, 0.4);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .btn-nav-cta:hover {
-    box-shadow: 0 4px 20px rgba(124, 92, 252, 0.4);
-    color: white;
+    box-shadow: 0 4px 24px rgba(124, 92, 252, 0.6);
+    color: #ffffff;
+    transform: translateY(-1px);
 }
 
 @media (min-width: 992px) {
@@ -474,6 +476,7 @@ footer,
     line-height: 1.2;
     margin-bottom: 20px;
     color: #ffffff;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
 }
 
 .hero h1 .text-gradient {
@@ -539,7 +542,7 @@ footer,
 
 .btn-hero-primary {
     background: var(--gradient-primary);
-    color: white;
+    color: #ffffff;
     padding: 16px 32px;
     border: none;
     border-radius: 30px;
@@ -551,20 +554,21 @@ footer,
     justify-content: center;
     gap: 8px;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(124, 92, 252, 0.4);
+    box-shadow: 0 4px 20px rgba(124, 92, 252, 0.5);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .btn-hero-primary:hover {
-    box-shadow: 0 8px 30px rgba(124, 92, 252, 0.6);
-    transform: translateY(-2px);
-    color: white;
+    box-shadow: 0 8px 35px rgba(124, 92, 252, 0.7);
+    transform: translateY(-3px);
+    color: #ffffff;
 }
 
 .btn-hero-secondary {
-    background: transparent;
-    color: var(--galactic-text-primary);
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
     padding: 16px 32px;
-    border: 2px solid rgba(124, 92, 252, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 30px;
     font-size: 16px;
     font-weight: 600;
@@ -577,9 +581,11 @@ footer,
 }
 
 .btn-hero-secondary:hover {
-    border-color: var(--primary);
-    background: rgba(124, 92, 252, 0.1);
-    color: white;
+    border-color: #ffffff;
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
 }
 
 /* Hero Animation Elements */
@@ -824,19 +830,22 @@ footer,
     width: 100%;
     padding: 14px 24px;
     border-radius: 25px;
-    font-weight: 600;
+    font-weight: 700;
     text-decoration: none;
     display: inline-block;
     text-align: center;
     transition: all 0.3s ease;
     background: var(--gradient-primary);
-    color: white;
+    color: #ffffff;
     border: none;
+    box-shadow: 0 4px 16px rgba(124, 92, 252, 0.4);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .btn-pricing:hover {
-    box-shadow: 0 4px 20px rgba(124, 92, 252, 0.5);
-    color: white;
+    box-shadow: 0 6px 28px rgba(124, 92, 252, 0.6);
+    color: #ffffff;
+    transform: translateY(-2px);
 }
 
 .btn-pricing-primary {
@@ -988,23 +997,23 @@ footer,
 }
 
 .btn-cta {
-    background: white;
-    color: var(--primary);
+    background: #ffffff;
+    color: #4c2fb8;
     padding: 16px 40px;
     border-radius: 30px;
     font-size: 18px;
-    font-weight: 700;
+    font-weight: 800;
     text-decoration: none;
     display: inline-block;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
     position: relative;
 }
 
 .btn-cta:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-    color: var(--primary);
+    box-shadow: 0 8px 30px rgba(255, 255, 255, 0.4);
+    color: #4c2fb8;
 }
 
 /* ========================================
