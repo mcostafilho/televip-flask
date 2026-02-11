@@ -87,8 +87,7 @@ body {
     z-index: 2;
     background: url('/static/img/space-bg.jpg') center center / cover no-repeat;
     opacity: 0;
-    -webkit-mask-image: radial-gradient(circle 0px at 50% 50%, black 0%, transparent 100%);
-    mask-image: radial-gradient(circle 0px at 50% 50%, black 0%, transparent 100%);
+    clip-path: circle(0px at 50% 50%);
 }
 
 @media (max-width: 767px) {
@@ -1573,7 +1572,50 @@ button:focus {
 }
 
 .space-reveal {
-    will-change: mask-image, -webkit-mask-image;
+    will-change: clip-path;
+}
+
+/* ========================================
+   Mobile Performance — reduce GPU-heavy effects
+   ======================================== */
+@media (max-width: 767px) {
+    /* Lighter nebula blur — 120px is brutal on mobile GPU */
+    .nebula-glow {
+        filter: blur(60px);
+        opacity: 0.3;
+    }
+
+    /* No will-change on mobile (saves memory) */
+    .starfield,
+    .nebula-glow,
+    .shooting-star {
+        will-change: auto;
+    }
+
+    /* Simpler backdrop-filter on mobile */
+    .stat-card,
+    .feature-card,
+    .testimonial-card,
+    .pricing-card,
+    .comparison-card {
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+
+    /* Kill shooting stars on mobile (3 extra animated elements) */
+    .shooting-star {
+        display: none;
+    }
+
+    /* Disable floating card animations */
+    .floating-card {
+        animation: none;
+    }
+
+    /* Smoother comparison cards transition */
+    .comparison-card.featured {
+        transform: none;
+    }
 }
 
 /* Print styles */

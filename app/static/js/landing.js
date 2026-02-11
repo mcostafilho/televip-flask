@@ -15,10 +15,11 @@
   // Bail entirely when reduced motion is on
   if (prefersReduced) return;
 
-  // ── 2. LENIS SMOOTH SCROLL ─────────────────────────────
+  // ── 2. LENIS SMOOTH SCROLL (desktop only) ──────────────
   var lenis = null;
   function initLenis() {
     if (typeof Lenis === 'undefined') return;
+    if (isMobile) return; // Native mobile scroll is better — Lenis fights touch inertia
     lenis = new Lenis({ duration: 1.2, easing: function (t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)); }, orientation: 'vertical', smoothWheel: true });
 
     // Sync Lenis with GSAP ticker
@@ -586,7 +587,7 @@
   function initStarfield() {
     var starfield = document.getElementById('starfield');
     if (!starfield) return;
-    var count = 350;
+    var count = isMobile ? 100 : 350;
     var frag = document.createDocumentFragment();
     for (var i = 0; i < count; i++) {
       var star = document.createElement('div');
@@ -653,14 +654,10 @@
       curY += (mouseY - curY) * 0.1;
       curSize += (targetSize - curSize) * 0.05;
 
-      if (curSize < 1) return;
+      if (curSize < 2) return;
 
       reveal.style.opacity = '1';
-
-      // Set full mask string inline — avoids CSS variable issues
-      var mask = 'radial-gradient(circle ' + Math.round(curSize) + 'px at ' + Math.round(curX) + 'px ' + Math.round(curY) + 'px, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 65%, rgba(0,0,0,0) 100%)';
-      reveal.style.webkitMaskImage = mask;
-      reveal.style.maskImage = mask;
+      reveal.style.clipPath = 'circle(' + Math.round(curSize) + 'px at ' + Math.round(curX) + 'px ' + Math.round(curY) + 'px)';
     });
   }
 
