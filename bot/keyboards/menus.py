@@ -7,8 +7,7 @@ def get_main_menu() -> InlineKeyboardMarkup:
     """Menu principal do bot"""
     keyboard = [
         [
-            InlineKeyboardButton("📊 Minhas Assinaturas", callback_data="check_status"),
-            InlineKeyboardButton("🔍 Descobrir", callback_data="discover")
+            InlineKeyboardButton("📊 Minhas Assinaturas", callback_data="check_status")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)

@@ -296,59 +296,6 @@ Apos concluir o pagamento:
         )
 
 
-async def handle_payment_success(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handler para quando usuário retorna do pagamento com sucesso"""
-    user = update.effective_user
-    
-    logger.info(f"Usuário {user.id} retornou do pagamento")
-    
-    # Mensagem de boas-vindas
-    text = """
-✅ **Obrigado pelo seu pagamento!**
-
-Estamos processando sua transação. Isso pode levar alguns segundos.
-
-Clique no botão abaixo para verificar o status:
-"""
-    
-    keyboard = [[
-        InlineKeyboardButton("🔄 Verificar Status", callback_data="check_payment_status"),
-        InlineKeyboardButton("🏠 Menu Principal", callback_data="back_to_start")
-    ]]
-    
-    await update.message.reply_text(
-        text,
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=InlineKeyboardMarkup(keyboard)
-    )
-
-
-async def handle_payment_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handler para quando usuário cancela o pagamento"""
-    user = update.effective_user
-    
-    logger.info(f"Usuário {user.id} cancelou o pagamento")
-    
-    text = """
-❌ **Pagamento Cancelado**
-
-Você cancelou o processo de pagamento. 
-
-Se mudou de ideia, você pode tentar novamente a qualquer momento.
-"""
-    
-    keyboard = [[
-        InlineKeyboardButton("🔍 Ver Grupos", callback_data="discover"),
-        InlineKeyboardButton("🏠 Menu Principal", callback_data="back_to_start")
-    ]]
-    
-    await update.message.reply_text(
-        text,
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=InlineKeyboardMarkup(keyboard)
-    )
-
-
 async def list_user_subscriptions(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Listar assinaturas ativas do usuário"""
     query = update.callback_query
@@ -369,13 +316,8 @@ async def list_user_subscriptions(update: Update, context: ContextTypes.DEFAULT_
         ).all()
         
         if not subscriptions:
-            text = """
-📭 **Você não tem assinaturas ativas**
-
-Explore nossos grupos exclusivos e comece sua jornada!
-"""
+            text = "📭 **Você não tem assinaturas ativas**\n\nPara assinar um grupo, use o link de convite fornecido pelo criador."
             keyboard = [[
-                InlineKeyboardButton("🔍 Descobrir Grupos", callback_data="discover"),
                 InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")
             ]]
         else:
@@ -400,7 +342,6 @@ Explore nossos grupos exclusivos e comece sua jornada!
 """
             
             keyboard = [
-                [InlineKeyboardButton("🔍 Descobrir Mais Grupos", callback_data="discover")],
                 [InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")]
             ]
         
@@ -614,30 +555,4 @@ Por favor, tente novamente ou use outro método de pagamento.
     )
 
 
-async def handle_payment_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handler para pagamento cancelado"""
-    user = update.effective_user
-    
-    # Limpar dados da sessão
-    context.user_data.pop('checkout', None)
-    context.user_data.pop('stripe_session_id', None)
-    
-    text = """
-❌ **Pagamento Cancelado**
-
-Seu pagamento foi cancelado.
-
-Você pode tentar novamente a qualquer momento clicando no link do grupo.
-"""
-    
-    keyboard = [[
-        InlineKeyboardButton("🔍 Descobrir Grupos", callback_data="discover"),
-        InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")
-    ]]
-    
-    await update.message.reply_text(
-        text,
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=InlineKeyboardMarkup(keyboard)
-    )
 

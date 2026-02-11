@@ -32,8 +32,7 @@ from telegram.ext import (
 from bot.handlers.start import start_command, show_user_dashboard
 from bot.handlers.payment import (
     start_payment, handle_payment_method,
-    list_user_subscriptions, handle_payment_success,
-    check_payment_status, handle_payment_error
+    list_user_subscriptions, handle_payment_success
 )
 from bot.handlers.subscription import (
     status_command, handle_renewal,
