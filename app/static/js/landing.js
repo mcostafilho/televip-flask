@@ -276,7 +276,7 @@
   // Glass cards with SVG space icons + messages appear in waves,
   // float across the hero edges, fade out, recycle.
   function initOrbitCards() {
-    if (!isLanding) return;
+    if (!isLanding || isMobile) return;
     var field = document.querySelector('.orbit-field');
     if (!field) return;
     if (getComputedStyle(field).display === 'none') return;
@@ -547,14 +547,16 @@
       });
     });
 
-    // Parallax nebula glows
-    gsap.utils.toArray('.nebula-glow').forEach(function (glow, i) {
-      var speed = (i + 1) * 50;
-      gsap.to(glow, {
-        scrollTrigger: { trigger: 'body', start: 'top top', end: 'bottom bottom', scrub: 1 },
-        y: speed, ease: 'none'
+    // Parallax nebula glows (desktop only — saves ScrollTriggers on mobile)
+    if (!isMobile) {
+      gsap.utils.toArray('.nebula-glow').forEach(function (glow, i) {
+        var speed = (i + 1) * 50;
+        gsap.to(glow, {
+          scrollTrigger: { trigger: 'body', start: 'top top', end: 'bottom bottom', scrub: 1 },
+          y: speed, ease: 'none'
+        });
       });
-    });
+    }
 
     // Step cards (recursos)
     gsap.utils.toArray('.step-card').forEach(function (card, i) {
@@ -631,14 +633,16 @@
       }
     }
 
-    // Footer reveal
-    var footer = document.querySelector('.footer');
-    if (footer) {
-      gsap.from(footer.querySelectorAll('.col-lg-4, .col-lg-2, .col-md-4'), {
-        scrollTrigger: { trigger: footer, start: 'top 90%', once: true },
-        y: 30, opacity: 0, duration: 0.6, stagger: 0.1,
-        ease: 'power3.out'
-      });
+    // Footer reveal (desktop only — mobile just shows them)
+    if (!isMobile) {
+      var footer = document.querySelector('.footer');
+      if (footer) {
+        gsap.from(footer.querySelectorAll('.col-lg-4, .col-lg-2, .col-md-4'), {
+          scrollTrigger: { trigger: footer, start: 'top 90%', once: true },
+          y: 30, opacity: 0, duration: 0.6, stagger: 0.1,
+          ease: 'power3.out'
+        });
+      }
     }
   }
 

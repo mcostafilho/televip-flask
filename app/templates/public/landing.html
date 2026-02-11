@@ -26,12 +26,13 @@
     <!-- Preload Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
 
     <!-- CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link href="{{ url_for('static', filename='css/landing.css') }}?v=28" rel="stylesheet">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"></noscript>
+    <link href="{{ url_for('static', filename='css/landing.css') }}?v=29" rel="stylesheet">
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
@@ -231,7 +232,7 @@
                         <div class="feature-icon">
                             <i class="bi bi-robot"></i>
                         </div>
-                        <h4>Bot Inteligente 24/7</h4>
+                        <h3>Bot Inteligente 24/7</h3>
                         <p>Automatize todo o processo de cobrança e gestão de membros com nosso bot exclusivo.</p>
                     </div>
                 </div>
@@ -242,7 +243,7 @@
                         <div class="feature-icon">
                             <i class="bi bi-credit-card"></i>
                         </div>
-                        <h4>Pagamento via Stripe</h4>
+                        <h3>Pagamento via Stripe</h3>
                         <p>Receba pagamentos via cartão de crédito e boleto com processamento seguro via Stripe.</p>
                         <span class="badge bg-warning text-dark">R$ 0,99 + 9,99% por transação</span>
                     </div>
@@ -254,7 +255,7 @@
                         <div class="feature-icon">
                             <i class="bi bi-bar-chart"></i>
                         </div>
-                        <h4>Dashboard Completo</h4>
+                        <h3>Dashboard Completo</h3>
                         <p>Acompanhe métricas, receita e crescimento do seu grupo em tempo real.</p>
                     </div>
                 </div>
@@ -265,7 +266,7 @@
                         <div class="feature-icon">
                             <i class="bi bi-shield-check"></i>
                         </div>
-                        <h4>100% Seguro</h4>
+                        <h3>100% Seguro</h3>
                         <p>Proteção total dos dados e transações com criptografia de ponta a ponta.</p>
                     </div>
                 </div>
@@ -276,7 +277,7 @@
                         <div class="feature-icon">
                             <i class="bi bi-lightning"></i>
                         </div>
-                        <h4>Setup em 2 Minutos</h4>
+                        <h3>Setup em 2 Minutos</h3>
                         <p>Configure seu grupo VIP em poucos cliques e comece a lucrar imediatamente.</p>
                     </div>
                 </div>
@@ -287,7 +288,7 @@
                         <div class="feature-icon">
                             <i class="bi bi-headset"></i>
                         </div>
-                        <h4>Suporte Premium</h4>
+                        <h3>Suporte Premium</h3>
                         <p>Time especializado pronto para ajudar você a maximizar seus resultados.</p>
                     </div>
                 </div>
@@ -590,11 +591,17 @@
     </div>
 
     <!-- Animation Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
-    <script src="{{ url_for('static', filename='js/landing.js') }}?v=29"></script>
+    <!-- Lenis + Three.js: desktop only (saves ~630 KiB on mobile) -->
+    <script>
+    if(!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)&&window.innerWidth>=768){
+      ['https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js',
+       'https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js'
+      ].forEach(function(s){var e=document.createElement('script');e.src=s;document.head.appendChild(e)})
+    }
+    </script>
+    <script src="{{ url_for('static', filename='js/landing.js') }}?v=30"></script>
 
     <!-- Cookie Banner -->
     <div id="cookieBanner" role="dialog" aria-label="Cookie consent" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:10000;
@@ -602,7 +609,7 @@
         font-size:14px; color:#ccc; text-align:center; font-family:'Poppins',sans-serif;">
         Usamos cookies essenciais para o funcionamento do site.
         <a href="{{ url_for('auth.privacy') }}" style="color:#7c8dff; text-decoration:underline;">Saiba mais</a>
-        <button onclick="acceptCookies()" style="margin-left:12px; background:#7c5cfc; color:#fff;
+        <button onclick="acceptCookies()" aria-label="Aceitar cookies" style="margin-left:12px; background:#7c5cfc; color:#fff;
             border:none; border-radius:6px; padding:6px 18px; cursor:pointer; font-size:14px;">OK</button>
     </div>
     <script>
