@@ -22,7 +22,7 @@ if sys.platform == 'win32':
 # Adicionar o diretório raiz ao path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler,
     MessageHandler, filters, ContextTypes, JobQueue
@@ -132,8 +132,12 @@ async def post_init(application: Application) -> None:
     try:
         bot_info = await application.bot.get_me()
         logger.info(f"✅ Bot @{bot_info.username} iniciado com sucesso!")
-        logger.info(f"Bot ID: {bot_info.id}")
-        logger.info(f"Nome: {bot_info.first_name}")
+
+        # Registrar apenas os comandos ativos no menu do Telegram
+        await application.bot.set_my_commands([
+            BotCommand("start", "Menu principal"),
+            BotCommand("status", "Ver suas assinaturas"),
+        ])
 
         # Iniciar tarefas agendadas (controle de assinaturas)
         from bot.jobs.scheduled_tasks import setup_jobs
