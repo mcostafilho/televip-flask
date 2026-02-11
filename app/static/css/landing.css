@@ -293,10 +293,15 @@ body {
     box-shadow: 0 0 20px rgba(124, 92, 252, 0.5);
 }
 
+/* Ensure sections stay below fixed navbar (GSAP transforms create stacking contexts) */
+.hero,
 .features,
 .pricing,
-.testimonials {
+.testimonials,
+.cta,
+.footer {
     position: relative;
+    z-index: 1;
 }
 
 /* ========================================
