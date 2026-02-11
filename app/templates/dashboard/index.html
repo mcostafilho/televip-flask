@@ -205,89 +205,80 @@
             </div>
         </div>
 
-        <!-- Meus Grupos (PRIMEIRO) -->
+        <!-- Meus Grupos -->
         <div class="content-card mt-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="mb-0">
-                    <i class="bi bi-telegram"></i> 
+                    <i class="bi bi-telegram"></i>
                     Meus Grupos
                 </h5>
                 {% if groups %}
-                <a href="{{ url_for('groups.list') }}" class="btn btn-primary btn-sm">
-                    Ver Todos
+                <a href="{{ url_for('groups.list') }}" class="link-see-all">
+                    Ver todos <i class="bi bi-arrow-right"></i>
                 </a>
                 {% endif %}
             </div>
-            
+
             {% if groups %}
-                <div class="custom-table">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Grupo</th>
-                                <th class="text-center">Assinantes</th>
-                                <th class="text-center">Receita</th>
-                                <th class="text-center">Status</th>
-                                <th class="text-center">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for group in groups[:5] %}
-                            <tr>
-                                <td>
-                                    <div>
-                                        <strong>{{ group.name }}</strong>
-                                        {% if group.description %}
-                                        <br>
-                                        <small class="text-muted">{{ group.description[:50] }}...</small>
-                                        {% endif %}
-                                        <div class="mt-1">
-                                            <div class="input-group input-group-sm" style="max-width: 300px;">
-                                                <input type="text" class="form-control" 
-                                                       value="https://t.me/{{ config.BOT_USERNAME or 'televipbra_bot' }}?start=g_{{ group.invite_slug }}"
-                                                       id="link_{{ group.id }}" readonly>
-                                                <button class="btn btn-sm btn-outline-secondary" type="button"
-                                                        onclick="copyLink('link_{{ group.id }}')">
-                                                    <i class="bi bi-clipboard"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge bg-info">{{ group.total_subscribers }}</span>
-                                </td>
-                                <td class="text-center">
-                                    <strong>R$ {{ "%.2f"|format(group.total_revenue) }}</strong>
-                                </td>
-                                <td class="text-center">
+                <div class="row-list">
+                    {% for group in groups[:5] %}
+                    <div class="row-item">
+                        <div class="row-item-left">
+                            <div class="row-icon {% if group.is_active %}active{% else %}inactive{% endif %}">
+                                <i class="bi bi-telegram"></i>
+                            </div>
+                            <div class="row-info">
+                                <div class="row-title">
+                                    {{ group.name }}
                                     {% if group.is_active %}
-                                        <span class="badge bg-success">Ativo</span>
+                                        <span class="glow-dot green" title="Ativo"></span>
                                     {% else %}
-                                        <span class="badge bg-secondary">Inativo</span>
+                                        <span class="glow-dot gray" title="Inativo"></span>
                                     {% endif %}
-                                </td>
-                                <td class="text-center">
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="{{ url_for('groups.subscribers', id=group.id) }}" 
-                                           class="btn btn-outline-primary" title="Ver Assinantes">
-                                            <i class="bi bi-people"></i>
-                                        </a>
-                                        <a href="{{ url_for('groups.edit', id=group.id) }}" 
-                                           class="btn btn-outline-secondary" title="Editar">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                </div>
+                                {% if group.description %}
+                                <div class="row-sub">{{ group.description[:60] }}{% if group.description|length > 60 %}...{% endif %}</div>
+                                {% endif %}
+                                <div class="row-link-copy mt-1">
+                                    <input type="text" class="form-control form-control-sm"
+                                           value="https://t.me/{{ config.BOT_USERNAME or 'televipbra_bot' }}?start=g_{{ group.invite_slug }}"
+                                           id="link_{{ group.id }}" readonly>
+                                    <button class="btn-copy" type="button" onclick="copyLink('link_{{ group.id }}')" title="Copiar link">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row-item-right">
+                            <div class="row-metrics">
+                                <div class="row-metric">
+                                    <span class="row-metric-value cyan">{{ group.total_subscribers }}</span>
+                                    <span class="row-metric-label">assinantes</span>
+                                </div>
+                                <div class="row-metric">
+                                    <span class="row-metric-value green">R$ {{ "%.2f"|format(group.total_revenue) }}</span>
+                                    <span class="row-metric-label">receita</span>
+                                </div>
+                            </div>
+                            <div class="row-actions">
+                                <a href="{{ url_for('groups.subscribers', id=group.id) }}" class="row-action-btn" title="Assinantes">
+                                    <i class="bi bi-people"></i>
+                                </a>
+                                <a href="{{ url_for('groups.edit', id=group.id) }}" class="row-action-btn" title="Editar">
+                                    <i class="bi bi-gear"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
             {% else %}
-                <div class="empty-state">
-                    <i class="bi bi-telegram"></i>
-                    <p>Você ainda não tem grupos criados</p>
+                <div class="empty-state-v2">
+                    <div class="empty-icon">
+                        <i class="bi bi-telegram"></i>
+                    </div>
+                    <h4>Nenhum grupo ainda</h4>
+                    <p>Crie seu primeiro grupo e comece a monetizar</p>
                     <a href="{{ url_for('groups.create') }}" class="btn btn-primary">
                         <i class="bi bi-plus-circle"></i> Criar Primeiro Grupo
                     </a>
@@ -297,65 +288,59 @@
 
         <!-- Transações Recentes -->
         <div class="content-card mt-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="mb-0">
-                    <i class="bi bi-clock-history"></i> 
+                    <i class="bi bi-clock-history"></i>
                     Transações Recentes
                 </h5>
                 {% if recent_transactions %}
-                <a href="{{ url_for('dashboard.transactions') }}" class="btn btn-primary btn-sm">
-                    Ver Todas
+                <a href="{{ url_for('dashboard.transactions') }}" class="link-see-all">
+                    Ver todas <i class="bi bi-arrow-right"></i>
                 </a>
                 {% endif %}
             </div>
-            
+
             {% if recent_transactions %}
-                <div class="custom-table">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Assinante</th>
-                                <th>Grupo</th>
-                                <th class="text-center">Valor</th>
-                                <th class="text-center">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for transaction in recent_transactions %}
-                            <tr>
-                                <td>{{ transaction.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                                <td>
+                <div class="row-list">
+                    {% for transaction in recent_transactions %}
+                    <div class="row-item tx-item">
+                        <div class="row-item-left">
+                            <div class="row-icon {% if transaction.status == 'completed' %}completed{% elif transaction.status == 'pending' %}pending{% else %}failed{% endif %}">
+                                {% if transaction.status == 'completed' %}
+                                    <i class="bi bi-check-lg"></i>
+                                {% elif transaction.status == 'pending' %}
+                                    <i class="bi bi-clock"></i>
+                                {% else %}
+                                    <i class="bi bi-x-lg"></i>
+                                {% endif %}
+                            </div>
+                            <div class="row-info">
+                                <div class="row-title">
                                     @{{ transaction.subscription.telegram_username }}
-                                    <br>
-                                    <small class="text-muted">{{ transaction.subscription.plan.name }}</small>
-                                </td>
-                                <td>{{ transaction.subscription.group.name }}</td>
-                                <td class="text-center">
-                                    <strong class="text-success">R$ {{ "%.2f"|format(transaction.amount) }}</strong>
-                                </td>
-                                <td class="text-center">
-                                    {% if transaction.status == 'completed' %}
-                                        <span class="badge bg-success">
-                                            <i class="bi bi-check-circle"></i> Pago
-                                        </span>
-                                    {% elif transaction.status == 'pending' %}
-                                        <span class="badge bg-warning">
-                                            <i class="bi bi-clock"></i> Pendente
-                                        </span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">{{ transaction.status }}</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                </div>
+                                <div class="row-sub">
+                                    {{ transaction.subscription.group.name }} &middot; {{ transaction.subscription.plan.name }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row-item-right">
+                            <div class="tx-amount {% if transaction.status == 'completed' %}green{% elif transaction.status == 'pending' %}yellow{% else %}red{% endif %}">
+                                +R$ {{ "%.2f"|format(transaction.amount) }}
+                            </div>
+                            <div class="tx-date">
+                                {{ transaction.created_at.strftime('%d/%m %H:%M') }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
             {% else %}
-                <div class="empty-state">
-                    <i class="bi bi-receipt"></i>
-                    <p>Nenhuma transação realizada ainda</p>
+                <div class="empty-state-v2">
+                    <div class="empty-icon">
+                        <i class="bi bi-receipt"></i>
+                    </div>
+                    <h4>Nenhuma transação ainda</h4>
+                    <p>Suas transações aparecerão aqui</p>
                 </div>
             {% endif %}
         </div>
