@@ -228,55 +228,52 @@
     // Split H1 words
     var words = h1 ? splitWords(h1) : [];
 
-    var tl = gsap.timeline({ defaults: { ease: 'power3.out' }, delay: 0.2 });
+    var tl = gsap.timeline({ defaults: { ease: 'power2.out' }, delay: 0.3 });
 
-    // Words reveal — dramatic staggered from below with slight scale
+    // Words reveal — slow, elegant stagger
     if (words.length) {
-      gsap.set(words, { y: 80, opacity: 0, scale: 0.9, rotateX: 15 });
-      tl.to(words, { y: 0, opacity: 1, scale: 1, rotateX: 0, duration: 0.9, stagger: 0.05, ease: 'back.out(1.2)' }, 0);
+      gsap.set(words, { y: 50, opacity: 0 });
+      tl.to(words, { y: 0, opacity: 1, duration: 1, stagger: 0.06, ease: 'power2.out' }, 0);
     }
 
-    // Lead text — fade up with slight blur effect
+    // Lead text — gentle fade up
     if (lead) {
-      gsap.set(lead, { y: 40, opacity: 0 });
-      tl.to(lead, { y: 0, opacity: 1, duration: 0.7 }, 0.5);
+      gsap.set(lead, { y: 25, opacity: 0 });
+      tl.to(lead, { y: 0, opacity: 1, duration: 0.9 }, 0.6);
     }
 
-    // Alert — scale bounce
+    // Alert — soft entrance
     if (alert) {
-      gsap.set(alert, { y: 20, opacity: 0, scale: 0.9 });
-      tl.to(alert, { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.5)' }, 0.7);
+      gsap.set(alert, { y: 15, opacity: 0 });
+      tl.to(alert, { y: 0, opacity: 1, duration: 0.7 }, 0.9);
     }
 
-    // Stats with dramatic bounce cascade
+    // Stats — measured cascade
     if (stats.length) {
-      gsap.set(stats, { scale: 0.3, opacity: 0, y: 30 });
+      gsap.set(stats, { opacity: 0, y: 20 });
       tl.to(stats, {
-        scale: 1, opacity: 1, y: 0, duration: 0.7,
-        stagger: 0.12, ease: 'back.out(2)'
-      }, 0.8);
+        opacity: 1, y: 0, duration: 0.8,
+        stagger: 0.15, ease: 'power2.out'
+      }, 1.0);
     }
 
-    // Buttons — slide up with elastic
+    // Buttons — gentle lift
     if (buttons) {
-      gsap.set(buttons, { y: 30, opacity: 0 });
-      tl.to(buttons, { y: 0, opacity: 1, duration: 0.6, ease: 'back.out(1.3)' }, 1.1);
+      gsap.set(buttons, { y: 20, opacity: 0 });
+      tl.to(buttons, { y: 0, opacity: 1, duration: 0.8 }, 1.4);
     }
 
     // Subtext
     if (subtext) {
       gsap.set(subtext, { opacity: 0 });
-      tl.to(subtext, { opacity: 1, duration: 0.6 }, 1.3);
+      tl.to(subtext, { opacity: 1, duration: 0.8 }, 1.7);
     }
 
-    // Floating cards — stagger from different sides
+    // Floating cards — elegant fade in
     var floats = document.querySelectorAll('.floating-card');
     if (floats.length) {
-      floats.forEach(function (card, i) {
-        var fromX = i % 2 === 0 ? -60 : 60;
-        gsap.set(card, { opacity: 0, x: fromX, y: 30, scale: 0.8 });
-      });
-      tl.to(floats, { opacity: 1, x: 0, y: 0, scale: 1, duration: 1, stagger: 0.25, ease: 'elastic.out(1, 0.6)' }, 1.2);
+      gsap.set(floats, { opacity: 0, y: 20 });
+      tl.to(floats, { opacity: 1, y: 0, duration: 1, stagger: 0.3, ease: 'power2.out' }, 1.5);
     }
   }
 
@@ -292,45 +289,41 @@
       });
     });
 
-    // Feature cards — dramatic reveal with perspective flip
+    // Feature cards — clean, measured fade-up
     gsap.utils.toArray('.feature-card, .feature-card-ext').forEach(function (card, i) {
       gsap.from(card, {
-        scrollTrigger: { trigger: card, start: 'top 88%', once: true },
-        y: 80, opacity: 0, rotateX: 12, scale: 0.9, duration: 0.8,
-        delay: (i % 3) * 0.18,
-        ease: 'back.out(1.2)',
-        transformPerspective: 800
+        scrollTrigger: { trigger: card, start: 'top 85%', once: true },
+        y: 40, opacity: 0, duration: 0.9,
+        delay: (i % 3) * 0.15,
+        ease: 'power2.out'
       });
     });
 
-    // Pricing card
+    // Pricing card — measured reveal
     gsap.utils.toArray('.pricing-card, .main-pricing-card').forEach(function (card) {
       gsap.from(card, {
         scrollTrigger: { trigger: card, start: 'top 85%', once: true },
-        scale: 0.8, opacity: 0, duration: 0.8, ease: 'back.out(1.4)'
+        y: 40, opacity: 0, duration: 1, ease: 'power2.out'
       });
     });
 
-    // Testimonial cards — dramatic alternate slide-in with rotation
+    // Testimonial cards — elegant alternate slide-in
     gsap.utils.toArray('.testimonial-card').forEach(function (card, i) {
-      var dir = i % 2 === 0 ? -80 : 80;
-      var rot = i % 2 === 0 ? -5 : 5;
+      var dir = i % 2 === 0 ? -40 : 40;
       gsap.from(card, {
-        scrollTrigger: { trigger: card, start: 'top 88%', once: true },
-        x: dir, opacity: 0, rotateY: rot, scale: 0.9, duration: 0.9,
-        ease: 'back.out(1.1)',
-        transformPerspective: 800
+        scrollTrigger: { trigger: card, start: 'top 85%', once: true },
+        x: dir, opacity: 0, duration: 1,
+        ease: 'power2.out'
       });
     });
 
-    // CTA section — dramatic clip-path reveal for h2
+    // CTA section — elegant clip-path reveal
     var ctaH2 = document.querySelector('.cta h2');
     if (ctaH2) {
       gsap.from(ctaH2, {
-        scrollTrigger: { trigger: ctaH2, start: 'top 88%', once: true },
-        clipPath: 'inset(0 100% 0 0)', opacity: 0, duration: 1.2,
-        scale: 0.95, y: 20,
-        ease: 'power4.out'
+        scrollTrigger: { trigger: ctaH2, start: 'top 85%', once: true },
+        clipPath: 'inset(0 100% 0 0)', opacity: 0, duration: 1.3,
+        ease: 'power2.out'
       });
     }
 
