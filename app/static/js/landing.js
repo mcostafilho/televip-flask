@@ -12,16 +12,8 @@
   var isPrecos = !!document.querySelector('.precos-hero');
   var isRecursos = !!document.querySelector('.recursos-hero');
 
-  // ── DEBUG ──
-  console.log('[TeleVIP] isMobile:', isMobile, '| width:', window.innerWidth, '| UA:', navigator.userAgent);
-  console.log('[TeleVIP] prefersReduced:', prefersReduced);
-  console.log('[TeleVIP] GSAP:', typeof gsap, '| ScrollTrigger:', typeof ScrollTrigger);
-
-  // Bail entirely when reduced motion is on
-  if (prefersReduced) {
-    console.warn('[TeleVIP] BAIL: prefers-reduced-motion is ON — all animations disabled');
-    return;
-  }
+  // NOTE: prefersReduced is checked per-feature, NOT globally.
+  // Mouse reveal + starfield + cursor always run (user-initiated, subtle).
 
   // ── 2. LENIS SMOOTH SCROLL (desktop only) ──────────────
   var lenis = null;
@@ -223,7 +215,7 @@
 
   // ── 5. HERO ENTRANCE TIMELINE (landing.html only) ─────
   function initHeroEntrance() {
-    if (!isLanding) return;
+    if (prefersReduced || !isLanding) return;
     var heroContent = document.querySelector('.hero-content');
     if (!heroContent) return;
 
@@ -291,6 +283,7 @@
 
   // ── 6. SCROLL TRIGGER ANIMATIONS ──────────────────────
   function initScrollAnimations() {
+    if (prefersReduced) return;
     // Default reveal for section headers
     gsap.utils.toArray('.text-center.mb-5, [data-aos="fade-up"]:not(.hero-content)').forEach(function (el) {
       // Skip if already handled
@@ -651,8 +644,7 @@
   // Full-screen overlay with space photo; circular CSS mask follows the mouse.
   // Separate glow ring element so the box-shadow isn't clipped by the mask.
   function initMouseReveal() {
-    console.log('[TeleVIP] initMouseReveal() called | isMobile:', isMobile);
-    if (isMobile) { console.warn('[TeleVIP] SKIP mouse reveal: isMobile=true'); return; }
+    if (isMobile) return;
 
     // Portal layer — full-screen space image
     var reveal = document.createElement('div');
@@ -666,27 +658,12 @@
     glow.setAttribute('aria-hidden', 'true');
     document.body.appendChild(glow);
 
-    // Debug: check computed styles
-    var cs = getComputedStyle(reveal);
-    console.log('[TeleVIP] reveal created — computed:', {
-      display: cs.display,
-      opacity: cs.opacity,
-      width: cs.width,
-      height: cs.height,
-      position: cs.position,
-      zIndex: cs.zIndex,
-      background: cs.backgroundImage ? cs.backgroundImage.substring(0, 60) : 'NONE',
-      maskImage: cs.webkitMaskImage ? cs.webkitMaskImage.substring(0, 60) : (cs.maskImage ? cs.maskImage.substring(0, 60) : 'NONE'),
-      maskSize: cs.webkitMaskSize || cs.maskSize || 'NONE'
-    });
-
     var hw = 300;   // half of 600px mask
     var ghw = 210;  // half of 420px glow
     var mouseX = window.innerWidth / 2;
     var mouseY = window.innerHeight / 2;
     var curX = mouseX, curY = mouseY;
     var active = false;
-    var moveCount = 0;
 
     document.addEventListener('mousemove', function (e) {
       mouseX = e.clientX;
@@ -695,16 +672,10 @@
         active = true;
         reveal.style.opacity = '1';
         glow.style.opacity = '1';
-        console.log('[TeleVIP] FIRST mousemove — reveal opacity set to 1');
-      }
-      moveCount++;
-      if (moveCount <= 3) {
-        console.log('[TeleVIP] mousemove #' + moveCount, '| x:', e.clientX, 'y:', e.clientY);
       }
     });
 
     // Dreamy trailing — move the mask hole + glow ring
-    var tickCount = 0;
     gsap.ticker.add(function () {
       curX += (mouseX - curX) * 0.08;
       curY += (mouseY - curY) * 0.08;
@@ -717,18 +688,12 @@
       // Move the glow ring
       glow.style.left = (curX - ghw) + 'px';
       glow.style.top = (curY - ghw) + 'px';
-
-      tickCount++;
-      if (tickCount === 1 || tickCount === 60) {
-        console.log('[TeleVIP] tick #' + tickCount, '| maskPos:', maskPos, '| opacity:', reveal.style.opacity);
-      }
     });
-
-    console.log('[TeleVIP] initMouseReveal() DONE — listeners attached');
   }
 
   // ── 14. PAGE TRANSITIONS ──────────────────────────────
   function initPageTransitions() {
+    if (prefersReduced) return;
     // Intercept internal navigation links for smooth page exit
     document.addEventListener('click', function (e) {
       var link = e.target.closest('a[href]');
@@ -751,13 +716,10 @@
   }
 
   function init() {
-    console.log('[TeleVIP] init() called');
     // Register GSAP plugin
     if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
       gsap.registerPlugin(ScrollTrigger);
-      console.log('[TeleVIP] GSAP + ScrollTrigger registered OK');
     } else {
-      console.error('[TeleVIP] BAIL: GSAP missing! gsap:', typeof gsap, 'ScrollTrigger:', typeof ScrollTrigger);
       return; // Can't proceed without GSAP
     }
 

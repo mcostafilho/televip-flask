@@ -1695,9 +1695,8 @@ button:focus {
     #hero-canvas {
         display: none !important;
     }
-    .space-reveal,
     .space-reveal-glow {
-        display: none !important;
+        animation: none !important;
     }
     /* Ensure all content is visible when animations disabled */
     .hero-content, .hero-content * ,
