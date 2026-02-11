@@ -355,6 +355,12 @@ def google_callback():
     return redirect(url_for('dashboard.index'))
 
 
+@bp.route('/em-breve')
+def coming_soon():
+    """Página Em Construção"""
+    return render_template('public/coming_soon.html')
+
+
 @bp.route('/conta-bloqueada')
 @login_required
 def blocked_account():

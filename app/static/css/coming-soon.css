@@ -1,0 +1,515 @@
+/* ===== Coming Soon — Space Station Pixel Art ===== */
+
+/* Background */
+.cs-body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #05060f 0%, #0b0e1a 40%, #12082e 100%);
+    font-family: 'Poppins', sans-serif;
+    color: #e2e8f0;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Stars layer */
+.cs-stars {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+.cs-star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: #fff;
+    border-radius: 50%;
+    animation: cs-twinkle var(--dur, 3s) ease-in-out infinite alternate;
+    opacity: 0;
+}
+@keyframes cs-twinkle {
+    0%   { opacity: 0.1; transform: scale(0.8); }
+    100% { opacity: var(--bright, 0.8); transform: scale(1.2); }
+}
+
+/* Navbar */
+.cs-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(5, 6, 15, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(124, 92, 252, 0.1);
+}
+.cs-nav-brand {
+    font-size: 20px;
+    font-weight: 700;
+    color: #e2e8f0;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.cs-nav-brand i { color: #7c5cfc; }
+.cs-nav-brand:hover { color: #fff; }
+.cs-nav-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 20px;
+    border-radius: 8px;
+    background: rgba(124, 92, 252, 0.15);
+    border: 1px solid rgba(124, 92, 252, 0.3);
+    color: #c4b5fd;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+.cs-nav-back:hover {
+    background: rgba(124, 92, 252, 0.25);
+    color: #fff;
+}
+
+/* Main content area */
+.cs-main {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 100px 24px 60px;
+    text-align: center;
+}
+
+/* Badge */
+.cs-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    border-radius: 50px;
+    background: rgba(124, 92, 252, 0.15);
+    border: 1px solid rgba(124, 92, 252, 0.3);
+    color: #c4b5fd;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 24px;
+    animation: cs-float 3s ease-in-out infinite;
+}
+@keyframes cs-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+/* Title */
+.cs-title {
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.2;
+    margin: 0 0 16px;
+    max-width: 600px;
+}
+.cs-title .cs-gradient {
+    background: linear-gradient(135deg, #7c5cfc, #38bdf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.cs-subtitle {
+    font-size: 16px;
+    color: #8b8fa8;
+    max-width: 480px;
+    margin: 0 auto 40px;
+    line-height: 1.6;
+}
+@media (min-width: 768px) {
+    .cs-title { font-size: 48px; }
+    .cs-subtitle { font-size: 18px; }
+}
+
+/* ===== Pixel Art Scene ===== */
+.cs-scene {
+    position: relative;
+    width: 320px;
+    height: 200px;
+    margin: 0 auto 32px;
+    /* Scale pixel art crisp */
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+@media (min-width: 768px) {
+    .cs-scene {
+        width: 480px;
+        height: 280px;
+    }
+}
+
+/* Space window */
+.cs-window {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 160px;
+    height: 70px;
+    border-radius: 70px 70px 0 0;
+    background: linear-gradient(180deg, #0a0520 0%, #150840 100%);
+    border: 3px solid #3a3a5c;
+    border-bottom: none;
+    overflow: hidden;
+}
+@media (min-width: 768px) {
+    .cs-window {
+        width: 220px;
+        height: 95px;
+    }
+}
+.cs-window-star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: #fff;
+    border-radius: 50%;
+    animation: cs-twinkle 2s ease-in-out infinite alternate;
+}
+
+/* Floor */
+.cs-floor {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: #1a1a2e;
+    border-top: 3px solid #2a2a4a;
+}
+@media (min-width: 768px) {
+    .cs-floor { height: 65px; }
+}
+
+/* Desk */
+.cs-desk {
+    position: absolute;
+    bottom: 45px;
+    width: 64px;
+    height: 28px;
+    background: #3d2f1e;
+    border-radius: 2px;
+}
+@media (min-width: 768px) {
+    .cs-desk {
+        bottom: 60px;
+        width: 88px;
+        height: 36px;
+    }
+}
+.cs-desk-leg {
+    position: absolute;
+    bottom: -16px;
+    width: 4px;
+    height: 16px;
+    background: #3d2f1e;
+}
+@media (min-width: 768px) {
+    .cs-desk-leg {
+        bottom: -22px;
+        width: 5px;
+        height: 22px;
+    }
+}
+.cs-desk-leg.left  { left: 6px; }
+.cs-desk-leg.right { right: 6px; }
+
+/* Monitor */
+.cs-monitor {
+    position: absolute;
+    top: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 22px;
+    background: #1a1a2e;
+    border: 2px solid #4a4a6a;
+    border-radius: 2px;
+    overflow: hidden;
+}
+@media (min-width: 768px) {
+    .cs-monitor {
+        top: -30px;
+        width: 42px;
+        height: 28px;
+    }
+}
+.cs-monitor-screen {
+    width: 100%;
+    height: 100%;
+    background: #0d1117;
+    position: relative;
+    overflow: hidden;
+}
+/* Code lines inside monitor */
+.cs-code-line {
+    position: absolute;
+    left: 2px;
+    height: 2px;
+    border-radius: 1px;
+    animation: cs-code-blink 1.5s ease-in-out infinite;
+}
+@keyframes cs-code-blink {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+}
+.cs-code-line:nth-child(1) { top: 3px; width: 12px; background: #7c5cfc; animation-delay: 0s; }
+.cs-code-line:nth-child(2) { top: 7px; width: 16px; background: #38bdf8; animation-delay: 0.3s; }
+.cs-code-line:nth-child(3) { top: 11px; width: 10px; background: #34d399; animation-delay: 0.6s; }
+.cs-code-line:nth-child(4) { top: 15px; width: 14px; background: #fbbf24; animation-delay: 0.9s; }
+
+/* Monitor stand */
+.cs-monitor-stand {
+    position: absolute;
+    top: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 8px;
+    height: 4px;
+    background: #4a4a6a;
+}
+
+/* ===== Pixel Dev Character ===== */
+.cs-dev {
+    position: absolute;
+    bottom: 70px;
+    width: 20px;
+    height: 28px;
+    cursor: pointer;
+    transition: filter 0.15s;
+    user-select: none;
+    -webkit-user-select: none;
+}
+@media (min-width: 768px) {
+    .cs-dev {
+        bottom: 92px;
+        width: 26px;
+        height: 36px;
+    }
+}
+.cs-dev:hover { filter: brightness(1.2); }
+.cs-dev:active { filter: brightness(1.4); }
+
+/* Head */
+.cs-dev-head {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+@media (min-width: 768px) {
+    .cs-dev-head {
+        width: 12px;
+        height: 12px;
+    }
+}
+
+/* Body */
+.cs-dev-body {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 14px;
+    height: 10px;
+    border-radius: 1px;
+}
+@media (min-width: 768px) {
+    .cs-dev-body {
+        top: 12px;
+        width: 18px;
+        height: 12px;
+    }
+}
+
+/* Arm (typing animation) */
+.cs-dev-arm {
+    position: absolute;
+    top: 14px;
+    width: 6px;
+    height: 4px;
+    border-radius: 1px;
+    animation: cs-type 0.6s ease-in-out infinite alternate;
+}
+@media (min-width: 768px) {
+    .cs-dev-arm {
+        top: 17px;
+        width: 8px;
+        height: 5px;
+    }
+}
+.cs-dev-arm.left  { left: 0; animation-delay: 0s; }
+.cs-dev-arm.right { right: 0; animation-delay: 0.3s; }
+@keyframes cs-type {
+    0%   { transform: translateY(0); }
+    100% { transform: translateY(-2px); }
+}
+
+/* Legs */
+.cs-dev-legs {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 12px;
+    height: 8px;
+    display: flex;
+    gap: 2px;
+    justify-content: center;
+}
+@media (min-width: 768px) {
+    .cs-dev-legs {
+        width: 16px;
+        height: 10px;
+    }
+}
+.cs-dev-leg {
+    width: 4px;
+    height: 100%;
+    border-radius: 0 0 1px 1px;
+}
+@media (min-width: 768px) {
+    .cs-dev-leg {
+        width: 6px;
+    }
+}
+
+/* Jump reaction */
+.cs-dev.jump {
+    animation: cs-jump 0.4s ease-out;
+}
+@keyframes cs-jump {
+    0%   { transform: translateY(0); }
+    40%  { transform: translateY(-16px); }
+    100% { transform: translateY(0); }
+}
+
+/* Emoji popup on click */
+.cs-emoji {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 18px;
+    pointer-events: none;
+    animation: cs-emoji-up 0.8s ease-out forwards;
+    z-index: 10;
+}
+@keyframes cs-emoji-up {
+    0%   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-30px) scale(1.3); }
+}
+
+/* Rocket easter egg */
+.cs-rocket {
+    position: fixed;
+    bottom: -60px;
+    left: -60px;
+    font-size: 40px;
+    z-index: 200;
+    pointer-events: none;
+    animation: cs-rocket-fly 2s ease-in forwards;
+}
+@keyframes cs-rocket-fly {
+    0%   { bottom: -60px; left: -60px; opacity: 1; transform: rotate(-45deg); }
+    100% { bottom: 110vh; left: 110vw; opacity: 0; transform: rotate(-45deg); }
+}
+
+/* Code counter */
+.cs-counter {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(124, 92, 252, 0.15);
+    font-size: 14px;
+    color: #8b8fa8;
+    margin-bottom: 32px;
+}
+.cs-counter-num {
+    font-weight: 700;
+    font-size: 18px;
+    color: #34d399;
+    font-variant-numeric: tabular-nums;
+}
+
+/* CTA button */
+.cs-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 36px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #7c5cfc, #38bdf8);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+}
+.cs-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(124, 92, 252, 0.3);
+    color: #fff;
+}
+
+/* Footer */
+.cs-footer {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 24px;
+    color: #4a4a6a;
+    font-size: 13px;
+}
+.cs-footer a {
+    color: #7c5cfc;
+    text-decoration: none;
+}
+.cs-footer a:hover { text-decoration: underline; }
+
+/* Dev color themes */
+.cs-dev[data-color="purple"] .cs-dev-head  { background: #f5d6c8; }
+.cs-dev[data-color="purple"] .cs-dev-body  { background: #7c5cfc; }
+.cs-dev[data-color="purple"] .cs-dev-arm   { background: #7c5cfc; }
+.cs-dev[data-color="purple"] .cs-dev-leg   { background: #2d2654; }
+
+.cs-dev[data-color="cyan"] .cs-dev-head    { background: #e8c8a0; }
+.cs-dev[data-color="cyan"] .cs-dev-body    { background: #38bdf8; }
+.cs-dev[data-color="cyan"] .cs-dev-arm     { background: #38bdf8; }
+.cs-dev[data-color="cyan"] .cs-dev-leg     { background: #1e3a5f; }
+
+.cs-dev[data-color="green"] .cs-dev-head   { background: #d4a98a; }
+.cs-dev[data-color="green"] .cs-dev-body   { background: #34d399; }
+.cs-dev[data-color="green"] .cs-dev-arm    { background: #34d399; }
+.cs-dev[data-color="green"] .cs-dev-leg    { background: #1a3a2e; }
+
+.cs-dev[data-color="pink"] .cs-dev-head    { background: #f0d0c0; }
+.cs-dev[data-color="pink"] .cs-dev-body    { background: #f093fb; }
+.cs-dev[data-color="pink"] .cs-dev-arm     { background: #f093fb; }
+.cs-dev[data-color="pink"] .cs-dev-leg     { background: #4a2050; }

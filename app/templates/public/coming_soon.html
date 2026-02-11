@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#7c5cfc">
+    {% include 'partials/_analytics.html' %}
+    <title>Em Breve - TeleVIP</title>
+    <meta name="description" content="Estamos construindo algo incrivel. Fique ligado nas novidades do TeleVIP!">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"></noscript>
+    <link href="{{ url_for('static', filename='css/coming-soon.css') }}" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+</head>
+<body class="cs-body">
+
+    <!-- Stars -->
+    <div class="cs-stars" id="csStars"></div>
+
+    <!-- Navbar -->
+    <nav class="cs-nav">
+        <a href="{{ url_for('auth.index') }}" class="cs-nav-brand">
+            <i class="bi bi-telegram"></i> TeleVIP
+        </a>
+        <a href="{{ url_for('auth.index') }}" class="cs-nav-back">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+    </nav>
+
+    <!-- Main -->
+    <main class="cs-main">
+        <div class="cs-badge">
+            <i class="bi bi-cone-striped"></i> Em Construcao
+        </div>
+
+        <h1 class="cs-title">
+            Estamos construindo algo <span class="cs-gradient">incrivel</span>
+        </h1>
+        <p class="cs-subtitle">
+            Nossa equipe esta trabalhando duro para trazer este recurso ate voce. Clique nos devs para anima-los!
+        </p>
+
+        <!-- Pixel Art Scene -->
+        <div class="cs-scene" id="csScene">
+            <!-- Space Window -->
+            <div class="cs-window">
+                <div class="cs-window-star" style="top:12px;left:20px;"></div>
+                <div class="cs-window-star" style="top:25px;left:60px;animation-delay:.5s;"></div>
+                <div class="cs-window-star" style="top:8px;left:100px;animation-delay:1s;"></div>
+                <div class="cs-window-star" style="top:35px;left:130px;animation-delay:1.5s;"></div>
+                <div class="cs-window-star" style="top:18px;left:45px;animation-delay:.8s;width:1px;height:1px;"></div>
+                <div class="cs-window-star" style="top:30px;left:90px;animation-delay:1.2s;width:1px;height:1px;"></div>
+            </div>
+
+            <!-- Dev 1 -->
+            <div class="cs-desk" style="left:24px;" id="desk1">
+                <div class="cs-desk-leg left"></div>
+                <div class="cs-desk-leg right"></div>
+                <div class="cs-monitor">
+                    <div class="cs-monitor-screen">
+                        <div class="cs-code-line"></div>
+                        <div class="cs-code-line"></div>
+                        <div class="cs-code-line"></div>
+                    </div>
+                    <div class="cs-monitor-stand"></div>
+                </div>
+            </div>
+            <div class="cs-dev" data-color="purple" data-clicks="0" style="left:34px;" onclick="clickDev(this)">
+                <div class="cs-dev-head"></div>
+                <div class="cs-dev-body"></div>
+                <div class="cs-dev-arm left"></div>
+                <div class="cs-dev-arm right"></div>
+                <div class="cs-dev-legs">
+                    <div class="cs-dev-leg" style="background:#2d2654;"></div>
+                    <div class="cs-dev-leg" style="background:#2d2654;"></div>
+                </div>
+            </div>
+
+            <!-- Dev 2 -->
+            <div class="cs-desk" style="left:50%;transform:translateX(-50%);" id="desk2">
+                <div class="cs-desk-leg left"></div>
+                <div class="cs-desk-leg right"></div>
+                <div class="cs-monitor">
+                    <div class="cs-monitor-screen">
+                        <div class="cs-code-line"></div>
+                        <div class="cs-code-line"></div>
+                        <div class="cs-code-line"></div>
+                        <div class="cs-code-line"></div>
+                    </div>
+                    <div class="cs-monitor-stand"></div>
+                </div>
+            </div>
+            <div class="cs-dev" data-color="cyan" data-clicks="0" style="left:50%;transform:translateX(-50%);" onclick="clickDev(this)">
+                <div class="cs-dev-head"></div>
+                <div class="cs-dev-body"></div>
+                <div class="cs-dev-arm left" style="animation-delay:.15s;"></div>
+                <div class="cs-dev-arm right" style="animation-delay:.45s;"></div>
+                <div class="cs-dev-legs">
+                    <div class="cs-dev-leg" style="background:#1e3a5f;"></div>
+                    <div class="cs-dev-leg" style="background:#1e3a5f;"></div>
+                </div>
+            </div>
+
+            <!-- Dev 3 -->
+            <div class="cs-desk" style="right:24px;" id="desk3">
+                <div class="cs-desk-leg left"></div>
+                <div class="cs-desk-leg right"></div>
+                <div class="cs-monitor">
+                    <div class="cs-monitor-screen">
+                        <div class="cs-code-line"></div>
+                        <div class="cs-code-line"></div>
+                        <div class="cs-code-line"></div>
+                    </div>
+                    <div class="cs-monitor-stand"></div>
+                </div>
+            </div>
+            <div class="cs-dev" data-color="green" data-clicks="0" style="right:34px;" onclick="clickDev(this)">
+                <div class="cs-dev-head"></div>
+                <div class="cs-dev-body"></div>
+                <div class="cs-dev-arm left" style="animation-delay:.25s;"></div>
+                <div class="cs-dev-arm right" style="animation-delay:.55s;"></div>
+                <div class="cs-dev-legs">
+                    <div class="cs-dev-leg" style="background:#1a3a2e;"></div>
+                    <div class="cs-dev-leg" style="background:#1a3a2e;"></div>
+                </div>
+            </div>
+
+            <!-- Floor -->
+            <div class="cs-floor"></div>
+        </div>
+
+        <!-- Code counter -->
+        <div class="cs-counter">
+            <i class="bi bi-code-slash"></i>
+            <span><span class="cs-counter-num" id="csCount">0</span> linhas de codigo escritas</span>
+        </div>
+
+        <!-- CTA -->
+        <a href="{{ url_for('auth.index') }}" class="cs-btn">
+            <i class="bi bi-house"></i> Voltar a Home
+        </a>
+    </main>
+
+    <!-- Footer -->
+    <footer class="cs-footer">
+        &copy; 2024 <a href="{{ url_for('auth.index') }}">TeleVIP</a>. Todos os direitos reservados.
+    </footer>
+
+    <!-- Vanilla JS -->
+    <script>
+    (function(){
+        // Generate stars
+        var sf = document.getElementById('csStars');
+        for(var i = 0; i < 60; i++){
+            var s = document.createElement('div');
+            s.className = 'cs-star';
+            s.style.left = Math.random()*100 + '%';
+            s.style.top = Math.random()*100 + '%';
+            s.style.setProperty('--dur', (2+Math.random()*4)+'s');
+            s.style.setProperty('--bright', (0.4+Math.random()*0.6).toString());
+            s.style.animationDelay = (Math.random()*4)+'s';
+            sf.appendChild(s);
+        }
+
+        // Code counter
+        var count = Math.floor(Math.random()*5000) + 10000;
+        var el = document.getElementById('csCount');
+        el.textContent = count.toLocaleString('pt-BR');
+        setInterval(function(){
+            count += Math.floor(Math.random()*3) + 1;
+            el.textContent = count.toLocaleString('pt-BR');
+        }, 800);
+    })();
+
+    var emojis = ['🚀','💻','⚡','🔥','✨','🎯','💜','🛸'];
+
+    function clickDev(dev){
+        // Jump
+        dev.classList.remove('jump');
+        void dev.offsetWidth;
+        dev.classList.add('jump');
+
+        // Emoji
+        var em = document.createElement('div');
+        em.className = 'cs-emoji';
+        em.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+        dev.appendChild(em);
+        setTimeout(function(){ em.remove(); }, 800);
+
+        // Easter egg: 5 clicks
+        var c = parseInt(dev.getAttribute('data-clicks') || '0') + 1;
+        dev.setAttribute('data-clicks', c);
+        if(c >= 5){
+            dev.setAttribute('data-clicks', '0');
+            launchRocket();
+        }
+    }
+
+    function launchRocket(){
+        var r = document.createElement('div');
+        r.className = 'cs-rocket';
+        r.textContent = '🚀';
+        document.body.appendChild(r);
+        setTimeout(function(){ r.remove(); }, 2200);
+    }
+    </script>
+</body>
+</html>
