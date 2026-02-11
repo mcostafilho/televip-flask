@@ -4,22 +4,18 @@
 
 {% block content %}
 <div class="auth-container">
-    <!-- Back Button -->
     <a href="{{ url_for('auth.index') }}" class="btn-back">
         <i class="bi bi-arrow-left"></i>
         <span>Voltar</span>
     </a>
 
-    <!-- Canvas Starfield -->
     <canvas id="starCanvas"></canvas>
 
-    <!-- Nebula Orbs -->
     <div class="nebula-orb nebula-orb--1"></div>
     <div class="nebula-orb nebula-orb--2"></div>
     <div class="nebula-orb nebula-orb--3"></div>
     <div class="nebula-orb nebula-orb--4"></div>
 
-    <!-- Shooting Stars -->
     <div class="shooting-star shooting-star--1" id="ss1"></div>
     <div class="shooting-star shooting-star--2" id="ss2"></div>
     <div class="shooting-star shooting-star--3" id="ss3"></div>
@@ -30,7 +26,6 @@
             <p class="subtitle">Crie sua conta em 30 segundos</p>
         </div>
 
-        <!-- Step Indicator -->
         <div class="step-indicator">
             <div class="step active">1</div>
             <div class="step-connector"></div>
@@ -75,8 +70,8 @@
                 <input type="text" name="username" class="form-control with-icon"
                        placeholder="Username" required pattern="[a-z0-9]+"
                        title="Apenas letras minúsculas e números">
-                <small class="form-text text-muted w-100 mt-1">
-                    Será usado no link do bot: t.me/seu_bot
+                <small class="form-text w-100 mt-1">
+                    Poderá ser usado no link do bot: t.me/seu_bot
                 </small>
             </div>
 
@@ -142,11 +137,9 @@ function togglePassword(fieldId) {
     else { f.type = 'password'; e.classList.remove('bi-eye-slash'); e.classList.add('bi-eye'); }
 }
 
-// Password strength
 var passwordInput = document.getElementById('password');
 var strengthBar = document.querySelector('.strength-progress');
 var strengthText = document.querySelector('.strength-text');
-
 passwordInput.addEventListener('input', function() {
     var pw = this.value, str = 0;
     if (pw.length >= 6) str += 25;
@@ -160,7 +153,6 @@ passwordInput.addEventListener('input', function() {
     else { strengthBar.style.background = '#28a745'; strengthText.textContent = 'Senha forte'; strengthText.style.color = '#28a745'; }
 });
 
-// Password match
 var confirmPasswordInput = document.getElementById('confirm_password');
 var form = document.querySelector('form');
 form.addEventListener('submit', function(e) {
@@ -172,132 +164,11 @@ confirmPasswordInput.addEventListener('input', function() {
     if (this.value === passwordInput.value) { this.classList.remove('is-invalid'); this.classList.add('is-valid'); }
     else { this.classList.remove('is-valid'); this.classList.add('is-invalid'); }
 });
-
-/* ---- GSAP Deep Space ---- */
+</script>
+<script src="{{ url_for('static', filename='js/auth-space.js') }}?v=1"></script>
+<script>
 (function() {
-    var container = document.querySelector('.auth-container');
-    if (!container || typeof gsap === 'undefined') return;
-
-    /* ================================================================
-       CANVAS STARFIELD
-       ================================================================ */
-    var canvas = document.getElementById('starCanvas');
-    var ctx = canvas.getContext('2d');
-    var stars = [];
-    var STAR_COUNT = 200;
-
-    function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    }
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    for (var i = 0; i < STAR_COUNT; i++) {
-        var depth = Math.random();
-        var hue = Math.random() > 0.7 ? (200 + Math.random() * 60) : 0;
-        stars.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            size: 0.3 + depth * 2,
-            speed: 0.02 + depth * 0.15,
-            opacity: 0.2 + depth * 0.6,
-            twinkleSpeed: 0.5 + Math.random() * 2,
-            twinkleOffset: Math.random() * Math.PI * 2,
-            hue: hue
-        });
-    }
-
-    function drawStars(time) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        for (var i = 0; i < stars.length; i++) {
-            var s = stars[i];
-            s.y -= s.speed;
-            if (s.y < -5) { s.y = canvas.height + 5; s.x = Math.random() * canvas.width; }
-            var twinkle = 0.5 + 0.5 * Math.sin(time * 0.001 * s.twinkleSpeed + s.twinkleOffset);
-            var alpha = s.opacity * twinkle;
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-            ctx.fillStyle = s.hue > 0
-                ? 'hsla(' + s.hue + ', 80%, 75%, ' + alpha + ')'
-                : 'rgba(255, 255, 255, ' + alpha + ')';
-            ctx.fill();
-            if (s.size > 1.5) {
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, s.size * 3, 0, Math.PI * 2);
-                ctx.fillStyle = s.hue > 0
-                    ? 'hsla(' + s.hue + ', 80%, 75%, ' + (alpha * 0.08) + ')'
-                    : 'rgba(255, 255, 255, ' + (alpha * 0.08) + ')';
-                ctx.fill();
-            }
-        }
-        requestAnimationFrame(drawStars);
-    }
-    requestAnimationFrame(drawStars);
-
-    /* ================================================================
-       FLOATING PARTICLES
-       ================================================================ */
-    var pColors = ['rgba(124,92,252,0.6)','rgba(0,240,255,0.5)','rgba(240,147,251,0.5)','rgba(56,189,248,0.4)','rgba(255,255,255,0.3)'];
-    for (var p = 0; p < 20; p++) {
-        var dot = document.createElement('div');
-        dot.className = 'particle';
-        var sz = 2 + Math.random() * 4;
-        dot.style.width = sz + 'px'; dot.style.height = sz + 'px';
-        dot.style.background = pColors[Math.floor(Math.random() * pColors.length)];
-        dot.style.left = Math.random() * 100 + '%'; dot.style.top = Math.random() * 100 + '%';
-        dot.style.opacity = '0';
-        container.appendChild(dot);
-        gsap.to(dot, { opacity: 0.4 + Math.random() * 0.4, duration: 1 + Math.random(), delay: Math.random() * 2 });
-        gsap.to(dot, {
-            y: -80 - Math.random() * 120, x: (Math.random() - 0.5) * 100,
-            duration: 8 + Math.random() * 12, repeat: -1, yoyo: true, ease: 'sine.inOut', delay: Math.random() * 3
-        });
-    }
-
-    /* ================================================================
-       NEBULA ORBS
-       ================================================================ */
-    document.querySelectorAll('.nebula-orb').forEach(function(orb, idx) {
-        gsap.to(orb, { opacity: 0.8, duration: 2.5, delay: 0.4 * idx, ease: 'power2.out' });
-        gsap.to(orb, {
-            x: function() { return (Math.random() - 0.5) * 80; },
-            y: function() { return (Math.random() - 0.5) * 60; },
-            duration: function() { return 8 + Math.random() * 6; },
-            repeat: -1, yoyo: true, ease: 'sine.inOut', delay: idx * 0.8
-        });
-        gsap.to(orb, {
-            scale: 1.15 + Math.random() * 0.1,
-            duration: 4 + Math.random() * 3,
-            repeat: -1, yoyo: true, ease: 'sine.inOut', delay: idx * 0.5
-        });
-    });
-
-    /* ================================================================
-       SHOOTING STARS
-       ================================================================ */
-    function shootStar(el) {
-        var startX = -150, startY = Math.random() * window.innerHeight * 0.5;
-        var angle = -20 + Math.random() * 15;
-        gsap.set(el, { x: startX, y: startY, rotation: angle, opacity: 0 });
-        gsap.to(el, {
-            x: window.innerWidth + 200,
-            y: startY + Math.tan(angle * Math.PI / 180) * (window.innerWidth + 350),
-            opacity: 1, duration: 0.6 + Math.random() * 0.4, ease: 'power1.in',
-            onComplete: function() {
-                gsap.to(el, { opacity: 0, duration: 0.15, onComplete: function() {
-                    setTimeout(function() { shootStar(el); }, 2000 + Math.random() * 6000);
-                }});
-            }
-        });
-    }
-    setTimeout(function() { shootStar(document.getElementById('ss1')); }, 1500);
-    setTimeout(function() { shootStar(document.getElementById('ss2')); }, 4000);
-    setTimeout(function() { shootStar(document.getElementById('ss3')); }, 7000);
-
-    /* ================================================================
-       CARD ENTRANCE
-       ================================================================ */
+    if (typeof gsap === 'undefined') return;
     var card = document.querySelector('.auth-card');
     var tl = gsap.timeline({ defaults: { ease: 'back.out(1.4)' } });
     tl.from(card, { y: 50, opacity: 0, scale: 0.95, duration: 0.8 })
@@ -311,21 +182,6 @@ confirmPasswordInput.addEventListener('input', function() {
       .from('.divider', { scaleX: 0, opacity: 0, duration: 0.35 }, '-=0.1')
       .from('.btn-secondary', { y: 12, opacity: 0, duration: 0.35 }, '-=0.1')
       .from('.auth-footer', { opacity: 0, duration: 0.35 }, '-=0.1');
-
-    /* ================================================================
-       FOCUS GLOW
-       ================================================================ */
-    document.querySelectorAll('.form-control').forEach(function(inp) {
-        inp.addEventListener('focus', function() {
-            gsap.to(this.closest('.input-group'), {
-                boxShadow: '0 0 25px rgba(0,240,255,0.12), 0 0 4px rgba(0,240,255,0.08)',
-                duration: 0.3
-            });
-        });
-        inp.addEventListener('blur', function() {
-            gsap.to(this.closest('.input-group'), { boxShadow: 'none', duration: 0.3 });
-        });
-    });
 })();
 </script>
 {% endblock %}

@@ -164,6 +164,40 @@ html, body {
     will-change: transform, opacity;
 }
 
+/* Space fact badges */
+.space-fact {
+    position: absolute;
+    z-index: 3;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: rgba(8, 10, 25, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(124, 92, 252, 0.15);
+    border-radius: 30px;
+    color: rgba(200, 210, 240, 0.85);
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    will-change: transform, opacity;
+}
+.space-fact i {
+    font-size: 14px;
+}
+.space-fact .sf-val {
+    color: var(--accent-cyan);
+    font-weight: 700;
+}
+
+/* Hide facts on mobile */
+@media (max-width: 768px) {
+    .space-fact { display: none; }
+}
+
 /* ========================================
    Auth Card - Transparent Glass
    ======================================== */
@@ -422,7 +456,7 @@ html, body {
 
 .form-text {
     font-size: 13px;
-    color: var(--text-muted);
+    color: #b8bfd8;
     margin-top: 4px;
     margin-left: 48px;
     display: block;
