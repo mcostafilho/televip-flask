@@ -75,9 +75,9 @@ body {
 }
 
 /* ========================================
-   Mouse Reveal — Spotlight on Galaxy
+   Mouse Reveal — Real Space Photo Under Cursor
    ======================================== */
-.mouse-reveal-overlay {
+.space-reveal {
     position: fixed;
     top: 0;
     left: 0;
@@ -85,23 +85,23 @@ body {
     height: 100%;
     pointer-events: none;
     z-index: 0;
-    background: radial-gradient(
-        700px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-        transparent 0%,
-        rgba(3, 5, 15, 0.1) 30%,
-        rgba(3, 5, 15, 0.35) 60%,
-        rgba(3, 5, 15, 0.5) 100%
+    background: url('/static/img/space-bg.jpg') center center / cover no-repeat fixed;
+    -webkit-mask-image: radial-gradient(
+        circle var(--reveal-size, 0px) at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(0, 0, 0, 1) 0%,
+        rgba(0, 0, 0, 0.6) 50%,
+        rgba(0, 0, 0, 0) 100%
     );
-    opacity: 0;
-    transition: opacity 1.2s ease;
-}
-
-.mouse-reveal-overlay.active {
-    opacity: 1;
+    mask-image: radial-gradient(
+        circle var(--reveal-size, 0px) at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(0, 0, 0, 1) 0%,
+        rgba(0, 0, 0, 0.6) 50%,
+        rgba(0, 0, 0, 0) 100%
+    );
 }
 
 @media (max-width: 767px) {
-    .mouse-reveal-overlay { display: none; }
+    .space-reveal { display: none; }
 }
 
 /* ========================================
@@ -1581,8 +1581,8 @@ button:focus {
     will-change: left, top;
 }
 
-.mouse-reveal-overlay {
-    will-change: background;
+.space-reveal {
+    will-change: mask-image, -webkit-mask-image;
 }
 
 /* Print styles */
@@ -1620,7 +1620,7 @@ button:focus {
     #hero-canvas {
         display: none !important;
     }
-    .mouse-reveal-overlay {
+    .space-reveal {
         display: none !important;
     }
     /* Ensure all content is visible when animations disabled */

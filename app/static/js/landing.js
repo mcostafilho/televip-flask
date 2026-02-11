@@ -626,40 +626,46 @@
     starfield.appendChild(frag);
   }
 
-  // ── 13. MOUSE REVEAL SPOTLIGHT (desktop only) ────────
+  // ── 13. MOUSE REVEAL — Real Space Photo (desktop only) ──
   function initMouseReveal() {
     if (isMobile) return;
 
-    var overlay = document.createElement('div');
-    overlay.className = 'mouse-reveal-overlay';
-    overlay.setAttribute('aria-hidden', 'true');
-    document.body.appendChild(overlay);
+    var reveal = document.createElement('div');
+    reveal.className = 'space-reveal';
+    reveal.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(reveal);
 
     var mouseX = window.innerWidth / 2;
     var mouseY = window.innerHeight / 2;
     var currentX = mouseX;
     var currentY = mouseY;
+    var currentSize = 0;
+    var targetSize = 0; // grows to 350px after hero entrance
 
-    // Set initial position to center
-    overlay.style.setProperty('--mouse-x', currentX + 'px');
-    overlay.style.setProperty('--mouse-y', currentY + 'px');
+    // Set initial position
+    reveal.style.setProperty('--mouse-x', currentX + 'px');
+    reveal.style.setProperty('--mouse-y', currentY + 'px');
+    reveal.style.setProperty('--reveal-size', '0px');
 
     document.addEventListener('mousemove', function (e) {
       mouseX = e.clientX;
       mouseY = e.clientY;
     });
 
-    // Activate after hero entrance plays out
+    // Grow the reveal circle after hero entrance
     setTimeout(function () {
-      overlay.classList.add('active');
+      targetSize = 350;
     }, 2000);
 
-    // Smooth trailing via GSAP ticker
+    // Smooth trailing + size animation via GSAP ticker
     gsap.ticker.add(function () {
-      currentX += (mouseX - currentX) * 0.12;
-      currentY += (mouseY - currentY) * 0.12;
-      overlay.style.setProperty('--mouse-x', currentX + 'px');
-      overlay.style.setProperty('--mouse-y', currentY + 'px');
+      currentX += (mouseX - currentX) * 0.1;
+      currentY += (mouseY - currentY) * 0.1;
+      currentSize += (targetSize - currentSize) * 0.04;
+
+      reveal.style.setProperty('--mouse-x', currentX + 'px');
+      reveal.style.setProperty('--mouse-y', currentY + 'px');
+      reveal.style.setProperty('--reveal-size', currentSize + 'px');
     });
   }
 
