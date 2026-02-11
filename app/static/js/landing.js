@@ -276,18 +276,21 @@
   // Cards appear in random groups (1-3), slide in from random edges,
   // float upward with gentle drift, fade out, then recycle.
   function initOrbitCards() {
-    if (!isLanding || prefersReduced) return;
+    console.log('[OrbitCards] init start', { isLanding: isLanding, prefersReduced: prefersReduced });
+    if (!isLanding || prefersReduced) { console.log('[OrbitCards] SKIP: landing/reduced'); return; }
     var field = document.querySelector('.orbit-field');
+    console.log('[OrbitCards] field:', field, field ? getComputedStyle(field).display : 'N/A');
     if (!field) return;
     // Only run if orbit-field is visible (tablet+)
-    if (getComputedStyle(field).display === 'none') return;
+    if (getComputedStyle(field).display === 'none') { console.log('[OrbitCards] SKIP: field hidden'); return; }
 
     var allCards = [];
     field.querySelectorAll('.orbit-card').forEach(function (c) {
       // Skip cards hidden by CSS nth-child rule
       if (getComputedStyle(c).display !== 'none') allCards.push(c);
     });
-    if (!allCards.length) return;
+    console.log('[OrbitCards] visible cards:', allCards.length);
+    if (!allCards.length) { console.log('[OrbitCards] SKIP: no visible cards'); return; }
 
     // Shuffle for initial randomness
     for (var i = allCards.length - 1; i > 0; i--) {
@@ -390,7 +393,9 @@
     }
 
     // Spawn a wave: 1-3 cards from the same side
+    console.log('[OrbitCards] ready, pool size:', pool.length);
     function spawnWave() {
+      console.log('[OrbitCards] spawnWave, pool:', pool.length);
       if (!pool.length) {
         setTimeout(spawnWave, 600);
         return;
