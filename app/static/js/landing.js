@@ -640,30 +640,21 @@
     starfield.appendChild(frag);
   }
 
-  // ── 13. MOUSE REVEAL — Nebula Portal (desktop only) ──
-  // Full-screen overlay with space photo; circular CSS mask follows the mouse.
-  // Separate glow ring element so the box-shadow isn't clipped by the mask.
+  // ── 13. MOUSE REVEAL — Crescente Portal (desktop only) ──
+  // Full-screen overlay; CSS-var-driven radial mask grows on first move.
   function initMouseReveal() {
     if (isMobile) return;
 
-    // Portal layer — full-screen space image
     var reveal = document.createElement('div');
     reveal.className = 'space-reveal';
     reveal.setAttribute('aria-hidden', 'true');
     document.body.appendChild(reveal);
 
-    // Glow ring — separate element for pulsing ambient light
-    var glow = document.createElement('div');
-    glow.className = 'space-reveal-glow';
-    glow.setAttribute('aria-hidden', 'true');
-    document.body.appendChild(glow);
-
-    var hw = 300;   // half of 600px mask
-    var ghw = 210;  // half of 420px glow
     var mouseX = window.innerWidth / 2;
     var mouseY = window.innerHeight / 2;
     var curX = mouseX, curY = mouseY;
     var active = false;
+    var size = { r: 0 };  // animated by GSAP
 
     document.addEventListener('mousemove', function (e) {
       mouseX = e.clientX;
@@ -671,23 +662,20 @@
       if (!active) {
         active = true;
         reveal.style.opacity = '1';
-        glow.style.opacity = '1';
+        // Grow from 0 → 320px with elastic ease
+        gsap.to(size, {
+          r: 320, duration: 1.4, ease: 'power3.out'
+        });
       }
     });
 
-    // Dreamy trailing — move the mask hole + glow ring
+    // Smooth trailing — update CSS custom properties each frame
     gsap.ticker.add(function () {
-      curX += (mouseX - curX) * 0.08;
-      curY += (mouseY - curY) * 0.08;
-
-      // Move the circular mask on the full-screen overlay
-      var maskPos = (curX - hw) + 'px ' + (curY - hw) + 'px';
-      reveal.style.webkitMaskPosition = maskPos;
-      reveal.style.maskPosition = maskPos;
-
-      // Move the glow ring
-      glow.style.left = (curX - ghw) + 'px';
-      glow.style.top = (curY - ghw) + 'px';
+      curX += (mouseX - curX) * 0.09;
+      curY += (mouseY - curY) * 0.09;
+      reveal.style.setProperty('--mx', curX + 'px');
+      reveal.style.setProperty('--my', curY + 'px');
+      reveal.style.setProperty('--r', size.r + 'px');
     });
   }
 
