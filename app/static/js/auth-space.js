@@ -201,8 +201,10 @@
     }
 
     /* ================================================================
-       SPACE FACTS - floating data badges
+       SPACE CARDS - Rich floating info cards with multiple styles
        ================================================================ */
+
+    // --- Type A: Space fact pill badges (original style) ---
     var facts = [
         { icon: 'bi-globe-americas', text: 'ISS orbita a', val: '27.600 km/h' },
         { icon: 'bi-rocket-takeoff', text: 'Distância à Lua:', val: '384.400 km' },
@@ -211,72 +213,156 @@
         { icon: 'bi-stars', text: 'Via Láctea tem', val: '200 bi estrelas' },
         { icon: 'bi-arrow-up-right', text: 'ISS altitude:', val: '408 km' },
         { icon: 'bi-clock-history', text: 'Luz do Sol chega em', val: '8 min 20s' },
-        { icon: 'bi-thermometer-snow', text: 'Espaço profundo:', val: '-270 °C' }
+        { icon: 'bi-thermometer-snow', text: 'Espaço profundo:', val: '-270 °C' },
+        { icon: 'bi-lightning-charge', text: 'Velocidade da luz:', val: '300.000 km/s' },
+        { icon: 'bi-tsunami', text: 'Gravidade em Marte:', val: '38% da Terra' },
+        { icon: 'bi-hourglass-split', text: 'Dia em Vênus:', val: '243 dias' },
+        { icon: 'bi-gem', text: 'Diamante gigante:', val: 'BPM 37093' }
     ];
 
-    // Only show on desktop
-    if (window.innerWidth >= 1024) {
-        // Pick 4 random facts
-        var shuffled = facts.sort(function() { return 0.5 - Math.random(); });
-        var selected = shuffled.slice(0, 4);
+    // --- Type B: Dashboard stat cards ---
+    var statCards = [
+        { icon: 'bi-broadcast',           label: 'SINAL',        val: 'Online',     theme: 'green',  live: true },
+        { icon: 'bi-shield-lock-fill',    label: 'CRIPTOGRAFIA', val: 'AES-256',    theme: 'cyan',   live: false },
+        { icon: 'bi-speedometer2',        label: 'LATÊNCIA',     val: '12 ms',      theme: 'purple', live: true },
+        { icon: 'bi-hdd-network-fill',    label: 'SERVIDORES',   val: '99.97% up',  theme: 'green',  live: true },
+        { icon: 'bi-globe2',              label: 'COBERTURA',    val: '190 países',  theme: 'blue',   live: false },
+        { icon: 'bi-cpu',                 label: 'PROCESSAMENTO',val: '< 50 ms',    theme: 'purple', live: false },
+        { icon: 'bi-database-fill-check', label: 'DADOS',        val: 'Protegidos',  theme: 'cyan',   live: false },
+        { icon: 'bi-ev-front-fill',       label: 'UPTIME',       val: '364 dias',   theme: 'green',  live: true },
+        { icon: 'bi-lightning-charge-fill',label: 'VELOCIDADE',   val: '1.2 Gbps',   theme: 'amber',  live: false },
+        { icon: 'bi-fingerprint',         label: 'AUTH',         val: '2FA Ativo',  theme: 'pink',   live: true },
+        { icon: 'bi-cloud-check-fill',    label: 'BACKUP',       val: 'Automático', theme: 'blue',   live: false },
+        { icon: 'bi-fire',                label: 'TRENDING',     val: '#1 Brasil',  theme: 'amber',  live: true }
+    ];
 
-        // Position facts in corners/sides, avoiding center card area
-        var positions = [
-            { left: '3%', top: '12%' },
-            { right: '3%', top: '18%' },
-            { left: '4%', bottom: '15%' },
-            { right: '4%', bottom: '12%' }
-        ];
+    function createFactEl(fact) {
+        var el = document.createElement('div');
+        el.className = 'space-fact';
+        el.innerHTML = '<i class="bi ' + fact.icon + '"></i> ' +
+            fact.text + ' <span class="sf-val">' + fact.val + '</span>';
+        return el;
+    }
 
-        selected.forEach(function(fact, idx) {
-            var el = document.createElement('div');
-            el.className = 'space-fact';
-            el.innerHTML = '<i class="bi ' + fact.icon + '"></i> ' +
-                fact.text + ' <span class="sf-val">' + fact.val + '</span>';
+    function createStatCard(card) {
+        var el = document.createElement('div');
+        el.className = 'space-card space-card--' + card.theme;
+        var liveHtml = card.live ? '<span class="live-dot"></span>' : '';
+        el.innerHTML =
+            '<div class="sc-icon"><i class="bi ' + card.icon + '"></i></div>' +
+            '<div class="sc-body">' +
+                '<span class="sc-label">' + card.label + '</span>' +
+                '<span class="sc-value">' + liveHtml + card.val + '</span>' +
+            '</div>';
+        return el;
+    }
 
-            var pos = positions[idx];
-            if (pos.left) el.style.left = pos.left;
-            if (pos.right) el.style.right = pos.right;
-            if (pos.top) el.style.top = pos.top;
-            if (pos.bottom) el.style.bottom = pos.bottom;
+    function shuffle(arr) {
+        var a = arr.slice();
+        for (var i = a.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+        }
+        return a;
+    }
 
-            container.appendChild(el);
+    function placeCard(el, pos, idx) {
+        if (pos.left)   el.style.left   = pos.left;
+        if (pos.right)  el.style.right  = pos.right;
+        if (pos.top)    el.style.top    = pos.top;
+        if (pos.bottom) el.style.bottom = pos.bottom;
+        container.appendChild(el);
 
-            // Entrance
-            gsap.to(el, { opacity: 1, duration: 1.2, delay: 1.5 + idx * 0.4, ease: 'power2.out' });
-            // Subtle float
+        // Entrance from random direction
+        var angle = (idx / 8) * Math.PI * 2;
+        var dist = 60 + Math.random() * 40;
+        gsap.set(el, { x: Math.cos(angle) * dist, y: Math.sin(angle) * dist });
+        gsap.to(el, { opacity: 1, x: 0, y: 0, duration: 1.0 + Math.random() * 0.5, delay: 1.2 + idx * 0.3, ease: 'back.out(1.2)' });
+
+        // Continuous float — mix of patterns
+        var pattern = idx % 3;
+        if (pattern === 0) {
+            // Drift
             gsap.to(el, {
-                y: (Math.random() - 0.5) * 20,
-                x: (Math.random() - 0.5) * 15,
-                duration: 5 + Math.random() * 4,
-                repeat: -1, yoyo: true, ease: 'sine.inOut',
-                delay: 2 + idx * 0.3
+                y: (Math.random() - 0.5) * 25, x: (Math.random() - 0.5) * 18,
+                duration: 5 + Math.random() * 5, repeat: -1, yoyo: true, ease: 'sine.inOut',
+                delay: 2 + idx * 0.2
             });
-        });
-    } else if (window.innerWidth >= 769) {
-        // Tablet: 2 facts
-        var shuffled2 = facts.sort(function() { return 0.5 - Math.random(); });
-        var sel2 = shuffled2.slice(0, 2);
-        var tpos = [
-            { left: '3%', top: '8%' },
-            { right: '3%', bottom: '8%' }
-        ];
-        sel2.forEach(function(fact, idx) {
-            var el = document.createElement('div');
-            el.className = 'space-fact';
-            el.innerHTML = '<i class="bi ' + fact.icon + '"></i> ' +
-                fact.text + ' <span class="sf-val">' + fact.val + '</span>';
-            var pos = tpos[idx];
-            if (pos.left) el.style.left = pos.left;
-            if (pos.right) el.style.right = pos.right;
-            if (pos.top) el.style.top = pos.top;
-            if (pos.bottom) el.style.bottom = pos.bottom;
-            container.appendChild(el);
-            gsap.to(el, { opacity: 1, duration: 1.2, delay: 1.5 + idx * 0.5, ease: 'power2.out' });
+        } else if (pattern === 1) {
+            // Ellipse orbit
             gsap.to(el, {
-                y: (Math.random() - 0.5) * 15, duration: 6 + Math.random() * 3,
+                motionPath: { path: [
+                    { x: 12, y: -8 }, { x: 0, y: -16 }, { x: -12, y: -8 }, { x: 0, y: 0 }
+                ], curviness: 2 },
+                duration: 8 + Math.random() * 4, repeat: -1, ease: 'none', delay: 2 + idx * 0.3
+            });
+            // Fallback without motionPath plugin — just gentle wave
+            gsap.to(el, {
+                y: '+=' + ((Math.random() - 0.5) * 20), duration: 6 + Math.random() * 4,
                 repeat: -1, yoyo: true, ease: 'sine.inOut', delay: 2
             });
+        } else {
+            // Wave (Lissajous)
+            gsap.to(el, {
+                x: (Math.random() - 0.5) * 22, duration: 7 + Math.random() * 3,
+                repeat: -1, yoyo: true, ease: 'sine.inOut', delay: 2 + idx * 0.1
+            });
+            gsap.to(el, {
+                y: (Math.random() - 0.5) * 18, duration: 5 + Math.random() * 4,
+                repeat: -1, yoyo: true, ease: 'sine.inOut', delay: 2.5 + idx * 0.15
+            });
+        }
+    }
+
+    // Desktop: 8 cards (4 facts + 4 stat cards)
+    if (window.innerWidth >= 1024) {
+        var pickedFacts = shuffle(facts).slice(0, 4);
+        var pickedStats = shuffle(statCards).slice(0, 4);
+
+        var positions = [
+            // Left side
+            { left: '2%',  top: '8%' },
+            { left: '1%',  top: '42%' },
+            { left: '3%',  bottom: '12%' },
+            { left: '1%',  bottom: '38%' },
+            // Right side
+            { right: '2%', top: '10%' },
+            { right: '1%', top: '44%' },
+            { right: '3%', bottom: '10%' },
+            { right: '1%', bottom: '36%' }
+        ];
+
+        // Interleave: fact, stat, fact, stat, ...
+        var allCards = [];
+        for (var ci = 0; ci < 4; ci++) {
+            allCards.push({ type: 'fact', data: pickedFacts[ci] });
+            allCards.push({ type: 'stat', data: pickedStats[ci] });
+        }
+
+        allCards.forEach(function(c, idx) {
+            var el = c.type === 'fact' ? createFactEl(c.data) : createStatCard(c.data);
+            placeCard(el, positions[idx], idx);
+        });
+
+    } else if (window.innerWidth >= 769) {
+        // Tablet: 4 cards (2 facts + 2 stat cards)
+        var pickedFacts2 = shuffle(facts).slice(0, 2);
+        var pickedStats2 = shuffle(statCards).slice(0, 2);
+        var tpos = [
+            { left: '2%', top: '6%' },
+            { right: '2%', top: '10%' },
+            { left: '2%', bottom: '8%' },
+            { right: '2%', bottom: '6%' }
+        ];
+        var tabCards = [
+            { type: 'fact', data: pickedFacts2[0] },
+            { type: 'stat', data: pickedStats2[0] },
+            { type: 'fact', data: pickedFacts2[1] },
+            { type: 'stat', data: pickedStats2[1] }
+        ];
+        tabCards.forEach(function(c, idx) {
+            var el = c.type === 'fact' ? createFactEl(c.data) : createStatCard(c.data);
+            placeCard(el, tpos[idx], idx);
         });
     }
 
