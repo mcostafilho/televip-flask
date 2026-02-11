@@ -639,7 +639,7 @@
     starfield.appendChild(frag);
   }
 
-  // ── 13. MOUSE REVEAL — Space Photo Portal (desktop only) ──
+  // ── 13. MOUSE REVEAL — Nebula Portal (desktop only) ──
   function initMouseReveal() {
     if (isMobile) return;
 
@@ -648,6 +648,7 @@
     reveal.setAttribute('aria-hidden', 'true');
     document.body.appendChild(reveal);
 
+    var hw = 300; // half of 600px — manual centering (no CSS transform)
     var mouseX = window.innerWidth / 2;
     var mouseY = window.innerHeight / 2;
     var curX = mouseX, curY = mouseY;
@@ -662,12 +663,12 @@
       }
     });
 
-    // Smooth trailing via GSAP ticker — just move left/top
+    // Dreamy trailing — offset by half-size to center on cursor
     gsap.ticker.add(function () {
-      curX += (mouseX - curX) * 0.12;
-      curY += (mouseY - curY) * 0.12;
-      reveal.style.left = curX + 'px';
-      reveal.style.top = curY + 'px';
+      curX += (mouseX - curX) * 0.07;
+      curY += (mouseY - curY) * 0.07;
+      reveal.style.left = (curX - hw) + 'px';
+      reveal.style.top = (curY - hw) + 'px';
     });
   }
 

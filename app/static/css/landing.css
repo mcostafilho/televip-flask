@@ -75,7 +75,7 @@ body {
 }
 
 /* ========================================
-   Mouse Reveal — Real Space Photo Portal
+   Mouse Reveal — Nebula Portal Effect
    ======================================== */
 .space-reveal {
     position: fixed;
@@ -89,10 +89,30 @@ body {
     background-size: cover;
     background-repeat: no-repeat;
     background-attachment: fixed;
-    transform: translate(-50%, -50%);
+    /* NO transform — it breaks background-attachment:fixed in all browsers */
     opacity: 0;
-    transition: opacity 0.6s ease;
-    box-shadow: 0 0 80px 30px rgba(5, 8, 22, 0.6);
+    transition: opacity 1s ease;
+    /* Feathered portal edges — soft ethereal fade */
+    -webkit-mask-image: radial-gradient(circle at center, #000 30%, rgba(0,0,0,0.4) 55%, transparent 70%);
+    mask-image: radial-gradient(circle at center, #000 30%, rgba(0,0,0,0.4) 55%, transparent 70%);
+    /* Ambient glow */
+    box-shadow:
+        0 0 80px 40px rgba(124, 92, 252, 0.10),
+        0 0 160px 80px rgba(56, 189, 248, 0.06);
+    animation: portalPulse 5s ease-in-out infinite;
+}
+
+@keyframes portalPulse {
+    0%, 100% {
+        box-shadow:
+            0 0 80px 40px rgba(124, 92, 252, 0.10),
+            0 0 160px 80px rgba(56, 189, 248, 0.06);
+    }
+    50% {
+        box-shadow:
+            0 0 100px 50px rgba(124, 92, 252, 0.18),
+            0 0 200px 100px rgba(56, 189, 248, 0.10);
+    }
 }
 
 @media (max-width: 767px) {
