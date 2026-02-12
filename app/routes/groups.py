@@ -33,7 +33,7 @@ def _validate_plan_input(name, price_str, duration_str, description=None, is_lif
     try:
         price = float(price_str)
         if price < 1 or price > 10000:
-            errors.append('Preco minimo e R$ 1,00. Valores abaixo de R$ 1,00 nao sao permitidos.')
+            errors.append('Preço mínimo é R$ 1,00. Valores abaixo de R$ 1,00 não são permitidos.')
     except (ValueError, TypeError):
         errors.append('Preço inválido')
 
@@ -41,9 +41,13 @@ def _validate_plan_input(name, price_str, duration_str, description=None, is_lif
         duration = 0
     else:
         try:
-            duration = int(duration_str)
-            if duration <= 0 or duration > 365:
-                errors.append('Duração deve ser entre 1 e 365 dias')
+            duration_float = float(duration_str)
+            if duration_float != int(duration_float):
+                errors.append('Duração deve ser um número inteiro (sem decimais).')
+            else:
+                duration = int(duration_float)
+                if duration <= 0 or duration > 365:
+                    errors.append('Duração deve ser entre 1 e 365 dias')
         except (ValueError, TypeError):
             errors.append('Duração inválida')
 
@@ -87,7 +91,7 @@ def list():
 def create():
     """Criar novo grupo"""
     if is_admin_viewing():
-        flash('Acao nao permitida no modo admin.', 'warning')
+        flash('Ação não permitida no modo admin.', 'warning')
         return redirect(url_for('groups.list'))
 
     if request.method == 'POST':
@@ -99,7 +103,7 @@ def create():
         
         # Validar formato do telegram_id (deve ser numerico, opcionalmente com -)
         if telegram_id and not telegram_id.lstrip('-').isdigit():
-            flash('ID do Telegram deve ser numerico.', 'error')
+            flash('ID do Telegram deve ser numérico.', 'error')
             return render_template('dashboard/group_form.html',
                                  group=None, show_success_modal=False)
 
@@ -119,7 +123,7 @@ def create():
                 try:
                     data = response.json()
                 except Exception:
-                    flash('Resposta invalida do Telegram. Tente novamente.', 'error')
+                    flash('Resposta inválida do Telegram. Tente novamente.', 'error')
                     return render_template('dashboard/group_form.html',
                                          group=None, show_success_modal=False)
 
@@ -142,22 +146,22 @@ def create():
                     if member_data.get('ok'):
                         status = member_data.get('result', {}).get('status')
                         if status not in ['administrator', 'creator']:
-                            flash('O bot precisa ser administrador do grupo! Adicione o bot como admin e tente novamente.', 'warning')
+                            flash('O bot precisa ser administrador do grupo! Adicione-o como admin e tente novamente.', 'warning')
                             return render_template('dashboard/group_form.html',
                                                  group=None, show_success_modal=False)
 
             except requests.exceptions.RequestException as req_error:
                 logger.error(f"Telegram connection error: {req_error}")
-                flash('Erro de conexao com o Telegram. Tente novamente.', 'error')
+                flash('Erro de conexão com o Telegram. Tente novamente.', 'error')
                 return render_template('dashboard/group_form.html',
                                      group=None, show_success_modal=False)
             except Exception as e:
-                logger.error(f"Erro na validacao do grupo Telegram: {e}")
-                flash('Erro ao validar grupo. Tente novamente.', 'error')
+                logger.error(f"Erro na validação do grupo Telegram: {e}")
+                flash('Erro ao validar o grupo. Tente novamente.', 'error')
                 return render_template('dashboard/group_form.html',
                                      group=None, show_success_modal=False)
         elif not telegram_id:
-            flash('ID do Telegram e obrigatorio.', 'error')
+            flash('ID do Telegram é obrigatório.', 'error')
             return render_template('dashboard/group_form.html',
                                  group=None, show_success_modal=False)
         
@@ -278,7 +282,7 @@ def edit(id):
 
     if request.method == 'POST':
         if is_admin_viewing():
-            flash('Acao nao permitida no modo admin.', 'warning')
+            flash('Ação não permitida no modo admin.', 'warning')
             return redirect(url_for('groups.list'))
         # Atualizar dados básicos
         group.name = request.form.get('name')
@@ -355,7 +359,7 @@ def edit(id):
 def delete(id):
     """Deletar grupo"""
     if is_admin_viewing():
-        flash('Acao nao permitida no modo admin.', 'warning')
+        flash('Ação não permitida no modo admin.', 'warning')
         return redirect(url_for('groups.list'))
 
     effective = get_effective_creator()
@@ -388,7 +392,7 @@ def delete(id):
 def toggle(id):
     """Ativar/Desativar grupo"""
     if is_admin_viewing():
-        flash('Acao nao permitida no modo admin.', 'warning')
+        flash('Ação não permitida no modo admin.', 'warning')
         return redirect(url_for('groups.list'))
 
     group = Group.query.filter_by(id=id, creator_id=current_user.id).first_or_404()
@@ -409,7 +413,7 @@ def toggle(id):
 def broadcast(group_id):
     """Enviar mensagem para todos os assinantes do grupo"""
     if is_admin_viewing():
-        flash('Acao nao permitida no modo admin.', 'warning')
+        flash('Ação não permitida no modo admin.', 'warning')
         return redirect(url_for('groups.list'))
 
     group = Group.query.filter_by(id=group_id, creator_id=current_user.id).first_or_404()
