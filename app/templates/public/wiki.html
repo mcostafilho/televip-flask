@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#7c5cfc">
+
+    {% include 'partials/_analytics.html' %}
+    <title>Central de Ajuda - TeleVIP | Como Funciona</title>
+
+    <meta name="description" content="Saiba como o TeleVIP funciona: configure seu bot, crie grupos, receba pagamentos e gerencie assinaturas no Telegram.">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Central de Ajuda - TeleVIP | Como Funciona">
+    <meta property="og:description" content="Saiba como o TeleVIP funciona: configure seu bot, crie grupos, receba pagamentos e gerencie assinaturas no Telegram.">
+    <meta property="og:image" content="https://televip.app/static/img/og-image.png">
+    <meta property="og:url" content="https://televip.app/como-funciona">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="pt_BR">
+    <link rel="canonical" href="https://televip.app/como-funciona">
+
+    <!-- Preload Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="{{ url_for('static', filename='css/landing.css') }}?v=19" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+
+    <style>
+        /* Wiki Page - Galactic Dark */
+        .wiki-hero {
+            padding: 140px 0 60px;
+            background: rgba(11, 14, 26, 0.6);
+            text-align: center;
+            position: relative;
+        }
+        .wiki-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at 50% 0%, rgba(124, 92, 252, 0.15) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        .wiki-hero h1 {
+            font-size: 36px;
+            font-weight: 900;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            color: #ffffff;
+            position: relative;
+        }
+        .wiki-hero p.lead {
+            font-size: 18px;
+            color: #b0b4cc;
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+        }
+        @media (min-width: 768px) {
+            .wiki-hero h1 { font-size: 48px; }
+            .wiki-hero p.lead { font-size: 20px; }
+        }
+
+        /* Wiki Content */
+        .wiki-section {
+            padding: 80px 0;
+            background: rgba(11, 14, 26, 0.75);
+        }
+
+        /* Section nav */
+        .wiki-nav {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(124, 92, 252, 0.15);
+            border-radius: 16px;
+            padding: 24px;
+            position: sticky;
+            top: 100px;
+        }
+        .wiki-nav h6 {
+            color: #e2e8f0;
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+        .wiki-nav a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            color: #b0b4cc;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            margin-bottom: 4px;
+        }
+        .wiki-nav a:hover {
+            background: rgba(124, 92, 252, 0.1);
+            color: #e2e8f0;
+        }
+        .wiki-nav a i {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        /* Accordion - Dark Glass */
+        .wiki-accordion .accordion-item {
+            border: 1px solid rgba(124, 92, 252, 0.1);
+            margin-bottom: 16px;
+            border-radius: 16px !important;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .wiki-accordion .accordion-button {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            color: #e2e8f0;
+            padding: 24px 28px;
+            background: transparent;
+            gap: 14px;
+        }
+        .wiki-accordion .accordion-button:not(.collapsed) {
+            background: rgba(124, 92, 252, 0.08);
+            color: var(--primary);
+            box-shadow: none;
+        }
+        .wiki-accordion .accordion-button::after {
+            filter: invert(1) brightness(0.7);
+        }
+        .wiki-accordion .accordion-button:focus {
+            box-shadow: none;
+        }
+        .wiki-accordion .accordion-body {
+            color: #b0b4cc;
+            font-size: 15px;
+            line-height: 1.9;
+            padding: 0 28px 28px;
+        }
+        .wiki-accordion .accordion-body h6 {
+            color: #e2e8f0;
+            font-weight: 700;
+            font-size: 16px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        .wiki-accordion .accordion-body h6:first-child {
+            margin-top: 0;
+        }
+        .wiki-accordion .accordion-body ul {
+            padding-left: 0;
+            list-style: none;
+        }
+        .wiki-accordion .accordion-body ul li {
+            padding: 6px 0;
+            position: relative;
+            padding-left: 28px;
+        }
+        .wiki-accordion .accordion-body ul li::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 14px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary);
+        }
+        .wiki-accordion .accordion-body ol {
+            padding-left: 20px;
+        }
+        .wiki-accordion .accordion-body ol li {
+            padding: 6px 0;
+        }
+        .wiki-accordion .accordion-body code {
+            background: rgba(124, 92, 252, 0.15);
+            color: #c4b5fd;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        /* Section icon in accordion header */
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        /* Highlight boxes */
+        .wiki-highlight {
+            background: rgba(124, 92, 252, 0.08);
+            border: 1px solid rgba(124, 92, 252, 0.2);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+        .wiki-highlight.warning {
+            background: rgba(251, 191, 36, 0.08);
+            border-color: rgba(251, 191, 36, 0.2);
+        }
+        .wiki-highlight.success {
+            background: rgba(52, 211, 153, 0.08);
+            border-color: rgba(52, 211, 153, 0.2);
+        }
+        .wiki-highlight.danger {
+            background: rgba(248, 113, 113, 0.08);
+            border-color: rgba(248, 113, 113, 0.2);
+        }
+
+        /* Section backgrounds */
+        section[style*="background: white"],
+        section[style*="background: #f8f9fa"] {
+            background: rgba(11, 14, 26, 0.7) !important;
+        }
+
+        /* Mobile nav hide */
+        @media (max-width: 991px) {
+            .wiki-nav-col { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Starfield Background -->
+    <div class="starfield" id="starfield">
+        <div class="shooting-star"></div>
+        <div class="shooting-star"></div>
+        <div class="shooting-star"></div>
+    </div>
+
+    <!-- Nebula Glow Overlays -->
+    <div class="nebula-glow purple"></div>
+    <div class="nebula-glow cyan"></div>
+    <div class="nebula-glow pink"></div>
+    <div class="nebula-glow deep"></div>
+
+    <!-- Cursor Animation (Desktop Only) -->
+    <div class="cursor"></div>
+    <div class="cursor2"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('auth.index') }}">
+                <i class="bi bi-telegram"></i> TeleVIP
+            </a>
+            <a href="https://wa.me/551721223445" target="_blank" rel="noopener noreferrer"
+               class="btn btn-success btn-sm d-lg-none ms-auto me-2"
+               style="font-size: 13px; white-space: nowrap;">
+                <i class="bi bi-whatsapp"></i> Suporte
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.recursos') }}">Recursos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.precos') }}">Precos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn-nav-cta" href="{{ url_for('auth.register') }}">
+                            Comecar Gratis
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="wiki-hero">
+        <div class="container">
+            <div>
+                <h1>Central de <span class="text-gradient">Ajuda</span></h1>
+                <p class="lead">
+                    Tudo que voce precisa saber para usar o TeleVIP e monetizar seus grupos no Telegram.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Wiki Content -->
+    <section class="wiki-section">
+        <div class="container">
+            <div class="row">
+                <!-- Sidebar Nav (desktop) -->
+                <div class="col-lg-3 wiki-nav-col">
+                    <div class="wiki-nav">
+                        <h6>Navegacao</h6>
+                        <a href="#sec-about"><i class="bi bi-info-circle"></i> O que e o TeleVIP</a>
+                        <a href="#sec-howto"><i class="bi bi-signpost-2"></i> Como Funciona</a>
+                        <a href="#sec-bot"><i class="bi bi-robot"></i> Configuracao do Bot</a>
+                        <a href="#sec-groups"><i class="bi bi-collection"></i> Grupos e Planos</a>
+                        <a href="#sec-payments"><i class="bi bi-credit-card"></i> Pagamentos e Taxas</a>
+                        <a href="#sec-subscriptions"><i class="bi bi-arrow-repeat"></i> Assinaturas</a>
+                        <a href="#sec-security"><i class="bi bi-shield-check"></i> Seguranca</a>
+                        <a href="#sec-not"><i class="bi bi-x-octagon"></i> O que NAO Faz</a>
+                        <a href="#sec-faq"><i class="bi bi-question-circle"></i> FAQ</a>
+                    </div>
+                </div>
+
+                <!-- Main Content -->
+                <div class="col-lg-9">
+                    <div class="accordion wiki-accordion" id="wikiAccordion">
+
+                        <!-- 1. O que e o TeleVIP -->
+                        <div class="accordion-item" id="sec-about">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#wiki1">
+                                    <div class="section-icon" style="background: rgba(124, 92, 252, 0.15); color: #7c5cfc;">
+                                        <i class="bi bi-info-circle-fill"></i>
+                                    </div>
+                                    O que e o TeleVIP
+                                </button>
+                            </h2>
+                            <div id="wiki1" class="accordion-collapse collapse show" data-bs-parent="#wikiAccordion">
+                                <div class="accordion-body">
+                                    <p>
+                                        O <strong>TeleVIP</strong> e uma plataforma brasileira para <strong>monetizacao de grupos do Telegram</strong>.
+                                        Com ele, voce transforma seu grupo em um negocio: cria planos de assinatura, recebe pagamentos automaticamente
+                                        e gerencia membros sem esforco manual.
+                                    </p>
+                                    <p>
+                                        Nosso bot inteligente opera 24 horas por dia, cuidando de toda a cobranca, aprovacao de novos membros
+                                        e remocao automatica de inadimplentes. Voce foca no conteudo, a gente cuida do resto.
+                                    </p>
+                                    <div class="wiki-highlight success">
+                                        <strong><i class="bi bi-check-circle-fill text-success"></i> Ideal para:</strong>
+                                        criadores de conteudo, educadores, traders, coaches, comunidades exclusivas
+                                        e qualquer pessoa que queira cobrar pelo acesso a um grupo no Telegram.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Como Funciona -->
+                        <div class="accordion-item" id="sec-howto">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#wiki2">
+                                    <div class="section-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">
+                                        <i class="bi bi-signpost-2-fill"></i>
+                                    </div>
+                                    Como Funciona (Passo a Passo)
+                                </button>
+                            </h2>
+                            <div id="wiki2" class="accordion-collapse collapse" data-bs-parent="#wikiAccordion">
+                                <div class="accordion-body">
+                                    <h6>Para o Criador</h6>
+                                    <ol>
+                                        <li><strong>Crie sua conta</strong> no TeleVIP (gratis, sem cartao de credito).</li>
+                                        <li><strong>Crie um grupo</strong> no painel, informando o ID do grupo no Telegram.</li>
+                                        <li><strong>Adicione o bot</strong> (<code>@televipbra_bot</code>) ao grupo e torne-o administrador com permissao para banir usuarios e convidar via link.</li>
+                                        <li><strong>Execute o /setup</strong> no grupo para vincular o bot ao TeleVIP.</li>
+                                        <li><strong>Crie planos de preco</strong> (ex: Mensal R$ 29,90, Trimestral R$ 69,90).</li>
+                                        <li><strong>Adicione manualmente</strong> na whitelist do grupo qualquer usuario que ja estiver dentro do grupo (para que nao sejam removidos pelo bot).</li>
+                                        <li><strong>Compartilhe o link de pagamento</strong> do seu grupo. Pronto!</li>
+                                    </ol>
+
+                                    <h6>Para o Assinante</h6>
+                                    <ol>
+                                        <li>O assinante acessa o link de pagamento do grupo.</li>
+                                        <li>Escolhe um plano e realiza o pagamento via Stripe (cartao ou boleto).</li>
+                                        <li>Apos confirmacao, o bot automaticamente convida o assinante para o grupo.</li>
+                                        <li>Quando a assinatura expira ou e cancelada, o bot remove o membro do grupo.</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. Configuracao do Bot -->
+                        <div class="accordion-item" id="sec-bot">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#wiki3">
+                                    <div class="section-icon" style="background: rgba(52, 211, 153, 0.15); color: #34d399;">
+                                        <i class="bi bi-robot"></i>
+                                    </div>
+                                    Configuracao do Bot
+                                </button>
+                            </h2>
+                            <div id="wiki3" class="accordion-collapse collapse" data-bs-parent="#wikiAccordion">
+                                <div class="accordion-body">
+                                    <h6>Adicionando o Bot ao Grupo</h6>
+                                    <ol>
+                                        <li>No Telegram, abra seu grupo e va em <strong>Configuracoes do Grupo</strong>.</li>
+                                        <li>Clique em <strong>Administradores</strong> &rarr; <strong>Adicionar Admin</strong>.</li>
+                                        <li>Pesquise por <code>@televipbra_bot</code> e adicione-o.</li>
+                                        <li>Conceda as permissoes: <strong>Banir usuarios</strong> e <strong>Convidar usuarios via link</strong>.</li>
+                                    </ol>
+
+                                    <h6>Vinculando o Bot</h6>
+                                    <p>
+                                        Apos adicionar o bot como administrador, envie o comando <code>/setup</code> no grupo.
+                                        O bot ira confirmar a vinculacao com o TeleVIP. A partir desse momento, ele passa
+                                        a gerenciar automaticamente a entrada e saida de membros.
+                                    </p>
+
+                                    <div class="wiki-highlight warning">
+                                        <strong><i class="bi bi-exclamation-triangle-fill" style="color: #fbbf24;"></i> Importante:</strong>
+                                        O bot precisa ser <strong>administrador</strong> do grupo com as permissoes corretas.
+                                        Sem isso, ele nao conseguira adicionar ou remover membros.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. Grupos e Planos -->
+                        <div class="accordion-item" id="sec-groups">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#wiki4">
+                                    <div class="section-icon" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24;">
+                                        <i class="bi bi-collection-fill"></i>
+                                    </div>
+                                    Grupos e Planos
+                                </button>
+                            </h2>
+                            <div id="wiki4" class="accordion-collapse collapse" data-bs-parent="#wikiAccordion">
+                                <div class="accordion-body">
+                                    <h6>Criando um Grupo</h6>
+                                    <p>
+                                        No dashboard, clique em <strong>Criar Grupo</strong>. Voce precisara informar:
+                                    </p>
+                                    <ul>
+                                        <li><strong>Nome do grupo</strong> (como aparecera na plataforma)</li>
+                                        <li><strong>ID do grupo no Telegram</strong> (numero negativo, ex: <code>-1001234567890</code>)</li>
+                                        <li><strong>Descricao</strong> (opcional)</li>
+                                    </ul>
+
+                                    <div class="wiki-highlight">
+                                        <strong><i class="bi bi-lightbulb-fill" style="color: #7c5cfc;"></i> Como descobrir o ID do grupo?</strong><br>
+                                        Adicione o bot <code>@userinfobot</code> ao seu grupo. Ele mostrara o ID. Copie o numero
+                                        (incluindo o sinal de menos) e cole no TeleVIP. Depois, pode remover o bot auxiliar.
+                                    </div>
+
+                                    <h6>Criando Planos de Preco</h6>
+                                    <ul>
+                                        <li>Cada grupo pode ter <strong>multiplos planos</strong> (ex: Mensal, Trimestral, Anual).</li>
+                                        <li>O <strong>preco minimo</strong> por plano e de <strong>R$ 1,00</strong>.</li>
+                                        <li>A <strong>duracao</strong> e definida em <strong>dias inteiros</strong> (ex: 30, 90, 365).</li>
+                                        <li>Planos podem ser editados ou desativados a qualquer momento.</li>
+                                    </ul>
+
+                                    <h6>Whitelist</h6>
+                                    <p>
+                                        Voce pode adicionar membros a <strong>whitelist</strong> do grupo. Membros na whitelist
+                                        nao sao removidos pelo bot, mesmo sem assinatura ativa. Ideal para moderadores,
+                                        amigos ou membros vitalcios.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 5. Pagamentos e Taxas -->
+                        <div class="accordion-item" id="sec-payments">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#wiki5">
+                                    <div class="section-icon" style="background: rgba(236, 72, 153, 0.15); color: #ec4899;">
+                                        <i class="bi bi-credit-card-fill"></i>
+                                    </div>
+                                    Pagamentos e Taxas
+                                </button>
+                            </h2>
+                            <div id="wiki5" class="accordion-collapse collapse" data-bs-parent="#wikiAccordion">
+                                <div class="accordion-body">
+                                    <h6>Processamento de Pagamentos</h6>
+                                    <p>
+                                        Todos os pagamentos sao processados via <strong>Stripe</strong>, a maior plataforma
+                                        de pagamentos do mundo. Aceitamos:
+                                    </p>
+                                    <ul>
+                                        <li><strong>Cartao de credito</strong> (Visa, Mastercard, Elo, etc.)</li>
+                                        <li><strong>Boleto bancario</strong></li>
+                                    </ul>
+
+                                    <h6>Taxas</h6>
+                                    <div class="wiki-highlight warning">
+                                        <strong><i class="bi bi-tag-fill" style="color: #fbbf24;"></i> Taxa por transacao:</strong>
+                                        <strong>R$ 0,99 (fixo) + 9,99% do valor da venda</strong><br>
+                                        <small>Exemplo: venda de R$ 100,00 &rarr; taxa de R$ 10,98 &rarr; voce recebe R$ 89,02</small>
+                                    </div>
+                                    <ul>
+                                        <li><strong>Sem mensalidade</strong> &mdash; voce so paga quando recebe.</li>
+                                        <li><strong>Sem taxa de setup</strong> &mdash; criar conta e gratuito.</li>
+                                        <li><strong>Sem taxa de saque</strong> &mdash; transferencias para sua conta sao gratis.</li>
+                                    </ul>
+
+                                    <h6>Saldo e Saques</h6>
+                                    <p>
+                                        O valor de cada venda (ja descontada a taxa) entra no seu saldo.
+                                        Por seguranca, novos pagamentos ficam <strong>retidos por 7 dias</strong>
+                                        antes de serem liberados para saque (protecao contra chargebacks).
+                                    </p>
+                                    <ul>
+                                        <li><strong>Saque minimo:</strong> R$ 50,00</li>
+                                        <li><strong>Prazo:</strong> ate 3 dias uteis via PIX</li>
+                                        <li>Necessario ter <strong>chave PIX cadastrada</strong> no perfil</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 6. Assinaturas -->
+                        <div class="accordion-item" id="sec-subscriptions">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#wiki6">
+                                    <div class="section-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">
+                                        <i class="bi bi-arrow-repeat"></i>
+                                    </div>
+                                    Assinaturas
+                                </button>
+                            </h2>
+                            <div id="wiki6" class="accordion-collapse collapse" data-bs-parent="#wikiAccordion">
+                                <div class="accordion-body">
+                                    <h6>Assinaturas Recorrentes</h6>
+                                    <p>
+                                        O TeleVIP suporta <strong>assinaturas recorrentes</strong> gerenciadas pelo Stripe.
+                                        O membro paga uma vez e o Stripe cobra automaticamente a cada periodo (mensal, por exemplo).
+                                    </p>
+                                    <ul>
+                                        <li>Renovacao automatica no cartao do membro.</li>
+                                        <li>Retentativa automatica em caso de falha de pagamento.</li>
+                                        <li>Notificacao por email ao membro sobre renovacoes.</li>
+                                    </ul>
+
+                                    <h6>Cancelamento</h6>
+                                    <p>
+                                        O membro pode cancelar a assinatura a qualquer momento. O cancelamento e feito
+                                        no <strong>final do periodo ja pago</strong> &mdash; ou seja, o membro continua no grupo
+                                        ate a data de expiracao, sem cobranca adicional.
+                                    </p>
+
+                                    <h6>Expiracao Automatica</h6>
+                                    <p>
+                                        Quando uma assinatura expira (por cancelamento ou falha de pagamento),
+                                        o bot <strong>remove automaticamente</strong> o membro do grupo no Telegram.
+                                        Nenhuma acao manual e necessaria.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 7. Seguranca -->
+                        <div class="accordion-item" id="sec-security">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#wiki7">
+                                    <div class="section-icon" style="background: rgba(52, 211, 153, 0.15); color: #34d399;">
+                                        <i class="bi bi-shield-check"></i>
+                                    </div>
+                                    Seguranca
+                                </button>
+                            </h2>
+                            <div id="wiki7" class="accordion-collapse collapse" data-bs-parent="#wikiAccordion">
+                                <div class="accordion-body">
+                                    <ul>
+                                        <li><strong>Remocao automatica:</strong> membros inadimplentes sao removidos do grupo automaticamente pelo bot.</li>
+                                        <li><strong>Auditoria periodica:</strong> o sistema verifica periodicamente se todos os membros do grupo possuem assinatura ativa.</li>
+                                        <li><strong>Protecao contra chargeback:</strong> valores ficam retidos por 7 dias antes da liberacao para saque.</li>
+                                        <li><strong>Criptografia:</strong> dados sensiveis sao criptografados. Senhas usam hashing seguro (scrypt).</li>
+                                        <li><strong>Stripe PCI DSS:</strong> pagamentos processados pelo Stripe, que possui certificacao PCI DSS Level 1.</li>
+                                        <li><strong>HTTPS obrigatorio:</strong> todas as conexoes sao criptografadas via TLS.</li>
+                                        <li><strong>Tokens JWT:</strong> autenticacao segura com tokens assinados e com expiracao.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 8. O que o TeleVIP NAO Faz -->
+                        <div class="accordion-item" id="sec-not">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#wiki8">
+                                    <div class="section-icon" style="background: rgba(248, 113, 113, 0.15); color: #f87171;">
+                                        <i class="bi bi-x-octagon-fill"></i>
+                                    </div>
+                                    O que o TeleVIP NAO Faz
+                                </button>
+                            </h2>
+                            <div id="wiki8" class="accordion-collapse collapse" data-bs-parent="#wikiAccordion">
+                                <div class="accordion-body">
+                                    <div class="wiki-highlight danger">
+                                        <p class="mb-2"><strong>O TeleVIP e uma plataforma de gestao de acesso e cobranca. Ele NAO:</strong></p>
+                                        <ul>
+                                            <li><strong>Nao envia conteudo</strong> &mdash; o criador e responsavel por postar no grupo.</li>
+                                            <li><strong>Nao modera mensagens</strong> &mdash; nao filtra, apaga ou gerencia mensagens dentro do grupo.</li>
+                                            <li><strong>Nao faz marketing</strong> &mdash; a divulgacao do grupo e responsabilidade do criador.</li>
+                                            <li><strong>Nao processa pagamentos fora do Stripe</strong> &mdash; nao aceitamos PIX direto, transferencia bancaria ou outros meios.</li>
+                                            <li><strong>Nao permite planos gratuitos</strong> &mdash; o preco minimo de um plano e R$ 1,00.</li>
+                                            <li><strong>Nao garante reembolsos</strong> &mdash; disputas de pagamento sao tratadas via Stripe conforme suas politicas.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 9. FAQ -->
+                        <div class="accordion-item" id="sec-faq">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#wiki9">
+                                    <div class="section-icon" style="background: rgba(124, 92, 252, 0.15); color: #7c5cfc;">
+                                        <i class="bi bi-question-circle-fill"></i>
+                                    </div>
+                                    Perguntas Frequentes (FAQ)
+                                </button>
+                            </h2>
+                            <div id="wiki9" class="accordion-collapse collapse" data-bs-parent="#wikiAccordion">
+                                <div class="accordion-body">
+                                    <!-- Inner FAQ accordion -->
+                                    <div class="accordion" id="faqInner">
+                                        <div class="accordion-item" style="background: rgba(255,255,255,0.03); border-color: rgba(124,92,252,0.08);">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed" style="font-size: 15px; padding: 16px 20px;" type="button" data-bs-toggle="collapse" data-bs-target="#fq1">
+                                                    Como descubro o ID do meu grupo no Telegram?
+                                                </button>
+                                            </h2>
+                                            <div id="fq1" class="accordion-collapse collapse" data-bs-parent="#faqInner">
+                                                <div class="accordion-body" style="padding: 0 20px 16px;">
+                                                    Adicione o bot <code>@userinfobot</code> ao seu grupo. Ele mostrara o ID (um numero negativo como <code>-1001234567890</code>). Copie e cole no TeleVIP ao criar o grupo.
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="accordion-item" style="background: rgba(255,255,255,0.03); border-color: rgba(124,92,252,0.08);">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed" style="font-size: 15px; padding: 16px 20px;" type="button" data-bs-toggle="collapse" data-bs-target="#fq2">
+                                                    Posso ter mais de um grupo?
+                                                </button>
+                                            </h2>
+                                            <div id="fq2" class="accordion-collapse collapse" data-bs-parent="#faqInner">
+                                                <div class="accordion-body" style="padding: 0 20px 16px;">
+                                                    Sim! Voce pode criar quantos grupos quiser. Cada grupo pode ter seus proprios planos e precos.
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="accordion-item" style="background: rgba(255,255,255,0.03); border-color: rgba(124,92,252,0.08);">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed" style="font-size: 15px; padding: 16px 20px;" type="button" data-bs-toggle="collapse" data-bs-target="#fq3">
+                                                    O que acontece se o pagamento do membro falhar?
+                                                </button>
+                                            </h2>
+                                            <div id="fq3" class="accordion-collapse collapse" data-bs-parent="#faqInner">
+                                                <div class="accordion-body" style="padding: 0 20px 16px;">
+                                                    Para assinaturas recorrentes, o Stripe tenta cobrar automaticamente varias vezes. Se todas as tentativas falharem, a assinatura e cancelada e o bot remove o membro do grupo.
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="accordion-item" style="background: rgba(255,255,255,0.03); border-color: rgba(124,92,252,0.08);">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed" style="font-size: 15px; padding: 16px 20px;" type="button" data-bs-toggle="collapse" data-bs-target="#fq4">
+                                                    Quando posso sacar meu dinheiro?
+                                                </button>
+                                            </h2>
+                                            <div id="fq4" class="accordion-collapse collapse" data-bs-parent="#faqInner">
+                                                <div class="accordion-body" style="padding: 0 20px 16px;">
+                                                    Os valores ficam retidos por 7 dias apos o pagamento (protecao contra chargebacks). Depois disso, voce pode solicitar o saque a qualquer momento. O saldo minimo para saque e de R$ 50,00 e o prazo e de ate 3 dias uteis via PIX.
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="accordion-item" style="background: rgba(255,255,255,0.03); border-color: rgba(124,92,252,0.08);">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed" style="font-size: 15px; padding: 16px 20px;" type="button" data-bs-toggle="collapse" data-bs-target="#fq5">
+                                                    O membro pode cancelar a assinatura sozinho?
+                                                </button>
+                                            </h2>
+                                            <div id="fq5" class="accordion-collapse collapse" data-bs-parent="#faqInner">
+                                                <div class="accordion-body" style="padding: 0 20px 16px;">
+                                                    Sim. Assinaturas recorrentes podem ser canceladas pelo membro a qualquer momento. O cancelamento entra em vigor no final do periodo ja pago &mdash; ou seja, o membro continua com acesso ate a data de expiracao.
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="accordion-item" style="background: rgba(255,255,255,0.03); border-color: rgba(124,92,252,0.08);">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed" style="font-size: 15px; padding: 16px 20px;" type="button" data-bs-toggle="collapse" data-bs-target="#fq6">
+                                                    Preciso de conhecimento tecnico para usar?
+                                                </button>
+                                            </h2>
+                                            <div id="fq6" class="accordion-collapse collapse" data-bs-parent="#faqInner">
+                                                <div class="accordion-body" style="padding: 0 20px 16px;">
+                                                    Nao! O TeleVIP foi feito para ser simples. O setup leva menos de 5 minutos e nosso suporte via WhatsApp esta disponivel para ajudar em qualquer etapa.
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="accordion-item" style="background: rgba(255,255,255,0.03); border-color: rgba(124,92,252,0.08);">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed" style="font-size: 15px; padding: 16px 20px;" type="button" data-bs-toggle="collapse" data-bs-target="#fq7">
+                                                    E se eu ja tiver membros no grupo?
+                                                </button>
+                                            </h2>
+                                            <div id="fq7" class="accordion-collapse collapse" data-bs-parent="#faqInner">
+                                                <div class="accordion-body" style="padding: 0 20px 16px;">
+                                                    Adicione os membros existentes a <strong>whitelist</strong> do grupo no TeleVIP antes de ativar o bot. Assim, eles nao serao removidos. Voce pode gerenciar a whitelist na pagina de edicao do grupo.
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="accordion-item" style="background: rgba(255,255,255,0.03); border-color: rgba(124,92,252,0.08);">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed" style="font-size: 15px; padding: 16px 20px;" type="button" data-bs-toggle="collapse" data-bs-target="#fq8">
+                                                    O TeleVIP funciona com canais do Telegram?
+                                                </button>
+                                            </h2>
+                                            <div id="fq8" class="accordion-collapse collapse" data-bs-parent="#faqInner">
+                                                <div class="accordion-body" style="padding: 0 20px 16px;">
+                                                    Atualmente, o TeleVIP funciona apenas com <strong>grupos</strong> do Telegram (nao canais). Suporte a canais esta em desenvolvimento.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- CTA -->
+                    <div class="text-center mt-5 pt-4">
+                        <p class="text-muted mb-3">Ainda tem duvidas? Fale com nosso suporte!</p>
+                        <a href="https://wa.me/551721223445" target="_blank" rel="noopener noreferrer"
+                           class="btn btn-success btn-lg" style="border-radius: 12px; padding: 14px 32px; font-weight: 600;">
+                            <i class="bi bi-whatsapp"></i> Falar com Suporte
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h5 class="text-gradient">
+                        <i class="bi bi-telegram"></i> TeleVIP
+                    </h5>
+                    <p class="text-muted">
+                        A plataforma definitiva para monetizacao de grupos no Telegram.
+                    </p>
+                    <div class="badge bg-warning text-dark p-2 mt-2">
+                        <i class="bi bi-tag-fill"></i> Taxa: R$ 0,99 + 9,99% por transacao
+                    </div>
+                    <div class="social-links mt-3">
+                        <a href="#" onclick="openSocialModal(event)"><i class="bi bi-facebook"></i></a>
+                        <a href="#" onclick="openSocialModal(event)"><i class="bi bi-instagram"></i></a>
+                        <a href="#" onclick="openSocialModal(event)"><i class="bi bi-twitter"></i></a>
+                        <a href="#" onclick="openSocialModal(event)"><i class="bi bi-linkedin"></i></a>
+                        <a href="#" onclick="openSocialModal(event)"><i class="bi bi-youtube"></i></a>
+                    </div>
+                </div>
+
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h6>PRODUTO</h6>
+                    <ul>
+                        <li><a href="{{ url_for('auth.recursos') }}">Recursos</a></li>
+                        <li><a href="{{ url_for('auth.precos') }}">Precos</a></li>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">API</a></li>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">Integracoes</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h6>EMPRESA</h6>
+                    <ul>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">Sobre</a></li>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">Blog</a></li>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">Carreiras</a></li>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">Afiliados</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h6>SUPORTE</h6>
+                    <ul>
+                        <li><a href="{{ url_for('auth.wiki') }}">Central de Ajuda</a></li>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">Contato</a></li>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">Status</a></li>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">Comunidade</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h6>LEGAL</h6>
+                    <ul>
+                        <li><a href="{{ url_for('auth.privacy') }}">Privacidade</a></li>
+                        <li><a href="{{ url_for('auth.terms') }}">Termos</a></li>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">Cookies</a></li>
+                        <li><a href="{{ url_for('auth.report') }}">Denunciar Abuso</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <hr class="my-4 border-secondary">
+
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted">
+                        &copy; 2024 TeleVIP. Todos os direitos reservados.
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0 text-muted">
+                        Feito com &#10084;&#65039; no Brasil
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Floating WhatsApp Button -->
+    <div id="whatsapp-float" class="d-none d-lg-flex" style="position: fixed; bottom: 24px; right: 24px; z-index: 9999; align-items: center; gap: 12px;">
+        <div id="whatsapp-tooltip" style="background: rgba(15, 18, 32, 0.95); color: #e2e8f0; padding: 10px 16px; border-radius: 12px;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.3); border: 1px solid rgba(124, 92, 252, 0.15); font-size: 14px; font-weight: 500; white-space: nowrap;
+                opacity: 1; transition: opacity 0.3s ease; font-family: 'Poppins', sans-serif;">
+            Fale com nosso suporte
+        </div>
+        <a href="https://wa.me/551721223445" target="_blank" rel="noopener noreferrer"
+           style="background-color: #25D366; color: white; width: 60px; height: 60px; border-radius: 50%;
+                  display: flex; align-items: center; justify-content: center;
+                  box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4); text-decoration: none; font-size: 30px;
+                  transition: all 0.3s ease; animation: whatsapp-pulse 2s infinite;"
+           onmouseover="this.style.transform='scale(1.1)'"
+           onmouseout="this.style.transform='scale(1)'"
+           title="Fale com o Suporte via WhatsApp">
+            <i class="bi bi-whatsapp"></i>
+        </a>
+    </div>
+
+    <!-- Animation Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+    <script src="{{ url_for('static', filename='js/landing.js') }}?v=19"></script>
+
+    {% include 'partials/_space_modals.html' %}
+
+    <!-- Cookie Banner -->
+    <div id="cookieBanner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:10000;
+        background:rgba(33,37,41,.95); backdrop-filter:blur(6px); padding:14px 20px;
+        font-size:14px; color:#ccc; text-align:center; font-family:'Poppins',sans-serif;">
+        Usamos cookies essenciais para o funcionamento do site.
+        <a href="{{ url_for('auth.privacy') }}" style="color:#7c8dff; text-decoration:underline;">Saiba mais</a>
+        <button onclick="acceptCookies()" style="margin-left:12px; background:#7c5cfc; color:#fff;
+            border:none; border-radius:6px; padding:6px 18px; cursor:pointer; font-size:14px;">OK</button>
+    </div>
+    <script>
+    if(!localStorage.getItem('cookies_ok')){document.getElementById('cookieBanner').style.display='block'}
+    function acceptCookies(){localStorage.setItem('cookies_ok','1');document.getElementById('cookieBanner').style.display='none'}
+    </script>
+</body>
+</html>

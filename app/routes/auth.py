@@ -369,6 +369,12 @@ def google_callback():
     return redirect(url_for('dashboard.index'))
 
 
+@bp.route('/como-funciona')
+def wiki():
+    """Central de Ajuda / Wiki"""
+    return render_template('public/wiki.html')
+
+
 @bp.route('/em-breve')
 def coming_soon():
     """Página Em Construção"""
@@ -400,6 +406,7 @@ def sitemap():
         'https://televip.app/termos',
         'https://televip.app/privacidade',
         'https://televip.app/denuncia',
+        'https://televip.app/como-funciona',
     ]
     xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
     xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
