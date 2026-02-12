@@ -506,10 +506,12 @@ def handle_invoice_paid(invoice):
 
 
 def handle_invoice_payment_failed(invoice):
-    """Handle invoice.payment_failed — notify user about failed payment"""
+    """Handle invoice.payment_failed — notify user with progressive warning"""
     logger.info(f"=== INVOICE PAYMENT FAILED ===")
     stripe_sub_id = invoice.get('subscription')
     stripe_invoice_id = invoice.get('id')
+    attempt_count = invoice.get('attempt_count', 1)
+    next_attempt = invoice.get('next_payment_attempt')  # unix timestamp or None
 
     if not stripe_sub_id:
         return
@@ -528,22 +530,69 @@ def handle_invoice_payment_failed(invoice):
 
         group_name_safe = group.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
+        # Link for user to update payment method / pay invoice
+        payment_url = invoice.get('hosted_invoice_url')
+        keyboard = None
+
         if payment_type == 'boleto':
-            msg = (
-                f"<b>Boleto expirado</b>\n\n"
-                f"O boleto da sua assinatura de <b>{group_name_safe}</b> expirou.\n"
-                f"Um novo boleto será gerado automaticamente."
-            )
+            if next_attempt:
+                # Stripe will generate a new boleto
+                msg = (
+                    f"<b>Boleto expirado</b>\n\n"
+                    f"O boleto da sua assinatura de <b>{group_name_safe}</b> expirou.\n"
+                    f"Um novo boleto será gerado automaticamente."
+                )
+                btn_text = 'Ver Novo Boleto'
+            else:
+                # No more retries — this was the only boleto
+                msg = (
+                    f"<b>Boleto expirado</b>\n\n"
+                    f"O boleto da sua assinatura de <b>{group_name_safe}</b> "
+                    f"expirou sem pagamento.\n\n"
+                    f"Sua assinatura será cancelada e você será "
+                    f"removido do grupo em breve."
+                )
+                btn_text = 'Pagar Agora'
+
+            if payment_url:
+                keyboard = {'inline_keyboard': [[
+                    {'text': btn_text, 'url': payment_url}
+                ]]}
         else:
-            msg = (
-                f"<b>Falha no pagamento</b>\n\n"
-                f"A cobrança da assinatura de <b>{group_name_safe}</b> falhou.\n"
-                f"Verifique seu cartão e tente novamente."
-            )
+            # Progressive warning based on attempt count
+            max_retries = 3
 
-        notify_user_via_bot(subscription.telegram_user_id, msg)
+            if next_attempt:
+                # There will be another retry
+                remaining = max_retries - attempt_count
+                msg = (
+                    f"<b>Falha no pagamento</b> "
+                    f"(tentativa {attempt_count}/{max_retries})\n\n"
+                    f"A cobrança da assinatura de <b>{group_name_safe}</b> falhou.\n\n"
+                    f"Restam <code>{remaining}</code> tentativa(s). "
+                    f"Atualize seu cartão para evitar a remoção do grupo."
+                )
+            else:
+                # Last attempt failed, no more retries
+                msg = (
+                    f"<b>Última tentativa de pagamento falhou</b>\n\n"
+                    f"A cobrança da assinatura de <b>{group_name_safe}</b> falhou "
+                    f"após {attempt_count} tentativa(s).\n\n"
+                    f"Sua assinatura será cancelada e você será "
+                    f"removido do grupo em breve."
+                )
 
-        logger.info(f"User {subscription.telegram_user_id} notified about payment failure")
+            if payment_url:
+                keyboard = {'inline_keyboard': [[
+                    {'text': 'Atualizar Pagamento', 'url': payment_url}
+                ]]}
+
+        notify_user_via_bot(subscription.telegram_user_id, msg, keyboard=keyboard)
+
+        logger.info(
+            f"User {subscription.telegram_user_id} notified about payment failure "
+            f"(attempt {attempt_count}, next_attempt={'yes' if next_attempt else 'none'})"
+        )
 
     except Exception as e:
         logger.error(f"Error handling invoice.payment_failed: {e}")
