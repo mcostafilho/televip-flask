@@ -352,11 +352,6 @@ def google_callback():
         login_user(user)
         return redirect(url_for('dashboard.index'))
 
-    # Verificar se conta está bloqueada
-    if user.is_blocked:
-        flash('Sua conta está bloqueada.', 'error')
-        return redirect(url_for('auth.login'))
-
     # M8: Se vinculou por email e não era verificado, verificar agora (Google confirmou o email)
     if not user.is_verified:
         user.is_verified = True
