@@ -280,14 +280,14 @@
                         <a class="nav-link" href="{{ url_for('auth.recursos') }}">Recursos</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.precos') }}">Precos</a>
+                        <a class="nav-link" href="{{ url_for('auth.precos') }}">Preços</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
                     </li>
                     <li class="nav-item">
                         <a class="btn-nav-cta" href="{{ url_for('auth.register') }}">
-                            Comecar Gratis
+                            Começar Grátis
                         </a>
                     </li>
                 </ul>
@@ -301,7 +301,7 @@
             <div>
                 <h1>Central de <span class="text-gradient">Ajuda</span></h1>
                 <p class="lead">
-                    Tudo que voce precisa saber para usar o TeleVIP e monetizar seus grupos no Telegram.
+                    Tudo que você precisa saber para usar o TeleVIP e monetizar seus grupos no Telegram.
                 </p>
             </div>
         </div>
@@ -314,15 +314,15 @@
                 <!-- Sidebar Nav (desktop) -->
                 <div class="col-lg-3 wiki-nav-col">
                     <div class="wiki-nav">
-                        <h6>Navegacao</h6>
-                        <a href="#sec-about"><i class="bi bi-info-circle"></i> O que e o TeleVIP</a>
+                        <h6>Navegação</h6>
+                        <a href="#sec-about"><i class="bi bi-info-circle"></i> O que é o TeleVIP</a>
                         <a href="#sec-howto"><i class="bi bi-signpost-2"></i> Como Funciona</a>
-                        <a href="#sec-bot"><i class="bi bi-robot"></i> Configuracao do Bot</a>
+                        <a href="#sec-bot"><i class="bi bi-robot"></i> Configuração do Bot</a>
                         <a href="#sec-groups"><i class="bi bi-collection"></i> Grupos e Planos</a>
                         <a href="#sec-payments"><i class="bi bi-credit-card"></i> Pagamentos e Taxas</a>
                         <a href="#sec-subscriptions"><i class="bi bi-arrow-repeat"></i> Assinaturas</a>
-                        <a href="#sec-security"><i class="bi bi-shield-check"></i> Seguranca</a>
-                        <a href="#sec-not"><i class="bi bi-x-octagon"></i> O que NAO Faz</a>
+                        <a href="#sec-security"><i class="bi bi-shield-check"></i> Segurança</a>
+                        <a href="#sec-not"><i class="bi bi-x-octagon"></i> O que NÃO Faz</a>
                         <a href="#sec-faq"><i class="bi bi-question-circle"></i> FAQ</a>
                     </div>
                 </div>
@@ -331,30 +331,30 @@
                 <div class="col-lg-9">
                     <div class="accordion wiki-accordion" id="wikiAccordion">
 
-                        <!-- 1. O que e o TeleVIP -->
+                        <!-- 1. O que é o TeleVIP -->
                         <div class="accordion-item" id="sec-about">
                             <h2 class="accordion-header">
                                 <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#wiki1">
                                     <div class="section-icon" style="background: rgba(124, 92, 252, 0.15); color: #7c5cfc;">
                                         <i class="bi bi-info-circle-fill"></i>
                                     </div>
-                                    O que e o TeleVIP
+                                    O que é o TeleVIP
                                 </button>
                             </h2>
                             <div id="wiki1" class="accordion-collapse collapse show" data-bs-parent="#wikiAccordion">
                                 <div class="accordion-body">
                                     <p>
-                                        O <strong>TeleVIP</strong> e uma plataforma brasileira para <strong>monetizacao de grupos do Telegram</strong>.
-                                        Com ele, voce transforma seu grupo em um negocio: cria planos de assinatura, recebe pagamentos automaticamente
-                                        e gerencia membros sem esforco manual.
+                                        O <strong>TeleVIP</strong> é uma plataforma brasileira para <strong>monetização de grupos do Telegram</strong>.
+                                        Com ele, você transforma seu grupo em um negócio: cria planos de assinatura, recebe pagamentos automaticamente
+                                        e gerencia membros sem esforço manual.
                                     </p>
                                     <p>
-                                        Nosso bot inteligente opera 24 horas por dia, cuidando de toda a cobranca, aprovacao de novos membros
-                                        e remocao automatica de inadimplentes. Voce foca no conteudo, a gente cuida do resto.
+                                        Nosso bot inteligente opera 24 horas por dia, cuidando de toda a cobrança, aprovação de novos membros
+                                        e remoção automática de inadimplentes. Você foca no conteúdo, a gente cuida do resto.
                                     </p>
                                     <div class="wiki-highlight success">
                                         <strong><i class="bi bi-check-circle-fill text-success"></i> Ideal para:</strong>
-                                        criadores de conteudo, educadores, traders, coaches, comunidades exclusivas
+                                        criadores de conteúdo, educadores, traders, coaches, comunidades exclusivas
                                         e qualquer pessoa que queira cobrar pelo acesso a um grupo no Telegram.
                                     </div>
                                 </div>
@@ -375,57 +375,57 @@
                                 <div class="accordion-body">
                                     <h6>Para o Criador</h6>
                                     <ol>
-                                        <li><strong>Crie sua conta</strong> no TeleVIP (gratis, sem cartao de credito).</li>
+                                        <li><strong>Crie sua conta</strong> no TeleVIP (grátis, sem cartão de crédito).</li>
                                         <li><strong>Crie um grupo</strong> no painel, informando o ID do grupo no Telegram.</li>
-                                        <li><strong>Adicione o bot</strong> (<code>@televipbra_bot</code>) ao grupo e torne-o administrador com permissao para banir usuarios e convidar via link.</li>
+                                        <li><strong>Adicione o bot</strong> (<code>@televipbra_bot</code>) ao grupo e torne-o administrador com permissão para banir usuários e convidar via link.</li>
                                         <li><strong>Execute o /setup</strong> no grupo para vincular o bot ao TeleVIP.</li>
-                                        <li><strong>Crie planos de preco</strong> (ex: Mensal R$ 29,90, Trimestral R$ 69,90).</li>
-                                        <li><strong>Adicione manualmente</strong> na whitelist do grupo qualquer usuario que ja estiver dentro do grupo (para que nao sejam removidos pelo bot).</li>
+                                        <li><strong>Crie planos de preço</strong> (ex: Mensal R$ 29,90, Trimestral R$ 69,90).</li>
+                                        <li><strong>Adicione manualmente</strong> na whitelist do grupo qualquer usuário que já estiver dentro do grupo (para que não sejam removidos pelo bot).</li>
                                         <li><strong>Compartilhe o link de pagamento</strong> do seu grupo. Pronto!</li>
                                     </ol>
 
                                     <h6>Para o Assinante</h6>
                                     <ol>
                                         <li>O assinante acessa o link de pagamento do grupo.</li>
-                                        <li>Escolhe um plano e realiza o pagamento via Stripe (cartao ou boleto).</li>
-                                        <li>Apos confirmacao, o bot automaticamente convida o assinante para o grupo.</li>
-                                        <li>Quando a assinatura expira ou e cancelada, o bot remove o membro do grupo.</li>
+                                        <li>Escolhe um plano e realiza o pagamento via Stripe (cartão ou boleto).</li>
+                                        <li>Após confirmação, o bot automaticamente convida o assinante para o grupo.</li>
+                                        <li>Quando a assinatura expira ou é cancelada, o bot remove o membro do grupo.</li>
                                     </ol>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- 3. Configuracao do Bot -->
+                        <!-- 3. Configuração do Bot -->
                         <div class="accordion-item" id="sec-bot">
                             <h2 class="accordion-header">
                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#wiki3">
                                     <div class="section-icon" style="background: rgba(52, 211, 153, 0.15); color: #34d399;">
                                         <i class="bi bi-robot"></i>
                                     </div>
-                                    Configuracao do Bot
+                                    Configuração do Bot
                                 </button>
                             </h2>
                             <div id="wiki3" class="accordion-collapse collapse" data-bs-parent="#wikiAccordion">
                                 <div class="accordion-body">
                                     <h6>Adicionando o Bot ao Grupo</h6>
                                     <ol>
-                                        <li>No Telegram, abra seu grupo e va em <strong>Configuracoes do Grupo</strong>.</li>
+                                        <li>No Telegram, abra seu grupo e vá em <strong>Configurações do Grupo</strong>.</li>
                                         <li>Clique em <strong>Administradores</strong> &rarr; <strong>Adicionar Admin</strong>.</li>
                                         <li>Pesquise por <code>@televipbra_bot</code> e adicione-o.</li>
-                                        <li>Conceda as permissoes: <strong>Banir usuarios</strong> e <strong>Convidar usuarios via link</strong>.</li>
+                                        <li>Conceda as permissões: <strong>Banir usuários</strong> e <strong>Convidar usuários via link</strong>.</li>
                                     </ol>
 
                                     <h6>Vinculando o Bot</h6>
                                     <p>
-                                        Apos adicionar o bot como administrador, envie o comando <code>/setup</code> no grupo.
-                                        O bot ira confirmar a vinculacao com o TeleVIP. A partir desse momento, ele passa
-                                        a gerenciar automaticamente a entrada e saida de membros.
+                                        Após adicionar o bot como administrador, envie o comando <code>/setup</code> no grupo.
+                                        O bot irá confirmar a vinculação com o TeleVIP. A partir desse momento, ele passa
+                                        a gerenciar automaticamente a entrada e saída de membros.
                                     </p>
 
                                     <div class="wiki-highlight warning">
                                         <strong><i class="bi bi-exclamation-triangle-fill" style="color: #fbbf24;"></i> Importante:</strong>
-                                        O bot precisa ser <strong>administrador</strong> do grupo com as permissoes corretas.
-                                        Sem isso, ele nao conseguira adicionar ou remover membros.
+                                        O bot precisa ser <strong>administrador</strong> do grupo com as permissões corretas.
+                                        Sem isso, ele não conseguirá adicionar ou remover membros.
                                     </div>
                                 </div>
                             </div>
@@ -445,33 +445,33 @@
                                 <div class="accordion-body">
                                     <h6>Criando um Grupo</h6>
                                     <p>
-                                        No dashboard, clique em <strong>Criar Grupo</strong>. Voce precisara informar:
+                                        No dashboard, clique em <strong>Criar Grupo</strong>. Você precisará informar:
                                     </p>
                                     <ul>
-                                        <li><strong>Nome do grupo</strong> (como aparecera na plataforma)</li>
-                                        <li><strong>ID do grupo no Telegram</strong> (numero negativo, ex: <code>-1001234567890</code>)</li>
-                                        <li><strong>Descricao</strong> (opcional)</li>
+                                        <li><strong>Nome do grupo</strong> (como aparecerá na plataforma)</li>
+                                        <li><strong>ID do grupo no Telegram</strong> (número negativo, ex: <code>-1001234567890</code>)</li>
+                                        <li><strong>Descrição</strong> (opcional)</li>
                                     </ul>
 
                                     <div class="wiki-highlight">
                                         <strong><i class="bi bi-lightbulb-fill" style="color: #7c5cfc;"></i> Como descobrir o ID do grupo?</strong><br>
-                                        Adicione o bot <code>@userinfobot</code> ao seu grupo. Ele mostrara o ID. Copie o numero
+                                        Adicione o bot <code>@userinfobot</code> ao seu grupo. Ele mostrará o ID. Copie o número
                                         (incluindo o sinal de menos) e cole no TeleVIP. Depois, pode remover o bot auxiliar.
                                     </div>
 
-                                    <h6>Criando Planos de Preco</h6>
+                                    <h6>Criando Planos de Preço</h6>
                                     <ul>
-                                        <li>Cada grupo pode ter <strong>multiplos planos</strong> (ex: Mensal, Trimestral, Anual).</li>
-                                        <li>O <strong>preco minimo</strong> por plano e de <strong>R$ 1,00</strong>.</li>
-                                        <li>A <strong>duracao</strong> e definida em <strong>dias inteiros</strong> (ex: 30, 90, 365).</li>
+                                        <li>Cada grupo pode ter <strong>múltiplos planos</strong> (ex: Mensal, Trimestral, Anual).</li>
+                                        <li>O <strong>preço mínimo</strong> por plano é de <strong>R$ 1,00</strong>.</li>
+                                        <li>A <strong>duração</strong> é definida em <strong>dias inteiros</strong> (ex: 30, 90, 365).</li>
                                         <li>Planos podem ser editados ou desativados a qualquer momento.</li>
                                     </ul>
 
                                     <h6>Whitelist</h6>
                                     <p>
-                                        Voce pode adicionar membros a <strong>whitelist</strong> do grupo. Membros na whitelist
-                                        nao sao removidos pelo bot, mesmo sem assinatura ativa. Ideal para moderadores,
-                                        amigos ou membros vitalcios.
+                                        Você pode adicionar membros à <strong>whitelist</strong> do grupo. Membros na whitelist
+                                        não são removidos pelo bot, mesmo sem assinatura ativa. Ideal para moderadores,
+                                        amigos ou membros vitalícios.
                                     </p>
                                 </div>
                             </div>
@@ -491,36 +491,36 @@
                                 <div class="accordion-body">
                                     <h6>Processamento de Pagamentos</h6>
                                     <p>
-                                        Todos os pagamentos sao processados via <strong>Stripe</strong>, a maior plataforma
+                                        Todos os pagamentos são processados via <strong>Stripe</strong>, a maior plataforma
                                         de pagamentos do mundo. Aceitamos:
                                     </p>
                                     <ul>
-                                        <li><strong>Cartao de credito</strong> (Visa, Mastercard, Elo, etc.)</li>
-                                        <li><strong>Boleto bancario</strong></li>
+                                        <li><strong>Cartão de crédito</strong> (Visa, Mastercard, Elo, etc.)</li>
+                                        <li><strong>Boleto bancário</strong></li>
                                     </ul>
 
                                     <h6>Taxas</h6>
                                     <div class="wiki-highlight warning">
-                                        <strong><i class="bi bi-tag-fill" style="color: #fbbf24;"></i> Taxa por transacao:</strong>
+                                        <strong><i class="bi bi-tag-fill" style="color: #fbbf24;"></i> Taxa por transação:</strong>
                                         <strong>R$ 0,99 (fixo) + 9,99% do valor da venda</strong><br>
-                                        <small>Exemplo: venda de R$ 100,00 &rarr; taxa de R$ 10,98 &rarr; voce recebe R$ 89,02</small>
+                                        <small>Exemplo: venda de R$ 100,00 &rarr; taxa de R$ 10,98 &rarr; você recebe R$ 89,02</small>
                                     </div>
                                     <ul>
-                                        <li><strong>Sem mensalidade</strong> &mdash; voce so paga quando recebe.</li>
-                                        <li><strong>Sem taxa de setup</strong> &mdash; criar conta e gratuito.</li>
-                                        <li><strong>Sem taxa de saque</strong> &mdash; transferencias para sua conta sao gratis.</li>
+                                        <li><strong>Sem mensalidade</strong> &mdash; você só paga quando recebe.</li>
+                                        <li><strong>Sem taxa de setup</strong> &mdash; criar conta é gratuito.</li>
+                                        <li><strong>Sem taxa de saque</strong> &mdash; transferências para sua conta são grátis.</li>
                                     </ul>
 
                                     <h6>Saldo e Saques</h6>
                                     <p>
-                                        O valor de cada venda (ja descontada a taxa) entra no seu saldo.
-                                        Por seguranca, novos pagamentos ficam <strong>retidos por 7 dias</strong>
-                                        antes de serem liberados para saque (protecao contra chargebacks).
+                                        O valor de cada venda (já descontada a taxa) entra no seu saldo.
+                                        Por segurança, novos pagamentos ficam <strong>retidos por 7 dias</strong>
+                                        antes de serem liberados para saque (proteção contra chargebacks).
                                     </p>
                                     <ul>
-                                        <li><strong>Saque minimo:</strong> R$ 50,00</li>
-                                        <li><strong>Prazo:</strong> ate 3 dias uteis via PIX</li>
-                                        <li>Necessario ter <strong>chave PIX cadastrada</strong> no perfil</li>
+                                        <li><strong>Saque mínimo:</strong> R$ 50,00</li>
+                                        <li><strong>Prazo:</strong> até 3 dias úteis via PIX</li>
+                                        <li>Necessário ter <strong>chave PIX cadastrada</strong> no perfil</li>
                                     </ul>
                                 </div>
                             </div>
@@ -541,77 +541,77 @@
                                     <h6>Assinaturas Recorrentes</h6>
                                     <p>
                                         O TeleVIP suporta <strong>assinaturas recorrentes</strong> gerenciadas pelo Stripe.
-                                        O membro paga uma vez e o Stripe cobra automaticamente a cada periodo (mensal, por exemplo).
+                                        O membro paga uma vez e o Stripe cobra automaticamente a cada período (mensal, por exemplo).
                                     </p>
                                     <ul>
-                                        <li>Renovacao automatica no cartao do membro.</li>
-                                        <li>Retentativa automatica em caso de falha de pagamento.</li>
-                                        <li>Notificacao por email ao membro sobre renovacoes.</li>
+                                        <li>Renovação automática no cartão do membro.</li>
+                                        <li>Retentativa automática em caso de falha de pagamento.</li>
+                                        <li>Notificação por email ao membro sobre renovações.</li>
                                     </ul>
 
                                     <h6>Cancelamento</h6>
                                     <p>
-                                        O membro pode cancelar a assinatura a qualquer momento. O cancelamento e feito
-                                        no <strong>final do periodo ja pago</strong> &mdash; ou seja, o membro continua no grupo
-                                        ate a data de expiracao, sem cobranca adicional.
+                                        O membro pode cancelar a assinatura a qualquer momento. O cancelamento é feito
+                                        no <strong>final do período já pago</strong> &mdash; ou seja, o membro continua no grupo
+                                        até a data de expiração, sem cobrança adicional.
                                     </p>
 
-                                    <h6>Expiracao Automatica</h6>
+                                    <h6>Expiração Automática</h6>
                                     <p>
                                         Quando uma assinatura expira (por cancelamento ou falha de pagamento),
                                         o bot <strong>remove automaticamente</strong> o membro do grupo no Telegram.
-                                        Nenhuma acao manual e necessaria.
+                                        Nenhuma ação manual é necessária.
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- 7. Seguranca -->
+                        <!-- 7. Segurança -->
                         <div class="accordion-item" id="sec-security">
                             <h2 class="accordion-header">
                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#wiki7">
                                     <div class="section-icon" style="background: rgba(52, 211, 153, 0.15); color: #34d399;">
                                         <i class="bi bi-shield-check"></i>
                                     </div>
-                                    Seguranca
+                                    Segurança
                                 </button>
                             </h2>
                             <div id="wiki7" class="accordion-collapse collapse" data-bs-parent="#wikiAccordion">
                                 <div class="accordion-body">
                                     <ul>
-                                        <li><strong>Remocao automatica:</strong> membros inadimplentes sao removidos do grupo automaticamente pelo bot.</li>
-                                        <li><strong>Auditoria periodica:</strong> o sistema verifica periodicamente se todos os membros do grupo possuem assinatura ativa.</li>
-                                        <li><strong>Protecao contra chargeback:</strong> valores ficam retidos por 7 dias antes da liberacao para saque.</li>
-                                        <li><strong>Criptografia:</strong> dados sensiveis sao criptografados. Senhas usam hashing seguro (scrypt).</li>
-                                        <li><strong>Stripe PCI DSS:</strong> pagamentos processados pelo Stripe, que possui certificacao PCI DSS Level 1.</li>
-                                        <li><strong>HTTPS obrigatorio:</strong> todas as conexoes sao criptografadas via TLS.</li>
-                                        <li><strong>Tokens JWT:</strong> autenticacao segura com tokens assinados e com expiracao.</li>
+                                        <li><strong>Remoção automática:</strong> membros inadimplentes são removidos do grupo automaticamente pelo bot.</li>
+                                        <li><strong>Auditoria periódica:</strong> o sistema verifica periodicamente se todos os membros do grupo possuem assinatura ativa.</li>
+                                        <li><strong>Proteção contra chargeback:</strong> valores ficam retidos por 7 dias antes da liberação para saque.</li>
+                                        <li><strong>Criptografia:</strong> dados sensíveis são criptografados. Senhas usam hashing seguro (scrypt).</li>
+                                        <li><strong>Stripe PCI DSS:</strong> pagamentos processados pelo Stripe, que possui certificação PCI DSS Level 1.</li>
+                                        <li><strong>HTTPS obrigatório:</strong> todas as conexões são criptografadas via TLS.</li>
+                                        <li><strong>Tokens JWT:</strong> autenticação segura com tokens assinados e com expiração.</li>
                                     </ul>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- 8. O que o TeleVIP NAO Faz -->
+                        <!-- 8. O que o TeleVIP NÃO Faz -->
                         <div class="accordion-item" id="sec-not">
                             <h2 class="accordion-header">
                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#wiki8">
                                     <div class="section-icon" style="background: rgba(248, 113, 113, 0.15); color: #f87171;">
                                         <i class="bi bi-x-octagon-fill"></i>
                                     </div>
-                                    O que o TeleVIP NAO Faz
+                                    O que o TeleVIP NÃO Faz
                                 </button>
                             </h2>
                             <div id="wiki8" class="accordion-collapse collapse" data-bs-parent="#wikiAccordion">
                                 <div class="accordion-body">
                                     <div class="wiki-highlight danger">
-                                        <p class="mb-2"><strong>O TeleVIP e uma plataforma de gestao de acesso e cobranca. Ele NAO:</strong></p>
+                                        <p class="mb-2"><strong>O TeleVIP é uma plataforma de gestão de acesso e cobrança. Ele NÃO:</strong></p>
                                         <ul>
-                                            <li><strong>Nao envia conteudo</strong> &mdash; o criador e responsavel por postar no grupo.</li>
-                                            <li><strong>Nao modera mensagens</strong> &mdash; nao filtra, apaga ou gerencia mensagens dentro do grupo.</li>
-                                            <li><strong>Nao faz marketing</strong> &mdash; a divulgacao do grupo e responsabilidade do criador.</li>
-                                            <li><strong>Nao processa pagamentos fora do Stripe</strong> &mdash; nao aceitamos PIX direto, transferencia bancaria ou outros meios.</li>
-                                            <li><strong>Nao permite planos gratuitos</strong> &mdash; o preco minimo de um plano e R$ 1,00.</li>
-                                            <li><strong>Nao garante reembolsos</strong> &mdash; disputas de pagamento sao tratadas via Stripe conforme suas politicas.</li>
+                                            <li><strong>Não envia conteúdo</strong> &mdash; o criador é responsável por postar no grupo.</li>
+                                            <li><strong>Não modera mensagens</strong> &mdash; não filtra, apaga ou gerencia mensagens dentro do grupo.</li>
+                                            <li><strong>Não faz marketing</strong> &mdash; a divulgação do grupo é responsabilidade do criador.</li>
+                                            <li><strong>Não processa pagamentos fora do Stripe</strong> &mdash; não aceitamos PIX direto, transferência bancária ou outros meios.</li>
+                                            <li><strong>Não permite planos gratuitos</strong> &mdash; o preço mínimo de um plano é R$ 1,00.</li>
+                                            <li><strong>Não garante reembolsos</strong> &mdash; disputas de pagamento são tratadas via Stripe conforme suas políticas.</li>
                                         </ul>
                                     </div>
                                 </div>
@@ -640,7 +640,7 @@
                                             </h2>
                                             <div id="fq1" class="accordion-collapse collapse" data-bs-parent="#faqInner">
                                                 <div class="accordion-body" style="padding: 0 20px 16px;">
-                                                    Adicione o bot <code>@userinfobot</code> ao seu grupo. Ele mostrara o ID (um numero negativo como <code>-1001234567890</code>). Copie e cole no TeleVIP ao criar o grupo.
+                                                    Adicione o bot <code>@userinfobot</code> ao seu grupo. Ele mostrará o ID (um número negativo como <code>-1001234567890</code>). Copie e cole no TeleVIP ao criar o grupo.
                                                 </div>
                                             </div>
                                         </div>
@@ -653,7 +653,7 @@
                                             </h2>
                                             <div id="fq2" class="accordion-collapse collapse" data-bs-parent="#faqInner">
                                                 <div class="accordion-body" style="padding: 0 20px 16px;">
-                                                    Sim! Voce pode criar quantos grupos quiser. Cada grupo pode ter seus proprios planos e precos.
+                                                    Sim! Você pode criar quantos grupos quiser. Cada grupo pode ter seus próprios planos e preços.
                                                 </div>
                                             </div>
                                         </div>
@@ -666,7 +666,7 @@
                                             </h2>
                                             <div id="fq3" class="accordion-collapse collapse" data-bs-parent="#faqInner">
                                                 <div class="accordion-body" style="padding: 0 20px 16px;">
-                                                    Para assinaturas recorrentes, o Stripe tenta cobrar automaticamente varias vezes. Se todas as tentativas falharem, a assinatura e cancelada e o bot remove o membro do grupo.
+                                                    Para assinaturas recorrentes, o Stripe tenta cobrar automaticamente várias vezes. Se todas as tentativas falharem, a assinatura é cancelada e o bot remove o membro do grupo.
                                                 </div>
                                             </div>
                                         </div>
@@ -679,7 +679,7 @@
                                             </h2>
                                             <div id="fq4" class="accordion-collapse collapse" data-bs-parent="#faqInner">
                                                 <div class="accordion-body" style="padding: 0 20px 16px;">
-                                                    Os valores ficam retidos por 7 dias apos o pagamento (protecao contra chargebacks). Depois disso, voce pode solicitar o saque a qualquer momento. O saldo minimo para saque e de R$ 50,00 e o prazo e de ate 3 dias uteis via PIX.
+                                                    Os valores ficam retidos por 7 dias após o pagamento (proteção contra chargebacks). Depois disso, você pode solicitar o saque a qualquer momento. O saldo mínimo para saque é de R$ 50,00 e o prazo é de até 3 dias úteis via PIX.
                                                 </div>
                                             </div>
                                         </div>
@@ -692,7 +692,7 @@
                                             </h2>
                                             <div id="fq5" class="accordion-collapse collapse" data-bs-parent="#faqInner">
                                                 <div class="accordion-body" style="padding: 0 20px 16px;">
-                                                    Sim. Assinaturas recorrentes podem ser canceladas pelo membro a qualquer momento. O cancelamento entra em vigor no final do periodo ja pago &mdash; ou seja, o membro continua com acesso ate a data de expiracao.
+                                                    Sim. Assinaturas recorrentes podem ser canceladas pelo membro a qualquer momento. O cancelamento entra em vigor no final do período já pago &mdash; ou seja, o membro continua com acesso até a data de expiração.
                                                 </div>
                                             </div>
                                         </div>
@@ -700,12 +700,12 @@
                                         <div class="accordion-item" style="background: rgba(255,255,255,0.03); border-color: rgba(124,92,252,0.08);">
                                             <h2 class="accordion-header">
                                                 <button class="accordion-button collapsed" style="font-size: 15px; padding: 16px 20px;" type="button" data-bs-toggle="collapse" data-bs-target="#fq6">
-                                                    Preciso de conhecimento tecnico para usar?
+                                                    Preciso de conhecimento técnico para usar?
                                                 </button>
                                             </h2>
                                             <div id="fq6" class="accordion-collapse collapse" data-bs-parent="#faqInner">
                                                 <div class="accordion-body" style="padding: 0 20px 16px;">
-                                                    Nao! O TeleVIP foi feito para ser simples. O setup leva menos de 5 minutos e nosso suporte via WhatsApp esta disponivel para ajudar em qualquer etapa.
+                                                    Não! O TeleVIP foi feito para ser simples. O setup leva menos de 5 minutos e nosso suporte via WhatsApp está disponível para ajudar em qualquer etapa.
                                                 </div>
                                             </div>
                                         </div>
@@ -713,12 +713,12 @@
                                         <div class="accordion-item" style="background: rgba(255,255,255,0.03); border-color: rgba(124,92,252,0.08);">
                                             <h2 class="accordion-header">
                                                 <button class="accordion-button collapsed" style="font-size: 15px; padding: 16px 20px;" type="button" data-bs-toggle="collapse" data-bs-target="#fq7">
-                                                    E se eu ja tiver membros no grupo?
+                                                    E se eu já tiver membros no grupo?
                                                 </button>
                                             </h2>
                                             <div id="fq7" class="accordion-collapse collapse" data-bs-parent="#faqInner">
                                                 <div class="accordion-body" style="padding: 0 20px 16px;">
-                                                    Adicione os membros existentes a <strong>whitelist</strong> do grupo no TeleVIP antes de ativar o bot. Assim, eles nao serao removidos. Voce pode gerenciar a whitelist na pagina de edicao do grupo.
+                                                    Adicione os membros existentes à <strong>whitelist</strong> do grupo no TeleVIP antes de ativar o bot. Assim, eles não serão removidos. Você pode gerenciar a whitelist na página de edição do grupo.
                                                 </div>
                                             </div>
                                         </div>
@@ -731,7 +731,7 @@
                                             </h2>
                                             <div id="fq8" class="accordion-collapse collapse" data-bs-parent="#faqInner">
                                                 <div class="accordion-body" style="padding: 0 20px 16px;">
-                                                    Atualmente, o TeleVIP funciona apenas com <strong>grupos</strong> do Telegram (nao canais). Suporte a canais esta em desenvolvimento.
+                                                    Atualmente, o TeleVIP funciona apenas com <strong>grupos</strong> do Telegram (não canais). Suporte a canais está em desenvolvimento.
                                                 </div>
                                             </div>
                                         </div>
@@ -744,7 +744,7 @@
 
                     <!-- CTA -->
                     <div class="text-center mt-5 pt-4">
-                        <p class="text-muted mb-3">Ainda tem duvidas? Fale com nosso suporte!</p>
+                        <p class="text-muted mb-3">Ainda tem dúvidas? Fale com nosso suporte!</p>
                         <a href="https://wa.me/551721223445" target="_blank" rel="noopener noreferrer"
                            class="btn btn-success btn-lg" style="border-radius: 12px; padding: 14px 32px; font-weight: 600;">
                             <i class="bi bi-whatsapp"></i> Falar com Suporte
@@ -764,10 +764,10 @@
                         <i class="bi bi-telegram"></i> TeleVIP
                     </h5>
                     <p class="text-muted">
-                        A plataforma definitiva para monetizacao de grupos no Telegram.
+                        A plataforma definitiva para monetização de grupos no Telegram.
                     </p>
                     <div class="badge bg-warning text-dark p-2 mt-2">
-                        <i class="bi bi-tag-fill"></i> Taxa: R$ 0,99 + 9,99% por transacao
+                        <i class="bi bi-tag-fill"></i> Taxa: R$ 0,99 + 9,99% por transação
                     </div>
                     <div class="social-links mt-3">
                         <a href="#" onclick="openSocialModal(event)"><i class="bi bi-facebook"></i></a>
@@ -782,9 +782,9 @@
                     <h6>PRODUTO</h6>
                     <ul>
                         <li><a href="{{ url_for('auth.recursos') }}">Recursos</a></li>
-                        <li><a href="{{ url_for('auth.precos') }}">Precos</a></li>
+                        <li><a href="{{ url_for('auth.precos') }}">Preços</a></li>
                         <li><a href="{{ url_for('auth.coming_soon') }}">API</a></li>
-                        <li><a href="{{ url_for('auth.coming_soon') }}">Integracoes</a></li>
+                        <li><a href="{{ url_for('auth.coming_soon') }}">Integrações</a></li>
                     </ul>
                 </div>
 
