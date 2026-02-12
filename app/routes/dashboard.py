@@ -2,7 +2,7 @@
 import logging
 from flask import Blueprint, render_template, jsonify, request, redirect, url_for, flash, session
 from flask_login import login_required, current_user
-from app import db, limiter
+from app import db, limiter, cache
 from app.models import Group, Transaction, Subscription, Creator, PricingPlan
 from app.services.payment_service import PaymentService
 from app.utils.security import generate_reset_token
@@ -16,6 +16,7 @@ from decimal import Decimal
 
 bp = Blueprint('dashboard', __name__, url_prefix='/dashboard')
 
+@cache.memoize(timeout=60)
 def calculate_balance(creator_id):
     """Calcular saldo disponível e bloqueado (7 dias de retenção)"""
     from app.models import Transaction, Subscription, Group
@@ -333,6 +334,9 @@ def withdraw():
     )
     db.session.add(withdrawal)
     db.session.commit()
+
+    # Invalidar cache do saldo após saque
+    cache.delete_memoized(calculate_balance, current_user.id)
 
     flash(f'Saque de R$ {amount:.2f} solicitado com sucesso! Será processado em até 3 dias úteis.', 'success')
     return redirect(url_for('dashboard.index'))

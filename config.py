@@ -40,9 +40,10 @@ class Config:
     STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
     STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
     
-    # Configurações de sessão
+    # Configurações de sessão (server-side no Redis)
     SESSION_PERMANENT = True
-    SESSION_TYPE = 'filesystem'
+    SESSION_TYPE = 'redis'
+    SESSION_REDIS = None  # Set from REDIS_URL at init time
     PERMANENT_SESSION_LIFETIME = timedelta(hours=2)  # Expira após 2h de inatividade
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
@@ -57,8 +58,9 @@ class Config:
     POSTS_PER_PAGE = 20
     USERS_PER_PAGE = 50
     
-    # Configurações de cache
-    CACHE_TYPE = 'simple'
+    # Configurações de cache (Redis)
+    CACHE_TYPE = 'RedisCache'
+    CACHE_REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
     CACHE_DEFAULT_TIMEOUT = 300
     
     # Configurações de email (se necessário no futuro)
@@ -106,7 +108,9 @@ class Config:
     @staticmethod
     def init_app(app):
         """Inicializar configurações adicionais da aplicação"""
-        pass
+        import redis
+        redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+        app.config['SESSION_REDIS'] = redis.from_url(redis_url)
 
 class DevelopmentConfig(Config):
     """Configurações de desenvolvimento"""
@@ -120,6 +124,14 @@ class ProductionConfig(Config):
     # Cookies seguros em produção (HTTPONLY and SameSite are in base Config)
     SESSION_COOKIE_SECURE = True
     REMEMBER_COOKIE_SECURE = True
+
+    # SSL + connection pool para Cloud SQL
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'connect_args': {'sslmode': 'require'},
+        'pool_size': 5,
+        'max_overflow': 10,
+        'pool_recycle': 1800,
+    }
 
     @classmethod
     def init_app(cls, app):
@@ -145,6 +157,8 @@ class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
     WTF_CSRF_ENABLED = False
+    SESSION_TYPE = 'filesystem'
+    CACHE_TYPE = 'SimpleCache'
 
 # Dicionário de configurações
 config = {

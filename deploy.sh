@@ -21,7 +21,7 @@ apt update && apt upgrade -y
 echo "[2/10] Instalando dependencias..."
 apt install -y python3 python3-pip python3-venv python3-dev \
     nginx certbot python3-certbot-nginx \
-    git ufw
+    git ufw fail2ban
 
 # 3. Criar usuario da aplicacao
 echo "[3/10] Criando usuario..."
@@ -150,6 +150,14 @@ server {
     listen 80;
     server_name $DOMAIN;
 
+    # Gzip compression
+    gzip on;
+    gzip_types text/plain text/css text/xml application/json application/javascript text/javascript;
+    gzip_comp_level 6;
+    gzip_min_length 1000;
+    gzip_proxied any;
+    gzip_vary on;
+
     location / {
         proxy_pass http://unix:/opt/televip/televip.sock;
         proxy_set_header Host \$host;
@@ -178,6 +186,51 @@ echo "[10/10] Finalizando..."
 ufw allow OpenSSH
 ufw allow 'Nginx Full'
 ufw --force enable
+
+# Configurar Fail2ban
+echo "Configurando Fail2ban..."
+cat > /etc/fail2ban/jail.local << 'F2BEOF'
+[sshd]
+enabled = true
+maxretry = 5
+
+[nginx-limit-req]
+enabled = true
+maxretry = 10
+findtime = 600
+bantime = 3600
+logpath = /var/log/nginx/error.log
+F2BEOF
+
+systemctl enable fail2ban
+systemctl restart fail2ban
+
+# Backup automatico do .env e configs criticos
+echo "Configurando backup semanal..."
+BACKUP_DIR="/opt/televip/backups"
+mkdir -p $BACKUP_DIR
+chown $APP_USER:$APP_USER $BACKUP_DIR
+
+cat > /opt/televip/backup.sh << 'BKPEOF'
+#!/bin/bash
+BACKUP_DIR="/opt/televip/backups"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+tar czf "$BACKUP_DIR/televip_config_$TIMESTAMP.tar.gz" \
+    /opt/televip/.env \
+    /etc/nginx/sites-available/televip \
+    /etc/systemd/system/televip.service \
+    /etc/systemd/system/televip-bot.service \
+    /etc/fail2ban/jail.local \
+    2>/dev/null
+# Manter apenas os ultimos 4 backups
+ls -t "$BACKUP_DIR"/televip_config_*.tar.gz | tail -n +5 | xargs -r rm
+BKPEOF
+
+chmod +x /opt/televip/backup.sh
+chown $APP_USER:$APP_USER /opt/televip/backup.sh
+
+# Cron semanal (domingo 3h)
+(crontab -u $APP_USER -l 2>/dev/null | grep -v backup.sh; echo "0 3 * * 0 /opt/televip/backup.sh") | crontab -u $APP_USER -
 
 # Iniciar servicos
 systemctl daemon-reload

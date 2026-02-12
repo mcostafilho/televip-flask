@@ -9,6 +9,8 @@ from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
+from flask_session import Session
+from flask_caching import Cache
 from authlib.integrations.flask_client import OAuth
 
 db = SQLAlchemy()
@@ -20,6 +22,8 @@ limiter = Limiter(
     storage_uri=os.environ.get('REDIS_URL', 'redis://localhost:6379/0'),
 )
 csrf = CSRFProtect()
+sess = Session()
+cache = Cache()
 oauth = OAuth()
 
 def create_app():
@@ -34,11 +38,14 @@ def create_app():
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     # Inicializar extensões
+    get_config().init_app(app)
     db.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app, db)
     limiter.init_app(app)
     csrf.init_app(app)
+    sess.init_app(app)
+    cache.init_app(app)
     oauth.init_app(app)
 
     # Registrar Google OAuth provider
