@@ -1,4 +1,5 @@
 # app/__init__.py
+import os
 from datetime import timedelta
 from flask import Flask, request, redirect, render_template, session, url_for
 from flask_sqlalchemy import SQLAlchemy
@@ -13,7 +14,11 @@ from authlib.integrations.flask_client import OAuth
 db = SQLAlchemy()
 login_manager = LoginManager()
 migrate = Migrate()
-limiter = Limiter(key_func=get_remote_address, default_limits=[])
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=[],
+    storage_uri=os.environ.get('REDIS_URL', 'redis://localhost:6379/0'),
+)
 csrf = CSRFProtect()
 oauth = OAuth()
 
@@ -91,7 +96,6 @@ def create_app():
         return render_template('errors/404.html'), 404
 
     # Criar diretórios necessários
-    import os
     os.makedirs('logs', exist_ok=True)
     os.makedirs('instance', exist_ok=True)
 
