@@ -3,6 +3,7 @@ Tarefas agendadas do bot - Controle de assinaturas
 """
 import logging
 import asyncio
+import os
 from datetime import datetime, timedelta
 from telegram.ext import Application
 from telegram.error import TelegramError
@@ -432,26 +433,40 @@ async def send_renewal_notification(subscription, days_left):
                 portal_url = None
                 customer_id = getattr(subscription, 'stripe_customer_id', None)
 
-                if customer_id:
+                # Fetch card last4 from Stripe Subscription's default payment method
+                if subscription.stripe_subscription_id:
                     try:
                         import stripe
-                        # Get default payment method last4
-                        customer = stripe.Customer.retrieve(customer_id, expand=['default_source'])
-                        pm_id = customer.get('invoice_settings', {}).get('default_payment_method')
-                        if pm_id:
-                            pm = stripe.PaymentMethod.retrieve(pm_id)
+                        stripe_sub = stripe.Subscription.retrieve(
+                            subscription.stripe_subscription_id,
+                            expand=['default_payment_method']
+                        )
+                        pm = stripe_sub.get('default_payment_method')
+                        if pm and isinstance(pm, dict):
                             last4 = pm.get('card', {}).get('last4')
                             if last4:
                                 card_info = f"\nCartão: <code>**** {last4}</code>"
-
-                        # Generate Billing Portal URL
-                        portal = stripe.billing_portal.Session.create(
-                            customer=customer_id,
-                            return_url=f"https://t.me/{(_application.bot.username or 'televipbot')}",
-                        )
-                        portal_url = portal.url
                     except Exception as e:
-                        logger.warning(f"Could not fetch card/portal info: {e}")
+                        logger.warning(f"Could not fetch card last4: {e}")
+
+                # Generate a signed URL that creates a fresh portal session on click
+                if customer_id:
+                    try:
+                        import jwt
+                        base_url = os.getenv('BASE_URL', 'http://localhost:5000')
+                        secret_key = os.getenv('SECRET_KEY', 'fallback-secret')
+                        token = jwt.encode(
+                            {
+                                'customer_id': customer_id,
+                                'purpose': 'billing_portal',
+                                'exp': datetime.utcnow() + timedelta(hours=24),
+                            },
+                            secret_key,
+                            algorithm='HS256'
+                        )
+                        portal_url = f"{base_url}/webhooks/billing-portal?t={token}"
+                    except Exception as e:
+                        logger.warning(f"Could not generate portal URL: {e}")
 
                 text = (
                     f"<b>Renovação automática</b>\n\n"

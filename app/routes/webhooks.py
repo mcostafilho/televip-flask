@@ -790,6 +790,36 @@ def notify_user_via_bot(telegram_user_id, text, keyboard=None):
         logger.error(f"Error notifying user via bot: {e}")
 
 
+@bp.route('/billing-portal')
+def billing_portal_redirect():
+    """Redirect to Stripe Billing Portal — generates fresh session on each click"""
+    from flask import redirect, abort
+    import jwt
+
+    token = request.args.get('t')
+    if not token:
+        abort(400)
+
+    secret_key = os.getenv('SECRET_KEY', 'fallback-secret')
+    try:
+        payload = jwt.decode(token, secret_key, algorithms=['HS256'])
+        if payload.get('purpose') != 'billing_portal':
+            abort(403)
+        customer_id = payload['customer_id']
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        abort(403)
+
+    try:
+        portal = stripe.billing_portal.Session.create(
+            customer=customer_id,
+            return_url=request.url_root.rstrip('/'),
+        )
+        return redirect(portal.url)
+    except stripe.error.StripeError as e:
+        logger.error(f"Failed to create billing portal session: {e}")
+        abort(502)
+
+
 @bp.route('/telegram', methods=['POST'])
 def telegram_webhook():
     """Webhook para receber atualizações do Telegram"""
