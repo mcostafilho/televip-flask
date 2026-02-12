@@ -27,22 +27,24 @@
                 <!-- Alerta para novos usuários -->
                 {% if not group %}
                 <div class="info-alert chat-type-group">
-                    <h5><i class="bi bi-info-circle"></i> Primeiro Grupo?</h5>
-                    <p>Para criar seu primeiro grupo, você precisará:</p>
+                    <h5><i class="bi bi-info-circle"></i> Primeira vez criando um Grupo?</h5>
+                    <p>Relaxa, é bem simples! Você só precisa de 3 coisas:</p>
                     <ol>
-                        <li>Ter um grupo no Telegram já criado</li>
-                        <li>Adicionar nosso bot (@televipbra_bot) como administrador</li>
-                        <li>Obter o ID do grupo usando o comando /setup no grupo</li>
+                        <li><strong>Um grupo no Telegram</strong> (pode ser um que você já tenha)</li>
+                        <li><strong>Adicionar o bot</strong> <code>@televipbra_bot</code> como administrador do grupo</li>
+                        <li><strong>Pegar o ID do grupo</strong> digitando <code>/setup</code> dentro do grupo</li>
                     </ol>
+                    <p class="mb-0"><small>Veja o passo a passo completo mais abaixo!</small></p>
                 </div>
                 <div class="info-alert chat-type-channel" style="display:none;">
-                    <h5><i class="bi bi-info-circle"></i> Primeiro Canal?</h5>
-                    <p>Para vincular seu canal, você precisará:</p>
+                    <h5><i class="bi bi-info-circle"></i> Primeira vez adicionando um Canal?</h5>
+                    <p>Relaxa, é bem simples! Você só precisa de 3 coisas:</p>
                     <ol>
-                        <li>Ter um canal no Telegram já criado</li>
-                        <li>Adicionar nosso bot (@televipbra_bot) como administrador do canal</li>
-                        <li>Obter o ID do canal usando o @userinfobot (adicione-o ao canal, ele mostrará o ID)</li>
+                        <li><strong>Um canal no Telegram</strong> (pode ser um que você já tenha)</li>
+                        <li><strong>Adicionar o bot</strong> <code>@televipbra_bot</code> como administrador do canal</li>
+                        <li><strong>Pegar o ID do canal</strong> usando o <code>@userinfobot</code> (adicione ele no canal e ele mostra o ID)</li>
                     </ol>
+                    <p class="mb-0"><small>Veja o passo a passo completo mais abaixo!</small></p>
                 </div>
                 {% endif %}
 
@@ -65,19 +67,33 @@
                             <div class="form-section">
                                 <h5 class="section-title">Informações Básicas</h5>
 
-                                <div class="mb-3">
-                                    <label class="form-label">Tipo <span class="text-danger">*</span></label>
-                                    <select class="form-select" name="chat_type" id="chatTypeSelect"
-                                            onchange="toggleChatType()" {% if group %}disabled{% endif %}>
-                                        <option value="group" {{ 'selected' if not group or group.chat_type == 'group' }}>
-                                            Grupo
-                                        </option>
-                                        <option value="channel" {{ 'selected' if group and group.chat_type == 'channel' }}>
-                                            Canal
-                                        </option>
-                                    </select>
+                                <div class="mb-4">
+                                    <label class="form-label" style="font-size: 1rem; font-weight: 600;">O que você quer adicionar? <span class="text-danger">*</span></label>
+                                    <input type="hidden" name="chat_type" id="chatTypeInput" value="{{ group.chat_type or 'group' if group else 'group' }}">
+                                    <div class="d-flex gap-3 mt-2">
+                                        <div class="chat-type-btn {{ 'active' if not group or (group and group.chat_type != 'channel') }} {{ 'disabled' if group }}"
+                                             id="btnTypeGroup" onclick="{% if not group %}selectChatType('group'){% endif %}"
+                                             style="flex: 1; cursor: {% if group %}default{% else %}pointer{% endif %}; padding: 16px 20px; border-radius: 12px;
+                                                    border: 2px solid {{ '#7c5cfc' if not group or (group and group.chat_type != 'channel') else 'rgba(255,255,255,0.1)' }};
+                                                    background: {{ 'rgba(124,92,252,0.15)' if not group or (group and group.chat_type != 'channel') else 'rgba(255,255,255,0.03)' }};
+                                                    text-align: center; transition: all 0.2s ease;">
+                                            <div style="font-size: 28px; margin-bottom: 6px;"><i class="bi bi-people-fill"></i></div>
+                                            <div style="font-weight: 700; font-size: 1rem; color: #e2e8f0;">Grupo</div>
+                                            <div style="font-size: 0.78rem; color: #b0b4cc; margin-top: 2px;">Membros conversam entre si</div>
+                                        </div>
+                                        <div class="chat-type-btn {{ 'active' if group and group.chat_type == 'channel' }} {{ 'disabled' if group }}"
+                                             id="btnTypeChannel" onclick="{% if not group %}selectChatType('channel'){% endif %}"
+                                             style="flex: 1; cursor: {% if group %}default{% else %}pointer{% endif %}; padding: 16px 20px; border-radius: 12px;
+                                                    border: 2px solid {{ '#7c5cfc' if group and group.chat_type == 'channel' else 'rgba(255,255,255,0.1)' }};
+                                                    background: {{ 'rgba(124,92,252,0.15)' if group and group.chat_type == 'channel' else 'rgba(255,255,255,0.03)' }};
+                                                    text-align: center; transition: all 0.2s ease;">
+                                            <div style="font-size: 28px; margin-bottom: 6px;"><i class="bi bi-megaphone-fill"></i></div>
+                                            <div style="font-weight: 700; font-size: 1rem; color: #e2e8f0;">Canal</div>
+                                            <div style="font-size: 0.78rem; color: #b0b4cc; margin-top: 2px;">Só você publica conteúdo</div>
+                                        </div>
+                                    </div>
                                     {% if group %}
-                                    <input type="hidden" name="chat_type" value="{{ group.chat_type or 'group' }}">
+                                    <small class="form-text" style="color: #b0b4cc;">O tipo não pode ser alterado depois de criado.</small>
                                     {% endif %}
                                 </div>
 
@@ -120,11 +136,11 @@
                                                value="{{ group.telegram_id if group else '' }}"
                                                {% if group %}readonly{% endif %} required
                                                placeholder="Ex: -1001234567890">
-                                        <small class="form-text text-muted" id="telegramIdHelpGroup">
-                                            Use /setup no seu grupo para obter o ID
+                                        <small class="form-text" style="color: #b0b4cc;" id="telegramIdHelpGroup">
+                                            Digite <code>/setup</code> dentro do seu grupo no Telegram e o bot vai mostrar o ID. Cole aqui.
                                         </small>
-                                        <small class="form-text text-muted" id="telegramIdHelpChannel" style="display:none;">
-                                            Use @userinfobot no canal para obter o ID
+                                        <small class="form-text" style="color: #b0b4cc; display:none;" id="telegramIdHelpChannel">
+                                            Adicione o <code>@userinfobot</code> no seu canal. Ele vai mostrar o ID. Cole aqui.
                                         </small>
                                     </div>
 
@@ -345,84 +361,84 @@
                 {% if not group %}
                 <div class="guide-card mt-4 chat-type-group">
                     <div class="guide-header">
-                        <h5 class="mb-0"><i class="bi bi-book"></i> Guia Passo a Passo</h5>
+                        <h5 class="mb-0"><i class="bi bi-book"></i> Como fazer? (Passo a Passo)</h5>
                     </div>
                     <div class="guide-body">
                         <div class="guide-step">
-                            <h6>1. Preparar seu Grupo no Telegram</h6>
-                            <ul>
-                                <li>Crie um grupo no Telegram (se ainda não tiver)</li>
-                                <li>Configure o grupo como privado</li>
-                                <li>Prepare uma mensagem de boas-vindas</li>
-                            </ul>
+                            <h6>1. Crie um grupo no Telegram</h6>
+                            <p style="color: #b0b4cc; margin-bottom: 0;">
+                                Abra o Telegram e crie um grupo novo (ou use um que já existe).
+                                Deixe ele como <strong>privado</strong> para que só assinantes possam entrar.
+                            </p>
                         </div>
 
                         <div class="guide-step">
-                            <h6>2. Adicionar o Bot</h6>
-                            <ul>
-                                <li>Procure por @televipbra_bot no Telegram</li>
-                                <li>Adicione o bot como administrador do grupo</li>
-                                <li>Dê permissões para gerenciar usuários e mensagens</li>
-                            </ul>
+                            <h6>2. Adicione o nosso bot no grupo</h6>
+                            <p style="color: #b0b4cc; margin-bottom: 0;">
+                                Procure por <code>@televipbra_bot</code> no Telegram e adicione ele no grupo.
+                                Depois, vá nas configurações do grupo e <strong>torne ele administrador</strong>.
+                                Ele precisa de permissão para adicionar e remover pessoas.
+                            </p>
                         </div>
 
                         <div class="guide-step">
-                            <h6>3. Obter o ID do Grupo</h6>
-                            <ul>
-                                <li>No grupo, digite o comando: <code>/setup</code></li>
-                                <li>O bot responderá com o ID do grupo</li>
-                                <li>Copie e cole o ID no formulário acima</li>
-                            </ul>
+                            <h6>3. Pegue o ID do grupo</h6>
+                            <p style="color: #b0b4cc; margin-bottom: 0;">
+                                Dentro do grupo, digite <code>/setup</code> e envie.
+                                O bot vai responder com um número (o ID do grupo). Ele se parece com isso: <code>-1001234567890</code>.
+                                <strong>Copie esse número</strong> e cole no campo "ID" do formulário acima.
+                            </p>
                         </div>
 
                         <div class="guide-step mb-0">
-                            <h6>4. Configurar Planos e Preços</h6>
-                            <ul class="mb-0">
-                                <li>Defina diferentes planos (mensal, trimestral, etc.)</li>
-                                <li>Configure preços competitivos</li>
-                                <li>Você pode adicionar ou modificar planos depois</li>
-                            </ul>
+                            <h6>4. Escolha os planos e preços</h6>
+                            <p style="color: #b0b4cc; margin-bottom: 0;">
+                                No formulário acima, defina quanto as pessoas vão pagar para entrar.
+                                Exemplo: "Mensal" por R$ 29,90. Você pode criar quantos planos quiser
+                                e mudar os preços depois.
+                            </p>
                         </div>
                     </div>
                 </div>
                 <div class="guide-card mt-4 chat-type-channel" style="display:none;">
                     <div class="guide-header">
-                        <h5 class="mb-0"><i class="bi bi-book"></i> Guia Passo a Passo</h5>
+                        <h5 class="mb-0"><i class="bi bi-book"></i> Como fazer? (Passo a Passo)</h5>
                     </div>
                     <div class="guide-body">
                         <div class="guide-step">
-                            <h6>1. Criar Canal no Telegram</h6>
-                            <ul>
-                                <li>Crie um canal no Telegram (privado)</li>
-                                <li>Configure o canal com nome e descrição</li>
-                            </ul>
+                            <h6>1. Crie um canal no Telegram</h6>
+                            <p style="color: #b0b4cc; margin-bottom: 0;">
+                                Abra o Telegram e crie um canal novo (ou use um que já existe).
+                                Deixe ele como <strong>privado</strong> para que só assinantes possam ver o conteúdo.
+                            </p>
                         </div>
 
                         <div class="guide-step">
-                            <h6>2. Adicionar o Bot como Administrador</h6>
-                            <ul>
-                                <li>Procure por @televipbra_bot no Telegram</li>
-                                <li>Adicione o bot como administrador do canal</li>
-                                <li>Dê permissões para gerenciar usuários</li>
-                            </ul>
+                            <h6>2. Adicione o nosso bot no canal</h6>
+                            <p style="color: #b0b4cc; margin-bottom: 0;">
+                                Procure por <code>@televipbra_bot</code> no Telegram e adicione ele no canal.
+                                Depois, vá nas configurações do canal e <strong>torne ele administrador</strong>.
+                                Ele precisa de permissão para adicionar e remover pessoas.
+                            </p>
                         </div>
 
                         <div class="guide-step">
-                            <h6>3. Obter o ID do Canal</h6>
-                            <ul>
-                                <li>Adicione @userinfobot ao canal</li>
-                                <li>Ele mostrará o ID do canal (ex: <code>-1001234567890</code>)</li>
-                                <li>Copie e cole o ID no formulário acima</li>
-                            </ul>
+                            <h6>3. Pegue o ID do canal</h6>
+                            <p style="color: #b0b4cc; margin-bottom: 0;">
+                                Adicione o <code>@userinfobot</code> no seu canal como administrador.
+                                Ele vai mostrar o ID do canal. Parece com isso: <code>-1001234567890</code>.
+                                <strong>Copie esse número</strong> e cole no campo "ID" do formulário acima.
+                                Depois pode remover o @userinfobot do canal.
+                            </p>
                         </div>
 
                         <div class="guide-step mb-0">
-                            <h6>4. Configurar Planos e Preços</h6>
-                            <ul class="mb-0">
-                                <li>Defina diferentes planos (mensal, trimestral, etc.)</li>
-                                <li>Configure preços competitivos</li>
-                                <li>Você pode adicionar ou modificar planos depois</li>
-                            </ul>
+                            <h6>4. Escolha os planos e preços</h6>
+                            <p style="color: #b0b4cc; margin-bottom: 0;">
+                                No formulário acima, defina quanto as pessoas vão pagar para acessar o canal.
+                                Exemplo: "Mensal" por R$ 29,90. Você pode criar quantos planos quiser
+                                e mudar os preços depois.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -513,11 +529,23 @@ function copyLinkModal() {
     });
 }
 
-// Toggle tipo de chat (Grupo/Canal)
-function toggleChatType() {
-    const type = document.getElementById('chatTypeSelect').value;
+// Selecionar tipo de chat (Grupo/Canal) via botões visuais
+function selectChatType(type) {
     const isChannel = type === 'channel';
 
+    // Atualizar hidden input
+    document.getElementById('chatTypeInput').value = type;
+
+    // Atualizar botões visuais
+    const btnGroup = document.getElementById('btnTypeGroup');
+    const btnChannel = document.getElementById('btnTypeChannel');
+
+    btnGroup.style.borderColor = isChannel ? 'rgba(255,255,255,0.1)' : '#7c5cfc';
+    btnGroup.style.background = isChannel ? 'rgba(255,255,255,0.03)' : 'rgba(124,92,252,0.15)';
+    btnChannel.style.borderColor = isChannel ? '#7c5cfc' : 'rgba(255,255,255,0.1)';
+    btnChannel.style.background = isChannel ? 'rgba(124,92,252,0.15)' : 'rgba(255,255,255,0.03)';
+
+    // Toggle conteúdo condicional
     document.querySelectorAll('.chat-type-group').forEach(el => el.style.display = isChannel ? 'none' : '');
     document.querySelectorAll('.chat-type-channel').forEach(el => el.style.display = isChannel ? '' : 'none');
 
