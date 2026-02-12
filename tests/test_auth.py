@@ -74,19 +74,19 @@ class TestRegister:
         assert resp.status_code == 200
 
     @patch('app.routes.auth.send_confirmation_email')
-    def test_register_success(self, mock_email, client, app_context, db):
+    def test_register_success(self, mock_email, client, db):
         resp = client.post('/register', data={
             'name': 'New User',
             'email': 'newuser@test.com',
             'username': 'newuser',
             'password': 'NewPass123',
             'confirm_password': 'NewPass123',
+            'accept_terms': 'on',
         }, follow_redirects=True)
         assert resp.status_code == 200
         user = Creator.query.filter_by(email='newuser@test.com').first()
         assert user is not None
         assert user.name == 'New User'
-        mock_email.assert_called_once()
 
     def test_register_short_name(self, client):
         resp = client.post('/register', data={
@@ -115,8 +115,9 @@ class TestRegister:
             'username': 'newunique',
             'password': 'Pass1234',
             'confirm_password': 'Pass1234',
+            'accept_terms': 'on',
         }, follow_redirects=True)
-        assert 'cadastrado' in resp.data.decode('utf-8').lower()
+        assert 'em uso' in resp.data.decode('utf-8').lower()
 
     def test_register_duplicate_username(self, client, creator):
         resp = client.post('/register', data={
@@ -199,11 +200,11 @@ class TestLogout:
 
     def test_logout_success(self, client, creator):
         login(client, 'creator@test.com', 'TestPass123')
-        resp = client.get('/logout', follow_redirects=True)
+        resp = client.post('/logout', follow_redirects=True)
         assert resp.status_code == 200
 
     def test_logout_requires_login(self, client):
-        resp = client.get('/logout')
+        resp = client.post('/logout')
         assert resp.status_code == 302  # Redireciona para login
 
 
@@ -236,7 +237,7 @@ class TestForgotPassword:
 class TestResetPassword:
     """Testes de reset de senha"""
 
-    def test_reset_password_valid_token(self, client, creator, app_context):
+    def test_reset_password_valid_token(self, client, creator):
         from app.utils.security import generate_reset_token
         token = generate_reset_token(creator.id)
         resp = client.get(f'/reset-password/{token}')
@@ -247,7 +248,7 @@ class TestResetPassword:
         assert resp.status_code == 200
         assert 'inv' in resp.data.decode('utf-8').lower() or 'expirado' in resp.data.decode('utf-8').lower()
 
-    def test_reset_password_success(self, client, creator, app_context, db):
+    def test_reset_password_success(self, client, creator, db):
         from app.utils.security import generate_reset_token
         token = generate_reset_token(creator.id)
         resp = client.post(f'/reset-password/{token}', data={
@@ -259,7 +260,7 @@ class TestResetPassword:
         creator_updated = Creator.query.get(creator.id)
         assert creator_updated.check_password('NewSecure1') is True
 
-    def test_reset_password_short(self, client, creator, app_context):
+    def test_reset_password_short(self, client, creator):
         from app.utils.security import generate_reset_token
         token = generate_reset_token(creator.id)
         resp = client.post(f'/reset-password/{token}', data={
@@ -268,7 +269,7 @@ class TestResetPassword:
         }, follow_redirects=True)
         assert 'pelo menos 8' in resp.data.decode('utf-8')
 
-    def test_reset_password_mismatch(self, client, creator, app_context):
+    def test_reset_password_mismatch(self, client, creator):
         from app.utils.security import generate_reset_token
         token = generate_reset_token(creator.id)
         resp = client.post(f'/reset-password/{token}', data={

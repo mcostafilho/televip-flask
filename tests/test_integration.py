@@ -169,7 +169,7 @@ class TestWithdrawalFlow:
 class TestCreatorDashboardFlow:
     """Teste do fluxo completo do criador"""
 
-    def test_creator_full_workflow(self, client, db, app_context):
+    def test_creator_full_workflow(self, client, db):
         """Criar conta -> login -> criar grupo -> ver dashboard -> ver analytics"""
         # 1. Criar criador verificado e fazer login
         creator = Creator(name='Flow Test', email='flowtest@test.com',
@@ -187,8 +187,11 @@ class TestCreatorDashboardFlow:
         resp = client.post('/groups/create', data={
             'name': 'Workflow Group',
             'description': 'Test workflow',
-            'telegram_id': '-100workflow',
-            'skip_validation': 'on',
+            'telegram_id': '-1005550001',
+            'plan_name[]': 'Mensal',
+            'plan_duration[]': '30',
+            'plan_price[]': '29.90',
+            'plan_lifetime[]': '0',
         }, follow_redirects=True)
         assert resp.status_code == 200
 
@@ -210,7 +213,7 @@ class TestCreatorDashboardFlow:
         assert resp.status_code == 200
 
         # 8. Logout
-        resp = client.get('/logout', follow_redirects=True)
+        resp = client.post('/logout', follow_redirects=True)
         assert resp.status_code == 200
 
 

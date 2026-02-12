@@ -43,7 +43,10 @@ class TestCreateGroup:
             'name': 'New Group',
             'description': 'A new test group',
             'telegram_id': '-1009999999',
-            'skip_validation': 'on',
+            'plan_name[]': 'Mensal',
+            'plan_duration[]': '30',
+            'plan_price[]': '29.90',
+            'plan_lifetime[]': '0',
         }, follow_redirects=True)
         assert resp.status_code == 200
         g = Group.query.filter_by(name='New Group').first()

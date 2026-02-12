@@ -30,10 +30,17 @@ class TestStripeWebhook:
     def test_telegram_webhook_returns_ok(self, client):
         resp = client.post('/webhooks/telegram',
                           data=json.dumps({}),
-                          content_type='application/json')
+                          content_type='application/json',
+                          headers={'X-Telegram-Bot-Api-Secret-Token': 'test-webhook-secret'})
         assert resp.status_code == 200
         data = json.loads(resp.data)
         assert data['status'] == 'ok'
+
+    def test_telegram_webhook_rejects_without_secret(self, client):
+        resp = client.post('/webhooks/telegram',
+                          data=json.dumps({}),
+                          content_type='application/json')
+        assert resp.status_code == 403
 
 
 class TestHandleCheckoutCompleted:

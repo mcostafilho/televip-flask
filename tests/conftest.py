@@ -10,6 +10,11 @@ from datetime import datetime, timedelta
 # Forçar variáveis de ambiente ANTES de importar a app
 os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
 os.environ['SECRET_KEY'] = 'test-secret-key-for-testing'
+os.environ['STRIPE_SECRET_KEY'] = 'sk_test_fake'
+os.environ['TELEGRAM_WEBHOOK_SECRET'] = 'test-webhook-secret'
+# Limpar tokens do bot para evitar chamadas ao Telegram API real nos testes
+os.environ.pop('BOT_TOKEN', None)
+os.environ.pop('TELEGRAM_BOT_TOKEN', None)
 
 from app import create_app, db as _db
 from app.models import Creator, Group, PricingPlan, Subscription, Transaction, Withdrawal
@@ -28,6 +33,9 @@ def app():
         'RATELIMIT_ENABLED': False,
         'RATELIMIT_STORAGE_URI': 'memory://',
     })
+    # Limpar tokens do bot APÓS create_app (load_dotenv pode ter re-carregado do .env)
+    os.environ.pop('BOT_TOKEN', None)
+    os.environ.pop('TELEGRAM_BOT_TOKEN', None)
     return app
 
 
@@ -211,4 +219,4 @@ def login(client, email, password):
 
 def logout(client):
     """Helper para fazer logout"""
-    return client.get('/logout', follow_redirects=True)
+    return client.post('/logout', follow_redirects=True)
