@@ -170,7 +170,7 @@ async def notify_expiration(subscription):
             f"⚠️ **Assinatura Expirada**\n\n"
             f"Sua assinatura do grupo **{group.name}** expirou.\n\n"
             f"Voce foi removido do grupo automaticamente.\n\n"
-            f"Para renovar, use /descobrir ou clique abaixo:"
+            f"Para renovar, clique abaixo:"
         )
 
         from telegram import InlineKeyboardButton, InlineKeyboardMarkup

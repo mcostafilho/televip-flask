@@ -337,12 +337,7 @@ async def show_group_stats(update: Update, context: ContextTypes.DEFAULT_TYPE, g
         
         keyboard = [
             [
-                InlineKeyboardButton("📈 Gráficos", callback_data="admin_charts"),
-                InlineKeyboardButton("👥 Assinantes", callback_data="admin_subscribers")
-            ],
-            [
-                InlineKeyboardButton("💰 Financeiro", callback_data="admin_finance"),
-                InlineKeyboardButton("🔄 Atualizar", callback_data="refresh_stats")
+                InlineKeyboardButton("🌐 Dashboard Web", url="https://televip.app/dashboard")
             ]
         ]
         
@@ -463,10 +458,6 @@ Para começar:
 """
         
         keyboard = [
-            [
-                InlineKeyboardButton("💰 Solicitar Saque", callback_data="request_withdrawal"),
-                InlineKeyboardButton("📈 Ver Gráficos", callback_data="creator_charts")
-            ],
             [
                 InlineKeyboardButton("🌐 Dashboard Web", url="https://televip.app/dashboard")
             ]

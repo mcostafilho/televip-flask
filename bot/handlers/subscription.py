@@ -315,13 +315,8 @@ Nenhuma assinatura precisa ser renovada nos próximos 15 dias.
             text += f"💰 **Total para renovar tudo:** R$ {total_renewal:.2f}\n"
             text += "\n💡 Dica: Renove com antecedência e ganhe descontos!"
             
-            keyboard.extend([
-                [
-                    InlineKeyboardButton("🔄 Renovar Todas", callback_data="renew_all")
-                ],
-                [
-                    InlineKeyboardButton("⬅️ Voltar", callback_data="check_status")
-                ]
+            keyboard.append([
+                InlineKeyboardButton("⬅️ Voltar", callback_data="check_status")
             ])
         
         await query.edit_message_text(
