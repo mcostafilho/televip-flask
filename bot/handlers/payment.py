@@ -13,7 +13,10 @@ from bot.utils.stripe_integration import (
     get_or_create_stripe_customer, get_or_create_stripe_price,
     create_subscription_checkout
 )
-from bot.utils.format_utils import format_currency, format_remaining_text, get_expiry_emoji, format_date
+from bot.utils.format_utils import (
+    format_currency, format_currency_code, format_remaining_text,
+    get_expiry_emoji, format_date, format_date_code, escape_html
+)
 from app.models import Group, PricingPlan, Subscription, Transaction, Creator
 
 logger = logging.getLogger(__name__)
@@ -23,7 +26,7 @@ async def start_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Iniciar processo de pagamento após seleção do plano"""
     query = update.callback_query
     await query.answer()
-    
+
     # Extrair dados do callback
     # Formato: plan_GROUPID_PLANID
     try:
@@ -32,32 +35,32 @@ async def start_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         plan_id = int(plan_id)
     except Exception:
         await query.edit_message_text(
-            "❌ Erro ao processar seleção. Tente novamente.",
+            "Erro ao processar seleção. Tente novamente.",
             reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")
+                InlineKeyboardButton("Menu", callback_data="back_to_start")
             ]])
         )
         return
-    
+
     # Buscar informações do grupo e plano
     with get_db_session() as session:
         group = session.query(Group).get(group_id)
         plan = session.query(PricingPlan).get(plan_id)
-        
+
         if not group or not plan:
             await query.edit_message_text(
-                "❌ Grupo ou plano não encontrado.",
+                "Grupo ou plano não encontrado.",
                 reply_markup=InlineKeyboardMarkup([[
-                    InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")
+                    InlineKeyboardButton("Menu", callback_data="back_to_start")
                 ]])
             )
             return
-        
+
         # Calcular valores
         amount = float(plan.price)
         platform_fee = amount * 0.10  # 10% de taxa
         creator_amount = amount - platform_fee
-        
+
         # Preparar dados do checkout
         is_lifetime = getattr(plan, 'is_lifetime', False) or plan.duration_days == 0
         checkout_data = {
@@ -75,35 +78,38 @@ async def start_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Salvar no contexto
         context.user_data['checkout'] = checkout_data
 
+        group_name = escape_html(group.name)
+        plan_name = escape_html(plan.name)
+
         # Mostrar resumo do pedido
         if is_lifetime:
-            duration_text = "Acesso Vitalicio"
-            renewal_text = "Pagamento unico (sem renovacao)"
+            duration_text = "Acesso vitalício"
+            type_text = "Pagamento único"
         else:
             duration_text = f"{plan.duration_days} dias"
-            renewal_text = "Automatica (cartao) ou novo boleto a cada ciclo"
+            type_text = "Recorrente"
 
-        text = f"""
-💳 **RESUMO DO PEDIDO**
-
-📱 **Grupo:** {group.name}
-📅 **Plano:** {plan.name}
-⏱ **Duração:** {duration_text}
-🔄 **Renovacao:** {renewal_text}
-
-💰 **Valor:** {format_currency(amount)}
-
-Clique abaixo para pagar com cartao ou boleto:
-"""
+        text = (
+            f"<b>Resumo do pedido</b>\n\n"
+            f"<pre>"
+            f"Grupo:    {group.name}\n"
+            f"Plano:    {plan.name}\n"
+            f"Duração:  {duration_text}\n"
+            f"Tipo:     {type_text}\n"
+            f"─────────────────────\n"
+            f"Total:    {format_currency(amount)}"
+            f"</pre>\n\n"
+            f"<i>Pagamento processado via Stripe.</i>"
+        )
 
         keyboard = [
-            [InlineKeyboardButton("💳 Pagar Agora", callback_data="pay_stripe")],
-            [InlineKeyboardButton("❌ Cancelar", callback_data=f"group_{group_id}")]
+            [InlineKeyboardButton("Pagar Agora", callback_data="pay_stripe")],
+            [InlineKeyboardButton("Cancelar", callback_data=f"group_{group_id}")]
         ]
 
         await query.edit_message_text(
             text,
-            parse_mode=ParseMode.MARKDOWN,
+            parse_mode=ParseMode.HTML,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
@@ -112,18 +118,18 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
     """Processar seleção do método de pagamento"""
     query = update.callback_query
     await query.answer()
-    
+
     # Verificar se temos os dados do checkout
     checkout_data = context.user_data.get('checkout')
     if not checkout_data:
         await query.edit_message_text(
-            "❌ Sessão expirada. Por favor, inicie novamente.",
+            "Sessão expirada. Por favor, inicie novamente.",
             reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")
+                InlineKeyboardButton("Menu", callback_data="back_to_start")
             ]])
         )
         return
-    
+
     if query.data == "pay_stripe":
         await process_stripe_payment(query, context, checkout_data)
 
@@ -153,9 +159,9 @@ async def process_stripe_payment(query, context, checkout_data):
 
             if not plan or not group:
                 await query.edit_message_text(
-                    "❌ Plano ou grupo nao encontrado.",
+                    "Plano ou grupo não encontrado.",
                     reply_markup=InlineKeyboardMarkup([[
-                        InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")
+                        InlineKeyboardButton("Menu", callback_data="back_to_start")
                     ]])
                 )
                 return
@@ -242,56 +248,44 @@ async def process_stripe_payment(query, context, checkout_data):
                 logger.info(f"Criada subscription {new_subscription.id} ({mode_label}) com session_id: {result['session_id']}")
 
             # Mostrar instruções e botão de pagamento
-            if is_lifetime:
-                renewal_line = "♾️ **Pagamento unico** - acesso vitalicio"
-            else:
-                renewal_line = "🔄 **Renovacao automatica** a cada ciclo"
-
-            text = f"""
-🔐 **Pagamento Seguro via Stripe**
-
-Clique no botao abaixo para ser redirecionado para a pagina de pagamento segura.
-
-💳 **Aceita:** Cartao e Boleto
-{renewal_line}
-
-Apos concluir o pagamento:
-1. Voce sera redirecionado de volta ao Telegram
-2. Clique em "Verificar Pagamento" para confirmar
-3. Sera adicionado ao grupo automaticamente
-
-⚠️ **Importante:** Nao feche esta conversa durante o pagamento!
-"""
+            text = (
+                f"<b>Pagamento seguro via Stripe</b>\n\n"
+                f"Clique no botão abaixo para pagar.\n\n"
+                f"Valor: {format_currency_code(checkout_data['amount'])}\n\n"
+                f"<i>Você será redirecionado para o checkout do Stripe.\n"
+                f"Após o pagamento, clique em \"Verificar Pagamento\".</i>"
+            )
 
             keyboard = [
-                [InlineKeyboardButton("💳 Pagar Agora", url=result['url'])],
-                [InlineKeyboardButton("🔄 Verificar Pagamento", callback_data="check_payment_status")],
-                [InlineKeyboardButton("❌ Cancelar", callback_data=f"group_{checkout_data['group_id']}")]
+                [InlineKeyboardButton("Pagar Agora", url=result['url'])],
+                [InlineKeyboardButton("Verificar Pagamento", callback_data="check_payment_status")],
+                [InlineKeyboardButton("Cancelar", callback_data=f"group_{checkout_data['group_id']}")]
             ]
 
             await query.edit_message_text(
                 text,
-                parse_mode=ParseMode.MARKDOWN,
+                parse_mode=ParseMode.HTML,
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
         else:
             # Erro ao criar sessão
             await query.edit_message_text(
-                f"❌ Erro ao processar pagamento: {result.get('error', 'Erro desconhecido')}\n\n"
+                f"Erro ao processar pagamento: {escape_html(result.get('error', 'Erro desconhecido'))}\n\n"
                 "Por favor, tente novamente ou entre em contato com o suporte.",
+                parse_mode=ParseMode.HTML,
                 reply_markup=InlineKeyboardMarkup([[
-                    InlineKeyboardButton("🔄 Tentar Novamente", callback_data=f"plan_{checkout_data['group_id']}_{checkout_data['plan_id']}"),
-                    InlineKeyboardButton("📞 Suporte", url="https://t.me/suporte_televip")
+                    InlineKeyboardButton("Tentar Novamente", callback_data=f"plan_{checkout_data['group_id']}_{checkout_data['plan_id']}"),
+                    InlineKeyboardButton("Suporte", url="https://t.me/suporte_televip")
                 ]])
             )
     except Exception as e:
         logger.error(f"Erro ao processar pagamento: {e}")
         await query.edit_message_text(
-            "❌ Erro ao processar pagamento. Tente novamente.\n\n"
+            "Erro ao processar pagamento. Tente novamente.\n\n"
             "Se o problema persistir, entre em contato com o suporte.",
             reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton("🔄 Tentar Novamente", callback_data=f"plan_{checkout_data['group_id']}_{checkout_data['plan_id']}"),
-                InlineKeyboardButton("📞 Suporte", url="https://t.me/suporte_televip")
+                InlineKeyboardButton("Tentar Novamente", callback_data=f"plan_{checkout_data['group_id']}_{checkout_data['plan_id']}"),
+                InlineKeyboardButton("Suporte", url="https://t.me/suporte_televip")
             ]])
         )
 
@@ -306,7 +300,7 @@ async def list_user_subscriptions(update: Update, context: ContextTypes.DEFAULT_
     else:
         user = update.effective_user
         message = update
-    
+
     with get_db_session() as session:
         # Buscar assinaturas ativas
         subscriptions = session.query(Subscription).filter(
@@ -314,47 +308,53 @@ async def list_user_subscriptions(update: Update, context: ContextTypes.DEFAULT_
             Subscription.status == 'active',
             Subscription.end_date > datetime.utcnow()
         ).all()
-        
+
         if not subscriptions:
-            text = "📭 **Você não tem assinaturas ativas**\n\nPara assinar um grupo, use o link de convite fornecido pelo criador."
+            text = (
+                "<b>Suas assinaturas</b>\n\n"
+                "Você não tem assinaturas ativas.\n"
+                "Para assinar um grupo, use o link de convite fornecido pelo criador."
+            )
             keyboard = [[
-                InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")
+                InlineKeyboardButton("Menu", callback_data="back_to_start")
             ]]
         else:
-            text = "📱 **SUAS ASSINATURAS ATIVAS**\n\n"
-            
+            text = "<b>Suas assinaturas</b>\n"
+
             for sub in subscriptions:
                 group = sub.group
                 plan = sub.plan
                 is_lifetime = getattr(plan, 'is_lifetime', False) or plan.duration_days == 0
+                group_name = escape_html(group.name)
+                plan_name = escape_html(plan.name)
 
                 if is_lifetime:
-                    expiry_text = "♾️ Acesso Vitalicio"
+                    expiry_text = "Acesso vitalício"
                 else:
                     remaining = format_remaining_text(sub.end_date)
-                    expiry_text = f"Expira em: {remaining} ({format_date(sub.end_date)})"
+                    expiry_text = f"Expira: {format_date_code(sub.end_date)}"
 
-                text += f"""
-📌 **{group.name}**
-⏱ {expiry_text}
-💰 Plano: {plan.name}
+                emoji = get_expiry_emoji(sub.end_date) if not is_lifetime else "♾️"
 
-"""
-            
+                text += (
+                    f"\n{emoji} <b>{group_name}</b>\n"
+                    f"   <code>{plan_name}</code> · {expiry_text}\n"
+                )
+
             keyboard = [
-                [InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")]
+                [InlineKeyboardButton("Menu", callback_data="back_to_start")]
             ]
-        
+
         if hasattr(message, 'edit_message_text'):
             await message.edit_message_text(
                 text,
-                parse_mode=ParseMode.MARKDOWN,
+                parse_mode=ParseMode.HTML,
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
         else:
             await message.reply_text(
                 text,
-                parse_mode=ParseMode.MARKDOWN,
+                parse_mode=ParseMode.HTML,
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
 
@@ -363,15 +363,15 @@ async def list_user_subscriptions(update: Update, context: ContextTypes.DEFAULT_
 def register_payment_handlers(application):
     """Registrar todos os handlers de pagamento"""
     from telegram.ext import CallbackQueryHandler, CommandHandler
-    
+
     # Handlers de callback
     application.add_handler(CallbackQueryHandler(start_payment, pattern=r'^plan_\d+_\d+$'))
     application.add_handler(CallbackQueryHandler(handle_payment_method, pattern='^pay_stripe$'))
     application.add_handler(CallbackQueryHandler(list_user_subscriptions, pattern='^my_subscriptions$'))
-    
+
     # Command handlers
     application.add_handler(CommandHandler('subscriptions', list_user_subscriptions))
-    
+
     logger.info("Handlers de pagamento registrados")
 
 # Funções adicionadas automaticamente
@@ -384,7 +384,7 @@ async def handle_plan_selection(update: Update, context: ContextTypes.DEFAULT_TY
 async def handle_payment_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler para callbacks de pagamento"""
     query = update.callback_query
-    
+
     if query.data.startswith('pay_'):
         await handle_payment_method(update, context)
     elif query.data == 'check_payment_status':
@@ -397,41 +397,41 @@ async def handle_payment_callback(update: Update, context: ContextTypes.DEFAULT_
 async def check_payment_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Verificar status do pagamento"""
     query = update.callback_query
-    await query.answer("🔄 Verificando pagamento...")
-    
+    await query.answer("Verificando pagamento...")
+
     # Verificar se temos session_id salvo
     session_id = context.user_data.get('stripe_session_id')
-    
+
     if not session_id:
         await query.edit_message_text(
-            "❌ Nenhum pagamento pendente encontrado.",
+            "Nenhum pagamento pendente encontrado.",
             reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")
+                InlineKeyboardButton("Menu", callback_data="back_to_start")
             ]])
         )
         return
-    
+
     # Verificar pagamento
     from bot.utils.stripe_integration import verify_payment
     payment_confirmed = await verify_payment(session_id)
-    
+
     if payment_confirmed:
         # Atualizar no banco
         with get_db_session() as session:
             transaction = session.query(Transaction).filter_by(
                 stripe_session_id=session_id
             ).first()
-            
+
             if transaction:
                 transaction.status = 'completed'
                 transaction.paid_at = datetime.utcnow()
-                
+
                 # Ativar assinatura
                 subscription = transaction.subscription
                 subscription.status = 'active'
-                
+
                 session.commit()
-                
+
                 # Gerar link de convite unico via Bot API
                 group = subscription.group
                 invite_link = None
@@ -451,68 +451,65 @@ async def check_payment_status(update: Update, context: ContextTypes.DEFAULT_TYP
                 if not invite_link:
                     invite_link = group.invite_link
 
+                group_name = escape_html(group.name)
+
                 if invite_link:
-                    text = f"""
-✅ **PAGAMENTO CONFIRMADO!**
-
-Bem-vindo ao grupo **{group.name}**!
-
-🔗 **Link de acesso:** {invite_link}
-
-Sua assinatura esta ativa ate {format_date(subscription.end_date)}.
-
-💡 Salve este link! Ele so pode ser usado uma vez.
-"""
-                    keyboard = [[InlineKeyboardButton("📱 Entrar no Grupo", url=invite_link)]]
+                    text = (
+                        f"<b>Pagamento confirmado!</b>\n\n"
+                        f"Sua assinatura de <b>{group_name}</b> foi ativada.\n"
+                        f"Válida até: {format_date_code(subscription.end_date)}\n\n"
+                        f"Use o botão abaixo para entrar no grupo."
+                    )
+                    keyboard = [
+                        [InlineKeyboardButton("Entrar no Grupo", url=invite_link)],
+                        [InlineKeyboardButton("Minhas Assinaturas", callback_data="my_subscriptions")]
+                    ]
                 else:
-                    text = f"""
-✅ **PAGAMENTO CONFIRMADO!**
-
-Sua assinatura do grupo **{group.name}** esta ativa ate {format_date(subscription.end_date)}.
-
-⚠️ Nao foi possivel gerar o link automaticamente.
-Entre em contato com o criador do grupo para acesso.
-"""
-                    keyboard = []
-
-                keyboard.append([InlineKeyboardButton("📱 Minhas Assinaturas", callback_data="my_subscriptions")])
+                    text = (
+                        f"<b>Pagamento confirmado!</b>\n\n"
+                        f"Sua assinatura de <b>{group_name}</b> foi ativada até "
+                        f"{format_date_code(subscription.end_date)}.\n\n"
+                        f"Não foi possível gerar o link automaticamente.\n"
+                        f"Entre em contato com o criador do grupo para acesso."
+                    )
+                    keyboard = [
+                        [InlineKeyboardButton("Minhas Assinaturas", callback_data="my_subscriptions")]
+                    ]
 
                 await query.edit_message_text(
                     text,
-                    parse_mode=ParseMode.MARKDOWN,
+                    parse_mode=ParseMode.HTML,
                     reply_markup=InlineKeyboardMarkup(keyboard)
                 )
-                
+
                 # Limpar dados da sessão
                 context.user_data.pop('stripe_session_id', None)
                 context.user_data.pop('checkout', None)
             else:
                 await query.edit_message_text(
-                    "❌ Transação não encontrada no sistema.",
+                    "Transação não encontrada no sistema.",
                     reply_markup=InlineKeyboardMarkup([[
-                        InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")
+                        InlineKeyboardButton("Menu", callback_data="back_to_start")
                     ]])
                 )
     else:
         # Pagamento ainda não confirmado
-        text = """
-⏳ **Pagamento ainda não confirmado**
+        text = (
+            "<b>Pagamento não confirmado</b>\n\n"
+            "Complete o pagamento no Stripe e clique em \"Verificar Novamente\".\n\n"
+            "<i>Se já pagou, aguarde alguns segundos.</i>"
+        )
 
-Por favor, complete o pagamento no Stripe.
-
-Se você já pagou, aguarde alguns segundos e clique em "Verificar Novamente".
-"""
-        
         keyboard = [
             [
-                InlineKeyboardButton("🔄 Verificar Novamente", callback_data="check_payment_status"),
-                InlineKeyboardButton("❌ Cancelar", callback_data="back_to_start")
+                InlineKeyboardButton("Verificar Novamente", callback_data="check_payment_status"),
+                InlineKeyboardButton("Cancelar", callback_data="back_to_start")
             ]
         ]
-        
+
         await query.edit_message_text(
             text,
-            parse_mode=ParseMode.MARKDOWN,
+            parse_mode=ParseMode.HTML,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
@@ -526,33 +523,27 @@ async def handle_payment_success(update: Update, context: ContextTypes.DEFAULT_T
 async def handle_payment_error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler para erro no pagamento"""
     query = update.callback_query
-    await query.answer("❌ Erro no pagamento", show_alert=True)
-    
-    text = """
-❌ **Erro no Pagamento**
+    await query.answer("Erro no pagamento", show_alert=True)
 
-Houve um problema ao processar seu pagamento.
-
-Possíveis causas:
-• Cartão recusado
-• Dados inválidos
-• Limite excedido
-
-Por favor, tente novamente ou use outro método de pagamento.
-"""
-    
-    keyboard = [
-        [
-            InlineKeyboardButton("🔄 Tentar Novamente", callback_data="retry_payment"),
-            InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")
-        ]
-    ]
-    
-    await query.edit_message_text(
-        text,
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=InlineKeyboardMarkup(keyboard)
+    text = (
+        "<b>Erro no pagamento</b>\n\n"
+        "Não foi possível processar o pagamento.\n\n"
+        "<i>Possíveis causas:</i>\n"
+        "• Cartão recusado\n"
+        "• Sessão expirada\n"
+        "• Erro temporário\n\n"
+        "Tente novamente ou entre em contato com o suporte."
     )
 
+    keyboard = [
+        [
+            InlineKeyboardButton("Tentar Novamente", callback_data="retry_payment"),
+            InlineKeyboardButton("Menu", callback_data="back_to_start")
+        ]
+    ]
 
-
+    await query.edit_message_text(
+        text,
+        parse_mode=ParseMode.HTML,
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )

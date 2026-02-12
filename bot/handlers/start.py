@@ -11,7 +11,10 @@ from telegram.constants import ParseMode
 
 from bot.utils.database import get_db_session
 from bot.keyboards.menus import get_plans_menu
-from bot.utils.format_utils import format_remaining_text, get_expiry_emoji, format_date
+from bot.utils.format_utils import (
+    format_remaining_text, get_expiry_emoji, format_date, format_date_code,
+    format_currency, escape_html
+)
 from app.models import Group, Creator, PricingPlan, Subscription, Transaction
 from bot.handlers.payment_verification import check_payment_from_start
 
@@ -27,9 +30,9 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     user = update.effective_user
     args = context.args
-    
+
     logger.info(f"Start command - User: {user.id}, Args: {args}")
-    
+
     # Tratar diferentes tipos de argumentos
     if args:
         if args[0].startswith('success_') or args[0] == 'payment_success':
@@ -43,7 +46,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             logger.info(f"Iniciando fluxo de assinatura para grupo: {group_identifier}")
             await start_subscription_flow(update, context, group_identifier)
             return
-    
+
     # Sem argumentos - mostrar dashboard
     await show_user_dashboard(update, context)
 
@@ -58,7 +61,9 @@ async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE
         user = update.effective_user
         message = update.message
         is_callback = False
-    
+
+    name = escape_html(user.first_name)
+
     with get_db_session() as session:
         # Verificar transações pendentes
         if not context.user_data.get('skip_pending_check'):
@@ -69,7 +74,7 @@ async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE
                 Transaction.status == 'pending',
                 Transaction.created_at >= datetime.utcnow() - timedelta(hours=2)
             ).order_by(Transaction.created_at.desc()).first()
-            
+
             if pending_transactions:
                 # Pegar apenas a transação mais recente
                 if isinstance(pending_transactions, list) and len(pending_transactions) > 1:
@@ -78,75 +83,72 @@ async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE
                 # CORRIGIDO: Pegar apenas a mais recente
                 if pending_transactions and isinstance(pending_transactions, list):
                     pending_transactions = pending_transactions[:1]
-                
-                # Mostrar botão para verificar pagamento
-                text = f"""
-👋 Olá {user.first_name}!
 
-🔄 **Detectamos um pagamento pendente!**
-
-Parece que você tem um pagamento em processamento. 
-
-💡 Se você acabou de fazer um pagamento, clique no botão abaixo para verificar o status.
-
-Se não fez nenhum pagamento recentemente, pode continuar para o menu principal.
-"""
+                text = (
+                    f"Olá, {name}!\n\n"
+                    f"⏳ <b>Pagamento pendente detectado</b>\n\n"
+                    f"Você tem um pagamento em processamento.\n"
+                    f"Clique abaixo para verificar o status."
+                )
                 keyboard = [
-                    [
-                        InlineKeyboardButton("🔄 Verificar Pagamento", callback_data="check_payment_status")
-                    ],
-                    [
-                        InlineKeyboardButton("🏠 Continuar para Menu", callback_data="continue_to_menu")
-                    ]
+                    [InlineKeyboardButton("Verificar Pagamento", callback_data="check_payment_status")],
+                    [InlineKeyboardButton("Menu Principal", callback_data="continue_to_menu")]
                 ]
-                
+
                 if is_callback:
                     await message.edit_text(
                         text,
-                        parse_mode=ParseMode.MARKDOWN,
+                        parse_mode=ParseMode.HTML,
                         reply_markup=InlineKeyboardMarkup(keyboard)
                     )
                 else:
                     await message.reply_text(
                         text,
-                        parse_mode=ParseMode.MARKDOWN,
+                        parse_mode=ParseMode.HTML,
                         reply_markup=InlineKeyboardMarkup(keyboard)
                     )
                 return
-        
+
         # Buscar todas as assinaturas do usuário
         subscriptions = session.query(Subscription).filter_by(
             telegram_user_id=str(user.id),
             status='active'
         ).order_by(Subscription.end_date).all()
-        
+
         if not subscriptions:
-            text = f"👋 Olá {user.first_name}!\n\nVocê ainda não possui assinaturas ativas.\n\nPara assinar um grupo, use o link de convite fornecido pelo criador."
+            text = (
+                f"Olá, {name}!\n\n"
+                f"Você ainda não possui assinaturas ativas.\n"
+                f"Use o link de convite do criador para assinar um grupo."
+            )
             reply_markup = None
         else:
-            text = f"👋 Olá {user.first_name}!\n\n"
+            text = f"Olá, {name}!\n\n<b>Suas assinaturas:</b>\n"
 
             for sub in subscriptions[:5]:
                 remaining = format_remaining_text(sub.end_date)
                 status_emoji = get_expiry_emoji(sub.end_date)
+                group_name = escape_html(sub.group.name) if sub.group else "N/A"
+                plan_name = escape_html(sub.plan.name) if sub.plan else "N/A"
 
-                if sub.group:
-                    text += f"{status_emoji} **{sub.group.name}**\n"
-                    text += f"   Plano: {sub.plan.name if sub.plan else 'N/A'}\n"
-                    text += f"   Expira em: {remaining}\n\n"
+                text += (
+                    f"\n{status_emoji} <b>{group_name}</b>\n"
+                    f"   Plano: <code>{plan_name}</code>\n"
+                    f"   Expira: {format_date_code(sub.end_date)} · {remaining}\n"
+                )
 
             if len(subscriptions) > 5:
-                text += f"... e mais {len(subscriptions) - 5} assinaturas\n\n"
+                text += f"\n... e mais {len(subscriptions) - 5} assinaturas\n"
 
             reply_markup = InlineKeyboardMarkup([
-                [InlineKeyboardButton("📊 Ver Detalhes", callback_data="check_status")]
+                [InlineKeyboardButton("Ver Detalhes", callback_data="check_status")]
             ])
 
         # Enviar ou editar mensagem
         if is_callback:
-            await message.edit_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
+            await message.edit_text(text, parse_mode=ParseMode.HTML, reply_markup=reply_markup)
         else:
-            await message.reply_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
+            await message.reply_text(text, parse_mode=ParseMode.HTML, reply_markup=reply_markup)
 
 async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_TYPE, group_identifier: str):
     """Iniciar fluxo de assinatura para um grupo específico (por slug ou ID legado)"""
@@ -161,19 +163,19 @@ async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_
                 group = session.query(Group).filter_by(id=group_id).first()
             except ValueError:
                 pass
-        
+
         if not group:
             logger.warning(f"Grupo não encontrado - identificador: {group_identifier}")
 
             await update.message.reply_text(
-                "❌ Grupo não encontrado. O link pode estar expirado ou inválido."
+                "Grupo não encontrado. O link pode estar expirado ou inválido."
             )
             return
 
         if not group.is_active:
             logger.warning(f"Grupo inativo: {group.name} (ID: {group.id})")
             await update.message.reply_text(
-                "❌ Este grupo está temporariamente indisponível."
+                "Este grupo está temporariamente indisponível."
             )
             return
 
@@ -182,118 +184,106 @@ async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_
         if creator and getattr(creator, 'is_blocked', False):
             logger.warning(f"Criador bloqueado: {creator.name} (grupo: {group.name})")
             await update.message.reply_text(
-                "❌ Este grupo está temporariamente indisponível."
+                "Este grupo está temporariamente indisponível."
             )
             return
-        
+
         # Log para debug
         logger.info(f"Grupo encontrado: {group.name} (ID: {group.id}, Ativo: {group.is_active})")
-        
+
+        group_name = escape_html(group.name)
+
         # Verificar se já tem assinatura ativa
         existing_sub = session.query(Subscription).filter_by(
             group_id=group.id,
             telegram_user_id=str(user.id),
             status='active'
         ).first()
-        
+
         if existing_sub:
             remaining = format_remaining_text(existing_sub.end_date)
-            text = f"""
-✅ **Você já é assinante!**
-
-**Grupo:** {group.name}
-**Plano atual:** {existing_sub.plan.name if existing_sub.plan else 'N/A'}
-**Tempo restante:** {remaining}
-
-Sua assinatura expira em: {format_date(existing_sub.end_date)}
-"""
+            plan_name = escape_html(existing_sub.plan.name) if existing_sub.plan else "N/A"
+            text = (
+                f"<b>Você já é assinante</b>\n\n"
+                f"Grupo: <b>{group_name}</b>\n"
+                f"Plano: <code>{plan_name}</code>\n"
+                f"Expira em: {format_date_code(existing_sub.end_date)} ({remaining})"
+            )
             keyboard = [
                 [
-                    InlineKeyboardButton("📊 Ver Status", callback_data="check_status"),
-                    InlineKeyboardButton("🏠 Menu Principal", callback_data="back_to_start")
+                    InlineKeyboardButton("Ver Status", callback_data="check_status"),
+                    InlineKeyboardButton("Menu Principal", callback_data="back_to_start")
                 ]
             ]
-            
+
             await update.message.reply_text(
                 text,
-                parse_mode=ParseMode.MARKDOWN,
+                parse_mode=ParseMode.HTML,
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
             return
-        
+
         # Buscar planos disponíveis
         plans = session.query(PricingPlan).filter_by(
             group_id=group.id,
             is_active=True
         ).order_by(PricingPlan.price).all()
-        
+
         if not plans:
             logger.warning(f"Nenhum plano ativo para o grupo {group.name}")
             await update.message.reply_text(
-                "❌ Nenhum plano disponível para este grupo no momento.\n\n"
+                "Nenhum plano disponível para este grupo no momento.\n\n"
                 "Entre em contato com o administrador do grupo."
             )
             return
-        
+
         # Mostrar informações do grupo e planos
-        creator = group.creator
-        text = f"""
-🎯 **{group.name}**
-
-👤 **Criador:** {creator.name if creator else 'N/A'}
-📝 **Descrição:** {group.description or 'Grupo VIP exclusivo'}
-👥 **Assinantes:** {group.total_subscribers or 0}
-
-💎 **Planos disponíveis:**
-"""
+        description = escape_html(group.description) if group.description else "Grupo VIP exclusivo"
+        text = (
+            f"<b>{group_name}</b>\n"
+            f"{description}\n\n"
+            f"<b>Planos disponíveis:</b>\n"
+        )
 
         keyboard = []
         for plan in plans:
-            text += f"\n📌 **{plan.name}** - R$ {plan.price:.2f}"
-            text += f"\n   ⏱ {plan.duration_days} dias\n"
+            plan_name = escape_html(plan.name)
+            text += f"\n<code>{plan_name}</code> — {format_currency(plan.price)} / {plan.duration_days} dias"
 
             keyboard.append([
                 InlineKeyboardButton(
-                    f"💳 {plan.name} - R$ {plan.price:.2f}",
+                    f"{plan.name} - {format_currency(plan.price)}",
                     callback_data=f"plan_{group.id}_{plan.id}"
                 )
             ])
 
-        text += (
-            "\n📋 **Ao assinar voce concorda que:**\n"
-            "• A assinatura e vinculada a **sua conta Telegram**\n"
-            "• O link de acesso e pessoal e intransferivel\n"
-            "• Somente voce pode acessar o grupo com esta assinatura\n"
-            "• A cobranca sera feita no seu metodo de pagamento"
-        )
+        text += "\n\n<i>Ao assinar, você concorda com os termos de uso.</i>"
 
         keyboard.append([
-            InlineKeyboardButton("❌ Cancelar", callback_data="cancel")
+            InlineKeyboardButton("Cancelar", callback_data="cancel")
         ])
-        
+
         await update.message.reply_text(
             text,
-            parse_mode=ParseMode.MARKDOWN,
+            parse_mode=ParseMode.HTML,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
 
 async def handle_payment_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler para pagamento cancelado"""
-    text = """
-❌ **Pagamento Cancelado**
-
-Nenhuma cobrança foi realizada. Para tentar novamente, use o link de convite do grupo.
-"""
+    text = (
+        "<b>Pagamento cancelado</b>\n\n"
+        "Nenhuma cobrança foi realizada.\n"
+        "Para tentar novamente, use o link de convite do grupo."
+    )
 
     keyboard = [
-        [
-            InlineKeyboardButton("🏠 Menu Principal", callback_data="back_to_start")
-        ]
+        [InlineKeyboardButton("Menu Principal", callback_data="back_to_start")]
     ]
 
     await update.message.reply_text(
         text,
-        parse_mode=ParseMode.MARKDOWN,
+        parse_mode=ParseMode.HTML,
         reply_markup=InlineKeyboardMarkup(keyboard)
     )

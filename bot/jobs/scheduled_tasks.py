@@ -6,6 +6,7 @@ import asyncio
 from datetime import datetime, timedelta
 from telegram.ext import Application
 from telegram.error import TelegramError
+from telegram.constants import ParseMode
 
 from bot.utils.database import get_db_session
 from app.models import Subscription, Group
@@ -201,17 +202,20 @@ async def notify_expiration(subscription):
         group = subscription.group
         user_id = int(subscription.telegram_user_id)
 
+        from bot.utils.format_utils import escape_html
+        group_name = escape_html(group.name)
+
         text = (
-            f"⚠️ **Assinatura Expirada**\n\n"
-            f"Sua assinatura do grupo **{group.name}** expirou.\n\n"
-            f"Voce foi removido do grupo automaticamente.\n\n"
-            f"Para renovar, clique abaixo:"
+            f"<b>Assinatura expirada</b>\n\n"
+            f"Sua assinatura de <b>{group_name}</b> expirou.\n"
+            f"Você foi removido do grupo automaticamente.\n\n"
+            f"Para renovar, clique abaixo."
         )
 
         from telegram import InlineKeyboardButton, InlineKeyboardMarkup
         keyboard = [[
             InlineKeyboardButton(
-                "🔄 Renovar Agora",
+                "Renovar Agora",
                 callback_data=f"plan_{group.id}_{subscription.plan_id}"
             )
         ]]
@@ -219,7 +223,7 @@ async def notify_expiration(subscription):
         await _application.bot.send_message(
             chat_id=user_id,
             text=text,
-            parse_mode="Markdown",
+            parse_mode=ParseMode.HTML,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
@@ -385,9 +389,11 @@ async def send_renewal_notification(subscription, days_left):
         user_id = int(subscription.telegram_user_id)
 
         from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-        from bot.utils.format_utils import format_remaining_text
+        from bot.utils.format_utils import format_remaining_text, format_currency, escape_html
 
         remaining = format_remaining_text(subscription.end_date)
+        group_name = escape_html(group.name)
+        plan_name = escape_html(plan.name)
 
         is_stripe_managed = (
             subscription.stripe_subscription_id
@@ -397,56 +403,45 @@ async def send_renewal_notification(subscription, days_left):
         if is_stripe_managed and getattr(subscription, 'cancel_at_period_end', False):
             # User chose not to renew
             text = (
-                f"⚠️ Sua assinatura do grupo **{group.name}** "
-                f"encerra em **{remaining}**.\n\n"
-                f"Voce optou por nao renovar. Apos essa data, voce perdera o acesso.\n\n"
-                f"Mudou de ideia? Reative a renovacao automatica!"
+                f"<b>Assinatura expirando</b>\n\n"
+                f"Sua assinatura de <b>{group_name}</b> expira em <code>{remaining}</code>.\n"
+                f"A renovação automática está desativada.\n\n"
+                f"Reative para manter seu acesso."
             )
             keyboard = [[
                 InlineKeyboardButton(
-                    "🔄 Reativar Renovacao",
+                    "Reativar",
                     callback_data=f"reactivate_sub_{subscription.id}"
                 )
             ]]
         elif is_stripe_managed and getattr(subscription, 'auto_renew', False):
             # Auto-renew active
-            payment_type = getattr(subscription, 'payment_method_type', 'card')
-            if payment_type == 'boleto':
-                text = (
-                    f"📋 Um novo boleto sera gerado em breve para renovacao "
-                    f"do grupo **{group.name}**.\n\n"
-                    f"Fique atento ao seu email para pagar o boleto a tempo!"
-                )
-            else:
-                text = (
-                    f"🔄 Sua assinatura do grupo **{group.name}** "
-                    f"sera renovada automaticamente em **{remaining}**.\n\n"
-                    f"Valor: R$ {plan.price:.2f}\n\n"
-                    f"Nenhuma acao necessaria. O cartao cadastrado sera cobrado automaticamente."
-                )
+            text = (
+                f"<b>Renovação automática</b>\n\n"
+                f"Sua assinatura de <b>{group_name}</b> será renovada em <code>{remaining}</code>.\n"
+                f"Valor: <code>{format_currency(plan.price)}</code>\n\n"
+                f"<i>Certifique-se de que seu cartão está atualizado.</i>"
+            )
             keyboard = [[
                 InlineKeyboardButton(
-                    "📊 Ver Status",
+                    "Ver Status",
                     callback_data="check_status"
                 )
             ]]
         else:
             # Legacy subscription
-            if days_left <= 1:
-                urgency = "🔴 ULTIMO DIA"
-            else:
-                urgency = f"⚠️ {remaining} restantes"
-
             text = (
-                f"{urgency}\n\n"
-                f"Sua assinatura do grupo **{group.name}** "
-                f"expira em **{remaining}**.\n\n"
-                f"Plano: {plan.name} - R$ {plan.price:.2f}\n\n"
-                f"Renove agora para nao perder o acesso!"
+                f"<b>Assinatura expirando</b>\n\n"
+                f"Sua assinatura de <b>{group_name}</b> expira em <code>{remaining}</code>.\n\n"
+                f"<pre>"
+                f"Plano:    {plan.name}\n"
+                f"Valor:    {format_currency(plan.price)}"
+                f"</pre>\n\n"
+                f"Renove agora para não perder o acesso."
             )
             keyboard = [[
                 InlineKeyboardButton(
-                    "🔄 Renovar Agora",
+                    "Renovar Agora",
                     callback_data=f"plan_{group.id}_{plan.id}"
                 )
             ]]
@@ -454,7 +449,7 @@ async def send_renewal_notification(subscription, days_left):
         await _application.bot.send_message(
             chat_id=user_id,
             text=text,
-            parse_mode="Markdown",
+            parse_mode=ParseMode.HTML,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 

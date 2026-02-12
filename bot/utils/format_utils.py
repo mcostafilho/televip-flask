@@ -236,6 +236,23 @@ def escape_markdown(text: str) -> str:
     return text
 
 
+def escape_html(text: str) -> str:
+    """Escapar caracteres especiais para HTML do Telegram"""
+    if not text:
+        return ""
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def format_currency_code(value) -> str:
+    """Formatar valor monetário dentro de <code> para Telegram HTML"""
+    return f"<code>{format_currency(value)}</code>"
+
+
+def format_date_code(date: datetime, include_time: bool = False) -> str:
+    """Formatar data dentro de <code> para Telegram HTML"""
+    return f"<code>{format_date(date, include_time)}</code>"
+
+
 def truncate_text(text: str, max_length: int = 100, suffix: str = "...") -> str:
     """
     Truncar texto longo

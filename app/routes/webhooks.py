@@ -250,12 +250,12 @@ def handle_dispute_created(dispute):
 
         # Notificar usuario
         group_name = subscription.group.name if subscription.group else 'N/A'
+        group_name_safe = group_name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
         notify_user_via_bot(
             subscription.telegram_user_id,
-            f"⚠️ **Assinatura Suspensa**\n\n"
-            f"Sua assinatura do grupo **{group_name}** foi suspensa "
-            f"devido a uma disputa de pagamento.\n\n"
-            f"Voce foi removido do grupo. Para resolver, entre em contato com o suporte."
+            f"<b>Assinatura suspensa</b>\n\n"
+            f"Sua assinatura de <b>{group_name_safe}</b> foi suspensa "
+            f"devido a uma disputa de pagamento."
         )
 
         # Notificar criador
@@ -263,11 +263,9 @@ def handle_dispute_created(dispute):
         if creator and creator.telegram_id:
             notify_user_via_bot(
                 creator.telegram_id,
-                f"🚨 **Alerta de Chargeback**\n\n"
-                f"O usuario {subscription.telegram_user_id} abriu uma disputa "
-                f"de pagamento para o grupo **{group_name}**.\n\n"
-                f"A assinatura foi suspensa e o usuario removido automaticamente.\n"
-                f"Valor disputado: R$ {transaction.amount:.2f}"
+                f"<b>Alerta de chargeback</b>\n\n"
+                f"Uma disputa foi aberta para a assinatura de <b>{group_name_safe}</b>.\n"
+                f"Assinante: <code>{subscription.telegram_user_id}</code>"
             )
 
         logger.warning(
@@ -310,25 +308,25 @@ def notify_bot_payment_complete(subscription, transaction):
         url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
 
         # Mensagem para o usuário
-        text = f"""
-✅ **Pagamento Aprovado!**
+        group_name = subscription.group.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
-Sua assinatura do grupo **{subscription.group.name}** foi ativada com sucesso!
-
-📅 Válida até: {_fmt_date_brt(subscription.end_date)}
-💰 Valor pago: R$ {transaction.amount:.2f}
-
-Use o link abaixo para acessar o grupo:
-{invite_link}
-
-_Obrigado por assinar!_
-"""
+        text = (
+            f"<b>Pagamento aprovado!</b>\n\n"
+            f"<pre>"
+            f"Grupo:     {subscription.group.name}\n"
+            f"Válida até: {_fmt_date_brt(subscription.end_date)}\n"
+            f"Valor:     R$ {transaction.amount:.2f}"
+            f"</pre>\n\n"
+            f"Use o link abaixo para acessar o grupo:\n"
+            f"{invite_link}\n\n"
+            f"<i>Obrigado por assinar!</i>"
+        )
 
         # Enviar mensagem
         response = requests.post(url, json={
             'chat_id': subscription.telegram_user_id,
             'text': text,
-            'parse_mode': 'Markdown'
+            'parse_mode': 'HTML'
         })
 
         if response.status_code == 200:
@@ -491,12 +489,13 @@ def handle_invoice_paid(invoice):
             logger.info(f"Subscription {subscription.id} renewed until {subscription.end_date}")
 
             # Notify user about renewal
+            group_name_safe = group.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             notify_user_via_bot(
                 subscription.telegram_user_id,
-                f"🔄 **Assinatura Renovada!**\n\n"
-                f"Sua assinatura do grupo **{group.name}** foi renovada com sucesso.\n\n"
-                f"📅 Nova validade: {_fmt_date_brt(subscription.end_date)}\n"
-                f"💰 Valor: R$ {amount_paid:.2f}"
+                f"<b>Assinatura renovada!</b>\n\n"
+                f"Grupo: <b>{group_name_safe}</b>\n"
+                f"Nova validade: <code>{_fmt_date_brt(subscription.end_date)}</code>\n"
+                f"Valor: <code>R$ {amount_paid:.2f}</code>"
             )
         else:
             logger.info(f"Unhandled billing_reason: {billing_reason}")
@@ -527,17 +526,19 @@ def handle_invoice_payment_failed(invoice):
         group = subscription.group
         payment_type = subscription.payment_method_type or 'card'
 
+        group_name_safe = group.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
         if payment_type == 'boleto':
             msg = (
-                f"⚠️ **Boleto Expirado**\n\n"
-                f"O boleto da sua assinatura do grupo **{group.name}** expirou.\n\n"
-                f"Um novo boleto sera gerado automaticamente. Fique atento!"
+                f"<b>Boleto expirado</b>\n\n"
+                f"O boleto da sua assinatura de <b>{group_name_safe}</b> expirou.\n"
+                f"Um novo boleto será gerado automaticamente."
             )
         else:
             msg = (
-                f"⚠️ **Pagamento Falhou**\n\n"
-                f"Nao foi possivel cobrar sua assinatura do grupo **{group.name}**.\n\n"
-                f"Por favor, atualize seu cartao de credito para manter o acesso."
+                f"<b>Falha no pagamento</b>\n\n"
+                f"A cobrança da assinatura de <b>{group_name_safe}</b> falhou.\n"
+                f"Verifique seu cartão e tente novamente."
             )
 
         notify_user_via_bot(subscription.telegram_user_id, msg)
@@ -571,10 +572,10 @@ def handle_subscription_deleted(stripe_subscription):
         # Determine final status
         if subscription.cancel_at_period_end:
             subscription.status = 'cancelled'
-            reason_text = "Voce optou por cancelar a renovacao."
+            reason_text = "Você optou por cancelar a renovação."
         else:
             subscription.status = 'expired'
-            reason_text = "O pagamento nao foi processado."
+            reason_text = "O pagamento não foi processado."
 
         subscription.auto_renew = False
         db.session.commit()
@@ -584,11 +585,13 @@ def handle_subscription_deleted(stripe_subscription):
         # Remove user from group via bot
         remove_user_from_group_via_bot(subscription)
 
+        group_name_safe = group.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
         # Notify user
         notify_user_via_bot(
             subscription.telegram_user_id,
-            f"❌ **Assinatura Encerrada**\n\n"
-            f"Sua assinatura do grupo **{group.name}** foi encerrada.\n\n"
+            f"<b>Assinatura encerrada</b>\n\n"
+            f"Sua assinatura de <b>{group_name_safe}</b> foi encerrada.\n"
             f"{reason_text}\n\n"
             f"Para assinar novamente, use o link de convite do grupo."
         )
@@ -658,7 +661,7 @@ def notify_user_via_bot(telegram_user_id, text, keyboard=None):
         payload = {
             'chat_id': str(telegram_user_id),
             'text': text,
-            'parse_mode': 'Markdown'
+            'parse_mode': 'HTML'
         }
 
         if keyboard:

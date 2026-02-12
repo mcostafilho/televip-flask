@@ -460,12 +460,14 @@ def broadcast(group_id):
         if bot_token:
             for sub in active_subs:
                 try:
+                    group_name_safe = group.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                    msg_safe = message.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
                     response = requests.post(
                         f'https://api.telegram.org/bot{bot_token}/sendMessage',
                         json={
                             'chat_id': sub.telegram_user_id,
-                            'text': f"📢 **Mensagem de {group.name}**\n\n{message}",
-                            'parse_mode': 'Markdown'
+                            'text': f"<b>Mensagem de {group_name_safe}</b>\n\n{msg_safe}",
+                            'parse_mode': 'HTML'
                         }
                     )
                     if response.status_code == 200:

@@ -23,6 +23,7 @@ if sys.platform == 'win32':
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
+from telegram.constants import ParseMode
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler,
     MessageHandler, ChatMemberHandler, filters, ContextTypes, JobQueue
@@ -70,24 +71,22 @@ async def handle_continue_to_menu(update: Update, context: ContextTypes.DEFAULT_
 async def handle_payment_error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler para erros de pagamento"""
     query = update.callback_query
-    await query.answer("❌ Erro no processamento", show_alert=True)
-    
-    text = """
-❌ **Erro no Processamento**
+    await query.answer("Erro no processamento", show_alert=True)
 
-Houve um erro ao processar sua solicitação.
+    text = (
+        "<b>Erro no processamento</b>\n\n"
+        "Houve um erro ao processar sua solicitação.\n"
+        "Tente novamente ou entre em contato com o suporte."
+    )
 
-Por favor, tente novamente ou entre em contato com o suporte.
-"""
-    
     keyboard = [[
-        InlineKeyboardButton("🔄 Tentar Novamente", callback_data="back_to_start"),
-        InlineKeyboardButton("📞 Suporte", url="https://t.me/suporte_televip")
+        InlineKeyboardButton("Tentar Novamente", callback_data="back_to_start"),
+        InlineKeyboardButton("Suporte", url="https://t.me/suporte_televip")
     ]]
-    
+
     await query.edit_message_text(
         text,
-        parse_mode="Markdown",
+        parse_mode=ParseMode.HTML,
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
