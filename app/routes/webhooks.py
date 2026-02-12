@@ -77,6 +77,10 @@ def stripe_webhook():
         invoice = event['data']['object']
         handle_invoice_paid(invoice)
 
+    elif event['type'] == 'invoice.created':
+        invoice = event['data']['object']
+        handle_invoice_created(invoice)
+
     elif event['type'] == 'invoice.payment_failed':
         invoice = event['data']['object']
         handle_invoice_payment_failed(invoice)
@@ -503,6 +507,65 @@ def handle_invoice_paid(invoice):
     except Exception as e:
         logger.error(f"Error processing invoice.paid: {e}")
         db.session.rollback()
+
+
+def handle_invoice_created(invoice):
+    """Handle invoice.created — send boleto link to user when Stripe generates renewal invoice"""
+    stripe_sub_id = invoice.get('subscription')
+    billing_reason = invoice.get('billing_reason', '')
+    hosted_url = invoice.get('hosted_invoice_url')
+
+    # Only handle subscription renewals (not the first invoice at checkout)
+    if not stripe_sub_id or billing_reason == 'subscription_create':
+        return
+
+    try:
+        subscription = Subscription.query.filter_by(
+            stripe_subscription_id=stripe_sub_id
+        ).first()
+
+        if not subscription:
+            return
+
+        payment_type = subscription.payment_method_type or 'card'
+
+        # Only send notification for boleto — card charges are automatic
+        if payment_type != 'boleto' or not hosted_url:
+            return
+
+        group = subscription.group
+        plan = subscription.plan
+        group_name_safe = group.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        plan_name_safe = plan.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") if plan else 'N/A'
+
+        from app.services.payment_service import PaymentService
+        amount = plan.price if plan else 0
+        net_display = f"R$ {amount:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+
+        msg = (
+            f"<b>Boleto de renovação disponível</b>\n\n"
+            f"Seu boleto para renovar a assinatura de <b>{group_name_safe}</b> "
+            f"foi gerado.\n\n"
+            f"<pre>"
+            f"Plano:  {plan_name_safe}\n"
+            f"Valor:  {net_display}"
+            f"</pre>\n\n"
+            f"<i>Pague antes do vencimento para manter seu acesso.</i>"
+        )
+
+        keyboard = {'inline_keyboard': [[
+            {'text': 'Pagar Boleto', 'url': hosted_url}
+        ]]}
+
+        notify_user_via_bot(subscription.telegram_user_id, msg, keyboard=keyboard)
+
+        logger.info(
+            f"Boleto link sent to user {subscription.telegram_user_id} "
+            f"for subscription {subscription.id}"
+        )
+
+    except Exception as e:
+        logger.error(f"Error handling invoice.created: {e}")
 
 
 def handle_invoice_payment_failed(invoice):
