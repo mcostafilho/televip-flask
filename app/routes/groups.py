@@ -32,8 +32,8 @@ def _validate_plan_input(name, price_str, duration_str, description=None, is_lif
 
     try:
         price = float(price_str)
-        if price <= 0 or price > 10000:
-            errors.append('Preço deve ser entre R$ 0,01 e R$ 10.000,00')
+        if price < 1 or price > 10000:
+            errors.append('Preco minimo e R$ 1,00. Valores abaixo de R$ 1,00 nao sao permitidos.')
     except (ValueError, TypeError):
         errors.append('Preço inválido')
 
