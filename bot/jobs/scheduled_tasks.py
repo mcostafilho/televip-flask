@@ -427,19 +427,54 @@ async def send_renewal_notification(subscription, days_left):
                     f"Fique atento ao seu e-mail para o link de pagamento.</i>"
                 )
             else:
+                # Try to get card last4 and portal URL for better UX
+                card_info = ""
+                portal_url = None
+                customer_id = getattr(subscription, 'stripe_customer_id', None)
+
+                if customer_id:
+                    try:
+                        import stripe
+                        # Get default payment method last4
+                        customer = stripe.Customer.retrieve(customer_id, expand=['default_source'])
+                        pm_id = customer.get('invoice_settings', {}).get('default_payment_method')
+                        if pm_id:
+                            pm = stripe.PaymentMethod.retrieve(pm_id)
+                            last4 = pm.get('card', {}).get('last4')
+                            if last4:
+                                card_info = f"\nCartão: <code>**** {last4}</code>"
+
+                        # Generate Billing Portal URL
+                        portal = stripe.billing_portal.Session.create(
+                            customer=customer_id,
+                            return_url=f"https://t.me/{(_application.bot.username or 'televipbot')}",
+                        )
+                        portal_url = portal.url
+                    except Exception as e:
+                        logger.warning(f"Could not fetch card/portal info: {e}")
+
                 text = (
                     f"<b>Renovação automática</b>\n\n"
                     f"Sua assinatura de <b>{group_name}</b> será renovada em <code>{remaining}</code>.\n"
-                    f"Valor: <code>{format_currency(plan.price)}</code>\n\n"
-                    f"<i>A cobrança será feita automaticamente no seu cartão.</i>"
+                    f"Valor: <code>{format_currency(plan.price)}</code>"
+                    f"{card_info}\n\n"
+                    f"<i>A cobrança será feita automaticamente.</i>"
                 )
 
-            keyboard = [[
-                InlineKeyboardButton(
-                    "Ver Status",
-                    callback_data="check_status"
-                )
-            ]]
+                if portal_url:
+                    keyboard = [[
+                        InlineKeyboardButton(
+                            "Gerenciar Pagamento",
+                            url=portal_url
+                        )
+                    ]]
+                else:
+                    keyboard = [[
+                        InlineKeyboardButton(
+                            "Ver Status",
+                            callback_data="check_status"
+                        )
+                    ]]
         else:
             # Legacy subscription
             text = (
