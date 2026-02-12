@@ -25,6 +25,7 @@ def setup_jobs(application: Application):
 
     asyncio.create_task(check_expired_loop())
     asyncio.create_task(send_reminders_loop())
+    asyncio.create_task(audit_members_loop())
 
     logger.info("Sistema de tarefas agendadas ativo")
 
@@ -64,26 +65,28 @@ async def send_reminders_loop():
 
 
 async def check_expired_subscriptions():
-    """Verificar e processar assinaturas expiradas (todas as categorias)"""
+    """Verificar e processar assinaturas expiradas e suspensas (todas as categorias)"""
     try:
         with get_db_session() as session:
             now = datetime.utcnow()
             # Grace period for Stripe auto-renew subs (payment retry window)
             grace_cutoff = now - timedelta(days=3)
 
-            # Fetch ALL active subscriptions past their end_date
+            # 1) Fetch ALL active subscriptions past their end_date
             all_expired = session.query(Subscription).filter(
                 Subscription.status == 'active',
                 Subscription.end_date < now
             ).all()
 
-            if not all_expired:
-                logger.info("Nenhuma assinatura expirada")
-                return
+            # 2) Fetch suspended/disputed subscriptions — enforce removal
+            suspended_subs = session.query(Subscription).filter(
+                Subscription.status.in_(['suspended', 'disputed'])
+            ).all()
 
             processed = 0
             skipped = 0
 
+            # Process expired active subscriptions
             for sub in all_expired:
                 is_stripe_managed = (
                     sub.stripe_subscription_id
@@ -113,11 +116,26 @@ async def check_expired_subscriptions():
                 )
                 processed += 1
 
+            # Process suspended/disputed subscriptions — ensure user is removed
+            suspended_processed = 0
+            for sub in suspended_subs:
+                await remove_from_group(sub)
+                suspended_processed += 1
+                logger.info(
+                    f"Assinatura suspensa {sub.id} - "
+                    f"user {sub.telegram_user_id} removido do grupo {sub.group_id}"
+                )
+
             session.commit()
-            logger.info(
-                f"{processed} assinaturas processadas, "
-                f"{skipped} stripe auto-renew aguardando grace period"
-            )
+
+            if processed or skipped or suspended_processed:
+                logger.info(
+                    f"{processed} expiradas processadas, "
+                    f"{skipped} stripe auto-renew aguardando grace period, "
+                    f"{suspended_processed} suspensas re-verificadas"
+                )
+            else:
+                logger.info("Nenhuma assinatura expirada ou suspensa")
 
     except Exception as e:
         logger.error(f"Erro ao verificar expiradas: {e}")
@@ -193,6 +211,105 @@ async def notify_expiration(subscription):
         logger.warning(f"Nao foi possivel notificar usuario {subscription.telegram_user_id}: {e}")
     except Exception as e:
         logger.error(f"Erro ao notificar expiracao: {e}")
+
+
+async def audit_members_loop():
+    """Auditar membros dos grupos a cada 6 horas"""
+    # Esperar bot estar pronto
+    await asyncio.sleep(60)
+
+    while True:
+        try:
+            logger.info("Iniciando auditoria de membros dos grupos...")
+            await audit_group_members()
+            await asyncio.sleep(21600)  # 6 horas
+        except asyncio.CancelledError:
+            break
+        except Exception as e:
+            logger.error(f"Erro no audit_members_loop: {e}")
+            await asyncio.sleep(3600)
+
+
+async def audit_group_members():
+    """Verificar se usuarios sem assinatura ativa ainda estao nos grupos"""
+    if not _application:
+        return
+
+    try:
+        with get_db_session() as session:
+            # Get all groups with telegram_id
+            groups = session.query(Group).filter(
+                Group.telegram_id != None,
+                Group.is_active == True
+            ).all()
+
+            total_removed = 0
+
+            for group in groups:
+                chat_id = int(group.telegram_id)
+
+                # Get all non-active subscriptions for this group
+                # (expired, cancelled, suspended) from last 30 days
+                cutoff = datetime.utcnow() - timedelta(days=30)
+                inactive_subs = session.query(Subscription).filter(
+                    Subscription.group_id == group.id,
+                    Subscription.status.in_(['expired', 'cancelled', 'suspended']),
+                    Subscription.end_date >= cutoff
+                ).all()
+
+                # Get active user IDs for this group
+                active_user_ids = set(
+                    s.telegram_user_id for s in
+                    session.query(Subscription).filter_by(
+                        group_id=group.id,
+                        status='active'
+                    ).all()
+                )
+
+                for sub in inactive_subs:
+                    # Skip if user has another active subscription for the same group
+                    if sub.telegram_user_id in active_user_ids:
+                        continue
+
+                    user_id = int(sub.telegram_user_id)
+
+                    try:
+                        # Check if user is still in the group
+                        member = await _application.bot.get_chat_member(
+                            chat_id=chat_id,
+                            user_id=user_id
+                        )
+
+                        if member.status in ['member', 'restricted']:
+                            # User is still in group without active subscription — remove
+                            await _application.bot.ban_chat_member(
+                                chat_id=chat_id,
+                                user_id=user_id
+                            )
+                            await _application.bot.unban_chat_member(
+                                chat_id=chat_id,
+                                user_id=user_id,
+                                only_if_banned=True
+                            )
+                            total_removed += 1
+                            logger.info(
+                                f"Audit: usuario {user_id} removido do grupo "
+                                f"{group.name} (assinatura {sub.status})"
+                            )
+
+                    except TelegramError:
+                        # User not in group or API error — skip
+                        pass
+                    except Exception as e:
+                        logger.error(f"Audit error checking user {user_id} in group {chat_id}: {e}")
+
+                    # Rate limiting: avoid hitting Telegram API too fast
+                    await asyncio.sleep(0.5)
+
+            logger.info(f"Auditoria concluida: {total_removed} usuarios removidos")
+
+    except Exception as e:
+        logger.error(f"Erro na auditoria de membros: {e}")
 
 
 async def send_renewal_reminders():

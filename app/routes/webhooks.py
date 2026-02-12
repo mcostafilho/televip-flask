@@ -210,24 +210,61 @@ def handle_payment_failed(payment_intent):
 
 
 def handle_dispute_created(dispute):
-    """Processar criação de disputa"""
+    """Processar criação de disputa — suspender assinatura e remover usuario do grupo"""
     logger.warning(f"Disputa criada: {dispute['id']}")
-    
+
     # Buscar transação pelo payment intent
     payment_intent = dispute.get('payment_intent')
-    if payment_intent:
-        transaction = Transaction.query.filter_by(
-            stripe_payment_intent_id=payment_intent
-        ).first()
-        
-        if transaction:
-            transaction.status = 'disputed'
-            
-            # Suspender assinatura
-            if transaction.subscription:
-                transaction.subscription.status = 'suspended'
-            
-            db.session.commit()
+    if not payment_intent:
+        logger.warning("Dispute sem payment_intent, ignorando")
+        return
+
+    transaction = Transaction.query.filter_by(
+        stripe_payment_intent_id=payment_intent
+    ).first()
+
+    if not transaction:
+        logger.warning(f"Transacao nao encontrada para payment_intent={payment_intent}")
+        return
+
+    transaction.status = 'disputed'
+
+    subscription = transaction.subscription
+    if subscription:
+        subscription.status = 'suspended'
+        db.session.commit()
+
+        # Remover usuario do grupo imediatamente
+        remove_user_from_group_via_bot(subscription)
+
+        # Notificar usuario
+        group_name = subscription.group.name if subscription.group else 'N/A'
+        notify_user_via_bot(
+            subscription.telegram_user_id,
+            f"⚠️ **Assinatura Suspensa**\n\n"
+            f"Sua assinatura do grupo **{group_name}** foi suspensa "
+            f"devido a uma disputa de pagamento.\n\n"
+            f"Voce foi removido do grupo. Para resolver, entre em contato com o suporte."
+        )
+
+        # Notificar criador
+        creator = subscription.group.creator if subscription.group else None
+        if creator and creator.telegram_id:
+            notify_user_via_bot(
+                creator.telegram_id,
+                f"🚨 **Alerta de Chargeback**\n\n"
+                f"O usuario {subscription.telegram_user_id} abriu uma disputa "
+                f"de pagamento para o grupo **{group_name}**.\n\n"
+                f"A assinatura foi suspensa e o usuario removido automaticamente.\n"
+                f"Valor disputado: R$ {transaction.amount:.2f}"
+            )
+
+        logger.warning(
+            f"Dispute: usuario {subscription.telegram_user_id} removido do grupo "
+            f"{subscription.group_id}, assinatura {subscription.id} suspensa"
+        )
+    else:
+        db.session.commit()
 
 
 def notify_bot_payment_complete(subscription, transaction):
@@ -542,7 +579,7 @@ def handle_subscription_deleted(stripe_subscription):
             f"❌ **Assinatura Encerrada**\n\n"
             f"Sua assinatura do grupo **{group.name}** foi encerrada.\n\n"
             f"{reason_text}\n\n"
-            f"Para assinar novamente, use /descobrir."
+            f"Para assinar novamente, use o link de convite do grupo."
         )
 
     except Exception as e:

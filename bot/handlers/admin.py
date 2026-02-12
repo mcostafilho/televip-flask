@@ -111,7 +111,7 @@ ou use /setup novamente apos vincular.
                 group_id=group.id,
                 status='active'
             ).count()
-            
+
             # Receita do mês
             start_of_month = datetime.now().replace(day=1, hour=0, minute=0, second=0)
             monthly_revenue = session.query(func.sum(Transaction.net_amount)).filter(
@@ -119,30 +119,38 @@ ou use /setup novamente apos vincular.
                 Transaction.created_at >= start_of_month,
                 Transaction.status == 'completed'
             ).scalar() or 0
-            
+
             # Planos ativos
             active_plans = session.query(PricingPlan).filter_by(
                 group_id=group.id,
                 is_active=True
             ).count()
-            
+
             text = f"""
-✅ **Grupo Já Configurado!**
+✅ **Grupo Ja Configurado!**
 
 📊 **Status Atual:**
 • Nome: {group.name}
 • ID: `{chat.id}`
 • Assinantes ativos: {active_subs}
-• Receita este mês: R$ {monthly_revenue:.2f}
+• Receita este mes: R$ {monthly_revenue:.2f}
 • Planos configurados: {active_plans}
 
 🔗 **Link de Assinatura:**
 `https://t.me/{context.bot.username}?start=g_{group.invite_slug}`
 
-📋 **Comandos Disponíveis:**
-/stats - Ver estatísticas detalhadas
+📋 **Comandos Disponiveis:**
+/stats - Ver estatisticas detalhadas
 /broadcast - Enviar mensagem aos assinantes
-/planos - Ver suas assinaturas ativas
+
+🔒 **Seguranca Anti-Fraude:**
+• O bot gera links de uso unico para cada assinante
+• Usuarios sem assinatura sao removidos automaticamente
+• Auditoria periodica de membros ativa
+
+⚠️ **IMPORTANTE:** Desative TODOS os links de convite permanentes
+do grupo. Use apenas os links gerados pelo bot para cada assinante.
+Links permanentes permitem que usuarios removidos voltem ao grupo!
 
 💡 Configure seus planos em:
 https://televip.app/dashboard
@@ -191,8 +199,14 @@ Seu grupo foi registrado na plataforma TeleVIP.
 ⚙️ **Funcionalidades Ativadas:**
 ✅ Adicionar assinantes pagos automaticamente
 ✅ Remover quando a assinatura expirar
-✅ Enviar lembretes de renovação
-✅ Estatísticas em tempo real
+✅ Enviar lembretes de renovacao
+✅ Auditoria periodica de membros
+✅ Protecao contra chargeback
+
+🔒 **IMPORTANTE - Seguranca:**
+Desative TODOS os links de convite permanentes deste grupo!
+O bot gera links de uso unico para cada assinante.
+Links permanentes permitem que usuarios removidos voltem ao grupo.
 
 💡 Acesse o dashboard para configurar planos:
 https://televip.app/dashboard
@@ -811,23 +825,91 @@ Se você já pagou, aguarde a confirmação ou entre em contato com o suporte.
                 pass  # Não é crítico se falhar
 
 async def handle_new_chat_members(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handler para novos membros no chat"""
+    """Handler para novos membros no chat - verificacao rapida de assinatura"""
     message = update.message
-    
+
     if not message or not message.new_chat_members:
         return
-    
+
+    chat = message.chat
+
     for new_member in message.new_chat_members:
-        # Ignorar se for o próprio bot
+        # Ignorar se for o proprio bot
         if new_member.id == context.bot.id:
             continue
-        
-        # Criar um update fake para reusar handle_join_request
-        fake_update = Update(
-            update_id=update.update_id,
-            message=message,
-            effective_user=new_member,
-            effective_chat=message.chat
-        )
-        
-        await handle_join_request(fake_update, context)
+
+        # Ignorar bots (admins podem adicionar bots livremente)
+        if new_member.is_bot:
+            continue
+
+        with get_db_session() as session:
+            group = session.query(Group).filter_by(
+                telegram_id=str(chat.id)
+            ).first()
+
+            if not group:
+                continue
+
+            subscription = session.query(Subscription).filter_by(
+                group_id=group.id,
+                telegram_user_id=str(new_member.id),
+                status='active'
+            ).first()
+
+            if not subscription or subscription.end_date < datetime.utcnow():
+                # UNAUTHORIZED — kick FIRST, then notify (minimize access window)
+                try:
+                    await context.bot.ban_chat_member(
+                        chat_id=chat.id,
+                        user_id=new_member.id
+                    )
+                    await context.bot.unban_chat_member(
+                        chat_id=chat.id,
+                        user_id=new_member.id,
+                        only_if_banned=True
+                    )
+                    logger.warning(f"Usuario {new_member.id} removido do grupo {chat.id} - sem assinatura")
+
+                    # Delete the "joined" system message to avoid confusion
+                    try:
+                        await message.delete()
+                    except Exception:
+                        pass
+
+                    # Notify user AFTER removal (non-blocking)
+                    try:
+                        await context.bot.send_message(
+                            chat_id=new_member.id,
+                            text=(
+                                f"❌ **Acesso Negado**\n\n"
+                                f"Voce foi removido do grupo **{group.name}** "
+                                f"porque nao possui uma assinatura ativa.\n\n"
+                                f"🔗 Para assinar:\n"
+                                f"https://t.me/{context.bot.username}?start=g_{group.invite_slug}"
+                            ),
+                            parse_mode=ParseMode.MARKDOWN
+                        )
+                    except Exception:
+                        pass  # User may have blocked bot
+
+                except Exception as e:
+                    logger.error(f"Erro ao remover usuario nao autorizado: {e}")
+            else:
+                # Authorized — send welcome privately
+                logger.info(f"Usuario {new_member.id} autorizado no grupo {chat.id}")
+                remaining = format_remaining_text(subscription.end_date)
+
+                try:
+                    await context.bot.send_message(
+                        chat_id=new_member.id,
+                        text=(
+                            f"🎉 Bem-vindo(a) ao grupo **{group.name}**, {new_member.first_name}!\n\n"
+                            f"✅ Sua assinatura esta ativa\n"
+                            f"📅 Plano: {subscription.plan.name}\n"
+                            f"⏳ Tempo restante: {remaining}\n\n"
+                            f"💡 Aproveite o conteudo exclusivo!"
+                        ),
+                        parse_mode=ParseMode.MARKDOWN
+                    )
+                except Exception:
+                    pass

@@ -97,52 +97,59 @@ async def check_payment_status(update: Update, context: ContextTypes.DEFAULT_TYP
 async def handle_payment_confirmed(query, context, transaction, db_session):
     """Processar pagamento confirmado - COM CRIAÇÃO AUTOMÁTICA DE LINK"""
     logger.info(f"Pagamento confirmado para transação {transaction.id}")
-    
-    # Ativar assinatura
-    subscription = transaction.subscription
 
-    # Buscar detalhes da sessão Stripe (subscription_id, payment_intent, etc.)
-    if transaction.stripe_session_id:
-        try:
-            details = await get_stripe_session_details(transaction.stripe_session_id)
-            if details.get('subscription_id') and not subscription.stripe_subscription_id:
-                subscription.stripe_subscription_id = details['subscription_id']
-                logger.info(f"stripe_subscription_id={details['subscription_id']} salvo na assinatura {subscription.id}")
-            if details.get('payment_intent_id') and not transaction.stripe_payment_intent_id:
-                transaction.stripe_payment_intent_id = details['payment_intent_id']
-            if details.get('payment_method_type'):
-                subscription.payment_method_type = details['payment_method_type']
-        except Exception as e:
-            logger.warning(f"Não foi possível buscar detalhes da sessão Stripe: {e}")
-
-    # Determine if this is a Stripe-managed subscription (webhook handles credit)
-    is_stripe_managed = subscription.stripe_subscription_id and not subscription.is_legacy
-
-    # Atualizar transação e crédito do criador
-    if is_stripe_managed:
-        # Stripe subscription: let invoice.paid webhook handle transaction + credit
-        # Bot only activates subscription and shows invite link to user
-        subscription.status = 'active'
-        logger.info(f"Subscription {subscription.id} ativada pelo bot (crédito via webhook invoice.paid)")
+    # IDEMPOTENCY: If transaction is already completed, skip processing
+    # This prevents race condition from multiple rapid clicks
+    if transaction.status == 'completed':
+        logger.info(f"Transacao {transaction.id} ja completada, pulando processamento duplicado")
+        subscription = transaction.subscription
+        # Still show the success message with invite link
     else:
-        # Legacy one-time payment: bot handles everything
-        transaction.status = 'completed'
-        transaction.paid_at = datetime.utcnow()
-        subscription.status = 'active'
+        # Ativar assinatura
+        subscription = transaction.subscription
 
-        group = subscription.group
-        if group and group.creator:
-            creator = group.creator
-            net = transaction.net_amount or transaction.amount or 0
-            if creator.balance is None:
-                creator.balance = 0
-            creator.balance += net
-            if creator.total_earned is None:
-                creator.total_earned = 0
-            creator.total_earned += net
-            logger.info(f"Saldo do criador {creator.id} atualizado: +R${net} = R${creator.balance}")
+        # Buscar detalhes da sessão Stripe (subscription_id, payment_intent, etc.)
+        if transaction.stripe_session_id:
+            try:
+                details = await get_stripe_session_details(transaction.stripe_session_id)
+                if details.get('subscription_id') and not subscription.stripe_subscription_id:
+                    subscription.stripe_subscription_id = details['subscription_id']
+                    logger.info(f"stripe_subscription_id={details['subscription_id']} salvo na assinatura {subscription.id}")
+                if details.get('payment_intent_id') and not transaction.stripe_payment_intent_id:
+                    transaction.stripe_payment_intent_id = details['payment_intent_id']
+                if details.get('payment_method_type'):
+                    subscription.payment_method_type = details['payment_method_type']
+            except Exception as e:
+                logger.warning(f"Não foi possível buscar detalhes da sessão Stripe: {e}")
 
-    db_session.commit()
+        # Determine if this is a Stripe-managed subscription (webhook handles credit)
+        is_stripe_managed = subscription.stripe_subscription_id and not subscription.is_legacy
+
+        # Atualizar transação e crédito do criador
+        if is_stripe_managed:
+            # Stripe subscription: let invoice.paid webhook handle transaction + credit
+            # Bot only activates subscription and shows invite link to user
+            subscription.status = 'active'
+            logger.info(f"Subscription {subscription.id} ativada pelo bot (crédito via webhook invoice.paid)")
+        else:
+            # Legacy one-time payment: bot handles everything
+            transaction.status = 'completed'
+            transaction.paid_at = datetime.utcnow()
+            subscription.status = 'active'
+
+            group = subscription.group
+            if group and group.creator:
+                creator = group.creator
+                net = transaction.net_amount or transaction.amount or 0
+                if creator.balance is None:
+                    creator.balance = 0
+                creator.balance += net
+                if creator.total_earned is None:
+                    creator.total_earned = 0
+                creator.total_earned += net
+                logger.info(f"Saldo do criador {creator.id} atualizado: +R${net} = R${creator.balance}")
+
+        db_session.commit()
     
     # Obter informações do grupo
     group = subscription.group
