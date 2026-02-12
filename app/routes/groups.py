@@ -32,8 +32,8 @@ def _validate_plan_input(name, price_str, duration_str, description=None, is_lif
 
     try:
         price = float(price_str)
-        if price < 1 or price > 10000:
-            errors.append('Preço mínimo é R$ 1,00. Valores abaixo de R$ 1,00 não são permitidos.')
+        if price < 5 or price > 10000:
+            errors.append('Preço mínimo é R$ 5,00 (exigência do Stripe para boleto).')
     except (ValueError, TypeError):
         errors.append('Preço inválido')
 
