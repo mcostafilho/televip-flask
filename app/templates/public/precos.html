@@ -516,6 +516,9 @@
                         <button type="button" id="calcBtn" onclick="calculate()" style="margin-top: 12px; width: 100%; padding: 14px; background: var(--gradient-primary); color: white; border: none; border-radius: 12px; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
                             <i class="bi bi-calculator"></i> Calcular
                         </button>
+                        <div id="calcWarning" style="display: none; margin-top: 10px; padding: 10px 14px; background: rgba(248, 113, 113, 0.15); border: 1px solid rgba(248, 113, 113, 0.3); border-radius: 10px; color: #f87171; font-size: 14px; text-align: center;">
+                            O valor minimo por plano é R$ 5,00
+                        </div>
                     </div>
 
                     <div class="calc-results">
@@ -913,7 +916,16 @@
             var sale = parseFloat(raw);
             if (isNaN(sale) || sale < 0) sale = 0;
 
-            var fixedFee = 0.99;
+            var minPrice = 5;
+            var warningEl = document.getElementById('calcWarning');
+            if (sale > 0 && sale < minPrice) {
+                if (warningEl) warningEl.style.display = 'block';
+                sale = 0;
+            } else {
+                if (warningEl) warningEl.style.display = 'none';
+            }
+
+            var fixedFee = sale > 0 ? 0.99 : 0;
             var percentFee = sale * 0.0999;
             var totalFee = fixedFee + percentFee;
             var net = sale - totalFee;
