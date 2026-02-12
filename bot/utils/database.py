@@ -4,7 +4,7 @@ Utilitários para conexão com banco de dados
 import os
 import sys
 from contextlib import contextmanager
-from sqlalchemy import create_engine, text, text, text
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from dotenv import load_dotenv
 
@@ -16,8 +16,16 @@ load_dotenv()
 # Configurar engine - usar o mesmo banco do Flask
 DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///instance/televip.db')
 
-# Se for SQLite relativo, ajustar o caminho
-if DATABASE_URL.startswith('sqlite:///') and not DATABASE_URL.startswith('sqlite:////'):
+# Configuração de pool por tipo de banco
+engine_kwargs = {}
+if DATABASE_URL.startswith('postgresql'):
+    engine_kwargs = {
+        'pool_size': 5,
+        'max_overflow': 10,
+        'pool_recycle': 1800,
+    }
+elif DATABASE_URL.startswith('sqlite:///') and not DATABASE_URL.startswith('sqlite:////'):
+    # Se for SQLite relativo, ajustar o caminho
     db_path = DATABASE_URL.replace('sqlite:///', '')
     if not os.path.isabs(db_path):
         root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -28,7 +36,7 @@ if DATABASE_URL.startswith('sqlite:///') and not DATABASE_URL.startswith('sqlite
 import logging as _logging
 _logging.getLogger(__name__).debug("Bot database engine configured")
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, **engine_kwargs)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 @contextmanager

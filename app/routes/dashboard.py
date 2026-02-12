@@ -170,7 +170,7 @@ def index():
 
     daily_revenue_query = text("""
         SELECT DATE(t.created_at) as date,
-               CAST(SUM(t.amount) AS FLOAT) as total
+               CAST(SUM(t.amount) AS DECIMAL) as total
         FROM transactions t
         JOIN subscriptions s ON t.subscription_id = s.id
         JOIN groups g ON s.group_id = g.id

@@ -9,6 +9,7 @@ Flask-WTF>=1.2.0
 
 # Database - VERSÃO MAIS RECENTE PARA PYTHON 3.13
 SQLAlchemy==2.0.36
+psycopg2-binary>=2.9.9
 
 # Authentication
 bcrypt==4.1.2

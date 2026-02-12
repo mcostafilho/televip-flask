@@ -21,7 +21,7 @@ apt update && apt upgrade -y
 echo "[2/10] Instalando dependencias..."
 apt install -y python3 python3-pip python3-venv python3-dev \
     nginx certbot python3-certbot-nginx \
-    git sqlite3 ufw
+    git ufw
 
 # 3. Criar usuario da aplicacao
 echo "[3/10] Criando usuario..."
@@ -58,8 +58,8 @@ SECRET_KEY=$SECRET
 FLASK_ENV=production
 FLASK_DEBUG=false
 
-# Banco de Dados
-DATABASE_URL=sqlite:///$APP_DIR/instance/app.db
+# Banco de Dados (Cloud SQL PostgreSQL)
+DATABASE_URL=postgresql://televip:SENHA@CLOUD_SQL_IP/televip
 
 # URLs
 APP_URL=https://$DOMAIN
