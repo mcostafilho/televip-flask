@@ -828,7 +828,6 @@
 /* Copy link inline */
 .row-link-copy {
     display: flex;
-    max-width: 480px;
     gap: 0;
 }
 
