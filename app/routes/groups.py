@@ -163,13 +163,28 @@ def create():
         
         # Criar grupo + planos de forma atômica
         try:
+            # Processar whitelist do formulário
+            whitelist_ids = request.form.getlist('whitelist_ids[]')
+            whitelist_names = request.form.getlist('whitelist_names[]')
+            whitelist_data = []
+            for i, tid in enumerate(whitelist_ids):
+                tid = tid.strip()
+                if tid and tid.isdigit():
+                    wl_name = whitelist_names[i].strip() if i < len(whitelist_names) else ''
+                    whitelist_data.append({
+                        'telegram_id': tid,
+                        'name': wl_name[:50],
+                        'added_at': datetime.utcnow().strftime('%Y-%m-%d %H:%M')
+                    })
+
             group = Group(
                 name=name,
                 description=description,
                 telegram_id=telegram_id or None,
                 invite_link=invite_link or None,
                 creator_id=current_user.id,
-                is_active=True
+                is_active=True,
+                whitelist_json=json.dumps(whitelist_data) if whitelist_data else '[]'
             )
             db.session.add(group)
             db.session.flush()  # gera group.id sem commitar
