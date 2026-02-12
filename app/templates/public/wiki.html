@@ -490,7 +490,7 @@
                                     <h6>Criando Planos de Preço</h6>
                                     <ul>
                                         <li>Cada grupo ou canal pode ter <strong>múltiplos planos</strong> (ex: Mensal, Trimestral, Anual).</li>
-                                        <li>O <strong>preço mínimo</strong> por plano é de <strong>R$ 1,00</strong>.</li>
+                                        <li>O <strong>preço mínimo</strong> por plano é de <strong>R$ 5,00</strong> (exigência do Stripe para boleto).</li>
                                         <li>A <strong>duração</strong> é definida em <strong>dias inteiros</strong> (ex: 30, 90, 365).</li>
                                         <li>Planos podem ser editados ou desativados a qualquer momento.</li>
                                     </ul>
@@ -599,10 +599,26 @@
                                         O membro paga uma vez e o Stripe cobra automaticamente a cada período (mensal, por exemplo).
                                     </p>
                                     <ul>
-                                        <li>Renovação automática no cartão do membro.</li>
-                                        <li>Retentativa automática em caso de falha de pagamento.</li>
-                                        <li>Notificação por email ao membro sobre renovações.</li>
+                                        <li>Renovação automática no cartão ou boleto do membro.</li>
+                                        <li>Notificação pelo bot no Telegram sobre renovações e vencimentos.</li>
                                     </ul>
+
+                                    <h6>Falha de Pagamento</h6>
+                                    <p>
+                                        Se o pagamento falhar na data da renovação (cartão expirado, saldo insuficiente, etc.),
+                                        o sistema age automaticamente:
+                                    </p>
+                                    <ol>
+                                        <li>O Stripe tenta cobrar até <strong>3 vezes</strong>, uma vez por dia.</li>
+                                        <li>A cada tentativa falhada, o bot notifica o membro no Telegram com um <strong>aviso progressivo</strong>
+                                            (ex: &ldquo;tentativa 1/3, restam 2&rdquo;) e um botão para atualizar o cartão.</li>
+                                        <li>Se todas as tentativas falharem, a assinatura é cancelada e o membro é <strong>removido automaticamente</strong> do grupo.</li>
+                                    </ol>
+                                    <div class="wiki-highlight">
+                                        <strong><i class="bi bi-info-circle-fill" style="color: #7c5cfc;"></i> Boleto:</strong>
+                                        Para boleto, um único boleto é gerado com validade de 3 dias. Se não for pago no prazo,
+                                        a assinatura é cancelada e o membro é removido do grupo.
+                                    </div>
 
                                     <h6>Cancelamento</h6>
                                     <p>
@@ -665,7 +681,7 @@
                                             <li><strong>Não modera mensagens</strong> &mdash; não filtra, apaga ou gerencia mensagens.</li>
                                             <li><strong>Não faz marketing</strong> &mdash; a divulgação do grupo é responsabilidade do criador.</li>
                                             <li><strong>Não processa pagamentos fora do Stripe</strong> &mdash; não aceitamos PIX direto, transferência bancária ou outros meios.</li>
-                                            <li><strong>Não permite planos gratuitos</strong> &mdash; o preço mínimo de um plano é R$ 1,00.</li>
+                                            <li><strong>Não permite planos gratuitos</strong> &mdash; o preço mínimo de um plano é R$ 5,00.</li>
                                             <li><strong>Não garante reembolsos</strong> &mdash; disputas de pagamento são tratadas via Stripe conforme suas políticas.</li>
                                         </ul>
                                     </div>
@@ -722,7 +738,9 @@
                                             </h2>
                                             <div id="fq3" class="accordion-collapse collapse" data-bs-parent="#faqInner">
                                                 <div class="accordion-body" style="padding: 0 20px 16px;">
-                                                    Para assinaturas recorrentes, o Stripe tenta cobrar automaticamente várias vezes. Se todas as tentativas falharem, a assinatura é cancelada e o bot remove o membro do grupo ou canal.
+                                                    Para cartão, o Stripe faz até 3 tentativas (uma por dia). A cada falha, o bot avisa o membro no Telegram com um contador (ex: &ldquo;tentativa 1/3&rdquo;) e um botão para atualizar o cartão.
+                                                    Para boleto, um boleto de 3 dias é gerado &mdash; se não for pago, a assinatura é cancelada.
+                                                    Em ambos os casos, após esgotar as tentativas, o bot remove o membro automaticamente do grupo ou canal.
                                                 </div>
                                             </div>
                                         </div>
