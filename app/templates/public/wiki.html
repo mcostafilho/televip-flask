@@ -318,7 +318,7 @@
                         <a href="#sec-about"><i class="bi bi-info-circle"></i> O que é o TeleVIP</a>
                         <a href="#sec-howto"><i class="bi bi-signpost-2"></i> Como Funciona</a>
                         <a href="#sec-bot"><i class="bi bi-robot"></i> Configuração do Bot</a>
-                        <a href="#sec-groups"><i class="bi bi-collection"></i> Grupos e Planos</a>
+                        <a href="#sec-groups"><i class="bi bi-collection"></i> Grupos, Canais e Planos</a>
                         <a href="#sec-payments"><i class="bi bi-credit-card"></i> Pagamentos e Taxas</a>
                         <a href="#sec-subscriptions"><i class="bi bi-arrow-repeat"></i> Assinaturas</a>
                         <a href="#sec-security"><i class="bi bi-shield-check"></i> Segurança</a>
@@ -344,8 +344,8 @@
                             <div id="wiki1" class="accordion-collapse collapse show" data-bs-parent="#wikiAccordion">
                                 <div class="accordion-body">
                                     <p>
-                                        O <strong>TeleVIP</strong> é uma plataforma brasileira para <strong>monetização de grupos do Telegram</strong>.
-                                        Com ele, você transforma seu grupo em um negócio: cria planos de assinatura, recebe pagamentos automaticamente
+                                        O <strong>TeleVIP</strong> é uma plataforma brasileira para <strong>monetização de grupos e canais do Telegram</strong>.
+                                        Com ele, você transforma seu grupo ou canal em um negócio: cria planos de assinatura, recebe pagamentos automaticamente
                                         e gerencia membros sem esforço manual.
                                     </p>
                                     <p>
@@ -355,7 +355,7 @@
                                     <div class="wiki-highlight success">
                                         <strong><i class="bi bi-check-circle-fill text-success"></i> Ideal para:</strong>
                                         criadores de conteúdo, educadores, traders, coaches, comunidades exclusivas
-                                        e qualquer pessoa que queira cobrar pelo acesso a um grupo no Telegram.
+                                        e qualquer pessoa que queira cobrar pelo acesso a um grupo ou canal no Telegram.
                                     </div>
                                 </div>
                             </div>
@@ -373,22 +373,31 @@
                             </h2>
                             <div id="wiki2" class="accordion-collapse collapse" data-bs-parent="#wikiAccordion">
                                 <div class="accordion-body">
-                                    <h6>Para o Criador</h6>
+                                    <h6>Para o Criador (Grupo)</h6>
                                     <ol>
                                         <li><strong>Crie sua conta</strong> no TeleVIP (grátis, sem cartão de crédito).</li>
                                         <li><strong>Adicione o bot</strong> (<code>@televipbra_bot</code>) ao seu grupo no Telegram e torne-o administrador com permissão para banir usuários e convidar via link.</li>
-                                        <li><strong>Envie <code>/setup</code></strong> no grupo — o bot cria e vincula o grupo automaticamente na plataforma.</li>
+                                        <li><strong>Envie <code>/setup</code></strong> no grupo &mdash; o bot cria e vincula o grupo automaticamente na plataforma.</li>
                                         <li><strong>Adicione à whitelist</strong> qualquer usuário que já estiver dentro do grupo (para que não sejam removidos pelo bot).</li>
                                         <li><strong>Crie planos de preço</strong> no painel (ex: Mensal R$ 29,90, Trimestral R$ 69,90).</li>
                                         <li><strong>Compartilhe o link de pagamento</strong> do seu grupo. Pronto!</li>
                                     </ol>
 
+                                    <h6>Para o Criador (Canal)</h6>
+                                    <ol>
+                                        <li><strong>Crie sua conta</strong> no TeleVIP (grátis, sem cartão de crédito).</li>
+                                        <li><strong>Adicione o bot</strong> (<code>@televipbra_bot</code>) como administrador do seu canal no Telegram.</li>
+                                        <li><strong>Descubra o ID do canal</strong> &mdash; adicione o <code>@userinfobot</code> ao canal, ele mostra o ID (ex: <code>-1001234567890</code>). Depois pode removê-lo.</li>
+                                        <li>No painel do TeleVIP, <strong>clique em "Canal"</strong> no formulário e cole o ID.</li>
+                                        <li><strong>Crie planos de preço</strong> e <strong>compartilhe o link</strong>. Pronto!</li>
+                                    </ol>
+
                                     <h6>Para o Assinante</h6>
                                     <ol>
-                                        <li>O assinante acessa o link de pagamento do grupo.</li>
+                                        <li>O assinante acessa o link de pagamento do grupo ou canal.</li>
                                         <li>Escolhe um plano e realiza o pagamento via Stripe (cartão ou boleto).</li>
-                                        <li>Após confirmação, o bot automaticamente convida o assinante para o grupo.</li>
-                                        <li>Quando a assinatura expira ou é cancelada, o bot remove o membro do grupo.</li>
+                                        <li>Após confirmação, o bot automaticamente convida o assinante.</li>
+                                        <li>Quando a assinatura expira ou é cancelada, o bot remove o membro automaticamente.</li>
                                     </ol>
                                 </div>
                             </div>
@@ -406,25 +415,35 @@
                             </h2>
                             <div id="wiki3" class="accordion-collapse collapse" data-bs-parent="#wikiAccordion">
                                 <div class="accordion-body">
-                                    <h6>Adicionando o Bot ao Grupo</h6>
+                                    <h6>Adicionando o Bot a um Grupo</h6>
                                     <ol>
                                         <li>No Telegram, abra seu grupo e vá em <strong>Configurações do Grupo</strong>.</li>
                                         <li>Clique em <strong>Administradores</strong> &rarr; <strong>Adicionar Admin</strong>.</li>
                                         <li>Pesquise por <code>@televipbra_bot</code> e adicione-o.</li>
                                         <li>Conceda as permissões: <strong>Banir usuários</strong> e <strong>Convidar usuários via link</strong>.</li>
+                                        <li>Dentro do grupo, envie <code>/setup</code> &mdash; o bot confirma a vinculação e mostra o ID.</li>
                                     </ol>
 
-                                    <h6>Vinculando o Bot</h6>
-                                    <p>
-                                        Após adicionar o bot como administrador, envie o comando <code>/setup</code> no grupo.
-                                        O bot irá confirmar a vinculação com o TeleVIP. A partir desse momento, ele passa
-                                        a gerenciar automaticamente a entrada e saída de membros.
-                                    </p>
+                                    <h6>Adicionando o Bot a um Canal</h6>
+                                    <ol>
+                                        <li>No Telegram, abra seu canal e vá em <strong>Configurações do Canal</strong>.</li>
+                                        <li>Clique em <strong>Administradores</strong> &rarr; <strong>Adicionar Admin</strong>.</li>
+                                        <li>Pesquise por <code>@televipbra_bot</code> e adicione-o como administrador.</li>
+                                        <li>Para descobrir o ID do canal, adicione o <code>@userinfobot</code> ao canal &mdash; ele mostra o ID (ex: <code>-1001234567890</code>). Depois pode removê-lo.</li>
+                                        <li>No painel do TeleVIP, selecione <strong>"Canal"</strong> no formulário e cole o ID.</li>
+                                    </ol>
 
                                     <div class="wiki-highlight warning">
                                         <strong><i class="bi bi-exclamation-triangle-fill" style="color: #fbbf24;"></i> Importante:</strong>
-                                        O bot precisa ser <strong>administrador</strong> do grupo com as permissões corretas.
+                                        O bot precisa ser <strong>administrador</strong> do grupo ou canal com as permissões corretas.
                                         Sem isso, ele não conseguirá adicionar ou remover membros.
+                                    </div>
+
+                                    <div class="wiki-highlight">
+                                        <strong><i class="bi bi-info-circle-fill" style="color: #7c5cfc;"></i> Diferença entre Grupo e Canal:</strong>
+                                        Em <strong>grupos</strong>, o bot detecta novos membros automaticamente. Em <strong>canais</strong>,
+                                        o bot usa um sistema diferente (ChatMemberHandler) para verificar quem entra.
+                                        O resultado é o mesmo: só assinantes ficam.
                                     </div>
                                 </div>
                             </div>
@@ -437,7 +456,7 @@
                                     <div class="section-icon" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24;">
                                         <i class="bi bi-collection-fill"></i>
                                     </div>
-                                    Grupos e Planos
+                                    Grupos, Canais e Planos
                                 </button>
                             </h2>
                             <div id="wiki4" class="accordion-collapse collapse" data-bs-parent="#wikiAccordion">
@@ -446,7 +465,7 @@
                                     <ol>
                                         <li>No Telegram, crie ou abra o grupo que deseja monetizar.</li>
                                         <li>Adicione o bot <code>@televipbra_bot</code> ao grupo e torne-o <strong>administrador</strong> (com permissão para banir e convidar via link).</li>
-                                        <li>Envie <code>/setup</code> no grupo — o bot irá guiá-lo pela criação do grupo na plataforma automaticamente.</li>
+                                        <li>Envie <code>/setup</code> no grupo &mdash; o bot vincula o grupo automaticamente na plataforma.</li>
                                     </ol>
 
                                     <div class="wiki-highlight success">
@@ -454,27 +473,42 @@
                                         O <code>/setup</code> cuida de tudo: vincula o grupo, registra no painel e já exibe a whitelist para você adicionar membros existentes.
                                     </div>
 
+                                    <h6>Criando um Canal</h6>
+                                    <ol>
+                                        <li>No Telegram, crie ou abra o canal que deseja monetizar.</li>
+                                        <li>Adicione o bot <code>@televipbra_bot</code> como <strong>administrador</strong> do canal.</li>
+                                        <li>Descubra o ID do canal: adicione o <code>@userinfobot</code> ao canal, ele mostra o ID (ex: <code>-1001234567890</code>). Depois pode removê-lo.</li>
+                                        <li>No painel do TeleVIP, selecione <strong>"Canal"</strong>, cole o ID e configure os planos.</li>
+                                    </ol>
+
+                                    <div class="wiki-highlight">
+                                        <strong><i class="bi bi-info-circle-fill" style="color: #7c5cfc;"></i> Por que o /setup não funciona em canais?</strong>
+                                        Canais do Telegram não permitem que membros enviem mensagens &mdash; só o dono publica.
+                                        Por isso, usamos o <code>@userinfobot</code> para descobrir o ID do canal.
+                                    </div>
+
                                     <h6>Criando Planos de Preço</h6>
                                     <ul>
-                                        <li>Cada grupo pode ter <strong>múltiplos planos</strong> (ex: Mensal, Trimestral, Anual).</li>
+                                        <li>Cada grupo ou canal pode ter <strong>múltiplos planos</strong> (ex: Mensal, Trimestral, Anual).</li>
                                         <li>O <strong>preço mínimo</strong> por plano é de <strong>R$ 1,00</strong>.</li>
                                         <li>A <strong>duração</strong> é definida em <strong>dias inteiros</strong> (ex: 30, 90, 365).</li>
                                         <li>Planos podem ser editados ou desativados a qualquer momento.</li>
                                     </ul>
 
-                                    <h6>Whitelist</h6>
+                                    <h6>Whitelist (Lista de Exceção)</h6>
                                     <p>
                                         A whitelist é uma <strong>lista de proteção</strong>: qualquer usuário adicionado nela
                                         <strong>nunca será removido</strong> pelo bot, mesmo que não tenha assinatura ativa.
+                                        Funciona tanto para grupos quanto para canais.
                                     </p>
                                     <div class="wiki-highlight success">
                                         <strong><i class="bi bi-check-circle-fill text-success"></i> Proteção automática:</strong>
-                                        Administradores e o dono do grupo <strong>já são protegidos automaticamente</strong> pelo bot
+                                        Administradores e o dono do grupo/canal <strong>já são protegidos automaticamente</strong> pelo bot
                                         &mdash; não precisam ser adicionados à whitelist.
                                     </div>
                                     <div class="wiki-highlight warning">
                                         <strong><i class="bi bi-exclamation-triangle-fill" style="color: #fbbf24;"></i> Muito importante:</strong>
-                                        Se o seu grupo já tem membros antes de ativar o bot, <strong>adicione todos eles à whitelist</strong>
+                                        Se o seu grupo ou canal já tem membros antes de ativar o bot, <strong>adicione todos eles à whitelist</strong>
                                         antes de criar planos. Caso contrário, o bot poderá removê-los por não terem assinatura.
                                     </div>
                                     <p><strong>Quando usar a whitelist:</strong></p>
@@ -580,7 +614,7 @@
                                     <h6>Expiração Automática</h6>
                                     <p>
                                         Quando uma assinatura expira (por cancelamento ou falha de pagamento),
-                                        o bot <strong>remove automaticamente</strong> o membro do grupo no Telegram.
+                                        o bot <strong>remove automaticamente</strong> o membro do grupo ou canal no Telegram.
                                         Nenhuma ação manual é necessária.
                                     </p>
                                 </div>
@@ -600,8 +634,8 @@
                             <div id="wiki7" class="accordion-collapse collapse" data-bs-parent="#wikiAccordion">
                                 <div class="accordion-body">
                                     <ul>
-                                        <li><strong>Remoção automática:</strong> membros inadimplentes são removidos do grupo automaticamente pelo bot.</li>
-                                        <li><strong>Auditoria periódica:</strong> o sistema verifica periodicamente se todos os membros do grupo possuem assinatura ativa.</li>
+                                        <li><strong>Remoção automática:</strong> membros inadimplentes são removidos do grupo ou canal automaticamente pelo bot.</li>
+                                        <li><strong>Auditoria periódica:</strong> o sistema verifica periodicamente se todos os membros possuem assinatura ativa.</li>
                                         <li><strong>Proteção contra chargeback:</strong> valores ficam retidos por 7 dias antes da liberação para saque.</li>
                                         <li><strong>Criptografia:</strong> dados sensíveis são criptografados. Senhas usam hashing seguro (scrypt).</li>
                                         <li><strong>Stripe PCI DSS:</strong> pagamentos processados pelo Stripe, que possui certificação PCI DSS Level 1.</li>
@@ -627,8 +661,8 @@
                                     <div class="wiki-highlight danger">
                                         <p class="mb-2"><strong>O TeleVIP é uma plataforma de gestão de acesso e cobrança. Ele NÃO:</strong></p>
                                         <ul>
-                                            <li><strong>Não envia conteúdo</strong> &mdash; o criador é responsável por postar no grupo.</li>
-                                            <li><strong>Não modera mensagens</strong> &mdash; não filtra, apaga ou gerencia mensagens dentro do grupo.</li>
+                                            <li><strong>Não envia conteúdo</strong> &mdash; o criador é responsável por postar no grupo ou canal.</li>
+                                            <li><strong>Não modera mensagens</strong> &mdash; não filtra, apaga ou gerencia mensagens.</li>
                                             <li><strong>Não faz marketing</strong> &mdash; a divulgação do grupo é responsabilidade do criador.</li>
                                             <li><strong>Não processa pagamentos fora do Stripe</strong> &mdash; não aceitamos PIX direto, transferência bancária ou outros meios.</li>
                                             <li><strong>Não permite planos gratuitos</strong> &mdash; o preço mínimo de um plano é R$ 1,00.</li>
@@ -656,12 +690,13 @@
                                         <div class="accordion-item" style="background: rgba(255,255,255,0.03); border-color: rgba(124,92,252,0.08);">
                                             <h2 class="accordion-header">
                                                 <button class="accordion-button collapsed" style="font-size: 15px; padding: 16px 20px;" type="button" data-bs-toggle="collapse" data-bs-target="#fq1">
-                                                    Como descubro o ID do meu grupo no Telegram?
+                                                    Como descubro o ID do meu grupo ou canal?
                                                 </button>
                                             </h2>
                                             <div id="fq1" class="accordion-collapse collapse" data-bs-parent="#faqInner">
                                                 <div class="accordion-body" style="padding: 0 20px 16px;">
-                                                    Adicione o bot <code>@userinfobot</code> ao seu grupo. Ele mostrará o ID (um número negativo como <code>-1001234567890</code>). Copie e cole no TeleVIP ao criar o grupo.
+                                                    <strong>Para grupos:</strong> digite <code>/setup</code> dentro do grupo e o bot mostra o ID.
+                                                    <strong>Para canais:</strong> adicione o <code>@userinfobot</code> ao canal &mdash; ele mostra o ID (um número como <code>-1001234567890</code>). Copie e cole no formulário do TeleVIP.
                                                 </div>
                                             </div>
                                         </div>
@@ -669,12 +704,12 @@
                                         <div class="accordion-item" style="background: rgba(255,255,255,0.03); border-color: rgba(124,92,252,0.08);">
                                             <h2 class="accordion-header">
                                                 <button class="accordion-button collapsed" style="font-size: 15px; padding: 16px 20px;" type="button" data-bs-toggle="collapse" data-bs-target="#fq2">
-                                                    Posso ter mais de um grupo?
+                                                    Posso ter mais de um grupo ou canal?
                                                 </button>
                                             </h2>
                                             <div id="fq2" class="accordion-collapse collapse" data-bs-parent="#faqInner">
                                                 <div class="accordion-body" style="padding: 0 20px 16px;">
-                                                    Sim! Você pode criar quantos grupos quiser. Cada grupo pode ter seus próprios planos e preços.
+                                                    Sim! Você pode criar quantos grupos e canais quiser. Cada um pode ter seus próprios planos e preços.
                                                 </div>
                                             </div>
                                         </div>
@@ -687,7 +722,7 @@
                                             </h2>
                                             <div id="fq3" class="accordion-collapse collapse" data-bs-parent="#faqInner">
                                                 <div class="accordion-body" style="padding: 0 20px 16px;">
-                                                    Para assinaturas recorrentes, o Stripe tenta cobrar automaticamente várias vezes. Se todas as tentativas falharem, a assinatura é cancelada e o bot remove o membro do grupo.
+                                                    Para assinaturas recorrentes, o Stripe tenta cobrar automaticamente várias vezes. Se todas as tentativas falharem, a assinatura é cancelada e o bot remove o membro do grupo ou canal.
                                                 </div>
                                             </div>
                                         </div>
@@ -734,12 +769,12 @@
                                         <div class="accordion-item" style="background: rgba(255,255,255,0.03); border-color: rgba(124,92,252,0.08);">
                                             <h2 class="accordion-header">
                                                 <button class="accordion-button collapsed" style="font-size: 15px; padding: 16px 20px;" type="button" data-bs-toggle="collapse" data-bs-target="#fq7">
-                                                    E se eu já tiver membros no grupo?
+                                                    E se eu já tiver membros no grupo ou canal?
                                                 </button>
                                             </h2>
                                             <div id="fq7" class="accordion-collapse collapse" data-bs-parent="#faqInner">
                                                 <div class="accordion-body" style="padding: 0 20px 16px;">
-                                                    Adicione os membros existentes à <strong>whitelist</strong> do grupo no TeleVIP antes de ativar o bot. Assim, eles não serão removidos. Você pode gerenciar a whitelist na página de edição do grupo.
+                                                    Adicione os membros existentes à <strong>whitelist</strong> no TeleVIP antes de ativar o bot. Assim, eles não serão removidos. Você pode gerenciar a whitelist na página de edição do grupo ou canal.
                                                 </div>
                                             </div>
                                         </div>
@@ -785,7 +820,7 @@
                         <i class="bi bi-telegram"></i> TeleVIP
                     </h5>
                     <p class="text-muted">
-                        A plataforma definitiva para monetização de grupos no Telegram.
+                        A plataforma definitiva para monetização de grupos e canais no Telegram.
                     </p>
                     <div class="badge bg-warning text-dark p-2 mt-2">
                         <i class="bi bi-tag-fill"></i> Taxa: R$ 0,99 + 9,99% por transação
