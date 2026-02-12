@@ -99,9 +99,9 @@
                             </div>
                             <div class="row-metric">
                                 <span class="row-metric-value" style="color: var(--galactic-text-bright); font-size: 0.82rem;">
-                                    {{ txn.created_at.strftime('%d/%m/%y') }}
+                                    {{ (txn.created_at|to_brt).strftime('%d/%m/%y') }}
                                 </span>
-                                <span class="row-metric-label">{{ txn.created_at.strftime('%H:%M') }}</span>
+                                <span class="row-metric-label">{{ (txn.created_at|to_brt).strftime('%H:%M') }}</span>
                             </div>
                         </div>
                     </div>

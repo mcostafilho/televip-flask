@@ -59,20 +59,21 @@
                             R$ <span class="countup" data-target="{{ "%.2f"|format(available_balance|default(0)) }}">0,00</span>
                         </h3>
 
-                        {% if blocked_balance|default(0) > 0 %}
-                        <div class="mt-2">
-                            <small class="text-warning">
-                                <i class="bi bi-lock-fill"></i> R$ {{ "%.2f"|format(blocked_balance) }} bloqueado
-                            </small>
-                            <a href="#" class="text-decoration-none ms-1" data-bs-toggle="modal" data-bs-target="#balanceDetailsModal" title="Ver detalhes">
-                                <i class="bi bi-info-circle"></i>
-                            </a>
-                        </div>
-                        {% endif %}
-
-                        <div class="mt-2">
+                        <div class="d-flex align-items-center justify-content-between mt-2 flex-wrap gap-2">
+                            <div>
+                                {% if blocked_balance|default(0) > 0 %}
+                                <small class="text-warning">
+                                    <i class="bi bi-lock-fill me-1"></i>R$ {{ "%.2f"|format(blocked_balance) }} bloqueado
+                                    <a href="#" class="text-decoration-none ms-1 text-info" data-bs-toggle="modal" data-bs-target="#balanceDetailsModal" title="Ver detalhes">
+                                        <i class="bi bi-info-circle"></i>
+                                    </a>
+                                </small>
+                                {% else %}
+                                <small class="text-muted">Nenhum valor bloqueado</small>
+                                {% endif %}
+                            </div>
                             <a href="#" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#withdrawModal">
-                                <i class="bi bi-cash-stack"></i> Sacar
+                                <i class="bi bi-cash-stack me-1"></i>Sacar
                             </a>
                         </div>
                     </div>
@@ -135,7 +136,15 @@
                             <span class="countup" data-target="{{ total_subscribers }}" data-decimals="0">0</span>
                         </h3>
                         <small class="text-muted">
-                            Em {{ total_groups }} grupo{{ 's' if total_groups != 1 else '' }}
+                            {% set num_channels = groups|selectattr('chat_type', 'equalto', 'channel')|list|length %}
+                            {% set num_groups = total_groups - num_channels %}
+                            {% if num_channels == 0 %}
+                                Em {{ total_groups }} grupo{{ 's' if total_groups != 1 else '' }}
+                            {% elif num_groups == 0 %}
+                                Em {{ total_groups }} canal{{ 'is' if total_groups != 1 else '' }}
+                            {% else %}
+                                Em {{ num_groups }} grupo{{ 's' if num_groups != 1 else '' }} e {{ num_channels }} canal{{ 'is' if num_channels != 1 else '' }}
+                            {% endif %}
                         </small>
                     </div>
                 </div>
@@ -205,7 +214,7 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="mb-0">
                     <i class="bi bi-telegram"></i>
-                    Meus Grupos
+                    Meus Grupos e Canais
                 </h5>
                 {% if groups %}
                 <a href="{{ url_for('groups.list') }}" class="link-see-all">
@@ -220,7 +229,7 @@
                     <div class="row-item">
                         <div class="row-item-left">
                             <div class="row-icon {% if group.is_active %}active{% else %}inactive{% endif %}">
-                                <i class="bi bi-telegram"></i>
+                                <i class="bi {% if group.chat_type == 'channel' %}bi-megaphone-fill{% else %}bi-telegram{% endif %}"></i>
                             </div>
                             <div class="row-info">
                                 <div class="row-title">
@@ -323,7 +332,7 @@
                                 +R$ {{ "%.2f"|format(transaction.amount) }}
                             </div>
                             <div class="tx-date">
-                                {{ transaction.created_at.strftime('%d/%m %H:%M') }}
+                                {{ (transaction.created_at|to_brt).strftime('%d/%m %H:%M') }}
                             </div>
                         </div>
                     </div>

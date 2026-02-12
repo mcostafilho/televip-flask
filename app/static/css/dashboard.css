@@ -221,6 +221,13 @@
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Make content area stretch to fill card height (centers content in cards without sparkline) */
+.stat-card > .d-flex:first-child {
+    flex: 1;
 }
 
 .stat-card:hover {
@@ -378,13 +385,14 @@
     box-shadow: 0 0 20px rgba(248, 113, 113, 0.2);
 }
 
-/* Mini sparkline bar in stat card */
+/* Mini sparkline bar in stat card — pushed to bottom */
 .stat-sparkline {
     display: flex;
     align-items: flex-end;
     gap: 2px;
     height: 28px;
-    margin-top: 0.6rem;
+    margin-top: auto;
+    padding-top: 0.6rem;
 }
 
 .stat-sparkline .bar {
@@ -820,7 +828,7 @@
 /* Copy link inline */
 .row-link-copy {
     display: flex;
-    max-width: 280px;
+    max-width: 480px;
     gap: 0;
 }
 

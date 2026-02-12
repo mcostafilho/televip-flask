@@ -276,7 +276,7 @@
                                 </div>
                                 <div class="row-item-right">
                                     <div class="tx-amount green">+R$ {{ "%.2f"|format(transaction.amount) }}</div>
-                                    <div class="tx-date">{{ transaction.created_at.strftime('%d/%m %H:%M') }}</div>
+                                    <div class="tx-date">{{ (transaction.created_at|to_brt).strftime('%d/%m %H:%M') }}</div>
                                 </div>
                             </div>
                             {% endfor %}

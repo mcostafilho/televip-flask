@@ -1,4 +1,5 @@
 # app/__init__.py
+from datetime import timedelta
 from flask import Flask, request, redirect, render_template, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user
@@ -76,6 +77,13 @@ def create_app():
             creator = _Creator.query.get(session['admin_viewing_id'])
             return {'admin_viewing': creator, 'is_admin_viewing': True}
         return {'admin_viewing': None, 'is_admin_viewing': False}
+
+    # Jinja filter: UTC → BRT (UTC-3)
+    @app.template_filter('to_brt')
+    def to_brt_filter(dt):
+        if dt:
+            return dt - timedelta(hours=3)
+        return dt
 
     # Custom error pages
     @app.errorhandler(404)
