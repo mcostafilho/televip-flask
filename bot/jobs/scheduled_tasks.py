@@ -142,7 +142,7 @@ async def check_expired_subscriptions():
 
 
 async def remove_from_group(subscription):
-    """Remover usuario do grupo via Telegram Bot API"""
+    """Remover usuario do grupo via Telegram Bot API (respeitando whitelist e admins)"""
     if not _application:
         logger.warning("Bot nao disponivel para remover usuario")
         return
@@ -154,6 +154,23 @@ async def remove_from_group(subscription):
 
         user_id = int(subscription.telegram_user_id)
         chat_id = int(group.telegram_id)
+
+        # Verificar se esta na whitelist
+        if group.is_whitelisted(str(user_id)):
+            logger.info(f"Usuario {user_id} na whitelist do grupo {chat_id} - nao removido")
+            return
+
+        # Verificar se é admin do grupo
+        try:
+            member_info = await _application.bot.get_chat_member(
+                chat_id=chat_id,
+                user_id=user_id
+            )
+            if member_info.status in ['administrator', 'creator']:
+                logger.info(f"Usuario {user_id} e admin do grupo {chat_id} - nao removido")
+                return
+        except TelegramError:
+            pass  # Se falhar, tenta remover normalmente
 
         # Ban e unban = kick (remove sem banir permanentemente)
         await _application.bot.ban_chat_member(
@@ -266,9 +283,18 @@ async def audit_group_members():
                     ).all()
                 )
 
+                # Build whitelist set for fast lookup
+                whitelisted_ids = set(
+                    e['telegram_id'] for e in group.get_whitelist()
+                )
+
                 for sub in inactive_subs:
                     # Skip if user has another active subscription for the same group
                     if sub.telegram_user_id in active_user_ids:
+                        continue
+
+                    # Skip if user is whitelisted
+                    if sub.telegram_user_id in whitelisted_ids:
                         continue
 
                     user_id = int(sub.telegram_user_id)
@@ -279,6 +305,10 @@ async def audit_group_members():
                             chat_id=chat_id,
                             user_id=user_id
                         )
+
+                        # Skip admins and creators
+                        if member.status in ['administrator', 'creator']:
+                            continue
 
                         if member.status in ['member', 'restricted']:
                             # User is still in group without active subscription — remove

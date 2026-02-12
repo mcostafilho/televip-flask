@@ -850,6 +850,20 @@ async def handle_new_chat_members(update: Update, context: ContextTypes.DEFAULT_
             if not group:
                 continue
 
+            # Verificar se esta na lista de excecao (whitelist)
+            if group.is_whitelisted(str(new_member.id)):
+                logger.info(f"Usuario {new_member.id} na whitelist do grupo {chat.id} - permitido")
+                continue
+
+            # Verificar se é admin/creator do grupo (moderadores)
+            try:
+                member_info = await context.bot.get_chat_member(chat.id, new_member.id)
+                if member_info.status in ['administrator', 'creator']:
+                    logger.info(f"Usuario {new_member.id} e admin do grupo {chat.id} - permitido")
+                    continue
+            except Exception:
+                pass  # Se falhar, continua verificacao normal
+
             subscription = session.query(Subscription).filter_by(
                 group_id=group.id,
                 telegram_user_id=str(new_member.id),

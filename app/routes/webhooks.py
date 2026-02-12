@@ -588,7 +588,7 @@ def handle_subscription_deleted(stripe_subscription):
 
 
 def remove_user_from_group_via_bot(subscription):
-    """Remove user from Telegram group using Bot API"""
+    """Remove user from Telegram group using Bot API (respects whitelist and admins)"""
     bot_token = os.getenv('BOT_TOKEN') or os.getenv('TELEGRAM_BOT_TOKEN')
     if not bot_token:
         logger.error("Bot token not configured for group removal")
@@ -598,9 +598,28 @@ def remove_user_from_group_via_bot(subscription):
     if not group or not group.telegram_id:
         return
 
+    user_id_str = subscription.telegram_user_id
+
+    # Check whitelist
+    if group.is_whitelisted(user_id_str):
+        logger.info(f"User {user_id_str} is whitelisted in group {group.telegram_id} — not removing")
+        return
+
     try:
-        user_id = int(subscription.telegram_user_id)
+        user_id = int(user_id_str)
         chat_id = int(group.telegram_id)
+
+        # Check if user is admin before kicking
+        try:
+            check_url = f"https://api.telegram.org/bot{bot_token}/getChatMember"
+            resp = requests.post(check_url, json={'chat_id': chat_id, 'user_id': user_id}, timeout=10)
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get('ok') and data['result'].get('status') in ['administrator', 'creator']:
+                    logger.info(f"User {user_id} is admin in group {chat_id} — not removing")
+                    return
+        except Exception:
+            pass  # If check fails, proceed with removal
 
         # Ban then unban = kick without permanent ban
         ban_url = f"https://api.telegram.org/bot{bot_token}/banChatMember"

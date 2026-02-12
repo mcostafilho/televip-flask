@@ -2,6 +2,7 @@
 from markupsafe import escape
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, Response, session, current_app
 from flask_login import login_required, current_user
+import json
 from app import db, limiter
 from app.models import Group, PricingPlan, Subscription, Transaction
 from app.utils.admin_helpers import get_effective_creator, is_admin_viewing
@@ -297,7 +298,24 @@ def edit(id):
         group.description = request.form.get('description')
         group.invite_link = request.form.get('invite_link')
         group.is_active = 'is_active' in request.form
-        
+
+        # Atualizar lista de exceção (whitelist)
+        whitelist_ids = request.form.getlist('whitelist_ids[]')
+        whitelist_names = request.form.getlist('whitelist_names[]')
+        new_whitelist = []
+        for i, tid in enumerate(whitelist_ids):
+            tid = tid.strip()
+            if tid and tid.isdigit():
+                name = whitelist_names[i].strip() if i < len(whitelist_names) else ''
+                # Preserve original added_at if entry already existed
+                existing = next((e for e in group.get_whitelist() if e['telegram_id'] == tid), None)
+                new_whitelist.append({
+                    'telegram_id': tid,
+                    'name': name[:50],
+                    'added_at': existing['added_at'] if existing else datetime.utcnow().strftime('%Y-%m-%d %H:%M')
+                })
+        group.whitelist_json = json.dumps(new_whitelist)
+
         # Safe plan editing: deactivate plans that have ANY subscriptions referencing them
         existing_plans = PricingPlan.query.filter_by(group_id=group.id).all()
         for plan in existing_plans:

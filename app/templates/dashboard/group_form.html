@@ -194,11 +194,96 @@
                                 </button>
                             </div>
 
-                            <!-- Status (apenas para edição) -->
+                            <!-- Lista de Exceção (apenas para edição) -->
                             {% if group %}
                             <div class="form-section">
+                                <h5 class="section-title">
+                                    <i class="bi bi-shield-check"></i> Lista de Excecao
+                                </h5>
+                                <p class="text-muted">
+                                    Pessoas nesta lista podem ficar no grupo <strong>sem pagar assinatura</strong>.
+                                    Ideal para moderadores, familiares ou parceiros.
+                                </p>
+
+                                <div class="alert alert-info small">
+                                    <i class="bi bi-info-circle"></i>
+                                    <strong>Como obter o Telegram ID de alguem:</strong>
+                                    <ol class="mb-0 mt-1">
+                                        <li>A pessoa deve abrir o bot <a href="https://t.me/userinfobot" target="_blank">@userinfobot</a> no Telegram</li>
+                                        <li>Enviar qualquer mensagem para ele</li>
+                                        <li>O bot responde com o <strong>Id</strong> numerico (ex: <code>123456789</code>)</li>
+                                        <li>Cole esse numero no campo abaixo</li>
+                                    </ol>
+                                </div>
+
+                                <!-- Lista atual -->
+                                <div id="whitelistContainer">
+                                    {% set whitelist = group.get_whitelist() %}
+                                    {% if whitelist %}
+                                    <div class="table-responsive mb-3">
+                                        <table class="table table-sm table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Telegram ID</th>
+                                                    <th>Nome/Nota</th>
+                                                    <th>Adicionado em</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for entry in whitelist %}
+                                                <tr id="wl-row-{{ entry.telegram_id }}">
+                                                    <td><code>{{ entry.telegram_id }}</code></td>
+                                                    <td>{{ entry.name or '-' }}</td>
+                                                    <td>{{ entry.added_at or '-' }}</td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                                onclick="removeWhitelistEntry('{{ entry.telegram_id }}')">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% else %}
+                                    <p class="text-muted small" id="whitelistEmpty">Nenhuma pessoa na lista de excecao.</p>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Adicionar novo -->
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Telegram ID</label>
+                                        <input type="text" class="form-control" id="newWhitelistId"
+                                               placeholder="Ex: 123456789" pattern="[0-9]+">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Nome/Nota (opcional)</label>
+                                        <input type="text" class="form-control" id="newWhitelistName"
+                                               placeholder="Ex: Joao (moderador)" maxlength="50">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button type="button" class="btn btn-outline-primary w-100" onclick="addWhitelistEntry()">
+                                            <i class="bi bi-plus-circle"></i> Adicionar
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Hidden inputs para enviar no form -->
+                                <div id="whitelistHiddenInputs">
+                                    {% for entry in whitelist %}
+                                    <input type="hidden" name="whitelist_ids[]" value="{{ entry.telegram_id }}" id="wl-hidden-{{ entry.telegram_id }}">
+                                    <input type="hidden" name="whitelist_names[]" value="{{ entry.name }}" id="wl-name-hidden-{{ entry.telegram_id }}">
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Status -->
+                            <div class="form-section">
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="is_active" 
+                                    <input class="form-check-input" type="checkbox" name="is_active"
                                            id="isActive" {{ 'checked' if group.is_active else '' }}>
                                     <label class="form-check-label" for="isActive">
                                         Grupo Ativo (aceita novas assinaturas)
@@ -430,6 +515,101 @@ function toggleLifetime(checkbox) {
         durationInput.disabled = false;
         durationInput.required = true;
         hiddenInput.value = '0';
+    }
+}
+
+// === Whitelist Management ===
+function addWhitelistEntry() {
+    const idInput = document.getElementById('newWhitelistId');
+    const nameInput = document.getElementById('newWhitelistName');
+    const telegramId = idInput.value.trim();
+    const name = nameInput.value.trim();
+
+    if (!telegramId || !/^\d+$/.test(telegramId)) {
+        alert('Telegram ID deve conter apenas numeros.');
+        return;
+    }
+
+    // Check duplicate
+    if (document.getElementById('wl-hidden-' + telegramId)) {
+        alert('Este Telegram ID ja esta na lista.');
+        return;
+    }
+
+    // Add hidden inputs
+    const hiddenContainer = document.getElementById('whitelistHiddenInputs');
+    const hiddenId = document.createElement('input');
+    hiddenId.type = 'hidden';
+    hiddenId.name = 'whitelist_ids[]';
+    hiddenId.value = telegramId;
+    hiddenId.id = 'wl-hidden-' + telegramId;
+    hiddenContainer.appendChild(hiddenId);
+
+    const hiddenName = document.createElement('input');
+    hiddenName.type = 'hidden';
+    hiddenName.name = 'whitelist_names[]';
+    hiddenName.value = name;
+    hiddenName.id = 'wl-name-hidden-' + telegramId;
+    hiddenContainer.appendChild(hiddenName);
+
+    // Add visible row
+    const container = document.getElementById('whitelistContainer');
+    let table = container.querySelector('table');
+    if (!table) {
+        // Remove empty message and create table
+        const emptyMsg = document.getElementById('whitelistEmpty');
+        if (emptyMsg) emptyMsg.remove();
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'table-responsive mb-3';
+        wrapper.innerHTML = `
+            <table class="table table-sm table-hover">
+                <thead><tr><th>Telegram ID</th><th>Nome/Nota</th><th>Adicionado em</th><th></th></tr></thead>
+                <tbody></tbody>
+            </table>`;
+        container.prepend(wrapper);
+        table = wrapper.querySelector('table');
+    }
+
+    const tbody = table.querySelector('tbody');
+    const now = new Date().toISOString().slice(0, 16).replace('T', ' ');
+    const row = document.createElement('tr');
+    row.id = 'wl-row-' + telegramId;
+    row.innerHTML = `
+        <td><code>${telegramId}</code></td>
+        <td>${name || '-'}</td>
+        <td>${now}</td>
+        <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeWhitelistEntry('${telegramId}')"><i class="bi bi-trash"></i></button></td>
+    `;
+    tbody.appendChild(row);
+
+    // Clear inputs
+    idInput.value = '';
+    nameInput.value = '';
+}
+
+function removeWhitelistEntry(telegramId) {
+    // Remove hidden inputs
+    const hiddenId = document.getElementById('wl-hidden-' + telegramId);
+    const hiddenName = document.getElementById('wl-name-hidden-' + telegramId);
+    if (hiddenId) hiddenId.remove();
+    if (hiddenName) hiddenName.remove();
+
+    // Remove visible row
+    const row = document.getElementById('wl-row-' + telegramId);
+    if (row) row.remove();
+
+    // Check if table is empty
+    const container = document.getElementById('whitelistContainer');
+    const tbody = container.querySelector('tbody');
+    if (tbody && tbody.children.length === 0) {
+        const wrapper = container.querySelector('.table-responsive');
+        if (wrapper) wrapper.remove();
+        const emptyMsg = document.createElement('p');
+        emptyMsg.className = 'text-muted small';
+        emptyMsg.id = 'whitelistEmpty';
+        emptyMsg.textContent = 'Nenhuma pessoa na lista de excecao.';
+        container.prepend(emptyMsg);
     }
 }
 
