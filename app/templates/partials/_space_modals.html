@@ -492,12 +492,17 @@
         </div>
 
         <p class="sm-text" style="margin-bottom:20px;font-size:13px;">
-            Enquanto isso, crie sua conta grátis e explore você mesmo!
+            Enquanto isso, confira nossa <strong>Central de Ajuda</strong> com o passo a passo completo, ou crie sua conta e explore você mesmo!
         </p>
 
-        <a href="{{ url_for('auth.register') }}" class="sm-btn">
-            <i class="bi bi-rocket-takeoff"></i> Criar Conta Grátis
-        </a>
+        <div style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
+            <a href="{{ url_for('auth.wiki') }}" class="sm-btn" style="background: linear-gradient(135deg, #ec4899, #7c5cfc);">
+                <i class="bi bi-question-circle"></i> Ver Central de Ajuda
+            </a>
+            <a href="{{ url_for('auth.register') }}" class="sm-btn">
+                <i class="bi bi-rocket-takeoff"></i> Criar Conta Grátis
+            </a>
+        </div>
     </div>
 </div>
 
