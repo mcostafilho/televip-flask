@@ -68,8 +68,15 @@ def migrate(sqlite_path, pg_url):
             col_names = list(columns)
 
             # Filtrar colunas que existem no PostgreSQL
-            pg_columns = [c['name'] for c in pg_inspector.get_columns(table_name)]
+            pg_col_info = pg_inspector.get_columns(table_name)
+            pg_columns = [c['name'] for c in pg_col_info]
             valid_cols = [c for c in col_names if c in pg_columns]
+
+            # Detectar colunas boolean no PostgreSQL (SQLite guarda como 0/1)
+            bool_cols = set()
+            for c in pg_col_info:
+                if str(c['type']).upper() == 'BOOLEAN' and c['name'] in valid_cols:
+                    bool_cols.add(c['name'])
 
             if not valid_cols:
                 print(f"  {table_name}: SKIP (sem colunas em comum)")
@@ -88,6 +95,10 @@ def migrate(sqlite_path, pg_url):
                 row_dict = dict(zip(col_names, row))
                 # Somente colunas válidas
                 filtered = {c: row_dict[c] for c in valid_cols}
+                # Converter 0/1 → bool para colunas boolean do PostgreSQL
+                for bc in bool_cols:
+                    if filtered[bc] is not None:
+                        filtered[bc] = bool(filtered[bc])
                 batch.append(filtered)
 
                 if len(batch) >= 500:
