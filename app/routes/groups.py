@@ -103,91 +103,63 @@ def create():
             return render_template('dashboard/group_form.html',
                                  group=None, show_success_modal=False)
 
-        # Verificar se deve validar no Telegram
-        skip_validation = request.form.get('skip_validation') == 'on'
-        
-        # Se marcar para pular validação, criar direto
-        if skip_validation:
-            pass
-        else:
-            # Tentar validar
-            bot_token = os.getenv('BOT_TOKEN') or os.getenv('TELEGRAM_BOT_TOKEN')
-            
-            if bot_token and telegram_id:
-                try:
-                    # URL da API
-                    url = f"https://api.telegram.org/bot{bot_token}/getChat"
-                    
-                    # Fazer requisição
-                    response = requests.get(
-                        url,
-                        params={"chat_id": telegram_id},
-                        timeout=10
-                    )
-                    
-                    if response.status_code != 200:
-                        flash('❌ Erro ao conectar com o Telegram. Use "Pular validação" para continuar.', 'error')
-                        return render_template('dashboard/group_form.html', 
-                                             group=None,
-                                             show_success_modal=False)
-                    
-                    # Processar resposta
-                    try:
-                        data = response.json()
-                    except Exception as json_error:
-                        flash('❌ Resposta inválida do Telegram. Use "Pular validação".', 'error')
-                        return render_template('dashboard/group_form.html', 
-                                             group=None,
-                                             show_success_modal=False)
-                    
-                    if not data.get('ok'):
-                        error_msg = str(escape(data.get('description', 'Erro desconhecido')))
-                        flash(f'Telegram: {error_msg}', 'error')
-                        return render_template('dashboard/group_form.html', 
-                                             group=None,
-                                             show_success_modal=False)
-                    
-                    # Grupo encontrado!
-                    chat = data.get('result', {})
-                    
-                    # Verificar se o bot é admin
-                    bot_id = bot_token.split(':')[0]
-                    bot_member = requests.get(
-                        f"https://api.telegram.org/bot{bot_token}/getChatMember",
-                        params={
-                            "chat_id": telegram_id,
-                            "user_id": bot_id
-                        },
-                        timeout=10
-                    )
-                    
-                    if bot_member.status_code == 200:
-                        member_data = bot_member.json()
-                        if member_data.get('ok'):
-                            status = member_data.get('result', {}).get('status')
-                            if status not in ['administrator', 'creator']:
-                                flash('⚠️ O bot precisa ser administrador do grupo!', 'warning')
-                                return render_template('dashboard/group_form.html', 
-                                                     group=None,
-                                                     show_success_modal=False)
-                    
-                except requests.exceptions.RequestException as req_error:
-                    logger.error(f"Telegram connection error: {req_error}")
-                    flash('Erro de conexão com o Telegram. Use "Pular validação".', 'error')
-                    return render_template('dashboard/group_form.html', 
-                                         group=None,
-                                         show_success_modal=False)
-                except Exception as e:
-                    logger.error(f"Erro na validação do grupo Telegram: {e}")
-                    flash('Erro ao validar grupo. Use "Pular validação".', 'error')
+        # Validar grupo no Telegram
+        bot_token = os.getenv('BOT_TOKEN') or os.getenv('TELEGRAM_BOT_TOKEN')
+
+        if bot_token and telegram_id:
+            try:
+                url = f"https://api.telegram.org/bot{bot_token}/getChat"
+                response = requests.get(url, params={"chat_id": telegram_id}, timeout=10)
+
+                if response.status_code != 200:
+                    flash('Erro ao conectar com o Telegram. Verifique o ID e tente novamente.', 'error')
                     return render_template('dashboard/group_form.html',
-                                         group=None,
-                                         show_success_modal=False)
-            else:
-                if not bot_token:
-                    flash('Bot nao configurado. Use "Pular validacao".', 'warning')
-                else:
-                    flash('⚠️ ID do Telegram não fornecido.', 'warning')
+                                         group=None, show_success_modal=False)
+
+                try:
+                    data = response.json()
+                except Exception:
+                    flash('Resposta invalida do Telegram. Tente novamente.', 'error')
+                    return render_template('dashboard/group_form.html',
+                                         group=None, show_success_modal=False)
+
+                if not data.get('ok'):
+                    error_msg = str(escape(data.get('description', 'Erro desconhecido')))
+                    flash(f'Telegram: {error_msg}', 'error')
+                    return render_template('dashboard/group_form.html',
+                                         group=None, show_success_modal=False)
+
+                # Verificar se o bot é admin
+                bot_id = bot_token.split(':')[0]
+                bot_member = requests.get(
+                    f"https://api.telegram.org/bot{bot_token}/getChatMember",
+                    params={"chat_id": telegram_id, "user_id": bot_id},
+                    timeout=10
+                )
+
+                if bot_member.status_code == 200:
+                    member_data = bot_member.json()
+                    if member_data.get('ok'):
+                        status = member_data.get('result', {}).get('status')
+                        if status not in ['administrator', 'creator']:
+                            flash('O bot precisa ser administrador do grupo! Adicione o bot como admin e tente novamente.', 'warning')
+                            return render_template('dashboard/group_form.html',
+                                                 group=None, show_success_modal=False)
+
+            except requests.exceptions.RequestException as req_error:
+                logger.error(f"Telegram connection error: {req_error}")
+                flash('Erro de conexao com o Telegram. Tente novamente.', 'error')
+                return render_template('dashboard/group_form.html',
+                                     group=None, show_success_modal=False)
+            except Exception as e:
+                logger.error(f"Erro na validacao do grupo Telegram: {e}")
+                flash('Erro ao validar grupo. Tente novamente.', 'error')
+                return render_template('dashboard/group_form.html',
+                                     group=None, show_success_modal=False)
+        elif not telegram_id:
+            flash('ID do Telegram e obrigatorio.', 'error')
+            return render_template('dashboard/group_form.html',
+                                 group=None, show_success_modal=False)
         
         # Criar grupo + planos de forma atômica
         try:
