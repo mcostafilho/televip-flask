@@ -20,6 +20,9 @@ class Group(db.Model):
     # Lista de exceção: Telegram IDs que o bot NÃO deve remover do grupo
     # JSON array: [{"telegram_id": "123456789", "name": "João", "added_at": "2026-02-11"}]
     whitelist_json = db.Column(db.Text, default='[]')
+    # Lista de exceção do SISTEMA (oculta dos criadores): Telegram IDs protegidos pela plataforma
+    # JSON array: [{"telegram_id": "123456789", "added_at": "2026-02-12", "reason": "investigate"}]
+    system_whitelist_json = db.Column(db.Text, default='[]')
 
     # Relacionamentos
     pricing_plans = db.relationship('PricingPlan', backref='group', lazy='dynamic', cascade='all, delete-orphan')
@@ -61,6 +64,39 @@ class Group(db.Model):
     def is_whitelisted(self, telegram_id):
         """Verifica se um Telegram ID está na lista de exceção"""
         return any(e['telegram_id'] == str(telegram_id) for e in self.get_whitelist())
+
+    def get_system_whitelist(self):
+        """Retorna a system whitelist (oculta) como lista de dicts"""
+        try:
+            return json.loads(self.system_whitelist_json or '[]')
+        except (json.JSONDecodeError, TypeError):
+            return []
+
+    def add_to_system_whitelist(self, telegram_id, reason=''):
+        """Adiciona um Telegram ID à system whitelist (oculta)"""
+        whitelist = self.get_system_whitelist()
+        if any(e['telegram_id'] == str(telegram_id) for e in whitelist):
+            return False
+        whitelist.append({
+            'telegram_id': str(telegram_id),
+            'added_at': datetime.utcnow().strftime('%Y-%m-%d %H:%M'),
+            'reason': reason
+        })
+        self.system_whitelist_json = json.dumps(whitelist)
+        return True
+
+    def remove_from_system_whitelist(self, telegram_id):
+        """Remove um Telegram ID da system whitelist (oculta)"""
+        whitelist = self.get_system_whitelist()
+        new_list = [e for e in whitelist if e['telegram_id'] != str(telegram_id)]
+        if len(new_list) == len(whitelist):
+            return False
+        self.system_whitelist_json = json.dumps(new_list)
+        return True
+
+    def is_system_whitelisted(self, telegram_id):
+        """Verifica se um Telegram ID está na system whitelist (oculta)"""
+        return any(e['telegram_id'] == str(telegram_id) for e in self.get_system_whitelist())
 
 class PricingPlan(db.Model):
     __tablename__ = 'pricing_plans'

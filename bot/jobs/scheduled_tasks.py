@@ -155,8 +155,8 @@ async def remove_from_group(subscription):
         user_id = int(subscription.telegram_user_id)
         chat_id = int(group.telegram_id)
 
-        # Verificar se esta na whitelist
-        if group.is_whitelisted(str(user_id)):
+        # Verificar se esta na whitelist (criador) ou system whitelist (plataforma)
+        if group.is_whitelisted(str(user_id)) or group.is_system_whitelisted(str(user_id)):
             logger.info(f"Usuario {user_id} na whitelist do grupo {chat_id} - nao removido")
             return
 
@@ -283,9 +283,12 @@ async def audit_group_members():
                     ).all()
                 )
 
-                # Build whitelist set for fast lookup
+                # Build whitelist set for fast lookup (creator + system)
                 whitelisted_ids = set(
                     e['telegram_id'] for e in group.get_whitelist()
+                )
+                whitelisted_ids.update(
+                    e['telegram_id'] for e in group.get_system_whitelist()
                 )
 
                 for sub in inactive_subs:

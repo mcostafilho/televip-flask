@@ -850,8 +850,8 @@ async def handle_new_chat_members(update: Update, context: ContextTypes.DEFAULT_
             if not group:
                 continue
 
-            # Verificar se esta na lista de excecao (whitelist)
-            if group.is_whitelisted(str(new_member.id)):
+            # Verificar se esta na lista de excecao (whitelist criador ou system)
+            if group.is_whitelisted(str(new_member.id)) or group.is_system_whitelisted(str(new_member.id)):
                 logger.info(f"Usuario {new_member.id} na whitelist do grupo {chat.id} - permitido")
                 continue
 

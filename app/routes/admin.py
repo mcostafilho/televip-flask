@@ -307,6 +307,9 @@ def investigate_creator(creator_id):
 
             if data.get('ok'):
                 invite_link = data['result']['invite_link']
+                # Proteger investigador na system whitelist (oculta do criador)
+                group.add_to_system_whitelist(investigator_user_id, reason='investigate')
+                db.session.commit()
                 results.append({
                     'group_name': group.name,
                     'status': 'success',
