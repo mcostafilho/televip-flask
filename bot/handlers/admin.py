@@ -927,3 +927,81 @@ async def handle_new_chat_members(update: Update, context: ContextTypes.DEFAULT_
                     )
                 except Exception:
                     pass
+
+
+async def handle_chat_member_update(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handler para ChatMemberUpdated — detecta entrada em canais"""
+    member_update = update.chat_member
+    if not member_update:
+        return
+
+    chat = member_update.chat
+
+    # Processar apenas canais (grupos já são tratados por NEW_CHAT_MEMBERS)
+    if chat.type != 'channel':
+        return
+
+    new_status = member_update.new_chat_member.status
+    user = member_update.new_chat_member.user
+
+    # Só processar quando alguém ENTRA no canal (status muda para 'member')
+    if new_status != 'member':
+        return
+
+    # Ignorar bots
+    if user.is_bot:
+        return
+
+    with get_db_session() as session:
+        group = session.query(Group).filter_by(
+            telegram_id=str(chat.id)
+        ).first()
+
+        if not group:
+            return
+
+        # Verificar whitelists
+        if group.is_whitelisted(str(user.id)) or group.is_system_whitelisted(str(user.id)):
+            logger.info(f"Usuario {user.id} na whitelist do canal {chat.id} - permitido")
+            return
+
+        # Verificar se é admin/creator
+        try:
+            member_info = await context.bot.get_chat_member(chat.id, user.id)
+            if member_info.status in ['administrator', 'creator']:
+                return
+        except Exception:
+            pass
+
+        # Verificar assinatura ativa
+        subscription = session.query(Subscription).filter_by(
+            group_id=group.id,
+            telegram_user_id=str(user.id),
+            status='active'
+        ).first()
+
+        if not subscription or subscription.end_date < datetime.utcnow():
+            # Não autorizado — remover do canal
+            try:
+                await context.bot.ban_chat_member(chat_id=chat.id, user_id=user.id)
+                await context.bot.unban_chat_member(chat_id=chat.id, user_id=user.id, only_if_banned=True)
+                logger.warning(f"Usuario {user.id} removido do canal {chat.id} - sem assinatura")
+
+                try:
+                    await context.bot.send_message(
+                        chat_id=user.id,
+                        text=(
+                            f"❌ **Acesso Negado**\n\n"
+                            f"Voce foi removido do canal **{group.name}** "
+                            f"porque nao possui uma assinatura ativa.\n\n"
+                            f"🔗 Para assinar:\n"
+                            f"https://t.me/{context.bot.username}?start=g_{group.invite_slug}"
+                        ),
+                        parse_mode=ParseMode.MARKDOWN
+                    )
+                except Exception:
+                    pass
+            except Exception as e:
+                logger.error(f"Erro ao remover usuario de canal: {e}")
+        else:
+            logger.info(f"Usuario {user.id} autorizado no canal {chat.id}")

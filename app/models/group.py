@@ -23,6 +23,8 @@ class Group(db.Model):
     # Lista de exceção do SISTEMA (oculta dos criadores): Telegram IDs protegidos pela plataforma
     # JSON array: [{"telegram_id": "123456789", "added_at": "2026-02-12", "reason": "investigate"}]
     system_whitelist_json = db.Column(db.Text, default='[]')
+    # Tipo de chat: 'group' (grupo/supergrupo) ou 'channel' (canal)
+    chat_type = db.Column(db.String(20), default='group')
 
     # Relacionamentos
     pricing_plans = db.relationship('PricingPlan', backref='group', lazy='dynamic', cascade='all, delete-orphan')

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ 'Editar' if group else 'Criar' }} Grupo - TeleVIP{% endblock %}
+{% block title %}{{ 'Editar' if group else 'Criar' }} {{ 'Canal' if group and group.chat_type == 'channel' else 'Grupo' }} - TeleVIP{% endblock %}
 
 {% block extra_css %}
 <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
@@ -15,7 +15,7 @@
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
                     <li class="breadcrumb-item"><a href="{{ url_for('groups.list') }}">Grupos</a></li>
-                    <li class="breadcrumb-item active">{{ 'Editar' if group else 'Novo' }} Grupo</li>
+                    <li class="breadcrumb-item active">{{ 'Editar' if group else 'Novo' }} {{ 'Canal' if group and group.chat_type == 'channel' else 'Grupo' }}</li>
                 </ol>
             </nav>
         </div>
@@ -26,13 +26,22 @@
             <div class="col-lg-8">
                 <!-- Alerta para novos usuários -->
                 {% if not group %}
-                <div class="info-alert">
+                <div class="info-alert chat-type-group">
                     <h5><i class="bi bi-info-circle"></i> Primeiro Grupo?</h5>
                     <p>Para criar seu primeiro grupo, você precisará:</p>
                     <ol>
-                        <li>Ter um grupo/canal no Telegram já criado</li>
+                        <li>Ter um grupo no Telegram já criado</li>
                         <li>Adicionar nosso bot (@televipbra_bot) como administrador</li>
                         <li>Obter o ID do grupo usando o comando /setup no grupo</li>
+                    </ol>
+                </div>
+                <div class="info-alert chat-type-channel" style="display:none;">
+                    <h5><i class="bi bi-info-circle"></i> Primeiro Canal?</h5>
+                    <p>Para vincular seu canal, você precisará:</p>
+                    <ol>
+                        <li>Ter um canal no Telegram já criado</li>
+                        <li>Adicionar nosso bot (@televipbra_bot) como administrador do canal</li>
+                        <li>Obter o ID do canal usando o @userinfobot (adicione-o ao canal, ele mostrará o ID)</li>
                     </ol>
                 </div>
                 {% endif %}
@@ -42,9 +51,9 @@
                     <div class="form-header">
                         <h4>
                             {% if group %}
-                                <i class="bi bi-pencil-square"></i> Editar Grupo
+                                <i class="bi bi-pencil-square"></i> Editar {{ 'Canal' if group.chat_type == 'channel' else 'Grupo' }}
                             {% else %}
-                                <i class="bi bi-plus-circle"></i> Criar Novo Grupo
+                                <i class="bi bi-plus-circle"></i> Criar Novo <span class="chat-type-group">Grupo</span><span class="chat-type-channel" style="display:none;">Canal</span>
                             {% endif %}
                         </h4>
                     </div>
@@ -55,9 +64,32 @@
                             <!-- Informações Básicas -->
                             <div class="form-section">
                                 <h5 class="section-title">Informações Básicas</h5>
-                                
+
                                 <div class="mb-3">
-                                    <label class="form-label">Nome do Grupo <span class="text-danger">*</span></label>
+                                    <label class="form-label">Tipo <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="chat_type" id="chatTypeSelect"
+                                            onchange="toggleChatType()" {% if group %}disabled{% endif %}>
+                                        <option value="group" {{ 'selected' if not group or group.chat_type == 'group' }}>
+                                            Grupo
+                                        </option>
+                                        <option value="channel" {{ 'selected' if group and group.chat_type == 'channel' }}>
+                                            Canal
+                                        </option>
+                                    </select>
+                                    {% if group %}
+                                    <input type="hidden" name="chat_type" value="{{ group.chat_type or 'group' }}">
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        {% if group %}
+                                            Nome do {{ 'Canal' if group.chat_type == 'channel' else 'Grupo' }}
+                                        {% else %}
+                                            Nome do <span class="chat-type-group">Grupo</span><span class="chat-type-channel" style="display:none;">Canal</span>
+                                        {% endif %}
+                                        <span class="text-danger">*</span>
+                                    </label>
                                     <input type="text" class="form-control" name="name" 
                                            value="{{ group.name if group else '' }}" required
                                            placeholder="Ex: VIP Trading Crypto">
@@ -76,13 +108,23 @@
                                 
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label class="form-label">ID do Grupo <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="telegram_id" 
-                                               value="{{ group.telegram_id if group else '' }}" 
+                                        <label class="form-label">
+                                            {% if group %}
+                                                ID do {{ 'Canal' if group.chat_type == 'channel' else 'Grupo' }}
+                                            {% else %}
+                                                ID do <span class="chat-type-group">Grupo</span><span class="chat-type-channel" style="display:none;">Canal</span>
+                                            {% endif %}
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control" name="telegram_id"
+                                               value="{{ group.telegram_id if group else '' }}"
                                                {% if group %}readonly{% endif %} required
                                                placeholder="Ex: -1001234567890">
-                                        <small class="form-text text-muted">
+                                        <small class="form-text text-muted" id="telegramIdHelpGroup">
                                             Use /setup no seu grupo para obter o ID
+                                        </small>
+                                        <small class="form-text text-muted" id="telegramIdHelpChannel" style="display:none;">
+                                            Use @userinfobot no canal para obter o ID
                                         </small>
                                     </div>
 
@@ -301,22 +343,22 @@
 
                 <!-- Guia Passo a Passo (apenas para novos grupos) -->
                 {% if not group %}
-                <div class="guide-card mt-4">
+                <div class="guide-card mt-4 chat-type-group">
                     <div class="guide-header">
                         <h5 class="mb-0"><i class="bi bi-book"></i> Guia Passo a Passo</h5>
                     </div>
                     <div class="guide-body">
                         <div class="guide-step">
-                            <h6>1️⃣ Preparar seu Grupo no Telegram</h6>
+                            <h6>1. Preparar seu Grupo no Telegram</h6>
                             <ul>
-                                <li>Crie um grupo ou canal no Telegram (se ainda não tiver)</li>
+                                <li>Crie um grupo no Telegram (se ainda não tiver)</li>
                                 <li>Configure o grupo como privado</li>
                                 <li>Prepare uma mensagem de boas-vindas</li>
                             </ul>
                         </div>
 
                         <div class="guide-step">
-                            <h6>2️⃣ Adicionar o Bot</h6>
+                            <h6>2. Adicionar o Bot</h6>
                             <ul>
                                 <li>Procure por @televipbra_bot no Telegram</li>
                                 <li>Adicione o bot como administrador do grupo</li>
@@ -325,7 +367,7 @@
                         </div>
 
                         <div class="guide-step">
-                            <h6>3️⃣ Obter o ID do Grupo</h6>
+                            <h6>3. Obter o ID do Grupo</h6>
                             <ul>
                                 <li>No grupo, digite o comando: <code>/setup</code></li>
                                 <li>O bot responderá com o ID do grupo</li>
@@ -334,7 +376,48 @@
                         </div>
 
                         <div class="guide-step mb-0">
-                            <h6>4️⃣ Configurar Planos e Preços</h6>
+                            <h6>4. Configurar Planos e Preços</h6>
+                            <ul class="mb-0">
+                                <li>Defina diferentes planos (mensal, trimestral, etc.)</li>
+                                <li>Configure preços competitivos</li>
+                                <li>Você pode adicionar ou modificar planos depois</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="guide-card mt-4 chat-type-channel" style="display:none;">
+                    <div class="guide-header">
+                        <h5 class="mb-0"><i class="bi bi-book"></i> Guia Passo a Passo</h5>
+                    </div>
+                    <div class="guide-body">
+                        <div class="guide-step">
+                            <h6>1. Criar Canal no Telegram</h6>
+                            <ul>
+                                <li>Crie um canal no Telegram (privado)</li>
+                                <li>Configure o canal com nome e descrição</li>
+                            </ul>
+                        </div>
+
+                        <div class="guide-step">
+                            <h6>2. Adicionar o Bot como Administrador</h6>
+                            <ul>
+                                <li>Procure por @televipbra_bot no Telegram</li>
+                                <li>Adicione o bot como administrador do canal</li>
+                                <li>Dê permissões para gerenciar usuários</li>
+                            </ul>
+                        </div>
+
+                        <div class="guide-step">
+                            <h6>3. Obter o ID do Canal</h6>
+                            <ul>
+                                <li>Adicione @userinfobot ao canal</li>
+                                <li>Ele mostrará o ID do canal (ex: <code>-1001234567890</code>)</li>
+                                <li>Copie e cole o ID no formulário acima</li>
+                            </ul>
+                        </div>
+
+                        <div class="guide-step mb-0">
+                            <h6>4. Configurar Planos e Preços</h6>
                             <ul class="mb-0">
                                 <li>Defina diferentes planos (mensal, trimestral, etc.)</li>
                                 <li>Configure preços competitivos</li>
@@ -428,6 +511,20 @@ function copyLinkModal() {
             btn.classList.add('btn-primary');
         }, 2000);
     });
+}
+
+// Toggle tipo de chat (Grupo/Canal)
+function toggleChatType() {
+    const type = document.getElementById('chatTypeSelect').value;
+    const isChannel = type === 'channel';
+
+    document.querySelectorAll('.chat-type-group').forEach(el => el.style.display = isChannel ? 'none' : '');
+    document.querySelectorAll('.chat-type-channel').forEach(el => el.style.display = isChannel ? '' : 'none');
+
+    const helpGroup = document.getElementById('telegramIdHelpGroup');
+    const helpChannel = document.getElementById('telegramIdHelpChannel');
+    if (helpGroup) helpGroup.style.display = isChannel ? 'none' : '';
+    if (helpChannel) helpChannel.style.display = isChannel ? '' : 'none';
 }
 
 // Adicionar novo plano

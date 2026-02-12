@@ -100,7 +100,10 @@ def create():
         description = request.form.get('description', '').strip()
         telegram_id = request.form.get('telegram_id', '').replace(' ', '').replace('\t', '').strip()
         invite_link = request.form.get('invite_link', '').strip()
-        
+        chat_type = request.form.get('chat_type', 'group')
+        if chat_type not in ('group', 'channel'):
+            chat_type = 'group'
+
         # Validar formato do telegram_id (deve ser numerico, opcionalmente com -)
         if telegram_id and not telegram_id.lstrip('-').isdigit():
             flash('ID do Telegram deve ser numérico.', 'error')
@@ -188,6 +191,7 @@ def create():
                 invite_link=invite_link or None,
                 creator_id=current_user.id,
                 is_active=True,
+                chat_type=chat_type,
                 whitelist_json=json.dumps(whitelist_data) if whitelist_data else '[]'
             )
             db.session.add(group)

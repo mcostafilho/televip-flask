@@ -25,7 +25,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler,
-    MessageHandler, filters, ContextTypes, JobQueue
+    MessageHandler, ChatMemberHandler, filters, ContextTypes, JobQueue
 )
 
 # Importar handlers
@@ -41,7 +41,7 @@ from bot.handlers.subscription import (
 )
 from bot.handlers.admin import (
     setup_command, stats_command, broadcast_command,
-    handle_join_request, handle_new_chat_members,
+    handle_join_request, handle_new_chat_members, handle_chat_member_update,
     handle_broadcast_to_group, handle_broadcast_confirm, handle_cancel_broadcast
 )
 from bot.handlers.payment_verification import check_payment_status
@@ -192,6 +192,12 @@ def setup_handlers(application: Application) -> None:
     application.add_handler(MessageHandler(
         filters.ChatType.GROUPS & filters.StatusUpdate.CHAT_CREATED,
         handle_join_request
+    ))
+
+    # Handler para canais (ChatMemberUpdated)
+    application.add_handler(ChatMemberHandler(
+        handle_chat_member_update,
+        ChatMemberHandler.CHAT_MEMBER
     ))
 
     # Handler genérico para callbacks não reconhecidos (deve ser o último)
