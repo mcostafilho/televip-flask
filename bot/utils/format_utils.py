@@ -2,7 +2,20 @@
 Utilitários de formatação para o bot
 """
 from typing import Union
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+# Fuso horário de Brasília (UTC-3)
+BRT = timezone(timedelta(hours=-3))
+
+
+def to_brt(dt: datetime) -> datetime:
+    """Converter datetime UTC para horário de Brasília (UTC-3)"""
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        # Assume UTC se naive
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(BRT)
 
 
 def format_currency(value: Union[float, int]) -> str:
@@ -32,18 +45,20 @@ def format_currency(value: Union[float, int]) -> str:
 
 def format_date(date: datetime, include_time: bool = False) -> str:
     """
-    Formatar data para padrão brasileiro
-    
+    Formatar data para padrão brasileiro em horário de Brasília (BRT).
+
     Args:
-        date: Data a ser formatada
+        date: Data a ser formatada (assume UTC se naive)
         include_time: Se deve incluir horário
-        
+
     Returns:
         String formatada (ex: 17/06/2025 ou 17/06/2025 14:30)
     """
     if not date:
         return "N/A"
-    
+
+    date = to_brt(date)
+
     if include_time:
         return date.strftime("%d/%m/%Y %H:%M")
     else:

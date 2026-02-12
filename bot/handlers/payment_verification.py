@@ -10,6 +10,7 @@ from telegram.constants import ParseMode
 
 from bot.utils.database import get_db_session
 from bot.utils.stripe_integration import verify_payment, get_stripe_session_details
+from bot.utils.format_utils import format_date
 from app.models import Transaction, Subscription, Group, Creator
 
 logger = logging.getLogger(__name__)
@@ -213,7 +214,7 @@ async def handle_payment_confirmed(query, context, transaction, db_session):
 2. Vá para seus chats
 3. O grupo **{group.name}** já está lá!
 
-📅 Sua assinatura está ativa até: {subscription.end_date.strftime('%d/%m/%Y')}
+📅 Sua assinatura está ativa até: {format_date(subscription.end_date)}
 
 💡 **Dica:** Fixe o grupo para não perder!
 """
@@ -236,7 +237,7 @@ Bem-vindo ao grupo **{group.name}**!
 2. Copie o link acima (toque nele)
 3. Cole no Telegram
 
-📅 Assinatura ativa até: {subscription.end_date.strftime('%d/%m/%Y')}
+📅 Assinatura ativa até: {format_date(subscription.end_date)}
 
 ⚠️ **IMPORTANTE:** 
 - Este link é pessoal e pode ser usado apenas 1 vez
@@ -263,7 +264,7 @@ Sua assinatura para **{group.name}** está ativa!
 2. Informe o ID da sua assinatura: #{subscription.id}
 3. Ou aguarde o administrador enviar o link
 
-📅 Assinatura válida até: {subscription.end_date.strftime('%d/%m/%Y')}
+📅 Assinatura válida até: {format_date(subscription.end_date)}
 
 💬 Suporte: @suporte_televip
 """

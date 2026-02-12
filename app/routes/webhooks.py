@@ -6,8 +6,19 @@ import stripe
 import os
 import logging
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app import db
+
+# Fuso horário de Brasília (UTC-3)
+BRT = timezone(timedelta(hours=-3))
+
+def _fmt_date_brt(dt):
+    """Formatar datetime UTC para dd/mm/yyyy em BRT"""
+    if dt is None:
+        return 'N/A'
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(BRT).strftime('%d/%m/%Y')
 from app.models import Transaction, Subscription, Creator, Group, PricingPlan
 
 bp = Blueprint('webhooks', __name__, url_prefix='/webhooks')
@@ -304,7 +315,7 @@ def notify_bot_payment_complete(subscription, transaction):
 
 Sua assinatura do grupo **{subscription.group.name}** foi ativada com sucesso!
 
-📅 Válida até: {subscription.end_date.strftime('%d/%m/%Y')}
+📅 Válida até: {_fmt_date_brt(subscription.end_date)}
 💰 Valor pago: R$ {transaction.amount:.2f}
 
 Use o link abaixo para acessar o grupo:
@@ -484,7 +495,7 @@ def handle_invoice_paid(invoice):
                 subscription.telegram_user_id,
                 f"🔄 **Assinatura Renovada!**\n\n"
                 f"Sua assinatura do grupo **{group.name}** foi renovada com sucesso.\n\n"
-                f"📅 Nova validade: {subscription.end_date.strftime('%d/%m/%Y')}\n"
+                f"📅 Nova validade: {_fmt_date_brt(subscription.end_date)}\n"
                 f"💰 Valor: R$ {amount_paid:.2f}"
             )
         else:

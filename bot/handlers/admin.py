@@ -9,7 +9,7 @@ from telegram.constants import ParseMode
 from sqlalchemy import func
 
 from bot.utils.database import get_db_session
-from bot.utils.format_utils import format_remaining_text
+from bot.utils.format_utils import format_remaining_text, format_date
 from app.models import Group, Creator, Subscription, Transaction, PricingPlan
 
 logger = logging.getLogger(__name__)
@@ -346,7 +346,7 @@ async def show_group_stats(update: Update, context: ContextTypes.DEFAULT_TYPE, g
 🔗 **Link do Grupo:**
 `https://t.me/{context.bot.username}?start=g_{group.invite_slug}`
 
-📅 Atualizado: {datetime.now().strftime('%d/%m/%Y %H:%M')}
+📅 Atualizado: {format_date(datetime.utcnow(), include_time=True)}
 """
         
         keyboard = [
@@ -418,7 +418,7 @@ Para começar:
 📊 **Dashboard do Criador**
 
 👤 **Perfil:** @{creator.username or creator.name}
-📅 **Membro desde:** {creator.created_at.strftime('%d/%m/%Y')}
+📅 **Membro desde:** {format_date(creator.created_at)}
 
 **💼 Seus Grupos ({len(groups)}):**
 
@@ -804,7 +804,7 @@ Se você já pagou, aguarde a confirmação ou entre em contato com o suporte.
 ✅ Sua assinatura está ativa
 📅 Plano: {subscription.plan.name}
 ⏳ Tempo restante: {remaining}
-📆 Expira em: {subscription.end_date.strftime('%d/%m/%Y')}
+📆 Expira em: {format_date(subscription.end_date)}
 
 📌 **Regras do Grupo:**
 • Respeite todos os membros

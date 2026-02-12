@@ -11,7 +11,7 @@ from telegram.constants import ParseMode
 
 from bot.utils.database import get_db_session
 from bot.keyboards.menus import get_plans_menu
-from bot.utils.format_utils import format_remaining_text, get_expiry_emoji
+from bot.utils.format_utils import format_remaining_text, get_expiry_emoji, format_date
 from app.models import Group, Creator, PricingPlan, Subscription, Transaction
 from bot.handlers.payment_verification import check_payment_from_start
 
@@ -205,7 +205,7 @@ async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_
 **Plano atual:** {existing_sub.plan.name if existing_sub.plan else 'N/A'}
 **Tempo restante:** {remaining}
 
-Sua assinatura expira em: {existing_sub.end_date.strftime('%d/%m/%Y')}
+Sua assinatura expira em: {format_date(existing_sub.end_date)}
 """
             keyboard = [
                 [

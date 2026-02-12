@@ -12,7 +12,7 @@ import os
 
 from bot.utils.database import get_db_session
 from bot.keyboards.menus import get_renewal_keyboard
-from bot.utils.format_utils import format_remaining_text, get_expiry_emoji
+from bot.utils.format_utils import format_remaining_text, get_expiry_emoji, format_date
 from app.models import Subscription, Group, Creator, PricingPlan, Transaction
 
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
@@ -101,12 +101,12 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 if is_lifetime:
                     text += f"   ♾️ **Acesso Vitalicio**\n"
                 else:
-                    text += f"   📅 Expira: {sub.end_date.strftime('%d/%m/%Y')}\n"
+                    text += f"   📅 Expira: {format_date(sub.end_date)}\n"
                     text += f"   ⏳ Restam: {remaining}\n"
 
                     # Subscription status info
                     if getattr(sub, 'cancel_at_period_end', False):
-                        text += f"   🚫 Cancelamento agendado - acesso ate {sub.end_date.strftime('%d/%m/%Y')}\n"
+                        text += f"   🚫 Cancelamento agendado - acesso ate {format_date(sub.end_date)}\n"
                     elif getattr(sub, 'auto_renew', False) and sub.stripe_subscription_id and not getattr(sub, 'is_legacy', False):
                         text += f"   🔄 Renovacao automatica ativa\n"
                     elif getattr(sub, 'is_legacy', False) or not sub.stripe_subscription_id:
@@ -128,7 +128,7 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 days_ago = (datetime.utcnow() - sub.end_date).days
                 
                 text += f"• **{group.name}**\n"
-                text += f"  Expirou há {days_ago} dias ({sub.end_date.strftime('%d/%m/%Y')})\n"
+                text += f"  Expirou há {days_ago} dias ({format_date(sub.end_date)})\n"
                 text += f"  Durou {(sub.end_date - sub.start_date).days} dias\n\n"
             
             if len(expired) > 5:
@@ -227,7 +227,7 @@ async def planos_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     text += f"   Acesso vitalicio\n"
                 else:
                     remaining = format_remaining_text(sub.end_date)
-                    text += f"   Expira em: {remaining} ({sub.end_date.strftime('%d/%m/%Y')})\n"
+                    text += f"   Expira em: {remaining} ({format_date(sub.end_date)})\n"
 
                 text += "\n"
 
@@ -417,7 +417,7 @@ async def process_renewal(update: Update, context: ContextTypes.DEFAULT_TYPE, su
         else:
             text += f"\n**Valor:** R$ {final_price:.2f}\n"
         
-        text += f"\n📅 **Nova data de expiração:** {(sub.end_date + timedelta(days=plan.duration_days)).strftime('%d/%m/%Y')}"
+        text += f"\n📅 **Nova data de expiração:** {format_date(sub.end_date + timedelta(days=plan.duration_days))}"
         
         text += "\n\n✅ A renovação é processada imediatamente"
         text += "\n🔒 Pagamento seguro via Stripe"
@@ -467,12 +467,12 @@ async def cancel_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE
         # Differentiate Stripe-managed vs legacy
         if sub.stripe_subscription_id and not sub.is_legacy:
             cancel_text = (
-                f"Voce mantera acesso ao grupo ate **{sub.end_date.strftime('%d/%m/%Y')}**.\n"
+                f"Voce mantera acesso ao grupo ate **{format_date(sub.end_date)}**.\n"
                 f"A renovacao automatica sera desativada."
             )
         else:
             cancel_text = (
-                f"Voce mantera acesso ao grupo ate **{sub.end_date.strftime('%d/%m/%Y')}**.\n"
+                f"Voce mantera acesso ao grupo ate **{format_date(sub.end_date)}**.\n"
                 f"Apos essa data, o acesso sera removido automaticamente."
             )
 
@@ -513,7 +513,7 @@ async def confirm_cancel_subscription(update: Update, context: ContextTypes.DEFA
             return
 
         group_name = sub.group.name
-        end_date_str = sub.end_date.strftime('%d/%m/%Y') if sub.end_date else 'N/A'
+        end_date_str = format_date(sub.end_date) if sub.end_date else 'N/A'
 
         if sub.stripe_subscription_id and not sub.is_legacy:
             # Stripe-managed: cancel at period end (keep access until end_date)
@@ -600,7 +600,7 @@ async def reactivate_subscription(update: Update, context: ContextTypes.DEFAULT_
             text = (
                 f"✅ **Renovacao Reativada!**\n\n"
                 f"Sua assinatura do grupo **{group_name}** sera renovada automaticamente.\n\n"
-                f"📅 Proxima renovacao: {sub.end_date.strftime('%d/%m/%Y')}"
+                f"📅 Proxima renovacao: {format_date(sub.end_date)}"
             )
 
             keyboard = [[InlineKeyboardButton("🏠 Menu Principal", callback_data="back_to_start")]]

@@ -13,7 +13,7 @@ from bot.utils.stripe_integration import (
     get_or_create_stripe_customer, get_or_create_stripe_price,
     create_subscription_checkout
 )
-from bot.utils.format_utils import format_currency, format_remaining_text, get_expiry_emoji
+from bot.utils.format_utils import format_currency, format_remaining_text, get_expiry_emoji, format_date
 from app.models import Group, PricingPlan, Subscription, Transaction, Creator
 
 logger = logging.getLogger(__name__)
@@ -332,7 +332,7 @@ async def list_user_subscriptions(update: Update, context: ContextTypes.DEFAULT_
                     expiry_text = "♾️ Acesso Vitalicio"
                 else:
                     remaining = format_remaining_text(sub.end_date)
-                    expiry_text = f"Expira em: {remaining} ({sub.end_date.strftime('%d/%m/%Y')})"
+                    expiry_text = f"Expira em: {remaining} ({format_date(sub.end_date)})"
 
                 text += f"""
 📌 **{group.name}**
@@ -459,7 +459,7 @@ Bem-vindo ao grupo **{group.name}**!
 
 🔗 **Link de acesso:** {invite_link}
 
-Sua assinatura esta ativa ate {subscription.end_date.strftime('%d/%m/%Y')}.
+Sua assinatura esta ativa ate {format_date(subscription.end_date)}.
 
 💡 Salve este link! Ele so pode ser usado uma vez.
 """
@@ -468,7 +468,7 @@ Sua assinatura esta ativa ate {subscription.end_date.strftime('%d/%m/%Y')}.
                     text = f"""
 ✅ **PAGAMENTO CONFIRMADO!**
 
-Sua assinatura do grupo **{group.name}** esta ativa ate {subscription.end_date.strftime('%d/%m/%Y')}.
+Sua assinatura do grupo **{group.name}** esta ativa ate {format_date(subscription.end_date)}.
 
 ⚠️ Nao foi possivel gerar o link automaticamente.
 Entre em contato com o criador do grupo para acesso.
