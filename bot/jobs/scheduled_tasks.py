@@ -415,13 +415,25 @@ async def send_renewal_notification(subscription, days_left):
                 )
             ]]
         elif is_stripe_managed and getattr(subscription, 'auto_renew', False):
-            # Auto-renew active
-            text = (
-                f"<b>Renovação automática</b>\n\n"
-                f"Sua assinatura de <b>{group_name}</b> será renovada em <code>{remaining}</code>.\n"
-                f"Valor: <code>{format_currency(plan.price)}</code>\n\n"
-                f"<i>Certifique-se de que seu cartão está atualizado.</i>"
-            )
+            # Auto-renew active — differentiate card vs boleto
+            method = getattr(subscription, 'payment_method_type', 'card') or 'card'
+
+            if method == 'boleto':
+                text = (
+                    f"<b>Renovação automática</b>\n\n"
+                    f"Sua assinatura de <b>{group_name}</b> será renovada em <code>{remaining}</code>.\n"
+                    f"Valor: <code>{format_currency(plan.price)}</code>\n\n"
+                    f"<i>Um novo boleto será gerado automaticamente.\n"
+                    f"Fique atento ao seu e-mail para o link de pagamento.</i>"
+                )
+            else:
+                text = (
+                    f"<b>Renovação automática</b>\n\n"
+                    f"Sua assinatura de <b>{group_name}</b> será renovada em <code>{remaining}</code>.\n"
+                    f"Valor: <code>{format_currency(plan.price)}</code>\n\n"
+                    f"<i>A cobrança será feita automaticamente no seu cartão.</i>"
+                )
+
             keyboard = [[
                 InlineKeyboardButton(
                     "Ver Status",
