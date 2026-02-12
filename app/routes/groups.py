@@ -167,7 +167,15 @@ def create():
             flash('ID do Telegram é obrigatório.', 'error')
             return render_template('dashboard/group_form.html',
                                  group=None, show_success_modal=False)
-        
+
+        # Verificar se já existe grupo com este telegram_id
+        if telegram_id:
+            existing_group = Group.query.filter_by(telegram_id=telegram_id).first()
+            if existing_group:
+                flash('Já existe um grupo cadastrado com este ID do Telegram.', 'error')
+                return render_template('dashboard/group_form.html',
+                                     group=None, show_success_modal=False)
+
         # Criar grupo + planos de forma atômica
         try:
             # Processar whitelist do formulário
