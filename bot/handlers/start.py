@@ -246,19 +246,27 @@ Sua assinatura expira em: {existing_sub.end_date.strftime('%d/%m/%Y')}
 
 💎 **Planos disponíveis:**
 """
-        
+
         keyboard = []
         for plan in plans:
             text += f"\n📌 **{plan.name}** - R$ {plan.price:.2f}"
             text += f"\n   ⏱ {plan.duration_days} dias\n"
-            
+
             keyboard.append([
                 InlineKeyboardButton(
                     f"💳 {plan.name} - R$ {plan.price:.2f}",
                     callback_data=f"plan_{group.id}_{plan.id}"
                 )
             ])
-        
+
+        text += (
+            "\n📋 **Ao assinar voce concorda que:**\n"
+            "• A assinatura e vinculada a **sua conta Telegram**\n"
+            "• O link de acesso e pessoal e intransferivel\n"
+            "• Somente voce pode acessar o grupo com esta assinatura\n"
+            "• A cobranca sera feita no seu metodo de pagamento"
+        )
+
         keyboard.append([
             InlineKeyboardButton("❌ Cancelar", callback_data="cancel")
         ])
