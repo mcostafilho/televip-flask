@@ -467,6 +467,11 @@
                                         A whitelist é uma <strong>lista de proteção</strong>: qualquer usuário adicionado nela
                                         <strong>nunca será removido</strong> pelo bot, mesmo que não tenha assinatura ativa.
                                     </p>
+                                    <div class="wiki-highlight success">
+                                        <strong><i class="bi bi-check-circle-fill text-success"></i> Proteção automática:</strong>
+                                        Administradores e o dono do grupo <strong>já são protegidos automaticamente</strong> pelo bot
+                                        &mdash; não precisam ser adicionados à whitelist.
+                                    </div>
                                     <div class="wiki-highlight warning">
                                         <strong><i class="bi bi-exclamation-triangle-fill" style="color: #fbbf24;"></i> Muito importante:</strong>
                                         Se o seu grupo já tem membros antes de ativar o bot, <strong>adicione todos eles à whitelist</strong>
@@ -475,13 +480,19 @@
                                     <p><strong>Quando usar a whitelist:</strong></p>
                                     <ul>
                                         <li><strong>Membros existentes</strong> — pessoas que já estavam no grupo antes do TeleVIP.</li>
-                                        <li><strong>Moderadores e admins</strong> — sua equipe que ajuda a gerenciar o grupo.</li>
                                         <li><strong>Membros vitalícios</strong> — pessoas que você quer manter sem cobrança (amigos, parceiros, etc.).</li>
-                                        <li><strong>Você mesmo</strong> — o dono do grupo também deve estar na whitelist.</li>
                                     </ul>
+
+                                    <h6>Como obter o ID numérico do Telegram</h6>
+                                    <p>Para adicionar alguém à whitelist, você precisa do ID numérico do Telegram dessa pessoa. Siga os passos:</p>
+                                    <ol>
+                                        <li>Peça para a pessoa abrir o bot <code>@userinfobot</code> no Telegram.</li>
+                                        <li>Ela deve enviar qualquer mensagem para ele.</li>
+                                        <li>O bot responde com o <strong>ID numérico</strong> (ex: <code>123456789</code>).</li>
+                                        <li>Cole esse número no campo de whitelist na <strong>página de edição do grupo</strong> no painel e clique em <strong>Adicionar</strong>.</li>
+                                    </ol>
                                     <p>
-                                        Você gerencia a whitelist na <strong>página de edição do grupo</strong> no painel,
-                                        adicionando o <strong>ID numérico do Telegram</strong> de cada usuário.
+                                        Após salvar, adicione a pessoa manualmente ao grupo no Telegram &mdash; o bot não irá removê-la.
                                     </p>
                                 </div>
                             </div>
