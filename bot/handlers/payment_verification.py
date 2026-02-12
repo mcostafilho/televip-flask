@@ -98,13 +98,8 @@ async def handle_payment_confirmed(query, context, transaction, db_session):
     """Processar pagamento confirmado - COM CRIAÇÃO AUTOMÁTICA DE LINK"""
     logger.info(f"Pagamento confirmado para transação {transaction.id}")
     
-    # Atualizar transação
-    transaction.status = 'completed'
-    transaction.paid_at = datetime.utcnow()
-
     # Ativar assinatura
     subscription = transaction.subscription
-    subscription.status = 'active'
 
     # Buscar detalhes da sessão Stripe (subscription_id, payment_intent, etc.)
     if transaction.stripe_session_id:
@@ -120,18 +115,32 @@ async def handle_payment_confirmed(query, context, transaction, db_session):
         except Exception as e:
             logger.warning(f"Não foi possível buscar detalhes da sessão Stripe: {e}")
 
-    # Atualizar saldo e total ganho do criador
-    group = subscription.group
-    if group and group.creator:
-        creator = group.creator
-        net = transaction.net_amount or transaction.amount or 0
-        if creator.balance is None:
-            creator.balance = 0
-        creator.balance += net
-        if creator.total_earned is None:
-            creator.total_earned = 0
-        creator.total_earned += net
-        logger.info(f"Saldo do criador {creator.id} atualizado: +R${net} = R${creator.balance}")
+    # Determine if this is a Stripe-managed subscription (webhook handles credit)
+    is_stripe_managed = subscription.stripe_subscription_id and not subscription.is_legacy
+
+    # Atualizar transação e crédito do criador
+    if is_stripe_managed:
+        # Stripe subscription: let invoice.paid webhook handle transaction + credit
+        # Bot only activates subscription and shows invite link to user
+        subscription.status = 'active'
+        logger.info(f"Subscription {subscription.id} ativada pelo bot (crédito via webhook invoice.paid)")
+    else:
+        # Legacy one-time payment: bot handles everything
+        transaction.status = 'completed'
+        transaction.paid_at = datetime.utcnow()
+        subscription.status = 'active'
+
+        group = subscription.group
+        if group and group.creator:
+            creator = group.creator
+            net = transaction.net_amount or transaction.amount or 0
+            if creator.balance is None:
+                creator.balance = 0
+            creator.balance += net
+            if creator.total_earned is None:
+                creator.total_earned = 0
+            creator.total_earned += net
+            logger.info(f"Saldo do criador {creator.id} atualizado: +R${net} = R${creator.balance}")
 
     db_session.commit()
     

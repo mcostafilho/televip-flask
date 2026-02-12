@@ -37,7 +37,7 @@ from bot.handlers.payment import (
 from bot.handlers.subscription import (
     status_command, handle_renewal,
     cancel_subscription, confirm_cancel_subscription,
-    reactivate_subscription
+    reactivate_subscription, get_invite_link
 )
 from bot.handlers.admin import (
     setup_command, stats_command, broadcast_command,
@@ -177,6 +177,7 @@ def setup_handlers(application: Application) -> None:
     application.add_handler(CallbackQueryHandler(cancel_subscription, pattern=r"^cancel_sub_\d+$"))
     application.add_handler(CallbackQueryHandler(confirm_cancel_subscription, pattern=r"^confirm_cancel_sub_\d+$"))
     application.add_handler(CallbackQueryHandler(reactivate_subscription, pattern=r"^reactivate_sub_\d+$"))
+    application.add_handler(CallbackQueryHandler(get_invite_link, pattern=r"^get_link_\d+$"))
 
     # Callbacks de broadcast
     application.add_handler(CallbackQueryHandler(handle_broadcast_to_group, pattern=r"^broadcast_to_\d+$"))

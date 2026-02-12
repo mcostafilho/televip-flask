@@ -154,23 +154,30 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
             ])
         
-        # Botões de cancelamento/reativação para cada assinatura ativa
+        # Botões de ação para cada assinatura ativa
         for sub in active:
             group = sub.group
+            row = [
+                InlineKeyboardButton(
+                    f"🔗 Link: {group.name[:15]}",
+                    callback_data=f"get_link_{sub.id}"
+                )
+            ]
             if getattr(sub, 'cancel_at_period_end', False):
-                keyboard.append([
+                row.append(
                     InlineKeyboardButton(
-                        f"🔄 Reativar: {group.name[:20]}",
+                        f"🔄 Reativar",
                         callback_data=f"reactivate_sub_{sub.id}"
                     )
-                ])
+                )
             else:
-                keyboard.append([
+                row.append(
                     InlineKeyboardButton(
-                        f"❌ Cancelar: {group.name[:20]}",
+                        f"❌ Cancelar",
                         callback_data=f"cancel_sub_{sub.id}"
                     )
-                ])
+                )
+            keyboard.append(row)
 
         # Botão voltar
         keyboard.append([
@@ -601,6 +608,72 @@ async def reactivate_subscription(update: Update, context: ContextTypes.DEFAULT_
         except stripe.error.StripeError as e:
             logger.error(f"Stripe error reactivating subscription: {e}")
             text = "❌ Erro ao reativar. Tente novamente."
+            keyboard = [[InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")]]
+
+    await query.edit_message_text(
+        text,
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+
+
+async def get_invite_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Gerar novo link de convite para assinatura ativa"""
+    query = update.callback_query
+    await query.answer("🔗 Gerando link...")
+    user = query.from_user
+
+    sub_id = int(query.data.replace("get_link_", ""))
+
+    with get_db_session() as session:
+        sub = session.query(Subscription).get(sub_id)
+
+        if not sub or sub.telegram_user_id != str(user.id) or sub.status != 'active':
+            await query.edit_message_text(
+                "❌ Assinatura nao encontrada ou inativa.",
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")
+                ]])
+            )
+            return
+
+        group = sub.group
+        if not group or not group.telegram_id:
+            await query.edit_message_text(
+                "❌ Grupo sem Telegram ID configurado. Contacte o suporte.",
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")
+                ]])
+            )
+            return
+
+        try:
+            link_obj = await context.bot.create_chat_invite_link(
+                chat_id=int(group.telegram_id),
+                member_limit=1,
+                expire_date=datetime.utcnow() + timedelta(days=7),
+                creates_join_request=False
+            )
+            invite_link = link_obj.invite_link
+
+            text = (
+                f"🔗 **Novo Link de Acesso**\n\n"
+                f"**Grupo:** {group.name}\n\n"
+                f"Clique no botao abaixo para entrar:\n\n"
+                f"⚠️ Link pessoal, uso unico, valido por 7 dias."
+            )
+
+            keyboard = [
+                [InlineKeyboardButton("🚀 Entrar no Grupo", url=invite_link)],
+                [InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")]
+            ]
+
+        except Exception as e:
+            logger.error(f"Erro ao gerar invite link: {e}")
+            text = (
+                f"❌ Nao foi possivel gerar o link.\n\n"
+                f"Contacte o suporte informando assinatura #{sub.id}."
+            )
             keyboard = [[InlineKeyboardButton("🏠 Menu", callback_data="back_to_start")]]
 
     await query.edit_message_text(

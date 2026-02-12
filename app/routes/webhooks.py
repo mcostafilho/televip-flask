@@ -357,19 +357,22 @@ def handle_invoice_paid(invoice):
             subscription.start_date = datetime.utcnow()
             subscription.end_date = datetime.utcnow() + timedelta(days=plan.duration_days)
 
-            # Find existing pending transaction for this subscription
-            pending_txn = Transaction.query.filter_by(
+            # Find existing transaction for this subscription (pending or already completed by bot)
+            existing_txn = Transaction.query.filter_by(
                 subscription_id=subscription.id,
-                status='pending',
                 billing_reason='subscription_create'
-            ).first()
+            ).order_by(Transaction.created_at.desc()).first()
 
-            if pending_txn:
-                pending_txn.status = 'completed'
-                pending_txn.paid_at = datetime.utcnow()
-                pending_txn.stripe_invoice_id = stripe_invoice_id
+            already_credited = False
+
+            if existing_txn:
+                already_credited = existing_txn.status == 'completed'
+                existing_txn.status = 'completed'
+                existing_txn.paid_at = existing_txn.paid_at or datetime.utcnow()
+                existing_txn.stripe_invoice_id = stripe_invoice_id
+                pending_txn = existing_txn
             else:
-                # Create new transaction
+                # No transaction found at all — create one
                 txn = Transaction(
                     subscription_id=subscription.id,
                     amount=amount_paid,
@@ -383,14 +386,16 @@ def handle_invoice_paid(invoice):
                 db.session.flush()
                 pending_txn = txn
 
-            # Credit creator
-            if creator:
+            # Credit creator only if not already credited by bot verification
+            if not already_credited and creator:
                 if creator.balance is None:
                     creator.balance = 0
                 creator.balance += pending_txn.net_amount
                 if creator.total_earned is None:
                     creator.total_earned = 0
                 creator.total_earned += pending_txn.net_amount
+            elif already_credited:
+                logger.info(f"Transaction {pending_txn.id} already completed — skipping creator credit")
 
             db.session.commit()
 
