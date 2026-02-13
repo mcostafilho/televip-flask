@@ -384,12 +384,21 @@ async def process_renewal(update: Update, context: ContextTypes.DEFAULT_TYPE, su
                 [InlineKeyboardButton("↩ Voltar", callback_data=f"sub_detail_{sub.id}")]
             ]
         else:
-            text += "\n\n<i>Escolha a forma de pagamento:</i>"
-            keyboard = [
-                [InlineKeyboardButton("💳 Cartão / Boleto", callback_data="pay_stripe")],
-                [InlineKeyboardButton("⚡ PIX", callback_data="pay_pix")],
-                [InlineKeyboardButton("↩ Voltar", callback_data=f"sub_detail_{sub.id}")]
-            ]
+            short_plan = plan.duration_days and plan.duration_days <= 4
+            if short_plan:
+                checkout_data['card_only'] = True
+                text += "\n\n<i>Confirme com seu cartão:</i>"
+                keyboard = [
+                    [InlineKeyboardButton("💳 Cartão", callback_data="pay_stripe")],
+                    [InlineKeyboardButton("↩ Voltar", callback_data=f"sub_detail_{sub.id}")]
+                ]
+            else:
+                text += "\n\n<i>Escolha a forma de pagamento:</i>"
+                keyboard = [
+                    [InlineKeyboardButton("💳 Cartão / Boleto", callback_data="pay_stripe")],
+                    [InlineKeyboardButton("⚡ PIX", callback_data="pay_pix")],
+                    [InlineKeyboardButton("↩ Voltar", callback_data=f"sub_detail_{sub.id}")]
+                ]
 
         await query.edit_message_text(
             text,

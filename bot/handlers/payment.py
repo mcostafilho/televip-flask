@@ -26,8 +26,13 @@ logger = logging.getLogger(__name__)
 # Helpers
 # ──────────────────────────────────────────────
 
-def _payment_method_keyboard(group_id):
+def _payment_method_keyboard(group_id, card_only=False):
     """Keyboard padrão: escolha de método de pagamento."""
+    if card_only:
+        return [
+            [InlineKeyboardButton("💳 Cartão", callback_data="pay_stripe")],
+            [InlineKeyboardButton("↩ Voltar", callback_data=f"group_{group_id}")]
+        ]
     return [
         [InlineKeyboardButton("💳 Cartão / Boleto", callback_data="pay_stripe")],
         [InlineKeyboardButton("⚡ PIX", callback_data="pay_pix")],
@@ -382,6 +387,11 @@ async def start_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         text = _order_summary_text(checkout_data)
 
+        # Boleto indisponível para: troca de plano (trial_end) ou planos curtos (≤ 4 dias)
+        short_plan = not is_lifetime and plan.duration_days <= 4
+        if checkout_data.get('card_only'):
+            short_plan = True  # propagate from renewal
+
         if checkout_data.get('trial_end'):
             # Troca de plano: só cartão (cobrança futura)
             text += "\n\n<i>Confirme com seu cartão:</i>"
@@ -389,6 +399,11 @@ async def start_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [InlineKeyboardButton("💳 Confirmar com Cartão", callback_data="pay_stripe")],
                 [InlineKeyboardButton("↩ Voltar", callback_data=f"change_plan_{group_id}")]
             ]
+        elif short_plan:
+            # Plano curto: boleto não dá tempo de compensar
+            text += "\n\n<i>Escolha a forma de pagamento:</i>"
+            checkout_data['card_only'] = True
+            keyboard = _payment_method_keyboard(group_id, card_only=True)
         else:
             text += "\n\n<i>Escolha a forma de pagamento:</i>"
             keyboard = _payment_method_keyboard(group_id)
@@ -476,8 +491,10 @@ async def _create_stripe_session(query, context, checkout_data):
             'group_id': str(group_id),
             'plan_id': str(plan_id),
             'group_name': checkout_data['group_name'],
-            'plan_name': checkout_data['plan_name']
+            'plan_name': checkout_data['plan_name'],
         }
+        if checkout_data.get('card_only'):
+            metadata['card_only'] = 'true'
 
         if is_lifetime:
             result = await create_checkout_session(
@@ -819,13 +836,14 @@ async def back_to_methods(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     group_id = checkout_data['group_id']
+    card_only = checkout_data.get('card_only', False)
     text = _order_summary_text(checkout_data)
     text += "\n\n<i>Escolha a forma de pagamento:</i>"
 
     await query.edit_message_text(
         text,
         parse_mode=ParseMode.HTML,
-        reply_markup=InlineKeyboardMarkup(_payment_method_keyboard(group_id))
+        reply_markup=InlineKeyboardMarkup(_payment_method_keyboard(group_id, card_only=card_only))
     )
 
 
