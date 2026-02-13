@@ -414,6 +414,17 @@ async def _create_stripe_session(query, context, checkout_data):
         # Mostrar tela do checkout
         await _show_stripe_checkout(query, checkout_data, result['url'])
 
+        # Agendar verificação automática de pagamento
+        try:
+            await _schedule_payment_check(
+                context, user,
+                chat_id=query.message.chat_id,
+                message_id=query.message.message_id,
+                session_id=result['session_id']
+            )
+        except Exception as e:
+            logger.warning(f"Não foi possível agendar auto-check: {e}")
+
     except Exception as e:
         logger.error(f"Erro ao processar pagamento: {e}")
         await query.edit_message_text(
@@ -425,6 +436,163 @@ async def _create_stripe_session(query, context, checkout_data):
                 [InlineKeyboardButton("Menu", callback_data="back_to_start")]
             ])
         )
+
+
+async def _schedule_payment_check(context, user, chat_id, message_id, session_id):
+    """Agendar verificação automática de pagamento após checkout."""
+    # Cancelar job anterior se existir
+    job_name = f"payment_check_{user.id}"
+    current_jobs = context.job_queue.get_jobs_by_name(job_name)
+    for job in current_jobs:
+        job.schedule_removal()
+
+    context.job_queue.run_repeating(
+        _auto_check_payment,
+        interval=15,
+        first=20,  # primeira verificação após 20s
+        data={
+            'user_id': user.id,
+            'chat_id': chat_id,
+            'message_id': message_id,
+            'session_id': session_id,
+            'attempts': 0,
+        },
+        name=job_name,
+    )
+    logger.info(f"Auto-check de pagamento agendado para user {user.id}")
+
+
+async def _auto_check_payment(context: ContextTypes.DEFAULT_TYPE):
+    """Job que verifica automaticamente se o pagamento foi confirmado."""
+    job = context.job
+    data = job.data
+    user_id = data['user_id']
+    chat_id = data['chat_id']
+    message_id = data['message_id']
+    session_id = data['session_id']
+
+    data['attempts'] = data.get('attempts', 0) + 1
+
+    # Timeout: 60 tentativas × 15s = 15 minutos
+    if data['attempts'] > 60:
+        logger.info(f"Auto-check timeout para user {user_id} session {session_id}")
+        job.schedule_removal()
+        return
+
+    try:
+        with get_db_session() as session:
+            txn = session.query(Transaction).filter_by(
+                stripe_session_id=session_id
+            ).first()
+
+            if not txn:
+                job.schedule_removal()
+                return
+
+            # Já processado (pelo webhook ou pelo botão "Já Paguei")
+            if txn.status == 'completed':
+                sub = txn.subscription
+                if not sub:
+                    job.schedule_removal()
+                    return
+
+                group = sub.group
+                if not group:
+                    job.schedule_removal()
+                    return
+
+                type_label = "canal" if group.chat_type == 'channel' else "grupo"
+                group_name = escape_html(group.name)
+                plan_name = escape_html(sub.plan.name) if sub.plan else "N/A"
+
+                # Gerar link de convite
+                invite_link = None
+                if group.telegram_id:
+                    try:
+                        link_obj = await context.bot.create_chat_invite_link(
+                            chat_id=int(group.telegram_id),
+                            member_limit=1,
+                            expire_date=datetime.utcnow() + timedelta(days=7),
+                            creates_join_request=False
+                        )
+                        invite_link = link_obj.invite_link
+                    except Exception as e:
+                        logger.warning(f"Auto-check: erro ao criar invite link: {e}")
+
+                text = (
+                    f"<b>Pagamento confirmado!</b>\n\n"
+                    f"<pre>"
+                    f"{type_label.capitalize()}:  {group.name}\n"
+                    f"Plano:      {sub.plan.name if sub.plan else 'N/A'}\n"
+                    f"Validade:   {format_date(sub.end_date)}\n"
+                    f"Valor:      {format_currency(txn.amount)}"
+                    f"</pre>\n\n"
+                )
+
+                keyboard = []
+                if invite_link:
+                    text += (
+                        f"Clique abaixo para entrar no {type_label}.\n"
+                        f"<i>O link é de uso único — não compartilhe.</i>"
+                    )
+                    keyboard.append([InlineKeyboardButton(
+                        f"Entrar no {type_label.capitalize()}", url=invite_link
+                    )])
+
+                keyboard.append([InlineKeyboardButton("Minhas Assinaturas", callback_data="subs_active")])
+
+                try:
+                    await context.bot.edit_message_text(
+                        chat_id=chat_id,
+                        message_id=message_id,
+                        text=text,
+                        parse_mode=ParseMode.HTML,
+                        reply_markup=InlineKeyboardMarkup(keyboard)
+                    )
+                    logger.info(f"Auto-check: mensagem atualizada para user {user_id}")
+                except Exception as e:
+                    # Mensagem pode já ter sido editada pelo botão "Já Paguei"
+                    logger.debug(f"Auto-check: não conseguiu editar mensagem: {e}")
+
+                job.schedule_removal()
+                return
+
+            # Cancelado ou falhou
+            if txn.status in ('cancelled', 'failed'):
+                job.schedule_removal()
+                return
+
+            # Ainda pendente — verificar diretamente no Stripe a cada 3 tentativas
+            if data['attempts'] % 3 == 0:
+                from bot.utils.stripe_integration import verify_payment
+                is_paid = await verify_payment(session_id)
+                if is_paid:
+                    # Stripe confirmou, mas webhook pode estar atrasado
+                    # Ativar a subscription aqui (idempotente)
+                    sub = txn.subscription
+                    if sub and sub.status == 'pending':
+                        sub.status = 'active'
+                        txn.status = 'completed'
+                        txn.paid_at = datetime.utcnow()
+
+                        # Creditar criador
+                        group = sub.group
+                        if group and group.creator:
+                            creator = group.creator
+                            net = txn.net_amount or txn.amount or 0
+                            if creator.balance is None:
+                                creator.balance = 0
+                            creator.balance += net
+                            if creator.total_earned is None:
+                                creator.total_earned = 0
+                            creator.total_earned += net
+
+                        session.commit()
+                        logger.info(f"Auto-check: subscription {sub.id} ativada (Stripe confirmou)")
+                    # Próxima iteração vai pegar txn.status == 'completed' e editar msg
+
+    except Exception as e:
+        logger.error(f"Auto-check erro para user {user_id}: {e}")
 
 
 async def _show_stripe_checkout(query, checkout_data, stripe_url):
@@ -493,6 +661,11 @@ async def abandon_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     user = query.from_user
+
+    # Cancelar job de auto-check
+    job_name = f"payment_check_{user.id}"
+    for job in context.job_queue.get_jobs_by_name(job_name):
+        job.schedule_removal()
 
     checkout_data = context.user_data.get('checkout')
     _cancel_pending(context, telegram_user_id=user.id)

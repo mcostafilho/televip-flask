@@ -224,20 +224,39 @@ async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_
         ).first()
 
         if existing_sub:
-            remaining = format_remaining_text(existing_sub.end_date)
+            is_lifetime = getattr(existing_sub.plan, 'is_lifetime', False) or (existing_sub.plan and existing_sub.plan.duration_days == 0)
             plan_name = escape_html(existing_sub.plan.name) if existing_sub.plan else "N/A"
+
+            if is_lifetime:
+                remaining = "Vitalício"
+            else:
+                remaining = format_remaining_text(existing_sub.end_date)
+
             text = (
                 f"<b>Você já é assinante</b>\n\n"
-                f"Grupo: <b>{group_name}</b>\n"
+                f"{type_label.capitalize()}: <b>{group_name}</b>\n"
                 f"Plano: <code>{plan_name}</code>\n"
-                f"Expira em: {format_date_code(existing_sub.end_date)} ({remaining})"
+                f"Expira em: {'Nunca' if is_lifetime else format_date_code(existing_sub.end_date)} ({remaining})"
             )
+
+            # Verificar se há outros planos disponíveis
+            other_plans = session.query(PricingPlan).filter(
+                PricingPlan.group_id == group.id,
+                PricingPlan.is_active == True,
+                PricingPlan.id != existing_sub.plan_id
+            ).count()
+
             keyboard = [
-                [
-                    InlineKeyboardButton("Ver Status", callback_data="check_status"),
-                    InlineKeyboardButton("Menu Principal", callback_data="back_to_start")
-                ]
+                [InlineKeyboardButton(f"Entrar no {type_label.capitalize()}", callback_data=f"get_link_{existing_sub.id}")]
             ]
+            if other_plans > 0:
+                keyboard.append([
+                    InlineKeyboardButton("Trocar Plano", callback_data=f"group_{group.id}")
+                ])
+            keyboard.append([
+                InlineKeyboardButton("Ver Detalhes", callback_data=f"sub_detail_{existing_sub.id}"),
+                InlineKeyboardButton("Menu Principal", callback_data="back_to_start")
+            ])
 
             await update.message.reply_text(
                 text,

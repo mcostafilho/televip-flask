@@ -858,4 +858,22 @@ async def handle_chat_member_update(update: Update, context: ContextTypes.DEFAUL
             except Exception as e:
                 logger.error(f"Erro ao remover usuario de canal: {e}")
         else:
+            # Autorizado — enviar boas-vindas no privado
             logger.info(f"Usuario {user.id} autorizado no canal {chat.id}")
+            group_name = escape_html(group.name)
+            plan_name = escape_html(subscription.plan.name) if subscription.plan else "N/A"
+            remaining = format_remaining_text(subscription.end_date)
+
+            try:
+                await context.bot.send_message(
+                    chat_id=user.id,
+                    text=(
+                        f"Bem-vindo ao canal <b>{group_name}</b>!\n\n"
+                        f"Plano: <code>{plan_name}</code>\n"
+                        f"Acesso até: {format_date_code(subscription.end_date)}\n\n"
+                        f"<i>Aproveite o conteúdo!</i>"
+                    ),
+                    parse_mode=ParseMode.HTML
+                )
+            except Exception:
+                pass  # Usuário pode ter bloqueado o bot

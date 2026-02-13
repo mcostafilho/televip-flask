@@ -257,6 +257,14 @@ async def handle_payment_confirmed(query, context, transaction, db_session):
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
+    # Cancelar job de auto-check (pagamento já confirmado pelo botão)
+    try:
+        job_name = f"payment_check_{user.id}"
+        for job in context.job_queue.get_jobs_by_name(job_name):
+            job.schedule_removal()
+    except Exception:
+        pass
+
     # Limpar dados da sessão
     context.user_data.pop('stripe_session_id', None)
     context.user_data.pop('stripe_checkout_url', None)

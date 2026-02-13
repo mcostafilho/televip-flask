@@ -593,6 +593,7 @@ async def get_invite_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         group_name = escape_html(group.name)
+        type_label = "canal" if group.chat_type == 'channel' else "grupo"
 
         try:
             link_obj = await context.bot.create_chat_invite_link(
@@ -603,11 +604,10 @@ async def get_invite_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             invite_link = link_obj.invite_link
 
-            type_label = "canal" if group.chat_type == 'channel' else "grupo"
             text = (
                 f"<b>Link de acesso</b>\n\n"
                 f"Use o botão abaixo para entrar no {type_label} <b>{group_name}</b>.\n\n"
-                f"<i>O link é de uso único.</i>"
+                f"<i>O link é de uso único e expira em 7 dias.</i>"
             )
 
             keyboard = [
@@ -616,12 +616,36 @@ async def get_invite_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
 
         except Exception as e:
+            error_str = str(e).lower()
             logger.error(f"Erro ao gerar invite link: {e}")
-            text = (
-                f"Não foi possível gerar o link.\n\n"
-                f"Contacte o suporte informando assinatura #{sub.id}."
-            )
-            keyboard = [[InlineKeyboardButton("Menu", callback_data="back_to_start")]]
+
+            if 'not enough rights' in error_str or 'chat_admin_required' in error_str:
+                text = (
+                    f"<b>Sem permissão</b>\n\n"
+                    f"O bot não tem permissão de administrador no {type_label} <b>{group_name}</b>.\n"
+                    f"O criador precisa verificar as configurações."
+                )
+            elif 'chat not found' in error_str or 'chat_not_found' in error_str:
+                text = (
+                    f"<b>{type_label.capitalize()} indisponível</b>\n\n"
+                    f"O {type_label} <b>{group_name}</b> não foi encontrado.\n"
+                    f"Pode ter sido removido ou o bot foi desconectado."
+                )
+            elif 'too many requests' in error_str or 'retry_after' in error_str:
+                text = (
+                    f"<b>Muitas tentativas</b>\n\n"
+                    f"Aguarde alguns segundos e tente novamente."
+                )
+            else:
+                text = (
+                    f"Não foi possível gerar o link para <b>{group_name}</b>.\n\n"
+                    f"Tente novamente em alguns instantes."
+                )
+
+            keyboard = [
+                [InlineKeyboardButton("🔄 Tentar Novamente", callback_data=f"get_link_{sub.id}")],
+                [InlineKeyboardButton("↩ Voltar", callback_data="subs_active")]
+            ]
 
     await query.edit_message_text(
         text,

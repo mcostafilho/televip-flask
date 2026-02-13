@@ -282,7 +282,7 @@ def handle_dispute_created(dispute):
 
 
 def notify_bot_payment_complete(subscription, transaction):
-    """Notificar o bot que o pagamento foi completado"""
+    """Notificar o usuário que o pagamento foi completado — com botão de acesso inline"""
     bot_token = os.getenv('BOT_TOKEN') or os.getenv('TELEGRAM_BOT_TOKEN')
 
     if not bot_token:
@@ -290,9 +290,11 @@ def notify_bot_payment_complete(subscription, transaction):
         return
 
     try:
-        # Generate single-use invite link via Bot API
-        invite_link = subscription.group.invite_link  # fallback
         group = subscription.group
+        type_label = "canal" if group.chat_type == 'channel' else "grupo"
+
+        # Generate single-use invite link via Bot API
+        invite_link = None
         if group.telegram_id:
             try:
                 create_link_url = f"https://api.telegram.org/bot{bot_token}/createChatInviteLink"
@@ -305,39 +307,44 @@ def notify_bot_payment_complete(subscription, transaction):
                     invite_link = link_data['result']['invite_link']
                     logger.info(f"Created single-use invite link for group {group.telegram_id}")
                 else:
-                    logger.warning(f"Failed to create invite link: {link_data}. Using permanent link.")
+                    logger.warning(f"Failed to create invite link: {link_data}")
             except Exception as e:
-                logger.warning(f"Error creating single-use invite link: {e}. Using permanent link.")
+                logger.warning(f"Error creating single-use invite link: {e}")
 
-        # URL da API do Telegram
-        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        # Fallback to stored links
+        if not invite_link:
+            invite_link = group.invite_link
+            if not invite_link and group.telegram_username:
+                invite_link = f"https://t.me/{group.telegram_username}"
 
-        # Mensagem para o usuário
-        group_name = subscription.group.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        group_name = group.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
         text = (
             f"<b>Pagamento aprovado!</b>\n\n"
             f"<pre>"
-            f"Grupo:     {subscription.group.name}\n"
+            f"{type_label.capitalize()}:  {group_name}\n"
             f"Válida até: {_fmt_date_brt(subscription.end_date)}\n"
-            f"Valor:     R$ {transaction.amount:.2f}"
+            f"Valor:      R$ {transaction.amount:.2f}"
             f"</pre>\n\n"
-            f"Use o link abaixo para acessar o grupo:\n"
-            f"{invite_link}\n\n"
-            f"<i>Obrigado por assinar!</i>"
         )
 
-        # Enviar mensagem
-        response = requests.post(url, json={
-            'chat_id': subscription.telegram_user_id,
-            'text': text,
-            'parse_mode': 'HTML'
-        })
+        keyboard = {'inline_keyboard': []}
 
-        if response.status_code == 200:
-            logger.info(f"Usuário {subscription.telegram_user_id} notificado do pagamento")
+        if invite_link:
+            text += (
+                f"Clique abaixo para entrar no {type_label}.\n"
+                f"<i>O link é de uso único — não compartilhe.</i>"
+            )
+            keyboard['inline_keyboard'].append([
+                {'text': f'Entrar no {type_label.capitalize()}', 'url': invite_link}
+            ])
         else:
-            logger.error(f"Erro ao notificar usuário: {response.text}")
+            text += "Entre em contato com o suporte para receber o link de acesso."
+            keyboard['inline_keyboard'].append([
+                {'text': 'Suporte', 'url': 'https://t.me/suporte_televip'}
+            ])
+
+        notify_user_via_bot(subscription.telegram_user_id, text, keyboard=keyboard)
 
     except Exception as e:
         logger.error(f"Erro ao notificar bot: {str(e)}")
