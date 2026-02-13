@@ -48,12 +48,16 @@ def group_landing(username, invite_slug):
     ).first_or_404()
 
     group = Group.query.filter_by(
-        invite_slug=invite_slug, creator_id=creator.id, is_active=True
+        invite_slug=invite_slug, creator_id=creator.id
     ).first_or_404()
 
-    plans = PricingPlan.query.filter_by(
-        group_id=group.id, is_active=True
-    ).order_by(PricingPlan.price.asc()).all()
+    # Se inativo, mostra a página mas sem planos (aviso no template)
+    if group.is_active:
+        plans = PricingPlan.query.filter_by(
+            group_id=group.id, is_active=True
+        ).order_by(PricingPlan.price.asc()).all()
+    else:
+        plans = []
 
     subscriber_count = Subscription.query.filter_by(
         group_id=group.id, status='active'
@@ -67,4 +71,5 @@ def group_landing(username, invite_slug):
                            group=group,
                            plans=plans,
                            bot_link=bot_link,
-                           subscriber_count=subscriber_count)
+                           subscriber_count=subscriber_count,
+                           group_inactive=not group.is_active)

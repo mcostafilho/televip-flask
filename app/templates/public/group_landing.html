@@ -550,6 +550,25 @@
     </div>
 
     <div class="page-content">
+        {% if group_inactive %}
+        <!-- ===== INACTIVE BANNER ===== -->
+        <div style="margin: 28px 0; padding: 20px 24px; background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.25); border-radius: 14px;">
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <i class="bi bi-exclamation-triangle-fill" style="color: #fbbf24; font-size: 1.3rem; flex-shrink: 0; margin-top: 2px;"></i>
+                <div>
+                    <div style="font-weight: 700; color: #fbbf24; margin-bottom: 4px;">Este grupo não está aceitando novas assinaturas</div>
+                    <div style="font-size: 0.88rem; color: var(--galactic-text-secondary); line-height: 1.6;">
+                        O criador pausou as inscrições para este grupo. Confira outros grupos disponíveis na página de {{ creator.name }}.
+                    </div>
+                    <a href="{{ url_for('public.creator_page', username=creator.username) }}"
+                       style="display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 8px 18px; border-radius: 10px; font-weight: 600; font-size: 0.85rem; color: #fff; background: var(--gradient-primary); text-decoration: none;">
+                        <i class="bi bi-grid-fill"></i> Ver todos os grupos de {{ creator.name.split(' ')[0] }}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- ===== CREATOR ===== -->
         <a href="{{ url_for('public.creator_page', username=creator.username) }}" class="creator-card">
             <div class="creator-card-avatar">
