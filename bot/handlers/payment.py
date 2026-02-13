@@ -440,6 +440,10 @@ async def _create_stripe_session(query, context, checkout_data):
 
 async def _schedule_payment_check(context, user, chat_id, message_id, session_id):
     """Agendar verificação automática de pagamento após checkout."""
+    if not context.job_queue:
+        logger.info("job_queue indisponível, auto-check não agendado")
+        return
+
     # Cancelar job anterior se existir
     job_name = f"payment_check_{user.id}"
     current_jobs = context.job_queue.get_jobs_by_name(job_name)
@@ -663,9 +667,10 @@ async def abandon_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = query.from_user
 
     # Cancelar job de auto-check
-    job_name = f"payment_check_{user.id}"
-    for job in context.job_queue.get_jobs_by_name(job_name):
-        job.schedule_removal()
+    if context.job_queue:
+        job_name = f"payment_check_{user.id}"
+        for job in context.job_queue.get_jobs_by_name(job_name):
+            job.schedule_removal()
 
     checkout_data = context.user_data.get('checkout')
     _cancel_pending(context, telegram_user_id=user.id)

@@ -519,14 +519,28 @@ def handle_invoice_paid(invoice):
 
             logger.info(f"Subscription {subscription.id} renewed until {subscription.end_date}")
 
-            # Notify user about renewal
+            # Notify user about renewal with cancel option
             group_name_safe = group.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            type_label = "canal" if group.chat_type == 'channel' else "grupo"
+            renewal_text = (
+                f"<b>Assinatura renovada!</b>\n\n"
+                f"<pre>"
+                f"{type_label.capitalize()}:  {group_name_safe}\n"
+                f"Validade:   {_fmt_date_brt(subscription.end_date)}\n"
+                f"Valor:      R$ {amount_paid:.2f}"
+                f"</pre>\n\n"
+                f"<i>Renovação automática ativa.</i>"
+            )
+            renewal_keyboard = {
+                'inline_keyboard': [
+                    [{'text': 'Ver Detalhes', 'callback_data': f'sub_detail_{subscription.id}'}],
+                    [{'text': 'Gerenciar Renovação', 'callback_data': f'cancel_sub_{subscription.id}'}]
+                ]
+            }
             notify_user_via_bot(
                 subscription.telegram_user_id,
-                f"<b>Assinatura renovada!</b>\n\n"
-                f"Grupo: <b>{group_name_safe}</b>\n"
-                f"Nova validade: <code>{_fmt_date_brt(subscription.end_date)}</code>\n"
-                f"Valor: <code>R$ {amount_paid:.2f}</code>"
+                renewal_text,
+                keyboard=renewal_keyboard
             )
         else:
             logger.info(f"Unhandled billing_reason: {billing_reason}")
