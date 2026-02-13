@@ -125,10 +125,12 @@ def create_app():
     # Fix 6: Redirecionar HTTP → HTTPS em produção (só quando SSL ativo)
     @app.before_request
     def redirect_to_https():
-        if not app.debug and not app.testing and os.environ.get('FORCE_HTTPS', '').lower() in ('true', '1'):
-            if request.headers.get('X-Forwarded-Proto', 'http') != 'https':
-                url = request.url.replace('http://', 'https://', 1)
-                return redirect(url, code=301)
+        if not app.debug and not app.testing:
+            # HTTPS enforced by default in production; set FORCE_HTTPS=false to disable
+            if os.environ.get('FORCE_HTTPS', 'true').lower() not in ('false', '0'):
+                if request.headers.get('X-Forwarded-Proto', 'http') != 'https':
+                    url = request.url.replace('http://', 'https://', 1)
+                    return redirect(url, code=301)
 
     # Fix 7: Security headers
     @app.after_request

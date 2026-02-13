@@ -7,7 +7,7 @@ import os
 import logging
 import requests
 from datetime import datetime, timedelta, timezone
-from app import db
+from app import db, limiter
 
 # Fuso horário de Brasília (UTC-3)
 BRT = timezone(timedelta(hours=-3))
@@ -29,6 +29,7 @@ stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
 
 @bp.route('/stripe', methods=['POST'])
+@limiter.limit("60 per minute")
 def stripe_webhook():
     """Processar webhooks do Stripe - VERSÃO CORRIGIDA"""
     logger.info("=== WEBHOOK RECEBIDO DO STRIPE ===")
@@ -840,6 +841,7 @@ def billing_portal_redirect():
 
 
 @bp.route('/telegram', methods=['POST'])
+@limiter.limit("120 per minute")
 def telegram_webhook():
     """Webhook para receber atualizações do Telegram"""
     # Verify X-Telegram-Bot-Api-Secret-Token header

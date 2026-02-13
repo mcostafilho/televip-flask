@@ -17,6 +17,12 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')
     if not SECRET_KEY:
         import warnings
+        _env = os.environ.get('FLASK_ENV', 'development')
+        if _env == 'production':
+            raise RuntimeError(
+                'SECRET_KEY não definida em produção! '
+                'Defina a variável de ambiente SECRET_KEY com um valor seguro.'
+            )
         SECRET_KEY = 'dev-secret-key-change-in-production'
         warnings.warn('SECRET_KEY não definida! Usando fallback inseguro. Defina SECRET_KEY no .env.', stacklevel=2)
     
