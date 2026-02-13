@@ -405,7 +405,19 @@ def handle_invoice_paid(invoice):
 
             subscription.status = 'active'
             subscription.start_date = datetime.utcnow()
-            subscription.end_date = datetime.utcnow() + timedelta(days=plan.duration_days)
+
+            # Use Stripe's actual billing period end instead of timedelta
+            # This ensures sync with Stripe's calendar-based intervals
+            stripe_period_end = None
+            lines_data = invoice.get('lines', {}).get('data', [])
+            if lines_data:
+                stripe_period_end = lines_data[0].get('period', {}).get('end')
+
+            if stripe_period_end:
+                subscription.end_date = datetime.utcfromtimestamp(stripe_period_end)
+            else:
+                # Fallback to timedelta if Stripe data unavailable
+                subscription.end_date = datetime.utcnow() + timedelta(days=plan.duration_days)
 
             # Find existing transaction for this subscription (pending or already completed by bot)
             existing_txn = Transaction.query.filter_by(
@@ -458,8 +470,15 @@ def handle_invoice_paid(invoice):
             # Renewal — extend end_date
             logger.info(f"Renewing subscription {subscription.id}")
 
-            # Extend from current end_date (not from now, to avoid gaps)
-            if subscription.end_date and subscription.end_date > datetime.utcnow():
+            # Use Stripe's actual period end for renewal too
+            stripe_period_end = None
+            lines_data = invoice.get('lines', {}).get('data', [])
+            if lines_data:
+                stripe_period_end = lines_data[0].get('period', {}).get('end')
+
+            if stripe_period_end:
+                subscription.end_date = datetime.utcfromtimestamp(stripe_period_end)
+            elif subscription.end_date and subscription.end_date > datetime.utcnow():
                 subscription.end_date = subscription.end_date + timedelta(days=plan.duration_days)
             else:
                 subscription.end_date = datetime.utcnow() + timedelta(days=plan.duration_days)
