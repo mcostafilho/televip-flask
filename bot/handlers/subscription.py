@@ -843,10 +843,15 @@ async def show_subscription_detail(update: Update, context: ContextTypes.DEFAULT
                 InlineKeyboardButton("↩ Voltar", callback_data="subs_active")
             ])
         else:
-            # Expirada ou cancelada
+            # Expirada ou cancelada — checar se grupo aceita novas assinaturas
+            has_plans = False
             if group and group.is_active:
+                has_plans = session.query(PricingPlan).filter_by(
+                    group_id=group.id, is_active=True
+                ).first() is not None
+            if has_plans:
                 keyboard.append([
-                    InlineKeyboardButton("Assinar Novamente", callback_data=f"group_{group.id}")
+                    InlineKeyboardButton("🔄 Assinar Novamente", callback_data=f"group_{group.id}")
                 ])
             keyboard.append([
                 InlineKeyboardButton("💳 Pagamentos", callback_data=f"sub_txns_{sub.id}")
@@ -947,13 +952,23 @@ async def show_subscription_history(update: Update, context: ContextTypes.DEFAUL
             if group_sub_count > 1:
                 text += f"   ({group_sub_count} assinaturas)\n"
 
-        # Botões: 1 por grupo
+        # Botões: por grupo — detalhes + assinar novamente se disponível
         keyboard = []
         for sub in page_items:
-            group_name_short = sub.group.name[:25] if sub.group else "N/A"
-            keyboard.append([
-                InlineKeyboardButton(group_name_short, callback_data=f"sub_detail_{sub.id}")
-            ])
+            group = sub.group
+            group_name_short = group.name[:18] if group else "N/A"
+
+            # Checar se o grupo aceita novas assinaturas (ativo + tem planos ativos)
+            has_plans = False
+            if group and group.is_active:
+                has_plans = session.query(PricingPlan).filter_by(
+                    group_id=group.id, is_active=True
+                ).first() is not None
+
+            row = [InlineKeyboardButton(f"📋 {group_name_short}", callback_data=f"sub_detail_{sub.id}")]
+            if has_plans:
+                row.append(InlineKeyboardButton("🔄 Assinar", callback_data=f"group_{group.id}"))
+            keyboard.append(row)
 
         # Paginação
         nav_row = []
