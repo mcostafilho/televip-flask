@@ -111,6 +111,57 @@
             </div>
         </div>
 
+        <!-- Retenção e Churn -->
+        <div class="d-flex align-items-center gap-2 mb-3 mt-2">
+            <i class="bi bi-arrow-repeat" style="font-size: 1.1rem; color: #8b8fad;"></i>
+            <h5 class="mb-0" style="color: var(--galactic-text-bright);">Retenção e Churn</h5>
+        </div>
+        <div class="analytics-grid">
+            <div class="stat-card stat-danger">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon danger"><i class="bi bi-person-dash-fill"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Churn no Período</p>
+                        <h3 class="mb-0"><span class="countup" data-target="{{ stats.churned_subs }}" data-decimals="0">0</span></h3>
+                        <small class="text-muted">assinantes perdidos</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-danger">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon danger"><i class="bi bi-graph-down"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Taxa de Churn</p>
+                        <h3 class="mb-0"><span class="countup" data-target="{{ stats.churn_rate }}">0</span>%</h3>
+                        <small class="text-muted">do total no período</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-warning">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon warning"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Em Risco</p>
+                        <h3 class="mb-0"><span class="countup" data-target="{{ stats.at_risk }}" data-decimals="0">0</span></h3>
+                        <small class="text-muted">vencem em 7 dias</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-info">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon info"><i class="bi bi-clock-history"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Duração Média</p>
+                        <h3 class="mb-0"><span class="countup" data-target="{{ stats.avg_duration }}">0</span> <small>dias</small></h3>
+                        <small class="text-muted">assinaturas encerradas</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Gráficos -->
         <div class="row g-4 mb-4">
             <div class="col-lg-8">
@@ -145,6 +196,17 @@
                     <h5><i class="bi bi-pie-chart"></i> Receita por Plano</h5>
                     <div class="chart-container" style="height: 300px;">
                         <canvas id="planChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-lg-8">
+                <div class="content-card">
+                    <h5><i class="bi bi-graph-down" style="color: #f87171;"></i> Churn por Dia</h5>
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="churnChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -194,6 +256,10 @@
                             <div class="row-metric">
                                 <span class="row-metric-value" style="color: var(--galactic-text-bright);">R$ {{ "%.2f"|format(group.average_ticket or 0) }}</span>
                                 <span class="row-metric-label">ticket médio</span>
+                            </div>
+                            <div class="row-metric">
+                                <span class="row-metric-value" style="color: #f87171;">{{ group.churned or 0 }}</span>
+                                <span class="row-metric-label">churn</span>
                             </div>
                         </div>
                     </div>
@@ -342,6 +408,39 @@ new Chart(document.getElementById('planChart').getContext('2d'), {
         plugins: {
             legend: { position: 'bottom', labels: { color: '#8b8fad', padding: 15, usePointStyle: true, font: { size: 11 } } },
             tooltip: { ...galacticTooltip, callbacks: { label: ctx => { const pct = ((ctx.parsed / ctx.dataset.data.reduce((a,b)=>a+b,0))*100).toFixed(1); return ctx.label + ': R$ ' + ctx.parsed.toFixed(2) + ' (' + pct + '%)'; } } }
+        }
+    }
+});
+
+// Churn line chart
+new Chart(document.getElementById('churnChart').getContext('2d'), {
+    type: 'line',
+    data: {
+        labels: chartsData.churn_by_day.labels,
+        datasets: [{
+            label: 'Churn',
+            data: chartsData.churn_by_day.data,
+            borderColor: '#f87171',
+            backgroundColor: 'rgba(248, 113, 113, 0.12)',
+            borderWidth: 3,
+            tension: 0.4,
+            fill: true,
+            pointRadius: 4,
+            pointBackgroundColor: '#f87171',
+            pointBorderColor: 'rgba(11, 14, 26, 0.8)',
+            pointBorderWidth: 2,
+            pointHoverRadius: 6
+        }]
+    },
+    options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: { ...galacticTooltip, callbacks: { label: ctx => 'Churn: ' + ctx.parsed.y } }
+        },
+        scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b8fad', font: { size: 11 } } },
+            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b8fad', stepSize: 1, precision: 0 } }
         }
     }
 });

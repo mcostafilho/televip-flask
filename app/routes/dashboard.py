@@ -10,7 +10,7 @@ from app.utils.email import send_password_reset_email
 from app.utils.admin_helpers import get_effective_creator, is_admin_viewing
 
 logger = logging.getLogger(__name__)
-from sqlalchemy import func, and_, desc
+from sqlalchemy import func, and_, or_, desc
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -694,6 +694,87 @@ def analytics():
     for date_obj in date_list:
         subscribers_data.append(subscribers_dict.get(date_obj, 0))
     
+    # 2b. Churn metrics
+    churned_subs = Subscription.query.join(Group).filter(
+        Group.creator_id == effective.id,
+        Subscription.status.in_(['expired', 'cancelled']),
+        Subscription.end_date >= start_date,
+        Subscription.end_date <= end_date
+    ).count()
+
+    active_at_start = Subscription.query.join(Group).filter(
+        Group.creator_id == effective.id,
+        Subscription.start_date < start_date,
+        Subscription.end_date >= start_date
+    ).count()
+
+    churn_denominator = active_at_start + new_subscribers
+    churn_rate = (churned_subs / churn_denominator * 100) if churn_denominator > 0 else 0
+
+    at_risk = Subscription.query.join(Group).filter(
+        Group.creator_id == effective.id,
+        Subscription.status == 'active',
+        Subscription.end_date <= end_date + timedelta(days=7),
+        Subscription.end_date >= end_date,
+        or_(
+            Subscription.cancel_at_period_end == True,
+            Subscription.auto_renew == False
+        )
+    ).count()
+
+    avg_duration_result = db.session.query(
+        func.avg(
+            func.extract('epoch', Subscription.end_date) - func.extract('epoch', Subscription.start_date)
+        )
+    ).join(Group).filter(
+        Group.creator_id == effective.id,
+        Subscription.status.in_(['expired', 'cancelled']),
+        Subscription.end_date >= start_date,
+        Subscription.end_date <= end_date
+    ).scalar()
+
+    avg_duration = round(float(avg_duration_result) / 86400, 1) if avg_duration_result else 0
+
+    # Daily churn for chart
+    daily_churn = db.session.query(
+        func.date(Subscription.end_date).label('date'),
+        func.count(Subscription.id).label('count')
+    ).join(Group).filter(
+        Group.creator_id == effective.id,
+        Subscription.status.in_(['expired', 'cancelled']),
+        func.date(Subscription.end_date) >= start_date.date(),
+        func.date(Subscription.end_date) <= end_date.date()
+    ).group_by(
+        func.date(Subscription.end_date)
+    ).all()
+
+    churn_dict = {}
+    for c in daily_churn:
+        if isinstance(c.date, str):
+            date_obj = datetime.strptime(c.date, '%Y-%m-%d').date()
+        else:
+            date_obj = c.date
+        churn_dict[date_obj] = c.count
+
+    churn_data = []
+    for date_obj in date_list:
+        churn_data.append(churn_dict.get(date_obj, 0))
+
+    # Churn by group for performance table
+    churn_by_group_query = db.session.query(
+        Subscription.group_id,
+        func.count(Subscription.id).label('count')
+    ).join(Group).filter(
+        Group.creator_id == effective.id,
+        Subscription.status.in_(['expired', 'cancelled']),
+        Subscription.end_date >= start_date,
+        Subscription.end_date <= end_date
+    ).group_by(
+        Subscription.group_id
+    ).all()
+
+    churn_by_group = {row.group_id: row.count for row in churn_by_group_query}
+
     # 3. Receita por grupo
     group_revenue = db.session.query(
         Group.name,
@@ -778,14 +859,19 @@ def analytics():
         ).count()
         
         group.average_ticket = float(group_period_revenue) / group_transactions if group_transactions > 0 else 0
-    
+        group.churned = churn_by_group.get(group.id, 0)
+
     # Preparar dados finais
     stats = {
         'total_revenue': float(total_revenue),
         'total_transactions': total_transactions,
         'average_ticket': average_ticket,
         'total_subscribers': total_subscribers,
-        'new_subscribers': new_subscribers
+        'new_subscribers': new_subscribers,
+        'churned_subs': churned_subs,
+        'churn_rate': round(churn_rate, 1),
+        'at_risk': at_risk,
+        'avg_duration': avg_duration
     }
     
     charts_data = {
@@ -804,6 +890,10 @@ def analytics():
         'revenue_by_plan': {
             'labels': plan_labels if plan_labels else ['Sem dados'],
             'data': plan_data if plan_data else [0]
+        },
+        'churn_by_day': {
+            'labels': revenue_labels,
+            'data': churn_data
         }
     }
     
