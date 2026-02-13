@@ -38,7 +38,9 @@ def _payment_method_keyboard(group_id):
 def _order_summary_text(checkout_data):
     """Texto do resumo do pedido."""
     is_lifetime = checkout_data.get('is_lifetime', False)
-    is_plan_change = 'trial_end' in checkout_data
+    is_renewal = checkout_data.get('is_renewal', False)
+    has_trial = 'trial_end' in checkout_data
+    is_plan_change = has_trial and not is_renewal
 
     if is_lifetime:
         duration_text = "Vitalício"
@@ -47,8 +49,15 @@ def _order_summary_text(checkout_data):
         duration_text = f"{checkout_data['duration_days']} dias"
         type_text = "Recorrente"
 
+    if is_plan_change:
+        title = "Troca de plano"
+    elif is_renewal:
+        title = "Renovação"
+    else:
+        title = "Resumo do pedido"
+
     text = (
-        f"<b>{'Troca de plano' if is_plan_change else 'Resumo do pedido'}</b>\n\n"
+        f"<b>{title}</b>\n\n"
         f"<pre>"
         f"Grupo:    {checkout_data['group_name']}\n"
         f"Plano:    {checkout_data['plan_name']}\n"
@@ -59,13 +68,14 @@ def _order_summary_text(checkout_data):
         f"</pre>"
     )
 
-    if is_plan_change:
+    if has_trial:
         from datetime import datetime as dt
         trial_dt = dt.utcfromtimestamp(checkout_data['trial_end'])
         new_end = trial_dt + timedelta(days=checkout_data['duration_days'])
+        action = "A renovação começa" if is_renewal else "O novo plano começa"
         text += (
             f"\n\n📌 Seu plano atual continua válido.\n"
-            f"O novo plano começa em <code>{format_date(trial_dt)}</code>\n"
+            f"{action} em <code>{format_date(trial_dt)}</code>\n"
             f"e vale até <code>{format_date(new_end)}</code>.\n\n"
             f"<i>Seu cartão será cobrado somente na data de início.</i>"
         )

@@ -330,7 +330,9 @@ async def show_urgent_renewals(update: Update, context: ContextTypes.DEFAULT_TYP
         )
 
 async def process_renewal(update: Update, context: ContextTypes.DEFAULT_TYPE, sub_id: int):
-    """Processar renovação de uma assinatura específica"""
+    """Processar renovação — reutiliza fluxo de pagamento existente (pay_stripe/pay_pix)."""
+    from bot.handlers.payment import _cancel_pending, _order_summary_text
+
     query = update.callback_query
 
     with get_db_session() as session:
@@ -342,46 +344,58 @@ async def process_renewal(update: Update, context: ContextTypes.DEFAULT_TYPE, su
 
         group = sub.group
         plan = sub.plan
-        group_name = escape_html(group.name)
-        plan_name = escape_html(plan.name)
-        type_label = "canal" if group.chat_type == 'channel' else "grupo"
+        if not group or not plan:
+            await query.edit_message_text("Grupo ou plano não encontrado.")
+            return
 
-        final_price = float(plan.price)
+        now = datetime.utcnow()
+        still_active = sub.status == 'active' and sub.end_date and sub.end_date > now
+        amount = float(plan.price)
+        platform_fee = amount * 0.10
 
-        text = (
-            f"<b>Renovar assinatura</b>\n\n"
-            f"<pre>"
-            f"{type_label.capitalize()}:  {group.name}\n"
-            f"Plano:     {plan.name}\n"
-            f"Duração:   {plan.duration_days} dias\n"
-            f"Valor:     {format_currency(final_price)}"
-            f"</pre>"
-        )
-
-        # Armazenar dados para pagamento
-        context.user_data['renewal'] = {
-            'subscription_id': sub_id,
+        checkout_data = {
             'group_id': group.id,
             'plan_id': plan.id,
-            'amount': final_price,
+            'amount': amount,
+            'platform_fee': platform_fee,
+            'creator_amount': amount - platform_fee,
+            'duration_days': plan.duration_days,
+            'is_lifetime': False,
+            'group_name': group.name,
+            'plan_name': plan.name,
+            'is_renewal': True,
         }
 
-        keyboard = [
-            [InlineKeyboardButton("💳 Cartão / Boleto", callback_data="pay_renewal_stripe")],
-            [InlineKeyboardButton("⚡ PIX", callback_data="pay_renewal_pix")],
-            [InlineKeyboardButton("Cancelar", callback_data="check_renewals")]
-        ]
+        if still_active:
+            # Sub ainda ativa: cobrança futura, só cartão
+            checkout_data['trial_end'] = int(sub.end_date.timestamp())
+            checkout_data['existing_sub_id'] = sub.id
+
+        # Limpar pendentes anteriores e salvar checkout
+        _cancel_pending(context)
+        context.user_data['checkout'] = checkout_data
+
+        text = _order_summary_text(checkout_data)
+
+        if still_active:
+            text += "\n\n<i>Confirme com seu cartão:</i>"
+            keyboard = [
+                [InlineKeyboardButton("💳 Confirmar com Cartão", callback_data="pay_stripe")],
+                [InlineKeyboardButton("↩ Voltar", callback_data=f"sub_detail_{sub.id}")]
+            ]
+        else:
+            text += "\n\n<i>Escolha a forma de pagamento:</i>"
+            keyboard = [
+                [InlineKeyboardButton("💳 Cartão / Boleto", callback_data="pay_stripe")],
+                [InlineKeyboardButton("⚡ PIX", callback_data="pay_pix")],
+                [InlineKeyboardButton("↩ Voltar", callback_data=f"sub_detail_{sub.id}")]
+            ]
 
         await query.edit_message_text(
             text,
             parse_mode=ParseMode.HTML,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
-
-async def handle_renewal_pix_coming_soon(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """PIX para renovação — em desenvolvimento."""
-    query = update.callback_query
-    await query.answer("PIX em breve!", show_alert=True)
 
 
 async def cancel_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -665,6 +679,7 @@ def _billing_reason_text(reason):
         'subscription_create': 'Assinatura inicial',
         'subscription_cycle': 'Renovação',
         'lifetime_purchase': 'Compra vitalícia',
+        'plan_change': 'Troca de plano',
     }
     return mapping.get(reason, reason or 'Pagamento')
 

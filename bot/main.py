@@ -40,7 +40,6 @@ from bot.handlers.subscription import (
     status_command, handle_renewal,
     cancel_subscription, confirm_cancel_subscription,
     reactivate_subscription, get_invite_link,
-    handle_renewal_pix_coming_soon,
     show_active_subscriptions, show_subscription_detail,
     show_subscription_history, show_subscription_transactions
 )
@@ -203,7 +202,6 @@ def setup_handlers(application: Application) -> None:
     
     # Callbacks de renovação
     application.add_handler(CallbackQueryHandler(handle_renewal, pattern=r"^renew_\d+$"))
-    application.add_handler(CallbackQueryHandler(handle_renewal_pix_coming_soon, pattern=r"^pay_renewal_pix$"))
 
     # Callbacks de gestão de assinaturas
     application.add_handler(CallbackQueryHandler(show_active_subscriptions, pattern=r"^subs_active(_p\d+)?$"))
