@@ -73,8 +73,57 @@ def get_or_create_stripe_price(plan, group) -> str:
     """
     try:
         if plan.stripe_price_id:
-            logger.info(f"Reusing Stripe price {plan.stripe_price_id} for plan {plan.id}")
-            return plan.stripe_price_id
+            # Validate that cached price matches current plan settings
+            try:
+                cached_price = stripe.Price.retrieve(plan.stripe_price_id)
+                is_lifetime = getattr(plan, 'is_lifetime', False) or plan.duration_days == 0
+
+                if is_lifetime:
+                    # Lifetime should be one-time (no recurring)
+                    if cached_price.recurring:
+                        logger.warning(f"Price {plan.stripe_price_id} has recurring but plan is lifetime — recreating")
+                    else:
+                        price_ok = cached_price.unit_amount == int(float(plan.price) * 100)
+                        if price_ok:
+                            logger.info(f"Reusing Stripe price {plan.stripe_price_id} for plan {plan.id}")
+                            return plan.stripe_price_id
+                        else:
+                            logger.warning(f"Price {plan.stripe_price_id} amount mismatch — recreating")
+                else:
+                    # Recurring: validate interval matches duration_days
+                    days = plan.duration_days
+                    if days == 7:
+                        exp_interval, exp_count = 'week', 1
+                    elif days == 30:
+                        exp_interval, exp_count = 'month', 1
+                    elif days == 90:
+                        exp_interval, exp_count = 'month', 3
+                    elif days == 180:
+                        exp_interval, exp_count = 'month', 6
+                    elif days == 365:
+                        exp_interval, exp_count = 'year', 1
+                    else:
+                        exp_interval, exp_count = 'day', days
+
+                    rec = cached_price.recurring
+                    price_amount_ok = cached_price.unit_amount == int(float(plan.price) * 100)
+                    interval_ok = (rec and rec.interval == exp_interval
+                                   and rec.interval_count == exp_count)
+
+                    if price_amount_ok and interval_ok:
+                        logger.info(f"Reusing Stripe price {plan.stripe_price_id} for plan {plan.id}")
+                        return plan.stripe_price_id
+                    else:
+                        logger.warning(
+                            f"Price {plan.stripe_price_id} mismatch for plan {plan.id}: "
+                            f"amount_ok={price_amount_ok}, interval_ok={interval_ok} "
+                            f"(expected {exp_interval}/{exp_count}) — recreating"
+                        )
+            except stripe.error.StripeError as e:
+                logger.warning(f"Could not validate cached price {plan.stripe_price_id}: {e} — recreating")
+
+            # Clear stale price_id so a new one is created below
+            plan.stripe_price_id = None
 
         # Create Stripe Product
         product_id = plan.stripe_product_id
