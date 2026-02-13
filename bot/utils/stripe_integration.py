@@ -171,9 +171,9 @@ async def create_subscription_checkout(
         Dict with success, session_id, url
     """
     try:
-        # Só cartão quando: troca de plano (trial_end) ou plano curto (card_only)
-        card_only = trial_end or metadata.get('card_only') == 'true'
-        payment_methods = ['card'] if card_only else ['card', 'boleto']
+        # Só cartão quando: troca de plano (trial_end) ou plano curto (no_boleto)
+        no_boleto = trial_end or metadata.get('no_boleto') == 'true'
+        payment_methods = ['card'] if no_boleto else ['card', 'boleto']
 
         params = dict(
             mode='subscription',

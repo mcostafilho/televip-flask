@@ -385,15 +385,15 @@ async def process_renewal(update: Update, context: ContextTypes.DEFAULT_TYPE, su
             ]
         else:
             short_plan = plan.duration_days and plan.duration_days <= 4
+            text += "\n\n<i>Escolha a forma de pagamento:</i>"
             if short_plan:
-                checkout_data['card_only'] = True
-                text += "\n\n<i>Confirme com seu cartão:</i>"
+                checkout_data['no_boleto'] = True
                 keyboard = [
                     [InlineKeyboardButton("💳 Cartão", callback_data="pay_stripe")],
+                    [InlineKeyboardButton("⚡ PIX", callback_data="pay_pix")],
                     [InlineKeyboardButton("↩ Voltar", callback_data=f"sub_detail_{sub.id}")]
                 ]
             else:
-                text += "\n\n<i>Escolha a forma de pagamento:</i>"
                 keyboard = [
                     [InlineKeyboardButton("💳 Cartão / Boleto", callback_data="pay_stripe")],
                     [InlineKeyboardButton("⚡ PIX", callback_data="pay_pix")],
