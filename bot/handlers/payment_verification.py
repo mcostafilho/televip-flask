@@ -207,8 +207,31 @@ async def handle_payment_confirmed(query, context, transaction, db_session):
     plan_name = escape_html(subscription.plan.name) if subscription.plan else "N/A"
     type_label = "canal" if group.chat_type == 'channel' else "grupo"
 
+    # Detectar troca de plano (start_date no futuro)
+    is_plan_change = (
+        transaction.billing_reason == 'plan_change'
+        or subscription.start_date > datetime.utcnow() + timedelta(minutes=5)
+    )
+
+    if is_plan_change:
+        # Troca de plano — não precisa de link, já tem acesso pelo plano atual
+        text = (
+            f"<b>Troca de plano confirmada!</b>\n\n"
+            f"<pre>"
+            f"{type_label.capitalize()}:  {group.name}\n"
+            f"Novo plano: {subscription.plan.name if subscription.plan else 'N/A'}\n"
+            f"Início:     {format_date(subscription.start_date)}\n"
+            f"Validade:   {format_date(subscription.end_date)}"
+            f"</pre>\n\n"
+            f"Seu plano atual continua válido até a data de início.\n"
+            f"<i>Seu cartão será cobrado automaticamente em {format_date(subscription.start_date)}.</i>"
+        )
+        keyboard = [[
+            InlineKeyboardButton("Minhas Assinaturas", callback_data="subs_active")
+        ]]
+
     # Preparar mensagem baseada no resultado
-    if user_added:
+    elif user_added:
         text = (
             f"<b>Pagamento confirmado!</b>\n\n"
             f"Você foi adicionado ao {type_label} <b>{group_name}</b>.\n\n"
@@ -223,10 +246,10 @@ async def handle_payment_confirmed(query, context, transaction, db_session):
         text = (
             f"<b>Pagamento confirmado!</b>\n\n"
             f"<pre>"
-            f"Grupo:     {group.name}\n"
-            f"Plano:     {subscription.plan.name if subscription.plan else 'N/A'}\n"
-            f"Validade:  {format_date(subscription.end_date)}\n"
-            f"Valor:     {format_currency(transaction.amount)}"
+            f"{type_label.capitalize()}:  {group.name}\n"
+            f"Plano:      {subscription.plan.name if subscription.plan else 'N/A'}\n"
+            f"Validade:   {format_date(subscription.end_date)}\n"
+            f"Valor:      {format_currency(transaction.amount)}"
             f"</pre>\n\n"
             f"Clique abaixo para entrar no {type_label}.\n\n"
             f"<i>O link é de uso único — não compartilhe.</i>"

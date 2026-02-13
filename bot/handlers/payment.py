@@ -38,6 +38,8 @@ def _payment_method_keyboard(group_id):
 def _order_summary_text(checkout_data):
     """Texto do resumo do pedido."""
     is_lifetime = checkout_data.get('is_lifetime', False)
+    is_plan_change = 'trial_end' in checkout_data
+
     if is_lifetime:
         duration_text = "Vitalício"
         type_text = "Pagamento único"
@@ -45,8 +47,8 @@ def _order_summary_text(checkout_data):
         duration_text = f"{checkout_data['duration_days']} dias"
         type_text = "Recorrente"
 
-    return (
-        f"<b>Resumo do pedido</b>\n\n"
+    text = (
+        f"<b>{'Troca de plano' if is_plan_change else 'Resumo do pedido'}</b>\n\n"
         f"<pre>"
         f"Grupo:    {checkout_data['group_name']}\n"
         f"Plano:    {checkout_data['plan_name']}\n"
@@ -56,6 +58,19 @@ def _order_summary_text(checkout_data):
         f"Total:    {format_currency(checkout_data['amount'])}"
         f"</pre>"
     )
+
+    if is_plan_change:
+        from datetime import datetime as dt
+        trial_dt = dt.utcfromtimestamp(checkout_data['trial_end'])
+        new_end = trial_dt + timedelta(days=checkout_data['duration_days'])
+        text += (
+            f"\n\n📌 Seu plano atual continua válido.\n"
+            f"O novo plano começa em <code>{format_date(trial_dt)}</code>\n"
+            f"e vale até <code>{format_date(new_end)}</code>.\n\n"
+            f"<i>Seu cartão será cobrado somente na data de início.</i>"
+        )
+
+    return text
 
 
 def _cancel_pending(context, telegram_user_id=None):
@@ -357,19 +372,21 @@ async def start_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         text = _order_summary_text(checkout_data)
 
-        if existing_sub and not is_lifetime:
-            text += (
-                f"\n\n⚠️ <i>Seu plano atual continua até "
-                f"{format_date(existing_sub.end_date)}.\n"
-                f"A cobrança do novo plano inicia após o vencimento.</i>"
-            )
-
-        text += "\n\n<i>Escolha a forma de pagamento:</i>"
+        if checkout_data.get('trial_end'):
+            # Troca de plano: só cartão (cobrança futura)
+            text += "\n\n<i>Confirme com seu cartão:</i>"
+            keyboard = [
+                [InlineKeyboardButton("💳 Confirmar com Cartão", callback_data="pay_stripe")],
+                [InlineKeyboardButton("↩ Voltar", callback_data=f"change_plan_{group_id}")]
+            ]
+        else:
+            text += "\n\n<i>Escolha a forma de pagamento:</i>"
+            keyboard = _payment_method_keyboard(group_id)
 
         await query.edit_message_text(
             text,
             parse_mode=ParseMode.HTML,
-            reply_markup=InlineKeyboardMarkup(_payment_method_keyboard(group_id))
+            reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
 

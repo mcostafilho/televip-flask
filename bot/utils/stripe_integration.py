@@ -171,6 +171,9 @@ async def create_subscription_checkout(
         Dict with success, session_id, url
     """
     try:
+        # Troca de plano (trial_end): só cartão (cobrança futura)
+        payment_methods = ['card'] if trial_end else ['card', 'boleto']
+
         params = dict(
             mode='subscription',
             customer=customer_id,
@@ -178,7 +181,7 @@ async def create_subscription_checkout(
                 'price': price_id,
                 'quantity': 1
             }],
-            payment_method_types=['card', 'boleto'],
+            payment_method_types=payment_methods,
             metadata=metadata,
             success_url=success_url,
             cancel_url=cancel_url,
@@ -315,7 +318,8 @@ async def verify_payment(payment_id: str) -> bool:
             try:
                 session = stripe.checkout.Session.retrieve(payment_id)
                 logger.info(f"Session encontrada - Status: {session.payment_status}")
-                return session.payment_status == 'paid'
+                # 'paid' = pagamento imediato, 'no_payment_required' = trial/troca de plano
+                return session.payment_status in ('paid', 'no_payment_required')
             except stripe.error.InvalidRequestError:
                 logger.warning(f"Session {payment_id} não encontrada")
                 return False
