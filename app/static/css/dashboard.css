@@ -2400,6 +2400,25 @@
     }
 }
 
+/* Mobile modal fix — ensure modals are visible and centered on viewport */
+@media (max-width: 767px) {
+    .modal {
+        padding: 0 !important;
+    }
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+    .modal-dialog.modal-lg,
+    .modal-dialog.modal-xl {
+        max-width: calc(100% - 1rem);
+    }
+    .modal-content {
+        max-height: calc(100vh - 1rem);
+        max-height: calc(100dvh - 1rem);
+        overflow-y: auto;
+    }
+}
+
 /* Small Mobile (max 575px) */
 @media (max-width: 575px) {
     .dashboard-container {
