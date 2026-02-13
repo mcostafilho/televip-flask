@@ -203,10 +203,11 @@ async def show_group_plans(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = []
         for plan in plans:
             plan_name = escape_html(plan.name)
-            text += f"\n<code>{plan_name}</code> — {format_currency(plan.price)} / {plan.duration_days} dias"
+            dur = "Vitalício" if plan.duration_days == 0 else f"{plan.duration_days} dias"
+            text += f"\n<code>{plan_name}</code> — {format_currency(plan.price)} / {dur}"
             keyboard.append([
                 InlineKeyboardButton(
-                    f"{plan.name} - {format_currency(plan.price)}",
+                    f"{plan.name} ({dur}) - {format_currency(plan.price)}",
                     callback_data=f"plan_{group.id}_{plan.id}"
                 )
             ])
@@ -299,10 +300,11 @@ async def show_change_plan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = []
         for plan in plans:
             plan_name = escape_html(plan.name)
-            text += f"\n<code>{plan_name}</code> — {format_currency(plan.price)} / {plan.duration_days} dias"
+            dur = "Vitalício" if plan.duration_days == 0 else f"{plan.duration_days} dias"
+            text += f"\n<code>{plan_name}</code> — {format_currency(plan.price)} / {dur}"
             keyboard.append([
                 InlineKeyboardButton(
-                    f"{plan.name} - {format_currency(plan.price)}",
+                    f"{plan.name} ({dur}) - {format_currency(plan.price)}",
                     callback_data=f"plan_{group.id}_{plan.id}"
                 )
             ])

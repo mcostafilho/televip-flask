@@ -328,9 +328,10 @@ async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_
             plan_name = escape_html(plan.name)
             text += f"\n<code>{plan_name}</code> — {format_currency(plan.price)} / {plan.duration_days} dias"
 
+            btn_duration = "Vitalício" if plan.duration_days == 0 else f"{plan.duration_days} dias"
             keyboard.append([
                 InlineKeyboardButton(
-                    f"{plan.name} - {format_currency(plan.price)}",
+                    f"{plan.name} ({btn_duration}) - {format_currency(plan.price)}",
                     callback_data=f"plan_{group.id}_{plan.id}"
                 )
             ])

@@ -833,11 +833,13 @@ async def show_subscription_detail(update: Update, context: ContextTypes.DEFAULT
 
         renewal = _renewal_text(sub) if is_active and not is_lifetime else "—"
 
+        cycle_text = "Vitalício" if is_lifetime else f"{plan.duration_days} dias" if plan else "N/A"
         text = (
             f"{emoji} <b>{group_name}</b>\n"
             f"{type_label.capitalize()}\n\n"
             f"<pre>"
             f"Plano:      {plan_name}\n"
+            f"Duração:    {cycle_text}\n"
             f"Status:     {status_text}\n"
             f"Início:     {format_date(sub.start_date)}\n"
             f"Expira:     {'Nunca' if is_lifetime else format_date(sub.end_date)}\n"
