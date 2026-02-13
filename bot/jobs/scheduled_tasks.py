@@ -68,92 +68,98 @@ async def send_reminders_loop():
 
 
 async def check_expired_subscriptions():
-    """Verificar e processar assinaturas expiradas e suspensas (todas as categorias)"""
+    """Verificar assinaturas expiradas: avisar → grace period 2 dias → remover"""
     try:
         with get_db_session() as session:
             now = datetime.utcnow()
-            # Grace period for Stripe auto-renew subs (payment retry window)
-            grace_cutoff = now - timedelta(days=3)
+            grace_days = 2
+            grace_cutoff = now - timedelta(days=grace_days)
+            stripe_grace_cutoff = now - timedelta(days=3)
 
-            # 1) Fetch ALL active subscriptions past their end_date
-            all_expired = session.query(Subscription).filter(
+            # ── Fase 1: Marcar como expiradas + avisar (NÃO remove ainda) ──
+            newly_expired = session.query(Subscription).filter(
                 Subscription.status == 'active',
                 Subscription.end_date < now
             ).all()
 
-            # 2) Fetch suspended/disputed subscriptions — enforce removal
-            suspended_subs = session.query(Subscription).filter(
-                Subscription.status.in_(['suspended', 'disputed'])
-            ).all()
-
-            processed = 0
+            warned = 0
             skipped = 0
-
-            # Process expired active subscriptions
-            for sub in all_expired:
+            for sub in newly_expired:
                 is_stripe_managed = (
                     sub.stripe_subscription_id
                     and not sub.is_legacy
                 )
-
-                # For Stripe auto-renew subs, allow grace period for payment retry
-                # Stripe may still process a renewal or fire webhook
+                # Stripe auto-renew (não cancelado): grace period maior para retry
                 if (is_stripe_managed
                         and not sub.cancel_at_period_end
-                        and sub.end_date > grace_cutoff):
+                        and sub.end_date > stripe_grace_cutoff):
                     skipped += 1
                     continue
 
                 sub.status = 'expired'
-
-                # Remover usuario do grupo
-                await remove_from_group(sub)
-
-                # Notificar usuario
-                await notify_expiration(sub)
-
-                sub_type = "legacy" if not is_stripe_managed else "stripe"
+                await notify_expiration_warning(sub, grace_days)
+                warned += 1
                 logger.info(
-                    f"Assinatura {sub.id} ({sub_type}) expirada - "
-                    f"user {sub.telegram_user_id} removido do grupo {sub.group_id}"
+                    f"Sub {sub.id} expirada - aviso enviado, "
+                    f"remoção em {grace_days} dias"
                 )
-                processed += 1
 
-            # Process suspended/disputed subscriptions — ensure user is removed
+            # ── Fase 2: Remover do grupo após grace period de 2 dias ──
+            to_remove = session.query(Subscription).filter(
+                Subscription.status == 'expired',
+                Subscription.end_date < grace_cutoff,
+                Subscription.end_date > now - timedelta(days=30)
+            ).all()
+
+            removed = 0
+            for sub in to_remove:
+                # Pular se tem outra sub ativa para o mesmo grupo
+                has_active = session.query(Subscription).filter(
+                    Subscription.group_id == sub.group_id,
+                    Subscription.telegram_user_id == sub.telegram_user_id,
+                    Subscription.status == 'active',
+                    Subscription.end_date > now
+                ).first()
+                if has_active:
+                    continue
+
+                was_removed = await remove_from_group(sub)
+                if was_removed:
+                    await notify_removal(sub)
+                    removed += 1
+
+            # ── Fase 3: Suspensos/disputados — remover sempre ──
+            suspended_subs = session.query(Subscription).filter(
+                Subscription.status.in_(['suspended', 'disputed'])
+            ).all()
             suspended_processed = 0
             for sub in suspended_subs:
                 await remove_from_group(sub)
                 suspended_processed += 1
-                logger.info(
-                    f"Assinatura suspensa {sub.id} - "
-                    f"user {sub.telegram_user_id} removido do grupo {sub.group_id}"
-                )
 
             session.commit()
 
-            if processed or skipped or suspended_processed:
+            if warned or removed or skipped or suspended_processed:
                 logger.info(
-                    f"{processed} expiradas processadas, "
-                    f"{skipped} stripe auto-renew aguardando grace period, "
-                    f"{suspended_processed} suspensas re-verificadas"
+                    f"Expiradas: {warned} avisadas, {removed} removidas, "
+                    f"{skipped} stripe aguardando, {suspended_processed} suspensas"
                 )
-            else:
-                logger.info("Nenhuma assinatura expirada ou suspensa")
 
     except Exception as e:
         logger.error(f"Erro ao verificar expiradas: {e}")
 
 
 async def remove_from_group(subscription):
-    """Remover usuario do grupo via Telegram Bot API (respeitando whitelist e admins)"""
+    """Remover usuario do grupo via Telegram Bot API (respeitando whitelist e admins).
+    Returns True if user was actually removed, False otherwise."""
     if not _application:
         logger.warning("Bot nao disponivel para remover usuario")
-        return
+        return False
 
     try:
         group = subscription.group
         if not group or not group.telegram_id:
-            return
+            return False
 
         user_id = int(subscription.telegram_user_id)
         chat_id = int(group.telegram_id)
@@ -161,9 +167,9 @@ async def remove_from_group(subscription):
         # Verificar se esta na whitelist (criador) ou system whitelist (plataforma)
         if group.is_whitelisted(str(user_id)) or group.is_system_whitelisted(str(user_id)):
             logger.info(f"Usuario {user_id} na whitelist do grupo {chat_id} - nao removido")
-            return
+            return False
 
-        # Verificar se é admin do grupo
+        # Verificar status do membro no grupo
         try:
             member_info = await _application.bot.get_chat_member(
                 chat_id=chat_id,
@@ -171,9 +177,12 @@ async def remove_from_group(subscription):
             )
             if member_info.status in ['administrator', 'creator']:
                 logger.info(f"Usuario {user_id} e admin do grupo {chat_id} - nao removido")
-                return
+                return False
+            if member_info.status in ['left', 'kicked']:
+                # Já não está no grupo
+                return False
         except TelegramError:
-            pass  # Se falhar, tenta remover normalmente
+            return False  # Não conseguiu verificar — não remove
 
         # Ban e unban = kick (remove sem banir permanentemente)
         await _application.bot.ban_chat_member(
@@ -188,15 +197,18 @@ async def remove_from_group(subscription):
         )
 
         logger.info(f"Usuario {user_id} removido do grupo {chat_id}")
+        return True
 
     except TelegramError as e:
         logger.error(f"Erro Telegram ao remover usuario: {e}")
+        return False
     except Exception as e:
         logger.error(f"Erro ao remover do grupo: {e}")
+        return False
 
 
-async def notify_expiration(subscription):
-    """Notificar usuario sobre expiracao"""
+async def notify_expiration_warning(subscription, grace_days=2):
+    """Avisar usuario que assinatura expirou — tem X dias para renovar antes da remoção"""
     if not _application:
         return
 
@@ -205,16 +217,18 @@ async def notify_expiration(subscription):
         user_id = int(subscription.telegram_user_id)
 
         from bot.utils.format_utils import escape_html
+        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
         group_name = escape_html(group.name)
+        type_label = "canal" if group.chat_type == 'channel' else "grupo"
 
         text = (
             f"<b>Assinatura expirada</b>\n\n"
-            f"Sua assinatura de <b>{group_name}</b> expirou.\n"
-            f"Você foi removido do grupo automaticamente.\n\n"
-            f"Para renovar, clique abaixo."
+            f"Sua assinatura de <b>{group_name}</b> expirou.\n\n"
+            f"Você tem <b>{grace_days} dias</b> para renovar.\n"
+            f"Após esse prazo, será removido do {type_label} automaticamente."
         )
 
-        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
         keyboard = [[
             InlineKeyboardButton(
                 "Renovar Agora",
@@ -229,11 +243,52 @@ async def notify_expiration(subscription):
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
-    except TelegramError as e:
-        # Usuario pode ter bloqueado o bot
-        logger.warning(f"Nao foi possivel notificar usuario {subscription.telegram_user_id}: {e}")
+    except TelegramError:
+        logger.warning(f"Nao foi possivel avisar usuario {subscription.telegram_user_id}")
     except Exception as e:
         logger.error(f"Erro ao notificar expiracao: {e}")
+
+
+async def notify_removal(subscription):
+    """Notificar usuario que foi removido do grupo após grace period"""
+    if not _application:
+        return
+
+    try:
+        group = subscription.group
+        user_id = int(subscription.telegram_user_id)
+
+        from bot.utils.format_utils import escape_html
+        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
+        group_name = escape_html(group.name)
+        type_label = "canal" if group.chat_type == 'channel' else "grupo"
+
+        text = (
+            f"<b>Acesso removido</b>\n\n"
+            f"Você foi removido do {type_label} <b>{group_name}</b> "
+            f"por falta de renovação.\n\n"
+            f"Para voltar, assine novamente."
+        )
+
+        keyboard = [[
+            InlineKeyboardButton(
+                "Assinar Novamente",
+                callback_data=f"plan_{group.id}_{subscription.plan_id}"
+            )
+        ]]
+
+        await _application.bot.send_message(
+            chat_id=user_id,
+            text=text,
+            parse_mode=ParseMode.HTML,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+
+    except TelegramError:
+        logger.warning(f"Nao foi possivel notificar remocao de {subscription.telegram_user_id}")
+    except Exception as e:
+        logger.error(f"Erro ao notificar remocao: {e}")
 
 
 async def audit_members_loop():
