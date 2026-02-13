@@ -34,7 +34,7 @@ from bot.handlers.start import start_command, show_user_dashboard
 from bot.handlers.payment import (
     start_payment, handle_payment_method,
     list_user_subscriptions, handle_payment_success,
-    abandon_payment
+    abandon_payment, back_to_methods, show_group_plans
 )
 from bot.handlers.subscription import (
     status_command, handle_renewal,
@@ -165,8 +165,12 @@ def setup_handlers(application: Application) -> None:
     application.add_handler(CallbackQueryHandler(check_payment_status, pattern="^check_payment_status$"))
     application.add_handler(CallbackQueryHandler(handle_payment_error, pattern="^payment_error$"))
     application.add_handler(CallbackQueryHandler(abandon_payment, pattern="^abandon_payment$"))
+    application.add_handler(CallbackQueryHandler(back_to_methods, pattern="^back_to_methods$"))
+    application.add_handler(CallbackQueryHandler(show_group_plans, pattern=r"^group_\d+$"))
+    application.add_handler(CallbackQueryHandler(list_user_subscriptions, pattern="^my_subscriptions$"))
     application.add_handler(CallbackQueryHandler(handle_retry_payment, pattern="^retry_payment$"))
-        # Callbacks de navegação
+
+    # Callbacks de navegação
     application.add_handler(CallbackQueryHandler(handle_back_callback, pattern="^back_to_start$"))
     application.add_handler(CallbackQueryHandler(handle_cancel_callback, pattern="^cancel$"))
     application.add_handler(CallbackQueryHandler(handle_check_status_callback, pattern="^check_status$"))

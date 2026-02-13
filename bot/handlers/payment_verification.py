@@ -274,16 +274,17 @@ async def handle_payment_pending(query, context):
     stripe_url = context.user_data.get('stripe_checkout_url')
 
     text = (
-        "<b>Pagamento em processamento</b>\n\n"
-        "Complete o pagamento e clique em \"Verificar Novamente\".\n\n"
-        "<i>Se já pagou, aguarde alguns segundos.</i>"
+        "⏳ <b>Pagamento ainda não confirmado</b>\n\n"
+        "Se já pagou, aguarde alguns segundos\n"
+        "e clique em <b>Verificar</b> novamente."
     )
 
     keyboard = []
     if stripe_url:
-        keyboard.append([InlineKeyboardButton("Pagar Agora", url=stripe_url)])
-    keyboard.append([InlineKeyboardButton("Verificar Novamente", callback_data="check_payment_status")])
-    keyboard.append([InlineKeyboardButton("Cancelar Pendente", callback_data="abandon_payment")])
+        keyboard.append([InlineKeyboardButton("Pagar", url=stripe_url)])
+    keyboard.append([InlineKeyboardButton("🔄 Verificar", callback_data="check_payment_status")])
+    keyboard.append([InlineKeyboardButton("↩ Trocar Método", callback_data="back_to_methods")])
+    keyboard.append([InlineKeyboardButton("❌ Desistir", callback_data="abandon_payment")])
 
     await query.edit_message_text(
         text,

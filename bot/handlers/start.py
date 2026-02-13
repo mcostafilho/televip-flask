@@ -84,17 +84,22 @@ async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE
                 if pending_transactions and isinstance(pending_transactions, list):
                     pending_transactions = pending_transactions[:1]
 
+                stripe_url = context.user_data.get('stripe_checkout_url')
                 text = (
                     f"Olá, {name}!\n\n"
-                    f"⏳ <b>Pagamento pendente detectado</b>\n\n"
-                    f"Você tem um pagamento em processamento.\n"
-                    f"Verifique o status ou cancele para escolher outro método."
+                    f"⏳ <b>Pagamento pendente</b>\n\n"
+                    f"Você tem um pagamento em andamento.\n"
+                    f"Complete o pagamento ou escolha outra opção."
                 )
-                keyboard = [
-                    [InlineKeyboardButton("Verificar Pagamento", callback_data="check_payment_status")],
-                    [InlineKeyboardButton("Cancelar Pendente", callback_data="abandon_payment")],
+                keyboard = []
+                if stripe_url:
+                    keyboard.append([InlineKeyboardButton("Pagar", url=stripe_url)])
+                keyboard.extend([
+                    [InlineKeyboardButton("✅ Já Paguei", callback_data="check_payment_status")],
+                    [InlineKeyboardButton("↩ Trocar Método", callback_data="back_to_methods")],
+                    [InlineKeyboardButton("❌ Desistir", callback_data="abandon_payment")],
                     [InlineKeyboardButton("Menu Principal", callback_data="continue_to_menu")]
-                ]
+                ])
 
                 if is_callback:
                     await message.edit_text(
