@@ -116,6 +116,35 @@ async def handle_retry_payment(update: Update, context: ContextTypes.DEFAULT_TYP
     # Voltar ao início
     await handle_back_callback(update, context)
 
+async def handle_menu_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handler para botão fixo '📱 Menu'"""
+    await show_user_dashboard(update, context)
+
+async def handle_subs_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handler para botão fixo '✅ Assinaturas'"""
+    await status_command(update, context)
+
+async def handle_history_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handler para botão fixo '📋 Histórico' — envia inline e depois mostra histórico"""
+    from bot.handlers.subscription import show_subscription_history
+
+    # Criar callback query falso para reusar o handler
+    class FakeQuery:
+        def __init__(self, user, message):
+            self.from_user = user
+            self.message = message
+            self.data = "subs_history"
+        async def answer(self, text=""):
+            pass
+        async def edit_message_text(self, text, parse_mode=None, reply_markup=None):
+            await self.message.reply_text(text, parse_mode=parse_mode, reply_markup=reply_markup)
+
+    fake_update = Update(
+        update_id=update.update_id,
+        callback_query=FakeQuery(update.effective_user, update.message)
+    )
+    await show_subscription_history(fake_update, context)
+
 async def handle_unknown_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler para callbacks não reconhecidos"""
     query = update.callback_query
@@ -206,6 +235,20 @@ def setup_handlers(application: Application) -> None:
     application.add_handler(ChatMemberHandler(
         handle_chat_member_update,
         ChatMemberHandler.CHAT_MEMBER
+    ))
+
+    # Handlers para botões fixos do teclado persistente (texto exato)
+    application.add_handler(MessageHandler(
+        filters.Text(["📱 Menu"]) & filters.ChatType.PRIVATE,
+        handle_menu_button
+    ))
+    application.add_handler(MessageHandler(
+        filters.Text(["✅ Assinaturas"]) & filters.ChatType.PRIVATE,
+        handle_subs_button
+    ))
+    application.add_handler(MessageHandler(
+        filters.Text(["📋 Histórico"]) & filters.ChatType.PRIVATE,
+        handle_history_button
     ))
 
     # Handler genérico para callbacks não reconhecidos (deve ser o último)

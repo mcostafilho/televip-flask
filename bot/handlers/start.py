@@ -5,7 +5,7 @@ VERSÃO CORRIGIDA - Sem referências a plan.description
 """
 import logging
 from datetime import datetime, timedelta
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
 
@@ -19,6 +19,13 @@ from app.models import Group, Creator, PricingPlan, Subscription, Transaction
 from bot.handlers.payment_verification import check_payment_from_start
 
 logger = logging.getLogger(__name__)
+
+# Teclado fixo que aparece na parte inferior do chat
+PERSISTENT_KEYBOARD = ReplyKeyboardMarkup(
+    [[KeyboardButton("📱 Menu"), KeyboardButton("✅ Assinaturas"), KeyboardButton("📋 Histórico")]],
+    resize_keyboard=True,
+    is_persistent=True
+)
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -150,13 +157,19 @@ async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE
         if history_count > 0:
             keyboard.append([InlineKeyboardButton("📋 Histórico", callback_data="subs_history")])
 
-        reply_markup = InlineKeyboardMarkup(keyboard) if keyboard else None
+        inline_markup = InlineKeyboardMarkup(keyboard) if keyboard else None
 
         # Enviar ou editar mensagem
         if is_callback:
-            await message.edit_text(text, parse_mode=ParseMode.HTML, reply_markup=reply_markup)
+            await message.edit_text(text, parse_mode=ParseMode.HTML, reply_markup=inline_markup)
         else:
-            await message.reply_text(text, parse_mode=ParseMode.HTML, reply_markup=reply_markup)
+            # Mensagem nova: enviar teclado fixo + inline buttons
+            await message.reply_text(text, parse_mode=ParseMode.HTML, reply_markup=inline_markup)
+            # Enviar teclado persistente separado (não pode misturar com inline)
+            await message.reply_text(
+                "Use os botões abaixo para navegar:",
+                reply_markup=PERSISTENT_KEYBOARD
+            )
 
 async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_TYPE, group_identifier: str):
     """Iniciar fluxo de assinatura para um grupo específico (por slug ou ID legado)"""
