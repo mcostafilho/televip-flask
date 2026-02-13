@@ -62,15 +62,8 @@ logger = logging.getLogger(__name__)
 # HANDLERS ADICIONAIS QUE ESTAVAM FALTANDO
 
 async def handle_continue_to_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handler para continuar para o menu principal"""
-    query = update.callback_query
-    await query.answer()
-    
-    # Marcar para pular verificação de pendentes temporariamente
-    context.user_data['skip_pending_check'] = True
-    await show_user_dashboard(update, context)
-    # Remover flag após mostrar
-    context.user_data.pop('skip_pending_check', None)
+    """Handler para continuar para o menu principal (alias de back_to_start)"""
+    await handle_back_callback(update, context)
 
 async def handle_payment_error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler para erros de pagamento"""

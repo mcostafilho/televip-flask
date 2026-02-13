@@ -58,23 +58,43 @@ def _order_summary_text(checkout_data):
     )
 
 
-def _cancel_pending(context):
-    """Cancela transação/assinatura pendente no banco e limpa contexto."""
-    session_id = context.user_data.get('stripe_session_id')
-    if session_id:
-        try:
-            with get_db_session() as session:
-                txn = session.query(Transaction).filter_by(
-                    stripe_session_id=session_id, status='pending'
-                ).first()
-                if txn:
+def _cancel_pending(context, telegram_user_id=None):
+    """Cancela transação/assinatura pendente no banco e limpa contexto.
+    Se telegram_user_id fornecido, cancela TODAS as pendentes do usuário.
+    """
+    try:
+        with get_db_session() as session:
+            if telegram_user_id:
+                # Cancelar TODAS as transações pendentes do usuário
+                pending_txns = session.query(Transaction).join(
+                    Subscription
+                ).filter(
+                    Subscription.telegram_user_id == str(telegram_user_id),
+                    Transaction.status == 'pending'
+                ).all()
+                for txn in pending_txns:
                     txn.status = 'cancelled'
                     sub = txn.subscription
                     if sub and sub.status == 'pending':
                         sub.status = 'cancelled'
+                if pending_txns:
                     session.commit()
-        except Exception as e:
-            logger.error(f"Erro ao cancelar pendente: {e}")
+                    logger.info(f"Canceladas {len(pending_txns)} transações pendentes do usuário {telegram_user_id}")
+            else:
+                # Fallback: cancelar por session_id do contexto
+                session_id = context.user_data.get('stripe_session_id')
+                if session_id:
+                    txn = session.query(Transaction).filter_by(
+                        stripe_session_id=session_id, status='pending'
+                    ).first()
+                    if txn:
+                        txn.status = 'cancelled'
+                        sub = txn.subscription
+                        if sub and sub.status == 'pending':
+                            sub.status = 'cancelled'
+                        session.commit()
+    except Exception as e:
+        logger.error(f"Erro ao cancelar pendente: {e}")
 
     context.user_data.pop('stripe_session_id', None)
     context.user_data.pop('stripe_checkout_url', None)
@@ -456,9 +476,10 @@ async def abandon_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Cancelar pagamento pendente e voltar ao início."""
     query = update.callback_query
     await query.answer()
+    user = query.from_user
 
     checkout_data = context.user_data.get('checkout')
-    _cancel_pending(context)
+    _cancel_pending(context, telegram_user_id=user.id)
     context.user_data.pop('checkout', None)
 
     if checkout_data:

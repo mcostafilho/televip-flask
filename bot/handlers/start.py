@@ -51,7 +51,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await show_user_dashboard(update, context)
 
 async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Mostrar dashboard com resumo de assinaturas do usuário"""
+    """Dashboard central do assinante — nunca bloqueia, mostra tudo."""
     # Detectar se veio de comando ou callback
     if update.callback_query:
         user = update.callback_query.from_user
@@ -65,42 +65,9 @@ async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE
     name = escape_html(user.first_name)
 
     with get_db_session() as session:
-        # Verificar transações pendentes
-        if not context.user_data.get('skip_pending_check'):
-            pending_transaction = session.query(Transaction).join(
-                Subscription
-            ).filter(
-                Subscription.telegram_user_id == str(user.id),
-                Transaction.status == 'pending',
-                Transaction.created_at >= datetime.utcnow() - timedelta(hours=2)
-            ).order_by(Transaction.created_at.desc()).first()
-
-            if pending_transaction:
-                stripe_url = context.user_data.get('stripe_checkout_url')
-                text = (
-                    f"Olá, {name}!\n\n"
-                    f"⏳ <b>Pagamento pendente</b>\n\n"
-                    f"Você tem um pagamento em andamento.\n"
-                    f"Complete o pagamento ou escolha outra opção."
-                )
-                keyboard = []
-                if stripe_url:
-                    keyboard.append([InlineKeyboardButton("Pagar", url=stripe_url)])
-                keyboard.extend([
-                    [InlineKeyboardButton("✅ Já Paguei", callback_data="check_payment_status")],
-                    [InlineKeyboardButton("↩ Trocar Método", callback_data="back_to_methods")],
-                    [InlineKeyboardButton("❌ Desistir", callback_data="abandon_payment")],
-                    [InlineKeyboardButton("Menu Principal", callback_data="continue_to_menu")]
-                ])
-
-                if is_callback:
-                    await message.edit_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
-                else:
-                    await message.reply_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
-                return
+        now = datetime.utcnow()
 
         # Buscar TODAS as assinaturas do usuário
-        now = datetime.utcnow()
         all_subs = session.query(Subscription).filter(
             Subscription.telegram_user_id == str(user.id),
             Subscription.status.in_(['active', 'expired', 'cancelled'])
@@ -112,55 +79,66 @@ async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE
         cancelled = [s for s in all_subs if s.status == 'cancelled']
         history_count = len(expired) + len(cancelled)
 
-        if not all_subs:
-            # Sem nenhuma assinatura
-            text = (
-                f"Olá, {name}!\n\n"
-                f"Você ainda não possui assinaturas.\n"
-                f"Use o link de convite de um criador para assinar."
-            )
-            reply_markup = None
-        elif not active:
-            # Só tem histórico, nada ativo
-            text = (
-                f"Olá, {name}!\n\n"
-                f"Você não possui assinaturas ativas.\n\n"
-                f"📋 {history_count} no histórico"
-            )
-            keyboard = [
-                [InlineKeyboardButton("📋 Histórico", callback_data="subs_history")]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-        else:
-            # Tem assinaturas ativas
-            text = f"Olá, {name}!\n\n"
-            text += f"✅ {len(active)} assinatura{'s' if len(active) != 1 else ''} ativa{'s' if len(active) != 1 else ''}\n"
+        # Verificar pagamentos pendentes (não bloqueia, só avisa)
+        pending_txn = session.query(Transaction).join(
+            Subscription
+        ).filter(
+            Subscription.telegram_user_id == str(user.id),
+            Transaction.status == 'pending',
+            Transaction.created_at >= now - timedelta(hours=2)
+        ).order_by(Transaction.created_at.desc()).first()
 
+        # ── Montar texto ──
+        text = f"Olá, {name}!\n"
+
+        # Seção: pagamento pendente (aviso, não bloqueio)
+        if pending_txn:
+            text += "\n⏳ Você tem um pagamento pendente\n"
+
+        # Seção: assinaturas ativas
+        if active:
+            text += f"\n✅ {len(active)} assinatura{'s' if len(active) != 1 else ''} ativa{'s' if len(active) != 1 else ''}\n"
             for sub in active[:5]:
                 group_name = escape_html(sub.group.name) if sub.group else "N/A"
                 is_lifetime = getattr(sub.plan, 'is_lifetime', False) or (sub.plan and sub.plan.duration_days == 0)
                 if is_lifetime:
                     remaining = "Vitalício"
+                    emoji = "♾️"
                 else:
                     remaining = format_remaining_text(sub.end_date)
-                emoji = get_expiry_emoji(sub.end_date) if not is_lifetime else "♾️"
+                    emoji = get_expiry_emoji(sub.end_date)
                 text += f"  {emoji} {group_name} — {remaining}\n"
-
             if len(active) > 5:
                 text += f"  ... e mais {len(active) - 5}\n"
 
             if expiring:
                 text += f"\n⚠️ {len(expiring)} expirando em breve\n"
+        else:
+            text += "\nVocê não possui assinaturas ativas.\n"
 
-            if history_count > 0:
-                text += f"\n📋 {history_count} no histórico\n"
+        if history_count > 0:
+            text += f"\n📋 {history_count} no histórico\n"
 
-            keyboard = [
-                [InlineKeyboardButton("✅ Minhas Assinaturas", callback_data="subs_active")]
-            ]
-            if history_count > 0:
-                keyboard.append([InlineKeyboardButton("📋 Histórico", callback_data="subs_history")])
-            reply_markup = InlineKeyboardMarkup(keyboard)
+        # ── Montar botões ──
+        keyboard = []
+
+        # Botão de pagamento pendente
+        if pending_txn:
+            stripe_url = context.user_data.get('stripe_checkout_url')
+            if stripe_url:
+                keyboard.append([InlineKeyboardButton("💳 Completar Pagamento", url=stripe_url)])
+            keyboard.append([
+                InlineKeyboardButton("✅ Já Paguei", callback_data="check_payment_status"),
+                InlineKeyboardButton("❌ Desistir", callback_data="abandon_payment")
+            ])
+
+        # Botões de navegação
+        if active:
+            keyboard.append([InlineKeyboardButton("✅ Minhas Assinaturas", callback_data="subs_active")])
+        if history_count > 0:
+            keyboard.append([InlineKeyboardButton("📋 Histórico", callback_data="subs_history")])
+
+        reply_markup = InlineKeyboardMarkup(keyboard) if keyboard else None
 
         # Enviar ou editar mensagem
         if is_callback:
