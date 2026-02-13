@@ -437,13 +437,18 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
 
     if query.data == "pay_pix":
         group_id = checkout_data.get('group_id', '')
+        no_boleto = checkout_data.get('no_boleto', False)
+        hint = "use Cartão:" if no_boleto else "use Cartão ou Boleto:"
         await query.edit_message_text(
             "⚡ <b>PIX — Em breve!</b>\n\n"
             "Estamos finalizando a integração.\n"
             "Em breve você poderá pagar com QR Code.\n\n"
-            "<i>Por enquanto, use Cartão ou Boleto:</i>",
+            f"<i>Por enquanto, {hint}</i>",
             parse_mode=ParseMode.HTML,
-            reply_markup=InlineKeyboardMarkup(_payment_method_keyboard(group_id))
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("💳 Cartão" if no_boleto else "💳 Cartão / Boleto", callback_data="pay_stripe")],
+                [InlineKeyboardButton("↩ Voltar", callback_data=f"group_{group_id}")]
+            ])
         )
         return
 
