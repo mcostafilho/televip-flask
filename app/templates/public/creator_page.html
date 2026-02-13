@@ -321,12 +321,16 @@
             </div>
             <div class="groups-grid">
                 {% for group in groups %}
-                <a href="{{ url_for('public.group_landing', username=creator.username, invite_slug=group.invite_slug) }}" class="group-card">
+                <a href="{{ url_for('public.group_landing', username=creator.username, invite_slug=group.invite_slug) }}" class="group-card" {% if not group.is_active %}style="opacity: 0.65;"{% endif %}>
                     <div class="group-cover">
                         {% if group.cover_image_url %}
                             <img src="{{ group.cover_image_url }}" alt="{{ group.name }}">
                         {% endif %}
-                        {% if group.subscriber_count > 0 %}
+                        {% if not group.is_active %}
+                        <div class="group-cover-badge" style="background: rgba(251,191,36,0.85); color: #000;">
+                            <i class="bi bi-pause-circle-fill"></i> Fechado para novas assinaturas
+                        </div>
+                        {% elif group.subscriber_count > 0 %}
                         <div class="group-cover-badge">
                             <i class="bi bi-people-fill"></i> {{ group.subscriber_count }} membro{{ 's' if group.subscriber_count != 1 else '' }}
                         </div>
@@ -339,12 +343,18 @@
                         {% endif %}
                         <div class="group-card-footer">
                             <div>
-                                {% if group.min_price is not none %}
+                                {% if not group.is_active %}
+                                    <span style="font-size: 0.82rem; color: #fbbf24; font-weight: 600;">Indisponível</span>
+                                {% elif group.min_price is not none %}
                                     <span class="group-price-tag">R$ {{ "%.2f"|format(group.min_price) }} <small>/ mês</small></span>
                                 {% endif %}
                             </div>
                             <span class="group-cta-btn">
-                                Acessar <i class="bi bi-arrow-right"></i>
+                                {% if group.is_active %}
+                                    Acessar <i class="bi bi-arrow-right"></i>
+                                {% else %}
+                                    Ver mais <i class="bi bi-arrow-right"></i>
+                                {% endif %}
                             </span>
                         </div>
                     </div>
