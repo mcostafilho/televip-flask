@@ -2,6 +2,13 @@
    Dashboard Galactico Dark Glass - TeleVIP
    ======================================== */
 
+/* === Prevent horizontal scroll & mobile bounce on dashboard pages === */
+html:has(.dashboard-wrapper),
+html:has(.dashboard-wrapper) body {
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+}
+
 /* === CSS Variables === */
 :root {
     --galactic-bg: linear-gradient(135deg, #0b0e1a 0%, #1a1040 50%, #0d1b2a 100%);
@@ -34,6 +41,8 @@
     padding: 2rem 0;
     color: var(--galactic-text-primary);
     position: relative;
+    overflow-x: hidden;
+    overscroll-behavior: none;
     animation: pageEntrance 0.6s ease-out;
 }
 
