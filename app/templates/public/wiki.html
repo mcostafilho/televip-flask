@@ -319,6 +319,7 @@
                         <a href="#sec-howto"><i class="bi bi-signpost-2"></i> Como Funciona</a>
                         <a href="#sec-bot"><i class="bi bi-robot"></i> Configuração do Bot</a>
                         <a href="#sec-groups"><i class="bi bi-collection"></i> Grupos, Canais e Planos</a>
+                        <a href="#sec-public"><i class="bi bi-globe"></i> Página Pública</a>
                         <a href="#sec-payments"><i class="bi bi-credit-card"></i> Pagamentos e Taxas</a>
                         <a href="#sec-subscriptions"><i class="bi bi-arrow-repeat"></i> Assinaturas</a>
                         <a href="#sec-security"><i class="bi bi-shield-check"></i> Segurança</a>
@@ -381,6 +382,7 @@
                                         <li><strong>Adicione à whitelist</strong> qualquer usuário que já estiver dentro do grupo (para que não sejam removidos pelo bot).</li>
                                         <li><strong>Crie planos de preço</strong> no painel (ex: Mensal R$ 29,90, Trimestral R$ 69,90).</li>
                                         <li><strong>Compartilhe o link de pagamento</strong> do seu grupo. Pronto!</li>
+                                        <li><strong>(Opcional)</strong> Ative a opção <strong>"Exibir na minha página pública"</strong> para gerar uma página de vendas em <code>televip.app/c/seu-username</code>.</li>
                                     </ol>
 
                                     <h6>Para o Criador (Canal)</h6>
@@ -487,6 +489,15 @@
                                         Por isso, usamos o <code>@userinfobot</code> para descobrir o ID do canal.
                                     </div>
 
+                                    <h6>Imagem de Capa e Página Pública</h6>
+                                    <p>
+                                        Ao criar ou editar um grupo, você pode:
+                                    </p>
+                                    <ul>
+                                        <li><strong>Fazer upload de uma imagem de capa</strong> (1200 x 400px recomendado) que aparece na página de vendas.</li>
+                                        <li><strong>Ativar "Exibir na minha página pública"</strong> para que o grupo apareça em <code>/c/seu-username</code> e tenha sua própria página de vendas.</li>
+                                    </ul>
+
                                     <h6>Criando Planos de Preço</h6>
                                     <ul>
                                         <li>Cada grupo ou canal pode ter <strong>múltiplos planos</strong> (ex: Mensal, Trimestral, Anual).</li>
@@ -532,7 +543,85 @@
                             </div>
                         </div>
 
-                        <!-- 5. Pagamentos e Taxas -->
+                        <!-- 5. Página Pública e Vendas -->
+                        <div class="accordion-item" id="sec-public">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#wiki4b">
+                                    <div class="section-icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
+                                        <i class="bi bi-globe"></i>
+                                    </div>
+                                    Página Pública e Vendas
+                                </button>
+                            </h2>
+                            <div id="wiki4b" class="accordion-collapse collapse" data-bs-parent="#wikiAccordion">
+                                <div class="accordion-body">
+                                    <h6>Sua Página de Criador</h6>
+                                    <p>
+                                        Todo criador no TeleVIP tem uma <strong>página pública</strong> com endereço próprio:
+                                        <code>televip.app/c/seu-username</code>. Essa página funciona como seu <strong>cartão de visita</strong>,
+                                        exibindo seu perfil, bio e todos os grupos que você marcou como públicos.
+                                    </p>
+                                    <div class="wiki-highlight success">
+                                        <strong><i class="bi bi-check-circle-fill text-success"></i> Acesso rápido:</strong>
+                                        No seu Dashboard, clique em <strong>"Minha Página"</strong> nas ações rápidas para abrir sua página pública em uma nova aba.
+                                    </div>
+
+                                    <h6>Página de Vendas do Grupo</h6>
+                                    <p>
+                                        Cada grupo também tem sua <strong>página de vendas individual</strong> com endereço:
+                                        <code>televip.app/c/seu-username/slug-do-grupo</code>. Essa página exibe:
+                                    </p>
+                                    <ul>
+                                        <li>Imagem de capa e descrição do grupo</li>
+                                        <li>Perfil do criador</li>
+                                        <li>Benefícios e destaques</li>
+                                        <li>Planos de assinatura disponíveis com preços</li>
+                                        <li>Perguntas frequentes</li>
+                                    </ul>
+                                    <p>
+                                        No Dashboard, na seção <strong>"Meus Grupos"</strong>, cada grupo mostra dois links:
+                                    </p>
+                                    <ul>
+                                        <li><strong>Link do Bot</strong> (roxo) &mdash; para compartilhar com clientes via Telegram</li>
+                                        <li><strong>Página de Vendas</strong> (verde) &mdash; link da página pública do grupo (aparece apenas para grupos marcados como públicos)</li>
+                                    </ul>
+
+                                    <h6>Controle de Visibilidade (Opt-in)</h6>
+                                    <p>
+                                        Você controla quais grupos aparecem na sua página pública. Ao criar ou editar um grupo,
+                                        ative o toggle <strong>"Exibir na minha página pública"</strong> para que ele apareça em
+                                        <code>/c/seu-username</code>.
+                                    </p>
+                                    <div class="wiki-highlight">
+                                        <strong><i class="bi bi-info-circle-fill" style="color: #7c5cfc;"></i> Grupos inativos:</strong>
+                                        Se um grupo estiver marcado como público mas <strong>inativo</strong>, ele ainda aparece na sua página
+                                        e na página de vendas, porém com um aviso de que <strong>não está aceitando novas assinaturas</strong>.
+                                        Os planos ficam ocultos até que o grupo seja reativado.
+                                    </div>
+
+                                    <h6>Upload de Imagens</h6>
+                                    <p>
+                                        Suas imagens de perfil e capa dos grupos aparecem tanto no painel quanto nas páginas públicas.
+                                    </p>
+                                    <ul>
+                                        <li><strong>Avatar do perfil:</strong> clique no ícone de lápis sobre sua foto no perfil para fazer upload. Recomendado: <strong>200 x 200px</strong> (PNG, JPG ou GIF, máx. 2MB).</li>
+                                        <li><strong>Capa do grupo:</strong> ao criar ou editar um grupo, faça upload da imagem de capa. Recomendado: <strong>1200 x 400px</strong> (PNG, JPG ou GIF, máx. 2MB).</li>
+                                    </ul>
+                                    <div class="wiki-highlight success">
+                                        <strong><i class="bi bi-shield-check" style="color: #34d399;"></i> Segurança:</strong>
+                                        Todas as imagens enviadas passam por validação de segurança (verificação de tipo de arquivo, remoção de metadados EXIF e re-processamento) para garantir que apenas arquivos de imagem válidos sejam aceitos.
+                                    </div>
+
+                                    <h6>Bio e Descrição</h6>
+                                    <ul>
+                                        <li><strong>Bio do perfil:</strong> até <strong>160 caracteres</strong>. Aparece abaixo do seu nome na página pública.</li>
+                                        <li><strong>Descrição do grupo:</strong> até <strong>500 caracteres</strong>. Aparece na página de vendas do grupo e nos cards da página do criador.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 6. Pagamentos e Taxas -->
                         <div class="accordion-item" id="sec-payments">
                             <h2 class="accordion-header">
                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#wiki5">
@@ -806,6 +895,45 @@
                                             <div id="fq8" class="accordion-collapse collapse" data-bs-parent="#faqInner">
                                                 <div class="accordion-body" style="padding: 0 20px 16px;">
                                                     Sim! O TeleVIP funciona com <strong>grupos e canais</strong> do Telegram. Na hora de criar, selecione o tipo (Grupo ou Canal) no formulário. Para canais, o ID é obtido via <code>@userinfobot</code> (já que o comando <code>/setup</code> funciona apenas em grupos).
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="accordion-item" style="background: rgba(255,255,255,0.03); border-color: rgba(124,92,252,0.08);">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed" style="font-size: 15px; padding: 16px 20px;" type="button" data-bs-toggle="collapse" data-bs-target="#fq9">
+                                                    Como funciona a página pública do criador?
+                                                </button>
+                                            </h2>
+                                            <div id="fq9" class="accordion-collapse collapse" data-bs-parent="#faqInner">
+                                                <div class="accordion-body" style="padding: 0 20px 16px;">
+                                                    Todo criador tem uma página pública em <code>televip.app/c/seu-username</code>. Ela mostra seu perfil, bio e os grupos que você marcou como públicos. Para acessar, clique em <strong>"Minha Página"</strong> no Dashboard. Cada grupo público também ganha sua própria página de vendas com planos, descrição e botão de assinatura.
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="accordion-item" style="background: rgba(255,255,255,0.03); border-color: rgba(124,92,252,0.08);">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed" style="font-size: 15px; padding: 16px 20px;" type="button" data-bs-toggle="collapse" data-bs-target="#fq10">
+                                                    Quais formatos e tamanhos de imagem posso usar?
+                                                </button>
+                                            </h2>
+                                            <div id="fq10" class="accordion-collapse collapse" data-bs-parent="#faqInner">
+                                                <div class="accordion-body" style="padding: 0 20px 16px;">
+                                                    <strong>Avatar:</strong> 200 x 200px (PNG, JPG ou GIF, máx. 2MB). <strong>Capa do grupo:</strong> 1200 x 400px (PNG, JPG ou GIF, máx. 2MB). As imagens são validadas automaticamente para garantir segurança &mdash; metadados e EXIF são removidos no upload.
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="accordion-item" style="background: rgba(255,255,255,0.03); border-color: rgba(124,92,252,0.08);">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed" style="font-size: 15px; padding: 16px 20px;" type="button" data-bs-toggle="collapse" data-bs-target="#fq11">
+                                                    O que acontece quando desativo um grupo?
+                                                </button>
+                                            </h2>
+                                            <div id="fq11" class="accordion-collapse collapse" data-bs-parent="#faqInner">
+                                                <div class="accordion-body" style="padding: 0 20px 16px;">
+                                                    Grupos inativos continuam visíveis na sua página pública (se marcados como públicos), mas exibem um aviso de que <strong>não estão aceitando novas assinaturas</strong>. Os planos ficam ocultos e o botão de assinar é substituído por uma mensagem informativa. Os membros existentes não são removidos.
                                                 </div>
                                             </div>
                                         </div>
