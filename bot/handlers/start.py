@@ -214,6 +214,7 @@ async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_
         logger.info(f"Grupo encontrado: {group.name} (ID: {group.id}, Ativo: {group.is_active})")
 
         group_name = escape_html(group.name)
+        type_label = "canal" if group.chat_type == 'channel' else "grupo"
 
         # Verificar se já tem assinatura ativa
         existing_sub = session.query(Subscription).filter_by(
@@ -315,7 +316,6 @@ async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_
             return
 
         # Mostrar informações do grupo e planos
-        type_label = "canal" if group.chat_type == 'channel' else "grupo"
         description = escape_html(group.description) if group.description else f"{type_label.capitalize()} VIP exclusivo"
         text = (
             f"Bem-vindo ao {type_label} <b>{group_name}</b>!\n"
