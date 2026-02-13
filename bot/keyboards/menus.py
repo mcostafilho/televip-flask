@@ -74,12 +74,9 @@ def get_plans_menu(plans: list, group_id: int) -> InlineKeyboardMarkup:
 def get_payment_keyboard(checkout_data: dict = None) -> InlineKeyboardMarkup:
     """Teclado para opções de pagamento"""
     keyboard = [
-        [
-            InlineKeyboardButton("💳 Pagar com Stripe", callback_data="pay_stripe")
-        ],
-        [
-            InlineKeyboardButton("❌ Cancelar", callback_data="cancel_payment")
-        ]
+        [InlineKeyboardButton("💳 Cartão / Boleto", callback_data="pay_stripe")],
+        [InlineKeyboardButton("⚡ PIX", callback_data="pay_pix")],
+        [InlineKeyboardButton("❌ Cancelar", callback_data="cancel_payment")],
     ]
     return InlineKeyboardMarkup(keyboard)
 

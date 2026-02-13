@@ -99,11 +99,12 @@ async def start_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"─────────────────────\n"
             f"Total:    {format_currency(amount)}"
             f"</pre>\n\n"
-            f"<i>Pagamento processado via Stripe.</i>"
+            f"<i>Escolha a forma de pagamento:</i>"
         )
 
         keyboard = [
-            [InlineKeyboardButton("Pagar Agora", callback_data="pay_stripe")],
+            [InlineKeyboardButton("💳 Cartão / Boleto", callback_data="pay_stripe")],
+            [InlineKeyboardButton("⚡ PIX", callback_data="pay_pix")],
             [InlineKeyboardButton("Cancelar", callback_data=f"group_{group_id}")]
         ]
 
@@ -130,8 +131,30 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
         )
         return
 
+    if query.data == "pay_pix":
+        await handle_pix_coming_soon(query, context, checkout_data)
+        return
+
     if query.data == "pay_stripe":
         await process_stripe_payment(query, context, checkout_data)
+
+
+async def handle_pix_coming_soon(query, context, checkout_data):
+    """PIX ainda em desenvolvimento — mostra aviso e volta ao menu de pagamento."""
+    group_id = checkout_data.get('group_id', '')
+    keyboard = [
+        [InlineKeyboardButton("💳 Cartão / Boleto", callback_data="pay_stripe")],
+        [InlineKeyboardButton("⚡ PIX", callback_data="pay_pix")],
+        [InlineKeyboardButton("Cancelar", callback_data=f"group_{group_id}")]
+    ]
+    await query.edit_message_text(
+        "⚡ <b>Pagamento via PIX</b>\n\n"
+        "Estamos finalizando a integração do PIX.\n"
+        "Em breve você poderá pagar com QR Code!\n\n"
+        "<i>Por enquanto, use Cartão ou Boleto.</i>",
+        parse_mode=ParseMode.HTML,
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
 
 
 async def process_stripe_payment(query, context, checkout_data):
@@ -366,7 +389,7 @@ def register_payment_handlers(application):
 
     # Handlers de callback
     application.add_handler(CallbackQueryHandler(start_payment, pattern=r'^plan_\d+_\d+$'))
-    application.add_handler(CallbackQueryHandler(handle_payment_method, pattern='^pay_stripe$'))
+    application.add_handler(CallbackQueryHandler(handle_payment_method, pattern='^pay_(stripe|pix)$'))
     application.add_handler(CallbackQueryHandler(list_user_subscriptions, pattern='^my_subscriptions$'))
 
     # Command handlers

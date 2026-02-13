@@ -38,7 +38,8 @@ from bot.handlers.payment import (
 from bot.handlers.subscription import (
     status_command, handle_renewal,
     cancel_subscription, confirm_cancel_subscription,
-    reactivate_subscription, get_invite_link
+    reactivate_subscription, get_invite_link,
+    handle_renewal_pix_coming_soon
 )
 from bot.handlers.admin import (
     setup_command, stats_command, broadcast_command,
@@ -159,7 +160,7 @@ def setup_handlers(application: Application) -> None:
     
     # Callbacks de pagamento
     application.add_handler(CallbackQueryHandler(start_payment, pattern=r"^plan_\d+_\d+$"))
-    application.add_handler(CallbackQueryHandler(handle_payment_method, pattern=r"^pay_stripe$"))
+    application.add_handler(CallbackQueryHandler(handle_payment_method, pattern=r"^pay_(stripe|pix)$"))
     application.add_handler(CallbackQueryHandler(check_payment_status, pattern="^check_payment_status$"))
     application.add_handler(CallbackQueryHandler(handle_payment_error, pattern="^payment_error$"))
     application.add_handler(CallbackQueryHandler(handle_retry_payment, pattern="^retry_payment$"))
@@ -171,6 +172,7 @@ def setup_handlers(application: Application) -> None:
     
     # Callbacks de renovação
     application.add_handler(CallbackQueryHandler(handle_renewal, pattern=r"^renew_\d+$"))
+    application.add_handler(CallbackQueryHandler(handle_renewal_pix_coming_soon, pattern=r"^pay_renewal_pix$"))
 
     # Callbacks de cancelamento de assinatura
     application.add_handler(CallbackQueryHandler(cancel_subscription, pattern=r"^cancel_sub_\d+$"))

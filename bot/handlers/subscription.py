@@ -377,7 +377,8 @@ async def process_renewal(update: Update, context: ContextTypes.DEFAULT_TYPE, su
         }
 
         keyboard = [
-            [InlineKeyboardButton("Pagar com Cartão", callback_data="pay_renewal_stripe")],
+            [InlineKeyboardButton("💳 Cartão / Boleto", callback_data="pay_renewal_stripe")],
+            [InlineKeyboardButton("⚡ PIX", callback_data="pay_renewal_pix")],
             [InlineKeyboardButton("Cancelar", callback_data="check_renewals")]
         ]
 
@@ -386,6 +387,12 @@ async def process_renewal(update: Update, context: ContextTypes.DEFAULT_TYPE, su
             parse_mode=ParseMode.HTML,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
+
+async def handle_renewal_pix_coming_soon(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """PIX para renovação — em desenvolvimento."""
+    query = update.callback_query
+    await query.answer("PIX em breve!", show_alert=True)
+
 
 async def cancel_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Mostrar confirmação de cancelamento de assinatura"""
