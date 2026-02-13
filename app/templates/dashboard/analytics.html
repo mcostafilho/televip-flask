@@ -86,9 +86,9 @@
                 <div class="d-flex align-items-center">
                     <div class="stat-icon info"><i class="bi bi-person-plus-fill"></i></div>
                     <div class="ms-3">
-                        <p class="text-muted mb-1 small">Novos Assinantes</p>
+                        <p class="text-muted mb-1 small">Novos Pagantes</p>
                         <h3 class="mb-0"><span class="countup" data-target="{{ stats.new_subscribers }}" data-decimals="0">0</span></h3>
-                        <small class="text-muted">no período</small>
+                        <small class="text-muted">de {{ stats.checkout_starts }} checkout{{ 's' if stats.checkout_starts != 1 else '' }} iniciado{{ 's' if stats.checkout_starts != 1 else '' }}</small>
                     </div>
                 </div>
             </div>
@@ -97,15 +97,9 @@
                 <div class="d-flex align-items-center">
                     <div class="stat-icon success"><i class="bi bi-percent"></i></div>
                     <div class="ms-3">
-                        <p class="text-muted mb-1 small">Taxa de Conversão</p>
-                        <h3 class="mb-0">
-                            {% if stats.total_subscribers > 0 %}
-                                {{ "%.1f"|format((stats.new_subscribers / stats.total_subscribers * 100)) }}%
-                            {% else %}
-                                0%
-                            {% endif %}
-                        </h3>
-                        <small class="text-muted">novos/total</small>
+                        <p class="text-muted mb-1 small">Conversão do Checkout</p>
+                        <h3 class="mb-0">{{ stats.checkout_conversion }}%</h3>
+                        <small class="text-muted">checkout → pagamento</small>
                     </div>
                 </div>
             </div>
@@ -185,7 +179,7 @@
         <div class="row g-4 mb-4">
             <div class="col-lg-8">
                 <div class="content-card">
-                    <h5><i class="bi bi-bar-chart-fill"></i> Novos Assinantes por Dia</h5>
+                    <h5><i class="bi bi-bar-chart-fill"></i> Novos Pagantes por Dia</h5>
                     <div class="chart-container" style="height: 300px;">
                         <canvas id="subscribersChart"></canvas>
                     </div>
@@ -348,7 +342,7 @@ new Chart(document.getElementById('subscribersChart').getContext('2d'), {
     data: {
         labels: chartsData.subscribers_by_day.labels,
         datasets: [{
-            label: 'Novos Assinantes',
+            label: 'Novos Pagantes',
             data: chartsData.subscribers_by_day.data,
             backgroundColor: 'rgba(56, 189, 248, 0.5)',
             borderColor: '#38bdf8',
@@ -361,7 +355,7 @@ new Chart(document.getElementById('subscribersChart').getContext('2d'), {
         responsive: true, maintainAspectRatio: false,
         plugins: {
             legend: { display: false },
-            tooltip: { ...galacticTooltip, callbacks: { label: ctx => 'Novos: ' + ctx.parsed.y } }
+            tooltip: { ...galacticTooltip, callbacks: { label: ctx => 'Pagantes: ' + ctx.parsed.y } }
         },
         scales: {
             x: { grid: { display: false }, ticks: { color: '#8b8fad' } },

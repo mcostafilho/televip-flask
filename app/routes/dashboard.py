@@ -669,13 +669,26 @@ def analytics():
         Subscription.status == 'active'
     ).count()
 
+    # Novos assinantes pagos (tem pelo menos 1 transação completed)
     new_subscribers = Subscription.query.join(
+        Group
+    ).filter(
+        Group.creator_id == effective.id,
+        Subscription.created_at >= start_date,
+        Subscription.created_at <= end_date,
+        Subscription.transactions.any(Transaction.status == 'completed')
+    ).count()
+
+    # Total de checkouts iniciados (todas as subscriptions, independente de pagamento)
+    checkout_starts = Subscription.query.join(
         Group
     ).filter(
         Group.creator_id == effective.id,
         Subscription.created_at >= start_date,
         Subscription.created_at <= end_date
     ).count()
+
+    checkout_conversion = (new_subscribers / checkout_starts * 100) if checkout_starts > 0 else 0
     
     # Preparar labels
     revenue_labels = []
@@ -726,7 +739,7 @@ def analytics():
         value = revenue_dict.get(date_obj, 0.0)
         revenue_data.append(value)
     
-    # 2. Buscar assinantes por dia
+    # 2. Buscar assinantes pagos por dia
     daily_subscribers = db.session.query(
         func.date(Subscription.created_at).label('date'),
         func.count(Subscription.id).label('count')
@@ -735,7 +748,8 @@ def analytics():
     ).filter(
         Group.creator_id == effective.id,
         func.date(Subscription.created_at) >= start_date.date(),
-        func.date(Subscription.created_at) <= end_date.date()
+        func.date(Subscription.created_at) <= end_date.date(),
+        Subscription.transactions.any(Transaction.status == 'completed')
     ).group_by(
         func.date(Subscription.created_at)
     ).all()
@@ -927,6 +941,8 @@ def analytics():
         'average_ticket': average_ticket,
         'total_subscribers': total_subscribers,
         'new_subscribers': new_subscribers,
+        'checkout_starts': checkout_starts,
+        'checkout_conversion': round(checkout_conversion, 1),
         'churned_subs': churned_subs,
         'churn_rate': round(churn_rate, 1),
         'at_risk': at_risk,
