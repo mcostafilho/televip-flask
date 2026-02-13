@@ -70,13 +70,14 @@ def create_app():
         return Creator.query.get(int(user_id))
 
     # Registrar blueprints
-    from app.routes import auth, dashboard, groups, admin, webhooks, api
+    from app.routes import auth, dashboard, groups, admin, webhooks, api, public
     app.register_blueprint(auth.bp)
     app.register_blueprint(dashboard.bp)
     app.register_blueprint(groups.bp)
     app.register_blueprint(admin.bp)
     app.register_blueprint(webhooks.bp)
     app.register_blueprint(api.bp)
+    app.register_blueprint(public.bp)
 
     # Exempt webhooks from CSRF (uses Stripe signature verification)
     csrf.exempt(webhooks.bp)

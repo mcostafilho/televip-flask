@@ -514,6 +514,13 @@ def update_profile():
     if phone is not None:
         current_user.phone = phone
 
+    # Update bio and avatar_url (no password required)
+    bio = request.form.get('bio', '').strip()
+    current_user.bio = bio if bio else None
+
+    avatar_url = request.form.get('avatar_url', '').strip()
+    current_user.avatar_url = avatar_url if avatar_url else None
+
     db.session.commit()
     flash('Perfil atualizado com sucesso!', 'success')
 

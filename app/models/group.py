@@ -25,6 +25,7 @@ class Group(db.Model):
     system_whitelist_json = db.Column(db.Text, default='[]')
     # Tipo de chat: 'group' (grupo/supergrupo) ou 'channel' (canal)
     chat_type = db.Column(db.String(20), default='group')
+    cover_image_url = db.Column(db.String(500))
 
     # Relacionamentos
     pricing_plans = db.relationship('PricingPlan', backref='group', lazy='dynamic', cascade='all, delete-orphan')

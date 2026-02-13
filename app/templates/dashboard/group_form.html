@@ -116,6 +116,29 @@
                                     <textarea class="form-control" name="description" rows="3"
                                               placeholder="Descreva o conteúdo exclusivo do seu grupo...">{{ group.description if group else '' }}</textarea>
                                 </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">URL da Imagem de Capa</label>
+                                    <input type="url" class="form-control" name="cover_image_url"
+                                           value="{{ group.cover_image_url if group and group.cover_image_url else '' }}"
+                                           placeholder="https://..." id="coverImageUrlInput">
+                                    <small class="form-text" style="color: #b0b4cc;">
+                                        Link direto para a imagem de capa (aparece na pagina de venda). Opcional.
+                                    </small>
+                                    {% if group and group.cover_image_url %}
+                                    <div class="mt-2">
+                                        <img src="{{ group.cover_image_url }}" alt="Cover preview"
+                                             style="max-width: 100%; max-height: 120px; border-radius: 8px; border: 1px solid rgba(124,92,252,0.2);"
+                                             id="coverPreview">
+                                    </div>
+                                    {% else %}
+                                    <div class="mt-2" id="coverPreviewWrap" style="display:none;">
+                                        <img src="" alt="Cover preview"
+                                             style="max-width: 100%; max-height: 120px; border-radius: 8px; border: 1px solid rgba(124,92,252,0.2);"
+                                             id="coverPreview">
+                                    </div>
+                                    {% endif %}
+                                </div>
                             </div>
 
                             <!-- Configuração do Telegram -->
@@ -729,6 +752,22 @@ function removeWhitelistEntry(telegramId) {
         emptyMsg.textContent = 'Nenhuma pessoa na lista de exceção.';
         container.prepend(emptyMsg);
     }
+}
+
+// Cover image URL preview
+var coverInput = document.getElementById('coverImageUrlInput');
+if (coverInput) {
+    coverInput.addEventListener('input', function() {
+        var url = this.value.trim();
+        var preview = document.getElementById('coverPreview');
+        var wrap = document.getElementById('coverPreviewWrap');
+        if (url && url.startsWith('http')) {
+            preview.src = url;
+            if (wrap) wrap.style.display = '';
+        } else {
+            if (wrap) wrap.style.display = 'none';
+        }
+    });
 }
 
 // Copiar para área de transferência

@@ -141,6 +141,34 @@
                                            value="{{ user.email }}" required>
                                 </div>
 
+                                <!-- Bio e Avatar (pagina publica) -->
+                                <div class="col-12">
+                                    <label class="form-label">Bio</label>
+                                    <textarea class="form-control" name="bio" rows="3"
+                                              placeholder="Conte sobre voce e seu trabalho..." maxlength="500">{{ user.bio or '' }}</textarea>
+                                    <small class="text-muted">Aparece na sua pagina publica /c/{{ user.username }}</small>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">URL do Avatar</label>
+                                    <input type="url" class="form-control" name="avatar_url"
+                                           value="{{ user.avatar_url or '' }}"
+                                           placeholder="https://..." id="avatarUrlInput">
+                                    <small class="text-muted">Link direto para sua foto de perfil (PNG, JPG)</small>
+                                    {% if user.avatar_url %}
+                                    <div class="mt-2">
+                                        <img src="{{ user.avatar_url }}" alt="Avatar preview"
+                                             style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(124,92,252,0.3);"
+                                             id="avatarPreview">
+                                    </div>
+                                    {% else %}
+                                    <div class="mt-2" id="avatarPreviewWrap" style="display:none;">
+                                        <img src="" alt="Avatar preview"
+                                             style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(124,92,252,0.3);"
+                                             id="avatarPreview">
+                                    </div>
+                                    {% endif %}
+                                </div>
+
                                 <!-- Dados para Saque -->
                                 <div class="col-12">
                                     <hr class="my-3">
@@ -435,6 +463,22 @@ function togglePhoneRequired() {
 pixType.addEventListener('change', togglePhoneRequired);
 pixValue.addEventListener('input', togglePhoneRequired);
 togglePhoneRequired();
+
+// Avatar URL preview
+var avatarInput = document.getElementById('avatarUrlInput');
+if (avatarInput) {
+    avatarInput.addEventListener('input', function() {
+        var url = this.value.trim();
+        var preview = document.getElementById('avatarPreview');
+        var wrap = document.getElementById('avatarPreviewWrap');
+        if (url && url.startsWith('http')) {
+            preview.src = url;
+            if (wrap) wrap.style.display = '';
+        } else {
+            if (wrap) wrap.style.display = 'none';
+        }
+    });
+}
 
 // Phone mask
 phoneInput.addEventListener('input', function() {

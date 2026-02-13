@@ -192,6 +192,8 @@ def create():
                         'added_at': datetime.utcnow().strftime('%Y-%m-%d %H:%M')
                     })
 
+            cover_image_url = request.form.get('cover_image_url', '').strip() or None
+
             group = Group(
                 name=name,
                 description=description,
@@ -200,6 +202,7 @@ def create():
                 creator_id=current_user.id,
                 is_active=True,
                 chat_type=chat_type,
+                cover_image_url=cover_image_url,
                 whitelist_json=json.dumps(whitelist_data) if whitelist_data else '[]'
             )
             db.session.add(group)
@@ -300,6 +303,7 @@ def edit(id):
         group.name = request.form.get('name')
         group.description = request.form.get('description')
         group.invite_link = request.form.get('invite_link')
+        group.cover_image_url = request.form.get('cover_image_url', '').strip() or None
         group.is_active = 'is_active' in request.form
 
         # Atualizar lista de exceção (whitelist)

@@ -16,6 +16,8 @@ class Creator(UserMixin, db.Model):
     telegram_id = db.Column(db.String(50))
     telegram_username = db.Column(db.String(50))
     phone = db.Column(db.String(20))
+    bio = db.Column(db.Text)
+    avatar_url = db.Column(db.String(500))
 
     # Campos financeiros
     balance = db.Column(db.Numeric(10, 2), default=0)
