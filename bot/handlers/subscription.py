@@ -16,6 +16,7 @@ from bot.utils.format_utils import (
     format_remaining_text, get_expiry_emoji, format_date, format_date_code,
     format_currency, format_currency_code, escape_html
 )
+from app import db
 from app.models import Subscription, Group, Creator, PricingPlan, Transaction
 
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
@@ -602,15 +603,16 @@ async def get_invite_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             invite_link = link_obj.invite_link
 
+            type_label = "canal" if group.chat_type == 'channel' else "grupo"
             text = (
                 f"<b>Link de acesso</b>\n\n"
-                f"Use o botão abaixo para entrar em <b>{group_name}</b>.\n\n"
+                f"Use o botão abaixo para entrar no {type_label} <b>{group_name}</b>.\n\n"
                 f"<i>O link é de uso único.</i>"
             )
 
             keyboard = [
-                [InlineKeyboardButton("Entrar no Grupo", url=invite_link)],
-                [InlineKeyboardButton("Menu", callback_data="back_to_start")]
+                [InlineKeyboardButton(f"Entrar no {type_label.capitalize()}", url=invite_link)],
+                [InlineKeyboardButton("↩ Voltar", callback_data="subs_active")]
             ]
 
         except Exception as e:
@@ -626,3 +628,393 @@ async def get_invite_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode=ParseMode.HTML,
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
+
+
+# ──────────────────────────────────────────────
+# Helpers
+# ──────────────────────────────────────────────
+
+SUBS_PER_PAGE = 5
+
+
+def _renewal_text(sub):
+    """Texto de renovação baseado no tipo de assinatura"""
+    if getattr(sub, 'cancel_at_period_end', False):
+        return "Cancelada"
+    if getattr(sub, 'auto_renew', False) and sub.stripe_subscription_id and not getattr(sub, 'is_legacy', False):
+        return "Automática"
+    return "Manual"
+
+
+def _billing_reason_text(reason):
+    """Texto legível para billing_reason"""
+    mapping = {
+        'subscription_create': 'Assinatura inicial',
+        'subscription_cycle': 'Renovação',
+        'lifetime_purchase': 'Compra vitalícia',
+    }
+    return mapping.get(reason, reason or 'Pagamento')
+
+
+# ──────────────────────────────────────────────
+# Fase 3: Minhas Assinaturas (ativas)
+# ──────────────────────────────────────────────
+
+async def show_active_subscriptions(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Listar assinaturas ativas com paginação — callback subs_active / subs_active_p{page}"""
+    query = update.callback_query
+    await query.answer()
+    user = query.from_user
+
+    # Extrair página
+    page = 0
+    data = query.data
+    if '_p' in data:
+        try:
+            page = int(data.split('_p')[1])
+        except (IndexError, ValueError):
+            page = 0
+
+    now = datetime.utcnow()
+
+    with get_db_session() as session:
+        all_active = session.query(Subscription).filter(
+            Subscription.telegram_user_id == str(user.id),
+            Subscription.status == 'active',
+            Subscription.end_date > now
+        ).order_by(Subscription.end_date).all()
+
+        if not all_active:
+            text = (
+                "✅ <b>Minhas Assinaturas</b>\n\n"
+                "Você não possui assinaturas ativas."
+            )
+            keyboard = [[InlineKeyboardButton("↩ Voltar", callback_data="back_to_start")]]
+            await query.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
+            return
+
+        total = len(all_active)
+        start = page * SUBS_PER_PAGE
+        page_subs = all_active[start:start + SUBS_PER_PAGE]
+
+        text = "✅ <b>Assinaturas Ativas</b>\n"
+
+        for sub in page_subs:
+            group = sub.group
+            plan = sub.plan
+            group_name = escape_html(group.name) if group else "N/A"
+            plan_name = escape_html(plan.name) if plan else "N/A"
+            is_lifetime = getattr(plan, 'is_lifetime', False) or (plan and plan.duration_days == 0)
+
+            if is_lifetime:
+                emoji = "♾️"
+                remaining = "Vitalício"
+            else:
+                emoji = get_expiry_emoji(sub.end_date)
+                remaining = format_remaining_text(sub.end_date)
+
+            renewal = _renewal_text(sub)
+
+            text += (
+                f"\n{emoji} <b>{group_name}</b>\n"
+                f"   {plan_name} · {remaining}\n"
+                f"   Renovação: {renewal}\n"
+            )
+
+        # Botões: 1 por sub para detalhe
+        keyboard = []
+        for sub in page_subs:
+            group_name_short = sub.group.name[:25] if sub.group else "N/A"
+            keyboard.append([
+                InlineKeyboardButton(group_name_short, callback_data=f"sub_detail_{sub.id}")
+            ])
+
+        # Paginação
+        nav_row = []
+        if page > 0:
+            nav_row.append(InlineKeyboardButton("⬅️", callback_data=f"subs_active_p{page - 1}"))
+        if start + SUBS_PER_PAGE < total:
+            nav_row.append(InlineKeyboardButton("➡️", callback_data=f"subs_active_p{page + 1}"))
+        if nav_row:
+            keyboard.append(nav_row)
+
+        keyboard.append([InlineKeyboardButton("↩ Voltar", callback_data="back_to_start")])
+
+        await query.edit_message_text(
+            text, parse_mode=ParseMode.HTML,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+
+
+# ──────────────────────────────────────────────
+# Fase 4: Detalhe da Assinatura
+# ──────────────────────────────────────────────
+
+async def show_subscription_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Mostrar detalhe de uma assinatura — callback sub_detail_{id}"""
+    query = update.callback_query
+    await query.answer()
+    user = query.from_user
+
+    sub_id = int(query.data.replace("sub_detail_", ""))
+
+    with get_db_session() as session:
+        sub = session.query(Subscription).get(sub_id)
+
+        if not sub or sub.telegram_user_id != str(user.id):
+            await query.edit_message_text(
+                "Assinatura não encontrada.",
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton("Menu", callback_data="back_to_start")
+                ]])
+            )
+            return
+
+        group = sub.group
+        plan = sub.plan
+        group_name = escape_html(group.name) if group else "N/A"
+        plan_name = escape_html(plan.name) if plan else "N/A"
+        type_label = "canal" if (group and group.chat_type == 'channel') else "grupo"
+        is_lifetime = getattr(plan, 'is_lifetime', False) or (plan and plan.duration_days == 0)
+        now = datetime.utcnow()
+        is_active = sub.status == 'active' and sub.end_date > now
+
+        # Status text
+        if is_active:
+            if is_lifetime:
+                emoji = "♾️"
+                status_text = "Ativo (vitalício)"
+            else:
+                emoji = get_expiry_emoji(sub.end_date)
+                status_text = "Ativo"
+        elif sub.status == 'cancelled':
+            emoji = "🚫"
+            status_text = "Cancelada"
+        else:
+            emoji = "❌"
+            status_text = "Expirada"
+
+        renewal = _renewal_text(sub) if is_active and not is_lifetime else "—"
+
+        text = (
+            f"{emoji} <b>{group_name}</b>\n"
+            f"{type_label.capitalize()}\n\n"
+            f"<pre>"
+            f"Plano:      {plan_name}\n"
+            f"Status:     {status_text}\n"
+            f"Início:     {format_date(sub.start_date)}\n"
+            f"Expira:     {'Nunca' if is_lifetime else format_date(sub.end_date)}\n"
+            f"Renovação:  {renewal}\n"
+            f"Valor:      {format_currency(plan.price) if plan else 'N/A'}"
+            f"</pre>"
+        )
+
+        # Aviso de expiração próxima
+        if is_active and not is_lifetime:
+            remaining = format_remaining_text(sub.end_date)
+            days_left = (sub.end_date - now).total_seconds() / 86400
+            if days_left <= 7:
+                text += f"\n\n⚠️ Expira em {remaining}"
+
+        # Botões contextuais
+        keyboard = []
+
+        if is_active:
+            keyboard.append([
+                InlineKeyboardButton(f"Entrar no {type_label.capitalize()}", callback_data=f"get_link_{sub.id}")
+            ])
+            if getattr(sub, 'cancel_at_period_end', False):
+                keyboard.append([
+                    InlineKeyboardButton("Reativar Renovação", callback_data=f"reactivate_sub_{sub.id}")
+                ])
+            elif getattr(sub, 'auto_renew', False) and sub.stripe_subscription_id and not getattr(sub, 'is_legacy', False):
+                keyboard.append([
+                    InlineKeyboardButton("Cancelar Renovação", callback_data=f"cancel_sub_{sub.id}")
+                ])
+            elif getattr(sub, 'is_legacy', False) or not sub.stripe_subscription_id:
+                if not is_lifetime:
+                    keyboard.append([
+                        InlineKeyboardButton("Renovar Agora", callback_data=f"renew_{sub.id}")
+                    ])
+            keyboard.append([
+                InlineKeyboardButton("💳 Pagamentos", callback_data=f"sub_txns_{sub.id}")
+            ])
+            keyboard.append([
+                InlineKeyboardButton("↩ Voltar", callback_data="subs_active")
+            ])
+        else:
+            # Expirada ou cancelada
+            if group and group.is_active:
+                keyboard.append([
+                    InlineKeyboardButton("Assinar Novamente", callback_data=f"group_{group.id}")
+                ])
+            keyboard.append([
+                InlineKeyboardButton("💳 Pagamentos", callback_data=f"sub_txns_{sub.id}")
+            ])
+            keyboard.append([
+                InlineKeyboardButton("↩ Voltar", callback_data="subs_history")
+            ])
+
+        await query.edit_message_text(
+            text, parse_mode=ParseMode.HTML,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+
+
+# ──────────────────────────────────────────────
+# Fase 5: Histórico de Assinaturas
+# ──────────────────────────────────────────────
+
+async def show_subscription_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Listar assinaturas expiradas/canceladas — callback subs_history / subs_history_p{page}"""
+    query = update.callback_query
+    await query.answer()
+    user = query.from_user
+
+    # Extrair página
+    page = 0
+    data = query.data
+    if '_p' in data:
+        try:
+            page = int(data.split('_p')[1])
+        except (IndexError, ValueError):
+            page = 0
+
+    now = datetime.utcnow()
+
+    with get_db_session() as session:
+        history_subs = session.query(Subscription).filter(
+            Subscription.telegram_user_id == str(user.id),
+            db.or_(
+                Subscription.status == 'expired',
+                Subscription.status == 'cancelled',
+                db.and_(Subscription.status == 'active', Subscription.end_date <= now)
+            )
+        ).order_by(Subscription.end_date.desc()).all()
+
+        if not history_subs:
+            text = (
+                "📋 <b>Histórico de Assinaturas</b>\n\n"
+                "Nenhuma assinatura no histórico."
+            )
+            keyboard = [[InlineKeyboardButton("↩ Voltar", callback_data="back_to_start")]]
+            await query.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
+            return
+
+        total = len(history_subs)
+        start = page * SUBS_PER_PAGE
+        page_subs = history_subs[start:start + SUBS_PER_PAGE]
+
+        text = "📋 <b>Histórico de Assinaturas</b>\n"
+
+        for sub in page_subs:
+            group = sub.group
+            plan = sub.plan
+            group_name = escape_html(group.name) if group else "N/A"
+            plan_name = escape_html(plan.name) if plan else "N/A"
+
+            if sub.status == 'cancelled':
+                emoji = "🚫"
+                date_text = f"Cancelada em {format_date(sub.end_date)}"
+            else:
+                emoji = "❌"
+                date_text = f"Expirou em {format_date(sub.end_date)}"
+
+            text += (
+                f"\n{emoji} <b>{group_name}</b>\n"
+                f"   {plan_name} · {date_text}\n"
+            )
+
+        # Botões: 1 por sub para detalhe
+        keyboard = []
+        for sub in page_subs:
+            group_name_short = (sub.group.name[:20] if sub.group else "N/A") + " — Detalhes"
+            keyboard.append([
+                InlineKeyboardButton(group_name_short, callback_data=f"sub_detail_{sub.id}")
+            ])
+
+        # Paginação
+        nav_row = []
+        if page > 0:
+            nav_row.append(InlineKeyboardButton("⬅️", callback_data=f"subs_history_p{page - 1}"))
+        if start + SUBS_PER_PAGE < total:
+            nav_row.append(InlineKeyboardButton("➡️", callback_data=f"subs_history_p{page + 1}"))
+        if nav_row:
+            keyboard.append(nav_row)
+
+        keyboard.append([InlineKeyboardButton("↩ Voltar", callback_data="back_to_start")])
+
+        await query.edit_message_text(
+            text, parse_mode=ParseMode.HTML,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+
+
+# ──────────────────────────────────────────────
+# Fase 6: Transações por Assinatura
+# ──────────────────────────────────────────────
+
+async def show_subscription_transactions(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Listar transações de uma assinatura — callback sub_txns_{id}"""
+    query = update.callback_query
+    await query.answer()
+    user = query.from_user
+
+    sub_id = int(query.data.replace("sub_txns_", ""))
+
+    with get_db_session() as session:
+        sub = session.query(Subscription).get(sub_id)
+
+        if not sub or sub.telegram_user_id != str(user.id):
+            await query.edit_message_text(
+                "Assinatura não encontrada.",
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton("Menu", callback_data="back_to_start")
+                ]])
+            )
+            return
+
+        group_name = escape_html(sub.group.name) if sub.group else "N/A"
+
+        transactions = session.query(Transaction).filter_by(
+            subscription_id=sub.id
+        ).order_by(Transaction.created_at.desc()).all()
+
+        text = f"💳 <b>Pagamentos — {group_name}</b>\n"
+
+        if not transactions:
+            text += "\nNenhum pagamento registrado."
+        else:
+            for txn in transactions:
+                if txn.status == 'completed':
+                    txn_emoji = "✅"
+                elif txn.status == 'pending':
+                    txn_emoji = "⏳"
+                elif txn.status == 'cancelled':
+                    txn_emoji = "❌"
+                else:
+                    txn_emoji = "⚪"
+
+                txn_date = format_date(txn.paid_at or txn.created_at)
+                reason_text = _billing_reason_text(txn.billing_reason)
+                method = (txn.payment_method or 'stripe').capitalize()
+
+                text += f"\n{txn_emoji} {txn_date} · {format_currency(txn.amount)}\n"
+
+                if txn.status == 'completed':
+                    text += f"   {reason_text} · {method}\n"
+                elif txn.status == 'pending':
+                    text += f"   Pendente\n"
+                elif txn.status == 'cancelled':
+                    text += f"   Cancelado\n"
+                else:
+                    text += f"   {txn.status}\n"
+
+        keyboard = [
+            [InlineKeyboardButton("↩ Voltar", callback_data=f"sub_detail_{sub.id}")]
+        ]
+
+        await query.edit_message_text(
+            text, parse_mode=ParseMode.HTML,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )

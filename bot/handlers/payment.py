@@ -125,10 +125,11 @@ async def show_group_plans(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         group_name = escape_html(group.name)
-        description = escape_html(group.description) if group.description else "Grupo VIP exclusivo"
+        type_label = "canal" if group.chat_type == 'channel' else "grupo"
+        description = escape_html(group.description) if group.description else f"{type_label.capitalize()} VIP exclusivo"
 
         text = (
-            f"<b>{group_name}</b>\n"
+            f"Bem-vindo ao {type_label} <b>{group_name}</b>!\n"
             f"{description}\n\n"
             f"<b>Planos disponíveis:</b>\n"
         )

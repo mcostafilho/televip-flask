@@ -22,6 +22,7 @@ class Subscription(db.Model):
     payment_method_type = db.Column(db.String(20), default='card')  # 'card' or 'boleto'
     auto_renew = db.Column(db.Boolean, default=True)
     is_legacy = db.Column(db.Boolean, default=False)
+    last_reminder_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relacionamentos

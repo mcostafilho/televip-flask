@@ -51,7 +51,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await show_user_dashboard(update, context)
 
 async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Mostrar dashboard com assinaturas do usuário"""
+    """Mostrar dashboard com resumo de assinaturas do usuário"""
     # Detectar se veio de comando ou callback
     if update.callback_query:
         user = update.callback_query.from_user
@@ -67,7 +67,7 @@ async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE
     with get_db_session() as session:
         # Verificar transações pendentes
         if not context.user_data.get('skip_pending_check'):
-            pending_transactions = session.query(Transaction).join(
+            pending_transaction = session.query(Transaction).join(
                 Subscription
             ).filter(
                 Subscription.telegram_user_id == str(user.id),
@@ -75,15 +75,7 @@ async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE
                 Transaction.created_at >= datetime.utcnow() - timedelta(hours=2)
             ).order_by(Transaction.created_at.desc()).first()
 
-            if pending_transactions:
-                # Pegar apenas a transação mais recente
-                if isinstance(pending_transactions, list) and len(pending_transactions) > 1:
-                    pending_transactions = [pending_transactions[0]]
-                    logger.info(f"Encontradas {len(pending_transactions)} transações pendentes para usuário {user.id}")
-                # CORRIGIDO: Pegar apenas a mais recente
-                if pending_transactions and isinstance(pending_transactions, list):
-                    pending_transactions = pending_transactions[:1]
-
+            if pending_transaction:
                 stripe_url = context.user_data.get('stripe_checkout_url')
                 text = (
                     f"Olá, {name}!\n\n"
@@ -102,53 +94,73 @@ async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE
                 ])
 
                 if is_callback:
-                    await message.edit_text(
-                        text,
-                        parse_mode=ParseMode.HTML,
-                        reply_markup=InlineKeyboardMarkup(keyboard)
-                    )
+                    await message.edit_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
                 else:
-                    await message.reply_text(
-                        text,
-                        parse_mode=ParseMode.HTML,
-                        reply_markup=InlineKeyboardMarkup(keyboard)
-                    )
+                    await message.reply_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
                 return
 
-        # Buscar todas as assinaturas do usuário
-        subscriptions = session.query(Subscription).filter_by(
-            telegram_user_id=str(user.id),
-            status='active'
-        ).order_by(Subscription.end_date).all()
+        # Buscar TODAS as assinaturas do usuário
+        now = datetime.utcnow()
+        all_subs = session.query(Subscription).filter(
+            Subscription.telegram_user_id == str(user.id),
+            Subscription.status.in_(['active', 'expired', 'cancelled'])
+        ).order_by(Subscription.end_date.desc()).all()
 
-        if not subscriptions:
+        active = [s for s in all_subs if s.status == 'active' and s.end_date > now]
+        expiring = [s for s in active if s.end_date <= now + timedelta(days=7)]
+        expired = [s for s in all_subs if s.status == 'expired' or (s.status == 'active' and s.end_date <= now)]
+        cancelled = [s for s in all_subs if s.status == 'cancelled']
+        history_count = len(expired) + len(cancelled)
+
+        if not all_subs:
+            # Sem nenhuma assinatura
             text = (
                 f"Olá, {name}!\n\n"
-                f"Você ainda não possui assinaturas ativas.\n"
-                f"Use o link de convite do criador para assinar um grupo."
+                f"Você ainda não possui assinaturas.\n"
+                f"Use o link de convite de um criador para assinar."
             )
             reply_markup = None
+        elif not active:
+            # Só tem histórico, nada ativo
+            text = (
+                f"Olá, {name}!\n\n"
+                f"Você não possui assinaturas ativas.\n\n"
+                f"📋 {history_count} no histórico"
+            )
+            keyboard = [
+                [InlineKeyboardButton("📋 Histórico", callback_data="subs_history")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
         else:
-            text = f"Olá, {name}!\n\n<b>Suas assinaturas:</b>\n"
+            # Tem assinaturas ativas
+            text = f"Olá, {name}!\n\n"
+            text += f"✅ {len(active)} assinatura{'s' if len(active) != 1 else ''} ativa{'s' if len(active) != 1 else ''}\n"
 
-            for sub in subscriptions[:5]:
-                remaining = format_remaining_text(sub.end_date)
-                status_emoji = get_expiry_emoji(sub.end_date)
+            for sub in active[:5]:
                 group_name = escape_html(sub.group.name) if sub.group else "N/A"
-                plan_name = escape_html(sub.plan.name) if sub.plan else "N/A"
+                is_lifetime = getattr(sub.plan, 'is_lifetime', False) or (sub.plan and sub.plan.duration_days == 0)
+                if is_lifetime:
+                    remaining = "Vitalício"
+                else:
+                    remaining = format_remaining_text(sub.end_date)
+                emoji = get_expiry_emoji(sub.end_date) if not is_lifetime else "♾️"
+                text += f"  {emoji} {group_name} — {remaining}\n"
 
-                text += (
-                    f"\n{status_emoji} <b>{group_name}</b>\n"
-                    f"   Plano: <code>{plan_name}</code>\n"
-                    f"   Expira: {format_date_code(sub.end_date)} · {remaining}\n"
-                )
+            if len(active) > 5:
+                text += f"  ... e mais {len(active) - 5}\n"
 
-            if len(subscriptions) > 5:
-                text += f"\n... e mais {len(subscriptions) - 5} assinaturas\n"
+            if expiring:
+                text += f"\n⚠️ {len(expiring)} expirando em breve\n"
 
-            reply_markup = InlineKeyboardMarkup([
-                [InlineKeyboardButton("Ver Detalhes", callback_data="check_status")]
-            ])
+            if history_count > 0:
+                text += f"\n📋 {history_count} no histórico\n"
+
+            keyboard = [
+                [InlineKeyboardButton("✅ Minhas Assinaturas", callback_data="subs_active")]
+            ]
+            if history_count > 0:
+                keyboard.append([InlineKeyboardButton("📋 Histórico", callback_data="subs_history")])
+            reply_markup = InlineKeyboardMarkup(keyboard)
 
         # Enviar ou editar mensagem
         if is_callback:
@@ -244,9 +256,10 @@ async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_
             return
 
         # Mostrar informações do grupo e planos
-        description = escape_html(group.description) if group.description else "Grupo VIP exclusivo"
+        type_label = "canal" if group.chat_type == 'channel' else "grupo"
+        description = escape_html(group.description) if group.description else f"{type_label.capitalize()} VIP exclusivo"
         text = (
-            f"<b>{group_name}</b>\n"
+            f"Bem-vindo ao {type_label} <b>{group_name}</b>!\n"
             f"{description}\n\n"
             f"<b>Planos disponíveis:</b>\n"
         )

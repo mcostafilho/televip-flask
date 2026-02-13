@@ -28,6 +28,7 @@ def setup_jobs(application: Application):
     asyncio.create_task(check_expired_loop())
     asyncio.create_task(send_reminders_loop())
     asyncio.create_task(audit_members_loop())
+    asyncio.create_task(resubscribe_reminders_loop())
 
     logger.info("Sistema de tarefas agendadas ativo")
 
@@ -519,3 +520,137 @@ async def send_renewal_notification(subscription, days_left):
         pass  # Usuario bloqueou o bot
     except Exception as e:
         logger.error(f"Erro ao enviar lembrete: {e}")
+
+
+# ──────────────────────────────────────────────
+# Remarketing: lembretes para assinaturas expiradas
+# ──────────────────────────────────────────────
+
+async def resubscribe_reminders_loop():
+    """Enviar lembretes de re-assinatura 1x por dia"""
+    await asyncio.sleep(120)  # Esperar bot estar pronto
+
+    while True:
+        try:
+            logger.info("Enviando lembretes de re-assinatura...")
+            await send_resubscribe_reminders()
+            await asyncio.sleep(86400)  # 24 horas
+        except asyncio.CancelledError:
+            break
+        except Exception as e:
+            logger.error(f"Erro no resubscribe_reminders_loop: {e}")
+            await asyncio.sleep(3600)
+
+
+async def send_resubscribe_reminders():
+    """Enviar lembretes para assinaturas expiradas (3, 14, 30 dias)"""
+    if not _application:
+        return
+
+    try:
+        with get_db_session() as session:
+            now = datetime.utcnow()
+            reminders_sent = 0
+
+            # Janelas de lembrete: (dias desde expiração, tolerância em horas, tipo)
+            windows = [
+                (3, 24, 'soft'),
+                (14, 24, 'incentive'),
+                (30, 24, 'final'),
+            ]
+
+            for days, tolerance_hours, reminder_type in windows:
+                target_start = now - timedelta(days=days, hours=tolerance_hours)
+                target_end = now - timedelta(days=days) + timedelta(hours=tolerance_hours)
+
+                expired_subs = session.query(Subscription).filter(
+                    Subscription.status == 'expired',
+                    Subscription.end_date >= target_start,
+                    Subscription.end_date <= target_end
+                ).all()
+
+                for sub in expired_subs:
+                    # Anti-spam: só envia se last_reminder_at é None ou > 7 dias atrás
+                    if sub.last_reminder_at and (now - sub.last_reminder_at).days < 7:
+                        continue
+
+                    # Verificar se o grupo ainda está ativo
+                    group = sub.group
+                    if not group or not group.is_active:
+                        continue
+
+                    # Verificar se o usuário já tem outra sub ativa para este grupo
+                    active_sub = session.query(Subscription).filter(
+                        Subscription.group_id == group.id,
+                        Subscription.telegram_user_id == sub.telegram_user_id,
+                        Subscription.status == 'active',
+                        Subscription.end_date > now
+                    ).first()
+                    if active_sub:
+                        continue
+
+                    sent = await _send_resubscribe_message(sub, reminder_type)
+                    if sent:
+                        sub.last_reminder_at = now
+                        reminders_sent += 1
+
+                session.commit()
+
+            logger.info(f"Remarketing: {reminders_sent} lembretes de re-assinatura enviados")
+
+    except Exception as e:
+        logger.error(f"Erro no remarketing: {e}")
+
+
+async def _send_resubscribe_message(subscription, reminder_type):
+    """Enviar mensagem de remarketing individual"""
+    if not _application:
+        return False
+
+    try:
+        group = subscription.group
+        user_id = int(subscription.telegram_user_id)
+
+        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+        from bot.utils.format_utils import escape_html
+
+        group_name = escape_html(group.name)
+        type_label = "canal" if group.chat_type == 'channel' else "grupo"
+        bot_username = (await _application.bot.get_me()).username
+
+        # Deep link para o grupo
+        deep_link = f"https://t.me/{bot_username}?start=g_{group.invite_slug}"
+
+        if reminder_type == 'soft':
+            text = (
+                f"Olá! Sua assinatura de <b>{group_name}</b> expirou há 3 dias.\n\n"
+                f"Renove agora para continuar com acesso."
+            )
+        elif reminder_type == 'incentive':
+            text = (
+                f"Sentimos sua falta! Sua assinatura de <b>{group_name}</b> expirou.\n\n"
+                f"Volte a fazer parte do {type_label}."
+            )
+        else:  # final
+            text = (
+                f"Último lembrete: sua assinatura de <b>{group_name}</b> expirou há 30 dias.\n\n"
+                f"Não enviaremos mais lembretes sobre esta assinatura."
+            )
+
+        keyboard = [[
+            InlineKeyboardButton("Assinar Novamente", url=deep_link)
+        ]]
+
+        await _application.bot.send_message(
+            chat_id=user_id,
+            text=text,
+            parse_mode=ParseMode.HTML,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+        return True
+
+    except TelegramError:
+        return False  # Usuário bloqueou o bot
+    except Exception as e:
+        logger.error(f"Erro ao enviar remarketing para {subscription.telegram_user_id}: {e}")
+        return False

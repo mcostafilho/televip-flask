@@ -205,17 +205,18 @@ async def handle_payment_confirmed(query, context, transaction, db_session):
 
     group_name = escape_html(group.name)
     plan_name = escape_html(subscription.plan.name) if subscription.plan else "N/A"
+    type_label = "canal" if group.chat_type == 'channel' else "grupo"
 
     # Preparar mensagem baseada no resultado
     if user_added:
         text = (
             f"<b>Pagamento confirmado!</b>\n\n"
-            f"Você foi adicionado ao grupo <b>{group_name}</b>.\n\n"
+            f"Você foi adicionado ao {type_label} <b>{group_name}</b>.\n\n"
             f"Plano: <code>{plan_name}</code>\n"
             f"Acesso até: {format_date_code(subscription.end_date)}"
         )
         keyboard = [[
-            InlineKeyboardButton("Minhas Assinaturas", callback_data="my_subscriptions")
+            InlineKeyboardButton("Minhas Assinaturas", callback_data="subs_active")
         ]]
 
     elif invite_link:
@@ -227,13 +228,13 @@ async def handle_payment_confirmed(query, context, transaction, db_session):
             f"Validade:  {format_date(subscription.end_date)}\n"
             f"Valor:     {format_currency(transaction.amount)}"
             f"</pre>\n\n"
-            f"Clique abaixo para entrar no grupo.\n\n"
+            f"Clique abaixo para entrar no {type_label}.\n\n"
             f"<i>O link é de uso único — não compartilhe.</i>"
         )
         keyboard = [[
-            InlineKeyboardButton("Entrar no Grupo", url=invite_link)
+            InlineKeyboardButton(f"Entrar no {type_label.capitalize()}", url=invite_link)
         ], [
-            InlineKeyboardButton("Minhas Assinaturas", callback_data="my_subscriptions")
+            InlineKeyboardButton("Minhas Assinaturas", callback_data="subs_active")
         ]]
 
     else:
@@ -246,7 +247,7 @@ async def handle_payment_confirmed(query, context, transaction, db_session):
         keyboard = [[
             InlineKeyboardButton("Contactar Suporte", url="https://t.me/suporte_televip")
         ], [
-            InlineKeyboardButton("Minhas Assinaturas", callback_data="my_subscriptions")
+            InlineKeyboardButton("Minhas Assinaturas", callback_data="subs_active")
         ]]
 
     # Enviar mensagem
