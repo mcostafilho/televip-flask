@@ -75,9 +75,21 @@ async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         active = [s for s in all_subs if s.status == 'active' and s.end_date > now]
         expiring = [s for s in active if s.end_date <= now + timedelta(days=7)]
-        expired = [s for s in all_subs if s.status == 'expired' or (s.status == 'active' and s.end_date <= now)]
-        cancelled = [s for s in all_subs if s.status == 'cancelled']
-        history_count = len(expired) + len(cancelled)
+
+        # Histórico: só subs que foram realmente ativas (expiradas ou canceladas com transação paga)
+        # Agrupado por grupo — conta grupos únicos, não tentativas individuais
+        history_subs = [
+            s for s in all_subs
+            if s.status == 'expired'
+            or (s.status == 'active' and s.end_date <= now)
+            or (s.status == 'cancelled' and any(t.status == 'completed' for t in s.transactions))
+        ]
+        history_groups = {}
+        for s in history_subs:
+            gid = s.group_id
+            if gid not in history_groups or (s.end_date and s.end_date > history_groups[gid].end_date):
+                history_groups[gid] = s
+        history_count = len(history_groups)
 
         # Verificar pagamentos pendentes (não bloqueia, só avisa)
         pending_txn = session.query(Transaction).join(

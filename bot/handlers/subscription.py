@@ -866,7 +866,7 @@ async def show_subscription_detail(update: Update, context: ContextTypes.DEFAULT
 # ──────────────────────────────────────────────
 
 async def show_subscription_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Listar assinaturas expiradas/canceladas — callback subs_history / subs_history_p{page}"""
+    """Histórico agrupado por grupo — só subs reais (não tentativas abandonadas)"""
     query = update.callback_query
     await query.answer()
     user = query.from_user
@@ -883,35 +883,57 @@ async def show_subscription_history(update: Update, context: ContextTypes.DEFAUL
     now = datetime.utcnow()
 
     with get_db_session() as session:
-        history_subs = session.query(Subscription).filter(
+        # Buscar todas as subs não-ativas do usuário
+        all_history = session.query(Subscription).filter(
             Subscription.telegram_user_id == str(user.id),
             db.or_(
                 Subscription.status == 'expired',
-                Subscription.status == 'cancelled',
                 db.and_(Subscription.status == 'active', Subscription.end_date <= now)
             )
         ).order_by(Subscription.end_date.desc()).all()
 
-        if not history_subs:
+        # Também incluir canceladas que tiveram pagamento real (não abandonos)
+        cancelled_real = session.query(Subscription).filter(
+            Subscription.telegram_user_id == str(user.id),
+            Subscription.status == 'cancelled'
+        ).all()
+        for sub in cancelled_real:
+            has_completed = any(t.status == 'completed' for t in sub.transactions)
+            if has_completed:
+                all_history.append(sub)
+
+        # Agrupar por grupo — manter só a sub mais recente de cada grupo
+        groups_map = {}
+        for sub in all_history:
+            gid = sub.group_id
+            if gid not in groups_map or (sub.end_date and sub.end_date > groups_map[gid].end_date):
+                groups_map[gid] = sub
+
+        grouped = sorted(groups_map.values(), key=lambda s: s.end_date or datetime.min, reverse=True)
+
+        if not grouped:
             text = (
-                "📋 <b>Histórico de Assinaturas</b>\n\n"
+                "📋 <b>Histórico</b>\n\n"
                 "Nenhuma assinatura no histórico."
             )
             keyboard = [[InlineKeyboardButton("↩ Voltar", callback_data="back_to_start")]]
             await query.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
             return
 
-        total = len(history_subs)
+        total = len(grouped)
         start = page * SUBS_PER_PAGE
-        page_subs = history_subs[start:start + SUBS_PER_PAGE]
+        page_items = grouped[start:start + SUBS_PER_PAGE]
 
-        text = "📋 <b>Histórico de Assinaturas</b>\n"
+        text = "📋 <b>Histórico</b>\n"
 
-        for sub in page_subs:
+        for sub in page_items:
             group = sub.group
             plan = sub.plan
             group_name = escape_html(group.name) if group else "N/A"
             plan_name = escape_html(plan.name) if plan else "N/A"
+
+            # Contar quantas subs reais teve neste grupo
+            group_sub_count = sum(1 for s in all_history if s.group_id == sub.group_id)
 
             if sub.status == 'cancelled':
                 emoji = "🚫"
@@ -920,15 +942,15 @@ async def show_subscription_history(update: Update, context: ContextTypes.DEFAUL
                 emoji = "❌"
                 date_text = f"Expirou em {format_date(sub.end_date)}"
 
-            text += (
-                f"\n{emoji} <b>{group_name}</b>\n"
-                f"   {plan_name} · {date_text}\n"
-            )
+            text += f"\n{emoji} <b>{group_name}</b>\n"
+            text += f"   {plan_name} · {date_text}\n"
+            if group_sub_count > 1:
+                text += f"   ({group_sub_count} assinaturas)\n"
 
-        # Botões: 1 por sub para detalhe
+        # Botões: 1 por grupo
         keyboard = []
-        for sub in page_subs:
-            group_name_short = (sub.group.name[:20] if sub.group else "N/A") + " — Detalhes"
+        for sub in page_items:
+            group_name_short = sub.group.name[:25] if sub.group else "N/A"
             keyboard.append([
                 InlineKeyboardButton(group_name_short, callback_data=f"sub_detail_{sub.id}")
             ])
