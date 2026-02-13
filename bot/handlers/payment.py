@@ -122,11 +122,24 @@ async def show_group_plans(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     with get_db_session() as session:
         group = session.query(Group).get(group_id)
-        if not group or not group.is_active:
+        if not group:
             await query.edit_message_text(
-                "Grupo não disponível.",
+                "Grupo não encontrado.",
                 reply_markup=InlineKeyboardMarkup([[
-                    InlineKeyboardButton("Menu", callback_data="back_to_start")
+                    InlineKeyboardButton("↩ Voltar", callback_data="back_to_start")
+                ]])
+            )
+            return
+
+        group_name = escape_html(group.name)
+
+        if not group.is_active:
+            await query.edit_message_text(
+                f"O {('canal' if group.chat_type == 'channel' else 'grupo')} <b>{group_name}</b> "
+                f"está temporariamente indisponível.",
+                parse_mode=ParseMode.HTML,
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton("↩ Voltar", callback_data="back_to_start")
                 ]])
             )
             return
@@ -137,9 +150,11 @@ async def show_group_plans(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if not plans:
             await query.edit_message_text(
-                "Nenhum plano disponível para este grupo.",
+                f"O criador de <b>{group_name}</b> pausou novas assinaturas.\n\n"
+                f"Tente novamente mais tarde.",
+                parse_mode=ParseMode.HTML,
                 reply_markup=InlineKeyboardMarkup([[
-                    InlineKeyboardButton("Menu", callback_data="back_to_start")
+                    InlineKeyboardButton("↩ Voltar", callback_data="back_to_start")
                 ]])
             )
             return

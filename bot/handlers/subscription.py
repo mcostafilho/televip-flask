@@ -843,13 +843,8 @@ async def show_subscription_detail(update: Update, context: ContextTypes.DEFAULT
                 InlineKeyboardButton("↩ Voltar", callback_data="subs_active")
             ])
         else:
-            # Expirada ou cancelada — checar se grupo aceita novas assinaturas
-            has_plans = False
-            if group and group.is_active:
-                has_plans = session.query(PricingPlan).filter_by(
-                    group_id=group.id, is_active=True
-                ).first() is not None
-            if has_plans:
+            # Expirada ou cancelada
+            if group:
                 keyboard.append([
                     InlineKeyboardButton("🔄 Assinar Novamente", callback_data=f"group_{group.id}")
                 ])
@@ -952,21 +947,14 @@ async def show_subscription_history(update: Update, context: ContextTypes.DEFAUL
             if group_sub_count > 1:
                 text += f"   ({group_sub_count} assinaturas)\n"
 
-        # Botões: por grupo — detalhes + assinar novamente se disponível
+        # Botões: por grupo — detalhes + assinar novamente
         keyboard = []
         for sub in page_items:
             group = sub.group
             group_name_short = group.name[:18] if group else "N/A"
 
-            # Checar se o grupo aceita novas assinaturas (ativo + tem planos ativos)
-            has_plans = False
-            if group and group.is_active:
-                has_plans = session.query(PricingPlan).filter_by(
-                    group_id=group.id, is_active=True
-                ).first() is not None
-
             row = [InlineKeyboardButton(f"📋 {group_name_short}", callback_data=f"sub_detail_{sub.id}")]
-            if has_plans:
+            if group:
                 row.append(InlineKeyboardButton("🔄 Assinar", callback_data=f"group_{group.id}"))
             keyboard.append(row)
 
