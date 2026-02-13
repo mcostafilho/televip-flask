@@ -291,6 +291,111 @@ def verify_password(password: str, password_hash: str) -> bool:
     import bcrypt
     return bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8'))
 
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+MAX_IMAGE_SIZE = 2 * 1024 * 1024  # 2MB
+
+# Magic bytes for image formats
+_IMAGE_SIGNATURES = {
+    b'\x89PNG\r\n\x1a\n': 'png',
+    b'\xff\xd8\xff': 'jpg',
+    b'GIF87a': 'gif',
+    b'GIF89a': 'gif',
+}
+
+
+def validate_and_sanitize_image(file, max_size=MAX_IMAGE_SIZE):
+    """
+    Validate uploaded image file for security:
+    1. Check extension is allowed
+    2. Check file size
+    3. Verify magic bytes match claimed extension
+    4. Re-process with Pillow to strip metadata and validate pixel data
+    5. Return sanitized image bytes
+
+    Args:
+        file: werkzeug FileStorage object
+        max_size: Maximum file size in bytes
+
+    Returns:
+        (sanitized_bytes, extension) tuple on success
+
+    Raises:
+        ValueError with user-friendly message on any validation failure
+    """
+    from PIL import Image
+    import io
+
+    if not file or file.filename == '':
+        raise ValueError('Nenhum arquivo selecionado.')
+
+    # 1. Extension check
+    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+    if ext not in ALLOWED_IMAGE_EXTENSIONS:
+        raise ValueError('Formato inválido. Use PNG, JPG ou GIF.')
+
+    # Normalize jpg/jpeg
+    if ext == 'jpeg':
+        ext = 'jpg'
+
+    # 2. Size check
+    file.seek(0, 2)
+    size = file.tell()
+    file.seek(0)
+    if size > max_size:
+        raise ValueError(f'Arquivo muito grande. Máximo {max_size // (1024*1024)}MB.')
+    if size < 100:
+        raise ValueError('Arquivo muito pequeno ou corrompido.')
+
+    # 3. Magic byte validation
+    header = file.read(16)
+    file.seek(0)
+    magic_match = False
+    detected_type = None
+    for signature, sig_type in _IMAGE_SIGNATURES.items():
+        if header.startswith(signature):
+            magic_match = True
+            detected_type = sig_type
+            break
+
+    if not magic_match:
+        raise ValueError('Arquivo não é uma imagem válida.')
+
+    # Cross-check: detected type must match extension
+    ext_normalized = 'jpg' if ext in ('jpg', 'jpeg') else ext
+    detected_normalized = 'jpg' if detected_type in ('jpg', 'jpeg') else detected_type
+    if ext_normalized != detected_normalized:
+        raise ValueError('Extensão não corresponde ao conteúdo do arquivo.')
+
+    # 4. Re-process with Pillow (strips EXIF, validates pixel data, prevents polyglot files)
+    try:
+        img = Image.open(file)
+        img.verify()  # Check for corruption
+        file.seek(0)
+        img = Image.open(file)  # Re-open after verify
+
+        # Limit dimensions to prevent decompression bombs
+        max_dimension = 4096
+        if img.width > max_dimension or img.height > max_dimension:
+            raise ValueError(f'Dimensões muito grandes. Máximo {max_dimension}x{max_dimension}px.')
+
+        # Re-save to clean buffer (strips metadata, prevents embedded scripts)
+        output = io.BytesIO()
+        save_format = 'PNG' if ext == 'png' else ('GIF' if ext == 'gif' else 'JPEG')
+
+        # Convert RGBA to RGB for JPEG (JPEG doesn't support alpha)
+        if save_format == 'JPEG' and img.mode in ('RGBA', 'P', 'LA'):
+            img = img.convert('RGB')
+
+        img.save(output, format=save_format, quality=90)
+        output.seek(0)
+        return output.read(), ext
+
+    except ValueError:
+        raise  # Re-raise our own ValueErrors
+    except Exception:
+        raise ValueError('Arquivo de imagem corrompido ou inválido.')
+
+
 def sanitize_filename(filename: str) -> str:
     """
     Sanitizar nome de arquivo para upload seguro

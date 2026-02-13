@@ -20,25 +20,33 @@ from io import StringIO
 bp = Blueprint('groups', __name__, url_prefix='/groups')
 logger = logging.getLogger(__name__)
 
-ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-MAX_IMAGE_SIZE = 2 * 1024 * 1024  # 2MB
+def _save_cover_image(file, group_id, old_cover_url=None):
+    """Valida, sanitiza e salva imagem de capa. Remove capa antiga do disco."""
+    from app.utils.security import validate_and_sanitize_image
 
-
-def _save_cover_image(file, group_id):
-    """Salva imagem de capa e retorna o URL relativo, ou None se invalido."""
     if not file or file.filename == '':
         return None
-    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
-    if ext not in ALLOWED_IMAGE_EXTENSIONS:
+
+    try:
+        clean_bytes, ext = validate_and_sanitize_image(file)
+    except ValueError:
         return None
-    file.seek(0, 2)
-    size = file.tell()
-    file.seek(0)
-    if size > MAX_IMAGE_SIZE:
-        return None
+
+    # Remover capa antiga do disco
+    if old_cover_url and '/uploads/covers/' in (old_cover_url or ''):
+        old_filename = old_cover_url.rsplit('/', 1)[-1]
+        old_path = os.path.join(current_app.static_folder, 'uploads', 'covers', old_filename)
+        if os.path.exists(old_path):
+            try:
+                os.remove(old_path)
+            except OSError:
+                pass
+
     filename = secure_filename(f"{group_id}_{int(time.time())}.{ext}")
     upload_dir = os.path.join(current_app.static_folder, 'uploads', 'covers')
-    file.save(os.path.join(upload_dir, filename))
+    filepath = os.path.join(upload_dir, filename)
+    with open(filepath, 'wb') as f:
+        f.write(clean_bytes)
     return url_for('static', filename=f"uploads/covers/{filename}")
 
 
@@ -236,7 +244,7 @@ def create():
                 if cover_url:
                     group.cover_image_url = cover_url
 
-            # Adicionar planos
+            # Adicionar planos (create)
             plan_names = request.form.getlist('plan_name[]')
             plan_durations = request.form.getlist('plan_duration[]')
             plan_prices = request.form.getlist('plan_price[]')
@@ -337,7 +345,7 @@ def edit(id):
         # Upload de capa (se enviado arquivo)
         cover_file = request.files.get('cover_image')
         if cover_file and cover_file.filename:
-            cover_url = _save_cover_image(cover_file, group.id)
+            cover_url = _save_cover_image(cover_file, group.id, old_cover_url=group.cover_image_url)
             if cover_url:
                 group.cover_image_url = cover_url
 

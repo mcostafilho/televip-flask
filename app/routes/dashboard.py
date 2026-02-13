@@ -528,42 +528,43 @@ def update_profile():
     return redirect(url_for('dashboard.profile'))
 
 
-ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-MAX_IMAGE_SIZE = 2 * 1024 * 1024  # 2MB
-
-
 @bp.route('/profile/upload-avatar', methods=['POST'])
 @login_required
 @limiter.limit("10 per hour")
 def upload_avatar():
     """Upload de avatar do criador"""
+    from app.utils.security import validate_and_sanitize_image
+
     if is_admin_viewing():
-        return jsonify({'success': False, 'error': 'Acao nao permitida no modo admin.'}), 403
+        return jsonify({'success': False, 'error': 'Ação não permitida no modo admin.'}), 403
 
     if 'avatar' not in request.files:
         return jsonify({'success': False, 'error': 'Nenhum arquivo enviado.'}), 400
 
     file = request.files['avatar']
-    if file.filename == '':
-        return jsonify({'success': False, 'error': 'Nenhum arquivo selecionado.'}), 400
 
-    # Validar extensao
-    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
-    if ext not in ALLOWED_IMAGE_EXTENSIONS:
-        return jsonify({'success': False, 'error': 'Formato invalido. Use PNG, JPG ou GIF.'}), 400
+    # Validar e sanitizar imagem (magic bytes, Pillow re-process, strip metadata)
+    try:
+        clean_bytes, ext = validate_and_sanitize_image(file)
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
 
-    # Validar tamanho
-    file.seek(0, 2)
-    size = file.tell()
-    file.seek(0)
-    if size > MAX_IMAGE_SIZE:
-        return jsonify({'success': False, 'error': 'Arquivo muito grande. Maximo 2MB.'}), 400
+    # Remover avatar antigo do disco
+    if current_user.avatar_url and '/uploads/avatars/' in (current_user.avatar_url or ''):
+        old_filename = current_user.avatar_url.rsplit('/', 1)[-1]
+        old_path = os.path.join(current_app.static_folder, 'uploads', 'avatars', old_filename)
+        if os.path.exists(old_path):
+            try:
+                os.remove(old_path)
+            except OSError:
+                pass
 
-    # Salvar arquivo
+    # Salvar arquivo sanitizado
     filename = secure_filename(f"{current_user.id}_{int(time.time())}.{ext}")
     upload_dir = os.path.join(current_app.static_folder, 'uploads', 'avatars')
     filepath = os.path.join(upload_dir, filename)
-    file.save(filepath)
+    with open(filepath, 'wb') as f:
+        f.write(clean_bytes)
 
     # Atualizar URL do avatar
     relative_path = f"uploads/avatars/{filename}"
