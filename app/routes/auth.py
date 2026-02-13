@@ -393,20 +393,66 @@ def logout():
 
 @bp.route('/sitemap.xml')
 def sitemap():
-    """Sitemap XML para motores de busca"""
-    urls = [
-        'https://televip.app/',
-        'https://televip.app/recursos',
-        'https://televip.app/precos',
-        'https://televip.app/termos',
-        'https://televip.app/privacidade',
-        'https://televip.app/denuncia',
-        'https://televip.app/como-funciona',
+    """Sitemap XML dinâmico — páginas estáticas + criadores + grupos públicos"""
+    from app.models import Group
+    from sqlalchemy import or_
+
+    base = 'https://televip.app'
+
+    # Páginas estáticas
+    static_pages = [
+        ('/', 'daily', '1.0'),
+        ('/recursos', 'weekly', '0.8'),
+        ('/precos', 'weekly', '0.8'),
+        ('/como-funciona', 'weekly', '0.7'),
+        ('/termos', 'monthly', '0.3'),
+        ('/privacidade', 'monthly', '0.3'),
+        ('/denuncia', 'monthly', '0.3'),
     ]
+
     xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
     xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-    for url in urls:
-        xml += f'  <url><loc>{url}</loc></url>\n'
+
+    for path, freq, priority in static_pages:
+        xml += (
+            f'  <url>\n'
+            f'    <loc>{base}{path}</loc>\n'
+            f'    <changefreq>{freq}</changefreq>\n'
+            f'    <priority>{priority}</priority>\n'
+            f'  </url>\n'
+        )
+
+    # Páginas públicas de criadores ativos
+    creators = Creator.query.filter(
+        Creator.is_active == True,
+        or_(Creator.is_blocked == False, Creator.is_blocked.is_(None)),
+        Creator.username.isnot(None)
+    ).all()
+
+    for creator in creators:
+        xml += (
+            f'  <url>\n'
+            f'    <loc>{base}/c/{creator.username}</loc>\n'
+            f'    <changefreq>weekly</changefreq>\n'
+            f'    <priority>0.6</priority>\n'
+            f'  </url>\n'
+        )
+
+        # Grupos públicos deste criador
+        public_groups = Group.query.filter_by(
+            creator_id=creator.id, is_public=True, is_active=True
+        ).all()
+
+        for group in public_groups:
+            if group.invite_slug:
+                xml += (
+                    f'  <url>\n'
+                    f'    <loc>{base}/c/{creator.username}/{group.invite_slug}</loc>\n'
+                    f'    <changefreq>weekly</changefreq>\n'
+                    f'    <priority>0.5</priority>\n'
+                    f'  </url>\n'
+                )
+
     xml += '</urlset>\n'
     return Response(xml, content_type='application/xml')
 
