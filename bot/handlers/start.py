@@ -88,10 +88,11 @@ async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE
                     f"Olá, {name}!\n\n"
                     f"⏳ <b>Pagamento pendente detectado</b>\n\n"
                     f"Você tem um pagamento em processamento.\n"
-                    f"Clique abaixo para verificar o status."
+                    f"Verifique o status ou cancele para escolher outro método."
                 )
                 keyboard = [
                     [InlineKeyboardButton("Verificar Pagamento", callback_data="check_payment_status")],
+                    [InlineKeyboardButton("Cancelar Pendente", callback_data="abandon_payment")],
                     [InlineKeyboardButton("Menu Principal", callback_data="continue_to_menu")]
                 ]
 
@@ -257,7 +258,7 @@ async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_
                 )
             ])
 
-        text += "\n\n<i>Ao assinar, você concorda com os termos de uso.</i>"
+        text += '\n\n<i>Ao assinar, você concorda com os <a href="https://televip.app/termos">termos de uso</a>.</i>'
 
         keyboard.append([
             InlineKeyboardButton("Cancelar", callback_data="cancel")

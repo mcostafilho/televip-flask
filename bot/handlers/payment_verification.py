@@ -258,6 +258,7 @@ async def handle_payment_confirmed(query, context, transaction, db_session):
 
     # Limpar dados da sessão
     context.user_data.pop('stripe_session_id', None)
+    context.user_data.pop('stripe_checkout_url', None)
     context.user_data.pop('checkout', None)
 
     # Log final
@@ -270,18 +271,19 @@ async def handle_payment_confirmed(query, context, transaction, db_session):
 
 async def handle_payment_pending(query, context):
     """Processar pagamento pendente"""
+    stripe_url = context.user_data.get('stripe_checkout_url')
+
     text = (
         "<b>Pagamento em processamento</b>\n\n"
-        "Aguarde 1-2 minutos e clique em \"Verificar Novamente\".\n\n"
-        "<i>Verifique seu e-mail para confirmação do Stripe.</i>"
+        "Complete o pagamento e clique em \"Verificar Novamente\".\n\n"
+        "<i>Se já pagou, aguarde alguns segundos.</i>"
     )
 
-    keyboard = [
-        [
-            InlineKeyboardButton("Verificar Novamente", callback_data="check_payment_status"),
-            InlineKeyboardButton("Cancelar", callback_data="back_to_start")
-        ]
-    ]
+    keyboard = []
+    if stripe_url:
+        keyboard.append([InlineKeyboardButton("Pagar Agora", url=stripe_url)])
+    keyboard.append([InlineKeyboardButton("Verificar Novamente", callback_data="check_payment_status")])
+    keyboard.append([InlineKeyboardButton("Cancelar Pendente", callback_data="abandon_payment")])
 
     await query.edit_message_text(
         text,

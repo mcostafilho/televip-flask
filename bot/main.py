@@ -33,7 +33,8 @@ from telegram.ext import (
 from bot.handlers.start import start_command, show_user_dashboard
 from bot.handlers.payment import (
     start_payment, handle_payment_method,
-    list_user_subscriptions, handle_payment_success
+    list_user_subscriptions, handle_payment_success,
+    abandon_payment
 )
 from bot.handlers.subscription import (
     status_command, handle_renewal,
@@ -163,6 +164,7 @@ def setup_handlers(application: Application) -> None:
     application.add_handler(CallbackQueryHandler(handle_payment_method, pattern=r"^pay_(stripe|pix)$"))
     application.add_handler(CallbackQueryHandler(check_payment_status, pattern="^check_payment_status$"))
     application.add_handler(CallbackQueryHandler(handle_payment_error, pattern="^payment_error$"))
+    application.add_handler(CallbackQueryHandler(abandon_payment, pattern="^abandon_payment$"))
     application.add_handler(CallbackQueryHandler(handle_retry_payment, pattern="^retry_payment$"))
         # Callbacks de navegação
     application.add_handler(CallbackQueryHandler(handle_back_callback, pattern="^back_to_start$"))

@@ -225,6 +225,7 @@ async def process_stripe_payment(query, context, checkout_data):
         if result['success']:
             # Salvar dados do checkout
             context.user_data['stripe_session_id'] = result['session_id']
+            context.user_data['stripe_checkout_url'] = result['url']
 
             with get_db_session() as session:
                 if is_lifetime:
@@ -507,6 +508,7 @@ async def check_payment_status(update: Update, context: ContextTypes.DEFAULT_TYP
 
                 # Limpar dados da sessão
                 context.user_data.pop('stripe_session_id', None)
+                context.user_data.pop('stripe_checkout_url', None)
                 context.user_data.pop('checkout', None)
             else:
                 await query.edit_message_text(
@@ -516,25 +518,83 @@ async def check_payment_status(update: Update, context: ContextTypes.DEFAULT_TYP
                     ]])
                 )
     else:
-        # Pagamento ainda não confirmado
+        # Pagamento ainda não confirmado — re-show payment link if available
+        checkout_data = context.user_data.get('checkout')
+        stripe_url = context.user_data.get('stripe_checkout_url')
+
         text = (
             "<b>Pagamento não confirmado</b>\n\n"
-            "Complete o pagamento no Stripe e clique em \"Verificar Novamente\".\n\n"
+            "Complete o pagamento e clique em \"Verificar Novamente\".\n\n"
             "<i>Se já pagou, aguarde alguns segundos.</i>"
         )
 
-        keyboard = [
-            [
-                InlineKeyboardButton("Verificar Novamente", callback_data="check_payment_status"),
-                InlineKeyboardButton("Cancelar", callback_data="back_to_start")
-            ]
-        ]
+        keyboard = []
+        if stripe_url:
+            keyboard.append([InlineKeyboardButton("Pagar Agora", url=stripe_url)])
+        keyboard.append([InlineKeyboardButton("Verificar Novamente", callback_data="check_payment_status")])
+        keyboard.append([InlineKeyboardButton("Cancelar Pendente", callback_data="abandon_payment")])
 
         await query.edit_message_text(
             text,
             parse_mode=ParseMode.HTML,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
+
+
+async def abandon_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Cancelar pagamento pendente e limpar sessão para recomeçar."""
+    query = update.callback_query
+    await query.answer()
+
+    session_id = context.user_data.get('stripe_session_id')
+    checkout_data = context.user_data.get('checkout')
+
+    # Marcar transação pendente como cancelada no banco
+    if session_id:
+        try:
+            with get_db_session() as session:
+                txn = session.query(Transaction).filter_by(
+                    stripe_session_id=session_id, status='pending'
+                ).first()
+                if txn:
+                    txn.status = 'cancelled'
+                    sub = txn.subscription
+                    if sub and sub.status == 'pending':
+                        sub.status = 'cancelled'
+                    session.commit()
+        except Exception as e:
+            logger.error(f"Erro ao cancelar pagamento pendente: {e}")
+
+    # Limpar dados da sessão
+    context.user_data.pop('stripe_session_id', None)
+    context.user_data.pop('stripe_checkout_url', None)
+    context.user_data.pop('checkout', None)
+
+    # Se temos dados do checkout, voltar para seleção de plano
+    if checkout_data:
+        group_id = checkout_data.get('group_id')
+        text = (
+            "Pagamento cancelado.\n\n"
+            "<i>Nenhuma cobrança foi realizada.</i>"
+        )
+        keyboard = [
+            [InlineKeyboardButton("Escolher Plano", callback_data=f"group_{group_id}")],
+            [InlineKeyboardButton("Menu Principal", callback_data="back_to_start")]
+        ]
+    else:
+        text = (
+            "Pagamento cancelado.\n\n"
+            "<i>Nenhuma cobrança foi realizada.</i>"
+        )
+        keyboard = [
+            [InlineKeyboardButton("Menu Principal", callback_data="back_to_start")]
+        ]
+
+    await query.edit_message_text(
+        text,
+        parse_mode=ParseMode.HTML,
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
 
 
 async def handle_payment_success(update: Update, context: ContextTypes.DEFAULT_TYPE):
