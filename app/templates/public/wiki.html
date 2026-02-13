@@ -321,6 +321,7 @@
                         <a href="#sec-public"><i class="bi bi-globe"></i> Página Pública</a>
                         <a href="#sec-payments"><i class="bi bi-credit-card"></i> Pagamentos e Taxas</a>
                         <a href="#sec-subscriptions"><i class="bi bi-arrow-repeat"></i> Assinaturas</a>
+                        <a href="#sec-bot-flow"><i class="bi bi-chat-dots"></i> Bot do Assinante</a>
                         <a href="#sec-security"><i class="bi bi-shield-check"></i> Segurança</a>
                         <a href="#sec-not"><i class="bi bi-x-octagon"></i> O que NÃO Faz</a>
                         <a href="#sec-faq"><i class="bi bi-question-circle"></i> FAQ</a>
@@ -725,7 +726,187 @@
                             </div>
                         </div>
 
-                        <!-- 7. Segurança -->
+                        <!-- 7. Funcionamento Completo do Bot (Assinante) -->
+                        <div class="accordion-item" id="sec-bot-flow">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#wikiBotFlow">
+                                    <div class="section-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">
+                                        <i class="bi bi-chat-dots-fill"></i>
+                                    </div>
+                                    Bot do Assinante &mdash; Funcionamento Completo
+                                </button>
+                            </h2>
+                            <div id="wikiBotFlow" class="accordion-collapse collapse" data-bs-parent="#wikiAccordion">
+                                <div class="accordion-body">
+
+                                    <p>
+                                        O bot <code>@televipbra_bot</code> é a interface do assinante no Telegram. Abaixo está o funcionamento
+                                        completo de todas as etapas, desde a assinatura até a expiração.
+                                    </p>
+
+                                    <!-- 1. Menu Principal -->
+                                    <h6>1. Menu Principal (<code>/start</code>)</h6>
+                                    <p>Ao abrir o bot, o assinante vê seu <strong>painel pessoal</strong> com:</p>
+                                    <ul>
+                                        <li>Resumo das assinaturas ativas (nome do grupo/canal, tempo restante)</li>
+                                        <li>Aviso de pagamentos pendentes (se houver)</li>
+                                        <li>Aviso de assinaturas expirando em breve</li>
+                                        <li>Histórico de assinaturas anteriores</li>
+                                    </ul>
+                                    <p>
+                                        Na parte inferior do chat, há um <strong>teclado fixo</strong> com 3 botões:
+                                        <code>Menu</code>, <code>Assinaturas</code> e <code>Histórico</code> para navegação rápida.
+                                    </p>
+
+                                    <!-- 2. Fluxo de Assinatura -->
+                                    <h6>2. Fluxo de Assinatura (Nova)</h6>
+                                    <p>O criador compartilha um link do tipo <code>t.me/televipbra_bot?start=g_slug</code>. Ao clicar:</p>
+                                    <ol>
+                                        <li>O bot mostra as <strong>informações do grupo/canal</strong> e os <strong>planos disponíveis</strong> com preços.</li>
+                                        <li>O assinante escolhe um plano.</li>
+                                        <li>O bot exibe o <strong>resumo do pedido</strong> (grupo, plano, duração, valor).</li>
+                                        <li>O assinante escolhe a <strong>forma de pagamento</strong>.</li>
+                                        <li>O bot gera o link de checkout do Stripe.</li>
+                                        <li>Após o pagamento, o bot <strong>confirma automaticamente</strong> e envia o <strong>link de acesso</strong> ao grupo/canal.</li>
+                                    </ol>
+                                    <div class="wiki-highlight success">
+                                        <strong><i class="bi bi-check-circle-fill text-success"></i> Confirmação automática:</strong>
+                                        O bot detecta o pagamento automaticamente &mdash; o assinante não precisa clicar em nada.
+                                        Se preferir, pode clicar em <strong>"Já Paguei"</strong> para verificar manualmente.
+                                    </div>
+
+                                    <!-- 3. Métodos de Pagamento -->
+                                    <h6>3. Métodos de Pagamento</h6>
+                                    <ul>
+                                        <li><strong>Cartão de crédito</strong> &mdash; pagamento instantâneo, renovação automática.</li>
+                                        <li><strong>Boleto bancário</strong> &mdash; validade de 3 dias úteis, compensação em até 2 dias úteis.</li>
+                                        <li><strong>PIX</strong> &mdash; <em>em breve</em>. Estamos finalizando a integração.</li>
+                                    </ul>
+                                    <div class="wiki-highlight">
+                                        <strong><i class="bi bi-info-circle-fill" style="color: #7c5cfc;"></i> Boleto:</strong>
+                                        Quando o assinante paga via boleto, o acesso é liberado automaticamente assim que o Stripe
+                                        confirma a compensação. O bot envia uma mensagem com o link de acesso ao grupo/canal.
+                                    </div>
+
+                                    <!-- 4. Gestão de Assinaturas -->
+                                    <h6>4. Gestão de Assinaturas</h6>
+                                    <p>O assinante pode gerenciar tudo pelo bot, sem sair do Telegram:</p>
+                                    <ul>
+                                        <li><strong>Minhas Assinaturas</strong> &mdash; lista todas as assinaturas ativas com status de renovação.</li>
+                                        <li><strong>Detalhe da Assinatura</strong> &mdash; plano, datas, valor, status da renovação e botões de ação.</li>
+                                        <li><strong>Histórico</strong> &mdash; assinaturas expiradas e canceladas, com opção de assinar novamente.</li>
+                                        <li><strong>Pagamentos</strong> &mdash; lista todas as transações de uma assinatura (valores, datas, status).</li>
+                                        <li><strong>Link de acesso</strong> &mdash; gera um novo link de convite de uso único (expira em 7 dias).</li>
+                                    </ul>
+
+                                    <!-- 5. Renovação -->
+                                    <h6>5. Renovação</h6>
+                                    <p>O TeleVIP suporta dois tipos de renovação:</p>
+                                    <ul>
+                                        <li>
+                                            <strong>Automática (cartão)</strong> &mdash; o Stripe cobra automaticamente na data de vencimento.
+                                            O bot notifica o assinante sobre a renovação e o novo período de acesso.
+                                        </li>
+                                        <li>
+                                            <strong>Manual (boleto ou legado)</strong> &mdash; o assinante precisa renovar manualmente pelo bot
+                                            antes do vencimento. O bot envia lembretes 3 dias e 1 dia antes da expiração.
+                                        </li>
+                                    </ul>
+
+                                    <!-- 6. Troca de Plano -->
+                                    <h6>6. Troca de Plano</h6>
+                                    <p>
+                                        O assinante pode trocar para outro plano do mesmo grupo/canal a qualquer momento.
+                                        O funcionamento depende da situação:
+                                    </p>
+                                    <ul>
+                                        <li>
+                                            <strong>Assinatura ativa (ainda não venceu)</strong> &mdash; o novo plano é agendado para começar
+                                            <strong>após o vencimento do plano atual</strong>. O cartão só é cobrado na data de início do novo plano.
+                                            Nesse caso, <strong>apenas cartão</strong> é aceito (cobrança futura).
+                                        </li>
+                                        <li>
+                                            <strong>Assinatura expirada</strong> &mdash; o novo plano começa imediatamente.
+                                            Todos os métodos de pagamento são aceitos (cartão, boleto e, em breve, PIX).
+                                        </li>
+                                    </ul>
+
+                                    <!-- 7. Cancelamento -->
+                                    <h6>7. Cancelamento de Renovação</h6>
+                                    <p>
+                                        O assinante pode cancelar a renovação automática a qualquer momento pelo bot.
+                                        O cancelamento funciona da seguinte forma:
+                                    </p>
+                                    <ul>
+                                        <li>O acesso <strong>continua ativo</strong> até a data de vencimento do período já pago.</li>
+                                        <li>Nenhuma cobrança adicional será feita.</li>
+                                        <li>O assinante pode <strong>reativar a renovação</strong> antes do vencimento, se mudar de ideia.</li>
+                                    </ul>
+
+                                    <!-- 8. Expiração e Grace Period -->
+                                    <h6>8. Expiração e Período de Carência</h6>
+                                    <p>
+                                        Quando uma assinatura expira (sem renovação), o bot segue um processo gradual:
+                                    </p>
+                                    <div class="wiki-highlight">
+                                        <strong>Timeline de expiração:</strong>
+                                        <ul class="mb-0 mt-2">
+                                            <li><strong>3 dias antes</strong> &mdash; Lembrete: &ldquo;sua assinatura expira em 3 dias&rdquo;</li>
+                                            <li><strong>1 dia antes</strong> &mdash; Lembrete: &ldquo;sua assinatura expira amanhã&rdquo;</li>
+                                            <li><strong>Dia da expiração</strong> &mdash; Aviso: &ldquo;expirou, renove em 2 dias ou será removido&rdquo;</li>
+                                            <li><strong>1 dia após</strong> &mdash; Último lembrete: &ldquo;último dia para renovar&rdquo;</li>
+                                            <li><strong>2 dias após</strong> &mdash; Remoção automática do grupo/canal + notificação</li>
+                                        </ul>
+                                    </div>
+                                    <div class="wiki-highlight warning">
+                                        <strong><i class="bi bi-exclamation-triangle-fill" style="color: #fbbf24;"></i> Boleto pendente:</strong>
+                                        Se o assinante pagou com boleto e o pagamento está aguardando compensação, o bot
+                                        <strong>não remove</strong> o assinante do grupo durante esse período. Quando o boleto compensar,
+                                        o bot confirma automaticamente e mantém (ou restaura) o acesso.
+                                    </div>
+
+                                    <!-- 9. Remarketing -->
+                                    <h6>9. Lembretes de Re-assinatura</h6>
+                                    <p>
+                                        Após a remoção, o bot envia lembretes espaçados convidando o assinante a voltar:
+                                    </p>
+                                    <ul>
+                                        <li><strong>3 dias após</strong> &mdash; &ldquo;Sentimos sua falta! Renove sua assinatura.&rdquo;</li>
+                                        <li><strong>14 dias após</strong> &mdash; &ldquo;Volte a fazer parte do grupo.&rdquo;</li>
+                                        <li><strong>30 dias após</strong> &mdash; &ldquo;Último lembrete.&rdquo; (não envia mais após isso)</li>
+                                    </ul>
+                                    <p>
+                                        Os lembretes incluem um botão para assinar novamente com um clique. O assinante pode
+                                        ignorar se não quiser voltar &mdash; não há spam.
+                                    </p>
+
+                                    <!-- 10. Notificações do Bot -->
+                                    <h6>10. Notificações Automáticas</h6>
+                                    <p>O bot envia notificações em momentos-chave:</p>
+                                    <ul>
+                                        <li><strong>Pagamento confirmado</strong> &mdash; com link de acesso ao grupo/canal.</li>
+                                        <li><strong>Renovação automática</strong> &mdash; confirmação com data do novo período e opção de gerenciar.</li>
+                                        <li><strong>Falha de pagamento</strong> &mdash; aviso progressivo com link para atualizar cartão ou pagar boleto.</li>
+                                        <li><strong>Boleto gerado</strong> &mdash; link direto para o boleto de renovação (quando aplicável).</li>
+                                        <li><strong>Assinatura expirando</strong> &mdash; lembretes antes e após o vencimento.</li>
+                                        <li><strong>Remoção do grupo</strong> &mdash; aviso com botão para assinar novamente.</li>
+                                    </ul>
+
+                                    <!-- 11. Resumo Visual -->
+                                    <h6>11. Fluxo Resumido</h6>
+                                    <div class="wiki-highlight">
+                                        <code style="font-size: 13px; line-height: 2; background: none; padding: 0;">
+                                            Link do grupo &rarr; Escolhe plano &rarr; Escolhe pagamento &rarr; Paga &rarr;
+                                            Confirmação automática &rarr; Entra no grupo &rarr; Renovação automática &rarr;
+                                            [Se cancelar] &rarr; Acesso até vencer &rarr; Grace period 2 dias &rarr; Remoção &rarr; Lembretes
+                                        </code>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 8. Seguranca -->
                         <div class="accordion-item" id="sec-security">
                             <h2 class="accordion-header">
                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#wiki7">
