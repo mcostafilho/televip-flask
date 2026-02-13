@@ -43,11 +43,36 @@
                 <!-- Coluna Esquerda - Perfil -->
                 <div class="col-lg-4">
                     <div class="profile-card text-center">
-                        <div class="profile-avatar">
-                            <span>{{ user.name[0] if user.name else 'U' }}</span>
+                        <div class="profile-avatar" style="position: relative; cursor: {% if not is_admin_viewing %}pointer{% else %}default{% endif %};" {% if not is_admin_viewing %}onclick="document.getElementById('avatarFileInput').click()"{% endif %}>
+                            {% if user.avatar_url %}
+                            <img src="{{ user.avatar_url }}" alt="Avatar" id="profileAvatarImg"
+                                 style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                            {% else %}
+                            <span id="profileAvatarInitial">{{ user.name[0] if user.name else 'U' }}</span>
+                            {% endif %}
+                            {% if not is_admin_viewing %}
+                            <div style="position: absolute; bottom: 0; right: 0; width: 32px; height: 32px; background: var(--galactic-accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--galactic-dark); cursor: pointer;">
+                                <i class="bi bi-pencil-fill" style="font-size: 14px; color: #fff;"></i>
+                            </div>
+                            {% endif %}
                         </div>
+                        {% if not is_admin_viewing %}
+                        <input type="file" id="avatarFileInput" accept="image/png,image/jpeg,image/gif" style="display: none;">
+                        {% endif %}
                         <h4 class="mb-1">{{ user.name }}</h4>
                         <p class="text-muted mb-2">{{ user.email }}</p>
+
+                        {% if not is_admin_viewing %}
+                        <div class="text-start mt-3">
+                            <label class="form-label small">Bio</label>
+                            <textarea class="form-control form-control-sm" name="bio" rows="3"
+                                      form="mainProfileForm"
+                                      placeholder="Conte sobre voce..." maxlength="500">{{ user.bio or '' }}</textarea>
+                            <small class="text-muted">Aparece em /c/{{ user.username }}</small>
+                        </div>
+                        {% elif user.bio %}
+                        <p class="text-muted small mt-3 text-start">{{ user.bio }}</p>
+                        {% endif %}
 
                         <div class="profile-stats mt-3">
                             <div class="profile-stat">
@@ -127,7 +152,7 @@
                             </div>
                         </div>
                         {% else %}
-                        <form method="POST" action="{{ url_for('dashboard.update_profile') }}" class="profile-form">
+                        <form method="POST" action="{{ url_for('dashboard.update_profile') }}" class="profile-form" id="mainProfileForm">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                             <div class="row g-3">
                                 <div class="col-md-6">
@@ -139,34 +164,6 @@
                                     <label class="form-label">Email</label>
                                     <input type="email" class="form-control" name="email"
                                            value="{{ user.email }}" required>
-                                </div>
-
-                                <!-- Bio e Avatar (pagina publica) -->
-                                <div class="col-12">
-                                    <label class="form-label">Bio</label>
-                                    <textarea class="form-control" name="bio" rows="3"
-                                              placeholder="Conte sobre voce e seu trabalho..." maxlength="500">{{ user.bio or '' }}</textarea>
-                                    <small class="text-muted">Aparece na sua pagina publica /c/{{ user.username }}</small>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label">URL do Avatar</label>
-                                    <input type="url" class="form-control" name="avatar_url"
-                                           value="{{ user.avatar_url or '' }}"
-                                           placeholder="https://..." id="avatarUrlInput">
-                                    <small class="text-muted">Link direto para sua foto de perfil (PNG, JPG)</small>
-                                    {% if user.avatar_url %}
-                                    <div class="mt-2">
-                                        <img src="{{ user.avatar_url }}" alt="Avatar preview"
-                                             style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(124,92,252,0.3);"
-                                             id="avatarPreview">
-                                    </div>
-                                    {% else %}
-                                    <div class="mt-2" id="avatarPreviewWrap" style="display:none;">
-                                        <img src="" alt="Avatar preview"
-                                             style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(124,92,252,0.3);"
-                                             id="avatarPreview">
-                                    </div>
-                                    {% endif %}
                                 </div>
 
                                 <!-- Dados para Saque -->
@@ -464,19 +461,45 @@ pixType.addEventListener('change', togglePhoneRequired);
 pixValue.addEventListener('input', togglePhoneRequired);
 togglePhoneRequired();
 
-// Avatar URL preview
-var avatarInput = document.getElementById('avatarUrlInput');
-if (avatarInput) {
-    avatarInput.addEventListener('input', function() {
-        var url = this.value.trim();
-        var preview = document.getElementById('avatarPreview');
-        var wrap = document.getElementById('avatarPreviewWrap');
-        if (url && url.startsWith('http')) {
-            preview.src = url;
-            if (wrap) wrap.style.display = '';
-        } else {
-            if (wrap) wrap.style.display = 'none';
+// Avatar file upload
+var avatarFileInput = document.getElementById('avatarFileInput');
+if (avatarFileInput) {
+    avatarFileInput.addEventListener('change', function() {
+        var file = this.files[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) {
+            alert('Arquivo muito grande. Maximo 2MB.');
+            return;
         }
+        var formData = new FormData();
+        formData.append('avatar', file);
+        formData.append('csrf_token', '{{ csrf_token() }}');
+        fetch('{{ url_for("dashboard.upload_avatar") }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                var container = document.querySelector('.profile-avatar');
+                var initial = document.getElementById('profileAvatarInitial');
+                if (initial) initial.remove();
+                var existing = document.getElementById('profileAvatarImg');
+                if (existing) {
+                    existing.src = data.url;
+                } else {
+                    var img = document.createElement('img');
+                    img.id = 'profileAvatarImg';
+                    img.src = data.url;
+                    img.alt = 'Avatar';
+                    img.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover;';
+                    container.insertBefore(img, container.firstChild);
+                }
+            } else {
+                alert(data.error || 'Erro ao enviar avatar.');
+            }
+        })
+        .catch(function() { alert('Erro de conexao.'); });
     });
 }
 

@@ -106,6 +106,8 @@ def create_app():
     # Criar diretórios necessários
     os.makedirs('logs', exist_ok=True)
     os.makedirs('instance', exist_ok=True)
+    os.makedirs(os.path.join(app.static_folder, 'uploads', 'avatars'), exist_ok=True)
+    os.makedirs(os.path.join(app.static_folder, 'uploads', 'covers'), exist_ok=True)
 
     # Renovar sessão a cada request (timeout por inatividade, não absoluto)
     @app.before_request

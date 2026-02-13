@@ -61,7 +61,7 @@
                     </div>
                     
                     <div class="form-body">
-                        <form method="POST" action="{{ url_for('groups.edit', id=group.id) if group else url_for('groups.create') }}">
+                        <form method="POST" action="{{ url_for('groups.edit', id=group.id) if group else url_for('groups.create') }}" enctype="multipart/form-data">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                             <!-- Informações Básicas -->
                             <div class="form-section">
@@ -118,26 +118,26 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label class="form-label">URL da Imagem de Capa</label>
-                                    <input type="url" class="form-control" name="cover_image_url"
-                                           value="{{ group.cover_image_url if group and group.cover_image_url else '' }}"
-                                           placeholder="https://..." id="coverImageUrlInput">
+                                    <label class="form-label">Imagem de Capa</label>
+                                    <div id="coverUploadArea" onclick="document.getElementById('coverFileInput').click()"
+                                         style="cursor: pointer; border: 2px dashed rgba(124,92,252,0.3); border-radius: 12px; padding: 20px; text-align: center; transition: border-color 0.2s; {% if group and group.cover_image_url %}background: url('{{ group.cover_image_url }}') center/cover no-repeat; min-height: 120px;{% endif %}"
+                                         onmouseover="this.style.borderColor='#7c5cfc'" onmouseout="this.style.borderColor='rgba(124,92,252,0.3)'">
+                                        <div id="coverUploadContent" {% if group and group.cover_image_url %}style="background: rgba(11,14,26,0.7); border-radius: 8px; padding: 10px;"{% endif %}>
+                                            <i class="bi bi-cloud-arrow-up" style="font-size: 2rem; color: #7c5cfc;"></i>
+                                            <p class="mb-0 mt-1" style="color: #b0b4cc; font-size: 0.85rem;">
+                                                {% if group and group.cover_image_url %}
+                                                    Clique para trocar a imagem
+                                                {% else %}
+                                                    Clique para enviar imagem de capa
+                                                {% endif %}
+                                            </p>
+                                            <small style="color: #8b8fad;">PNG, JPG ou GIF (max 2MB)</small>
+                                        </div>
+                                    </div>
+                                    <input type="file" name="cover_image" id="coverFileInput" accept="image/png,image/jpeg,image/gif" style="display: none;">
                                     <small class="form-text" style="color: #b0b4cc;">
-                                        Link direto para a imagem de capa (aparece na pagina de venda). Opcional.
+                                        Aparece na pagina de venda. Opcional.
                                     </small>
-                                    {% if group and group.cover_image_url %}
-                                    <div class="mt-2">
-                                        <img src="{{ group.cover_image_url }}" alt="Cover preview"
-                                             style="max-width: 100%; max-height: 120px; border-radius: 8px; border: 1px solid rgba(124,92,252,0.2);"
-                                             id="coverPreview">
-                                    </div>
-                                    {% else %}
-                                    <div class="mt-2" id="coverPreviewWrap" style="display:none;">
-                                        <img src="" alt="Cover preview"
-                                             style="max-width: 100%; max-height: 120px; border-radius: 8px; border: 1px solid rgba(124,92,252,0.2);"
-                                             id="coverPreview">
-                                    </div>
-                                    {% endif %}
                                 </div>
                             </div>
 
@@ -353,18 +353,26 @@
                                 </div>
                             </div>
 
-                            <!-- Status (apenas para edição) -->
-                            {% if group %}
+                            <!-- Status -->
                             <div class="form-section">
-                                <div class="form-check form-switch">
+                                <h5 class="section-title">Status e Visibilidade</h5>
+                                {% if group %}
+                                <div class="form-check form-switch mb-3">
                                     <input class="form-check-input" type="checkbox" name="is_active"
                                            id="isActive" {{ 'checked' if group.is_active else '' }}>
                                     <label class="form-check-label" for="isActive">
                                         Grupo Ativo (aceita novas assinaturas)
                                     </label>
                                 </div>
+                                {% endif %}
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="is_public"
+                                           id="isPublic" {{ 'checked' if group and group.is_public else '' }}>
+                                    <label class="form-check-label" for="isPublic">
+                                        Exibir na minha pagina publica (/c/username)
+                                    </label>
+                                </div>
                             </div>
-                            {% endif %}
 
                             <!-- Botões -->
                             <div class="d-flex gap-2 mt-4">
@@ -754,19 +762,29 @@ function removeWhitelistEntry(telegramId) {
     }
 }
 
-// Cover image URL preview
-var coverInput = document.getElementById('coverImageUrlInput');
-if (coverInput) {
-    coverInput.addEventListener('input', function() {
-        var url = this.value.trim();
-        var preview = document.getElementById('coverPreview');
-        var wrap = document.getElementById('coverPreviewWrap');
-        if (url && url.startsWith('http')) {
-            preview.src = url;
-            if (wrap) wrap.style.display = '';
-        } else {
-            if (wrap) wrap.style.display = 'none';
+// Cover image file upload preview
+var coverFileInput = document.getElementById('coverFileInput');
+if (coverFileInput) {
+    coverFileInput.addEventListener('change', function() {
+        var file = this.files[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) {
+            alert('Arquivo muito grande. Maximo 2MB.');
+            this.value = '';
+            return;
         }
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var area = document.getElementById('coverUploadArea');
+            area.style.background = 'url(' + e.target.result + ') center/cover no-repeat';
+            area.style.minHeight = '120px';
+            var content = document.getElementById('coverUploadContent');
+            content.style.background = 'rgba(11,14,26,0.7)';
+            content.style.borderRadius = '8px';
+            content.style.padding = '10px';
+            content.querySelector('p').textContent = 'Clique para trocar a imagem';
+        };
+        reader.readAsDataURL(file);
     });
 }
 

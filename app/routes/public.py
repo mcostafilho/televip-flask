@@ -17,7 +17,7 @@ def creator_page(username):
     ).first_or_404()
 
     groups = Group.query.filter_by(
-        creator_id=creator.id, is_active=True
+        creator_id=creator.id, is_active=True, is_public=True
     ).all()
 
     # Para cada grupo: menor preco e contagem de assinantes ativos

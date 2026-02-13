@@ -1,7 +1,10 @@
 # app/routes/dashboard.py
 import logging
-from flask import Blueprint, render_template, jsonify, request, redirect, url_for, flash, session
+import os
+import time
+from flask import Blueprint, render_template, jsonify, request, redirect, url_for, flash, session, current_app
 from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
 from app import db, limiter, cache
 from app.models import Group, Transaction, Subscription, Creator, PricingPlan
 from app.services.payment_service import PaymentService
@@ -212,6 +215,7 @@ def index():
         current_date += timedelta(days=1)
 
     return render_template('dashboard/index.html',
+        effective=effective,
         available_balance=balance_info['available_balance'],
         blocked_balance=balance_info['blocked_balance'],
         blocked_by_days=balance_info['blocked_by_days'],
@@ -514,17 +518,59 @@ def update_profile():
     if phone is not None:
         current_user.phone = phone
 
-    # Update bio and avatar_url (no password required)
+    # Update bio (no password required)
     bio = request.form.get('bio', '').strip()
     current_user.bio = bio if bio else None
-
-    avatar_url = request.form.get('avatar_url', '').strip()
-    current_user.avatar_url = avatar_url if avatar_url else None
 
     db.session.commit()
     flash('Perfil atualizado com sucesso!', 'success')
 
     return redirect(url_for('dashboard.profile'))
+
+
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+MAX_IMAGE_SIZE = 2 * 1024 * 1024  # 2MB
+
+
+@bp.route('/profile/upload-avatar', methods=['POST'])
+@login_required
+@limiter.limit("10 per hour")
+def upload_avatar():
+    """Upload de avatar do criador"""
+    if is_admin_viewing():
+        return jsonify({'success': False, 'error': 'Acao nao permitida no modo admin.'}), 403
+
+    if 'avatar' not in request.files:
+        return jsonify({'success': False, 'error': 'Nenhum arquivo enviado.'}), 400
+
+    file = request.files['avatar']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'Nenhum arquivo selecionado.'}), 400
+
+    # Validar extensao
+    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+    if ext not in ALLOWED_IMAGE_EXTENSIONS:
+        return jsonify({'success': False, 'error': 'Formato invalido. Use PNG, JPG ou GIF.'}), 400
+
+    # Validar tamanho
+    file.seek(0, 2)
+    size = file.tell()
+    file.seek(0)
+    if size > MAX_IMAGE_SIZE:
+        return jsonify({'success': False, 'error': 'Arquivo muito grande. Maximo 2MB.'}), 400
+
+    # Salvar arquivo
+    filename = secure_filename(f"{current_user.id}_{int(time.time())}.{ext}")
+    upload_dir = os.path.join(current_app.static_folder, 'uploads', 'avatars')
+    filepath = os.path.join(upload_dir, filename)
+    file.save(filepath)
+
+    # Atualizar URL do avatar
+    relative_path = f"uploads/avatars/{filename}"
+    current_user.avatar_url = url_for('static', filename=relative_path)
+    db.session.commit()
+
+    return jsonify({'success': True, 'url': current_user.avatar_url})
 
 
 @bp.route('/profile/delete', methods=['POST'])

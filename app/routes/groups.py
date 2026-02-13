@@ -1,7 +1,9 @@
 # app/routes/groups.py
+import time
 from markupsafe import escape
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, Response, session, current_app
 from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
 import json
 from app import db, limiter
 from app.models import Group, PricingPlan, Subscription, Transaction
@@ -17,6 +19,27 @@ from io import StringIO
 
 bp = Blueprint('groups', __name__, url_prefix='/groups')
 logger = logging.getLogger(__name__)
+
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+MAX_IMAGE_SIZE = 2 * 1024 * 1024  # 2MB
+
+
+def _save_cover_image(file, group_id):
+    """Salva imagem de capa e retorna o URL relativo, ou None se invalido."""
+    if not file or file.filename == '':
+        return None
+    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+    if ext not in ALLOWED_IMAGE_EXTENSIONS:
+        return None
+    file.seek(0, 2)
+    size = file.tell()
+    file.seek(0)
+    if size > MAX_IMAGE_SIZE:
+        return None
+    filename = secure_filename(f"{group_id}_{int(time.time())}.{ext}")
+    upload_dir = os.path.join(current_app.static_folder, 'uploads', 'covers')
+    file.save(os.path.join(upload_dir, filename))
+    return url_for('static', filename=f"uploads/covers/{filename}")
 
 
 def _validate_plan_input(name, price_str, duration_str, description=None, is_lifetime=False):
@@ -192,8 +215,6 @@ def create():
                         'added_at': datetime.utcnow().strftime('%Y-%m-%d %H:%M')
                     })
 
-            cover_image_url = request.form.get('cover_image_url', '').strip() or None
-
             group = Group(
                 name=name,
                 description=description,
@@ -201,12 +222,19 @@ def create():
                 invite_link=invite_link or None,
                 creator_id=current_user.id,
                 is_active=True,
+                is_public='is_public' in request.form,
                 chat_type=chat_type,
-                cover_image_url=cover_image_url,
                 whitelist_json=json.dumps(whitelist_data) if whitelist_data else '[]'
             )
             db.session.add(group)
             db.session.flush()  # gera group.id sem commitar
+
+            # Upload de capa (se enviado arquivo)
+            cover_file = request.files.get('cover_image')
+            if cover_file and cover_file.filename:
+                cover_url = _save_cover_image(cover_file, group.id)
+                if cover_url:
+                    group.cover_image_url = cover_url
 
             # Adicionar planos
             plan_names = request.form.getlist('plan_name[]')
@@ -303,8 +331,15 @@ def edit(id):
         group.name = request.form.get('name')
         group.description = request.form.get('description')
         group.invite_link = request.form.get('invite_link')
-        group.cover_image_url = request.form.get('cover_image_url', '').strip() or None
         group.is_active = 'is_active' in request.form
+        group.is_public = 'is_public' in request.form
+
+        # Upload de capa (se enviado arquivo)
+        cover_file = request.files.get('cover_image')
+        if cover_file and cover_file.filename:
+            cover_url = _save_cover_image(cover_file, group.id)
+            if cover_url:
+                group.cover_image_url = cover_url
 
         # Atualizar lista de exceção (whitelist)
         whitelist_ids = request.form.getlist('whitelist_ids[]')
