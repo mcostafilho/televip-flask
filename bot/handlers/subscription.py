@@ -344,29 +344,19 @@ async def process_renewal(update: Update, context: ContextTypes.DEFAULT_TYPE, su
         plan = sub.plan
         group_name = escape_html(group.name)
         plan_name = escape_html(plan.name)
+        type_label = "canal" if group.chat_type == 'channel' else "grupo"
 
-        # Simular renovação com desconto
-        days_left = (sub.end_date - datetime.utcnow()).days
-
-        if days_left >= 5:
-            discount = 0.1  # 10% de desconto
-        else:
-            discount = 0
-
-        final_price = float(plan.price) * (1 - discount)
+        final_price = float(plan.price)
 
         text = (
             f"<b>Renovar assinatura</b>\n\n"
             f"<pre>"
-            f"Grupo:    {group.name}\n"
-            f"Plano:    {plan.name}\n"
-            f"Duração:  {plan.duration_days} dias\n"
-            f"Valor:    {format_currency(final_price)}"
+            f"{type_label.capitalize()}:  {group.name}\n"
+            f"Plano:     {plan.name}\n"
+            f"Duração:   {plan.duration_days} dias\n"
+            f"Valor:     {format_currency(final_price)}"
             f"</pre>"
         )
-
-        if discount > 0:
-            text += f"\n\n<i>Desconto de renovação aplicado!</i>"
 
         # Armazenar dados para pagamento
         context.user_data['renewal'] = {
@@ -374,7 +364,6 @@ async def process_renewal(update: Update, context: ContextTypes.DEFAULT_TYPE, su
             'group_id': group.id,
             'plan_id': plan.id,
             'amount': final_price,
-            'discount': discount
         }
 
         keyboard = [

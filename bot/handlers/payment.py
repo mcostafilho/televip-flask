@@ -191,6 +191,102 @@ async def show_group_plans(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # ──────────────────────────────────────────────
+# Trocar plano (assinante ativo)
+# ──────────────────────────────────────────────
+
+async def show_change_plan(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Mostrar planos para troca — exclui plano atual, avisa sobre vigência."""
+    query = update.callback_query
+    await query.answer()
+    user = query.from_user
+
+    try:
+        group_id = int(query.data.replace("change_plan_", ""))
+    except (IndexError, ValueError):
+        await query.edit_message_text(
+            "Erro. Use /start para recomeçar.",
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton("Menu", callback_data="back_to_start")
+            ]])
+        )
+        return
+
+    with get_db_session() as session:
+        group = session.query(Group).get(group_id)
+        if not group:
+            await query.edit_message_text(
+                "Grupo não encontrado.",
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton("↩ Voltar", callback_data="back_to_start")
+                ]])
+            )
+            return
+
+        # Buscar assinatura ativa do usuário neste grupo
+        existing_sub = session.query(Subscription).filter_by(
+            group_id=group.id,
+            telegram_user_id=str(user.id),
+            status='active'
+        ).first()
+
+        current_plan_id = existing_sub.plan_id if existing_sub else None
+
+        # Buscar outros planos (excluir o atual)
+        plans_query = session.query(PricingPlan).filter_by(
+            group_id=group.id, is_active=True
+        ).order_by(PricingPlan.price)
+
+        if current_plan_id:
+            plans_query = plans_query.filter(PricingPlan.id != current_plan_id)
+
+        plans = plans_query.all()
+
+        group_name = escape_html(group.name)
+        type_label = "canal" if group.chat_type == 'channel' else "grupo"
+
+        if not plans:
+            await query.edit_message_text(
+                f"Não há outros planos disponíveis para <b>{group_name}</b>.",
+                parse_mode=ParseMode.HTML,
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton("↩ Voltar", callback_data="back_to_start")
+                ]])
+            )
+            return
+
+        text = f"<b>Trocar plano — {group_name}</b>\n\n"
+
+        if existing_sub and existing_sub.end_date:
+            text += (
+                f"Seu plano atual continua até "
+                f"<code>{format_date(existing_sub.end_date)}</code>.\n"
+                f"O novo plano entra em vigor após o vencimento.\n\n"
+            )
+
+        text += "<b>Planos disponíveis:</b>\n"
+
+        keyboard = []
+        for plan in plans:
+            plan_name = escape_html(plan.name)
+            text += f"\n<code>{plan_name}</code> — {format_currency(plan.price)} / {plan.duration_days} dias"
+            keyboard.append([
+                InlineKeyboardButton(
+                    f"{plan.name} - {format_currency(plan.price)}",
+                    callback_data=f"plan_{group.id}_{plan.id}"
+                )
+            ])
+
+        text += '\n\n<i>Ao assinar, você concorda com os <a href="https://televip.app/termos">termos de uso</a>.</i>'
+        keyboard.append([InlineKeyboardButton("↩ Voltar", callback_data="back_to_start")])
+
+        await query.edit_message_text(
+            text,
+            parse_mode=ParseMode.HTML,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+
+
+# ──────────────────────────────────────────────
 # TELA 1: Resumo do pedido + escolha de método
 # ──────────────────────────────────────────────
 
@@ -241,11 +337,33 @@ async def start_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             'plan_name': plan.name
         }
 
+        # Verificar se já tem assinatura ativa neste grupo (troca de plano)
+        user = query.from_user
+        existing_sub = session.query(Subscription).filter(
+            Subscription.group_id == group_id,
+            Subscription.telegram_user_id == str(user.id),
+            Subscription.status == 'active',
+            Subscription.end_date > datetime.utcnow()
+        ).first()
+
+        if existing_sub and not is_lifetime:
+            # Troca de plano: novo plano começa após vencimento do atual
+            checkout_data['existing_sub_id'] = existing_sub.id
+            checkout_data['trial_end'] = int(existing_sub.end_date.timestamp())
+
         # Limpar qualquer pendente anterior
         _cancel_pending(context)
         context.user_data['checkout'] = checkout_data
 
         text = _order_summary_text(checkout_data)
+
+        if existing_sub and not is_lifetime:
+            text += (
+                f"\n\n⚠️ <i>Seu plano atual continua até "
+                f"{format_date(existing_sub.end_date)}.\n"
+                f"A cobrança do novo plano inicia após o vencimento.</i>"
+            )
+
         text += "\n\n<i>Escolha a forma de pagamento:</i>"
 
         await query.edit_message_text(
@@ -345,12 +463,14 @@ async def _create_stripe_session(query, context, checkout_data):
                 metadata=metadata
             )
         else:
+            trial_end = checkout_data.get('trial_end')
             result = await create_subscription_checkout(
                 customer_id=customer_id,
                 price_id=price_id,
                 metadata=metadata,
                 success_url=success_url,
-                cancel_url=cancel_url
+                cancel_url=cancel_url,
+                trial_end=trial_end
             )
 
         if not result['success']:
@@ -382,6 +502,32 @@ async def _create_stripe_session(query, context, checkout_data):
                 is_legacy = False
                 billing_reason = 'subscription_create'
 
+            # Troca de plano: cancelar sub antiga no período e ajustar datas
+            start_date = datetime.utcnow()
+            existing_sub_id = checkout_data.get('existing_sub_id')
+            if existing_sub_id:
+                import stripe as stripe_lib
+                old_sub = session.query(Subscription).get(existing_sub_id)
+                if old_sub and old_sub.status == 'active':
+                    # Cancelar Stripe subscription antiga no período
+                    if old_sub.stripe_subscription_id and not old_sub.is_legacy:
+                        try:
+                            stripe_lib.Subscription.modify(
+                                old_sub.stripe_subscription_id,
+                                cancel_at_period_end=True
+                            )
+                        except Exception as e:
+                            logger.warning(f"Não foi possível cancelar sub antiga no Stripe: {e}")
+                    old_sub.cancel_at_period_end = True
+                    old_sub.auto_renew = False
+                    session.flush()
+                    logger.info(f"Sub antiga {old_sub.id} marcada para cancelar no período (troca de plano)")
+
+                    # Novo plano começa após vencimento do atual
+                    start_date = old_sub.end_date
+                    end_date = start_date + timedelta(days=checkout_data['duration_days'])
+                    billing_reason = 'plan_change'
+
             new_sub = Subscription(
                 group_id=group_id,
                 plan_id=plan_id,
@@ -391,7 +537,7 @@ async def _create_stripe_session(query, context, checkout_data):
                 status='pending',
                 auto_renew=auto_renew,
                 is_legacy=is_legacy,
-                start_date=datetime.utcnow(),
+                start_date=start_date,
                 end_date=end_date
             )
             session.add(new_sub)

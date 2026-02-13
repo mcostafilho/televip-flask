@@ -40,13 +40,12 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     logger.info(f"Start command - User: {user.id}, Args: {args}")
 
-    # Garantir que o teclado persistente está ativo (envia só 1x)
-    if not context.user_data.get('keyboard_sent'):
-        await update.message.reply_text(
-            "Use os botões abaixo para navegar:",
-            reply_markup=PERSISTENT_KEYBOARD
-        )
-        context.user_data['keyboard_sent'] = True
+    # Sempre reenviar o teclado persistente no /start
+    # (garante que aparece no Android mesmo após reinício do bot)
+    await update.message.reply_text(
+        "⬇️",
+        reply_markup=PERSISTENT_KEYBOARD
+    )
 
     # Tratar diferentes tipos de argumentos
     if args:
@@ -224,45 +223,81 @@ async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_
         ).first()
 
         if existing_sub:
-            is_lifetime = getattr(existing_sub.plan, 'is_lifetime', False) or (existing_sub.plan and existing_sub.plan.duration_days == 0)
-            plan_name = escape_html(existing_sub.plan.name) if existing_sub.plan else "N/A"
+            plan = existing_sub.plan
+            is_lifetime = getattr(plan, 'is_lifetime', False) or (plan and plan.duration_days == 0)
+            plan_name = escape_html(plan.name) if plan else "N/A"
 
+            # Caso Vitalício — nada a fazer
             if is_lifetime:
-                remaining = "Vitalício"
+                text = (
+                    f"<b>Acesso vitalício</b>\n\n"
+                    f"{type_label.capitalize()}: <b>{group_name}</b>\n"
+                    f"Plano: <code>{plan_name}</code>\n\n"
+                    f"Você tem acesso permanente a este {type_label}."
+                )
+                keyboard = [
+                    [InlineKeyboardButton(f"Entrar no {type_label.capitalize()}", callback_data=f"get_link_{existing_sub.id}")],
+                    [InlineKeyboardButton("Menu Principal", callback_data="back_to_start")]
+                ]
+                await update.message.reply_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
+                return
+
+            remaining = format_remaining_text(existing_sub.end_date)
+
+            # Determinar estado da assinatura
+            is_stripe_managed = existing_sub.stripe_subscription_id and not existing_sub.is_legacy
+            has_cancelled_renewal = getattr(existing_sub, 'cancel_at_period_end', False)
+            is_auto_renewing = is_stripe_managed and not has_cancelled_renewal
+
+            if has_cancelled_renewal:
+                renewal_line = f"🚫 Renovação cancelada\nAcesso até {format_date_code(existing_sub.end_date)}"
+            elif is_auto_renewing:
+                renewal_line = f"✅ Renovação automática ativa\nPróxima cobrança: {format_date_code(existing_sub.end_date)}"
             else:
-                remaining = format_remaining_text(existing_sub.end_date)
+                renewal_line = f"⚠️ Renovação manual\nExpira em {format_date_code(existing_sub.end_date)}"
 
             text = (
                 f"<b>Você já é assinante</b>\n\n"
                 f"{type_label.capitalize()}: <b>{group_name}</b>\n"
                 f"Plano: <code>{plan_name}</code>\n"
-                f"Expira em: {'Nunca' if is_lifetime else format_date_code(existing_sub.end_date)} ({remaining})"
+                f"Restante: {remaining}\n\n"
+                f"{renewal_line}"
             )
 
-            # Verificar se há outros planos disponíveis
+            # Verificar outros planos
             other_plans = session.query(PricingPlan).filter(
                 PricingPlan.group_id == group.id,
                 PricingPlan.is_active == True,
                 PricingPlan.id != existing_sub.plan_id
             ).count()
 
+            # Botões contextuais
             keyboard = [
                 [InlineKeyboardButton(f"Entrar no {type_label.capitalize()}", callback_data=f"get_link_{existing_sub.id}")]
             ]
+
+            if has_cancelled_renewal and is_stripe_managed:
+                # Cancelou renovação → oferecer reativar (sem cobrança agora)
+                keyboard.append([
+                    InlineKeyboardButton("🔄 Reativar Renovação", callback_data=f"reactivate_sub_{existing_sub.id}")
+                ])
+            elif not is_auto_renewing and not is_stripe_managed:
+                # Legacy/manual → renovar agora
+                keyboard.append([
+                    InlineKeyboardButton("🔄 Renovar Agora", callback_data=f"renew_{existing_sub.id}")
+                ])
+
             if other_plans > 0:
                 keyboard.append([
-                    InlineKeyboardButton("Trocar Plano", callback_data=f"group_{group.id}")
+                    InlineKeyboardButton("Trocar Plano", callback_data=f"change_plan_{group.id}")
                 ])
+
             keyboard.append([
                 InlineKeyboardButton("Ver Detalhes", callback_data=f"sub_detail_{existing_sub.id}"),
-                InlineKeyboardButton("Menu Principal", callback_data="back_to_start")
+                InlineKeyboardButton("Menu", callback_data="back_to_start")
             ])
 
-            await update.message.reply_text(
-                text,
-                parse_mode=ParseMode.HTML,
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
+            await update.message.reply_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
             return
 
         # Buscar planos disponíveis

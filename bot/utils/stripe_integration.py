@@ -158,16 +158,20 @@ async def create_subscription_checkout(
     price_id: str,
     metadata: Dict,
     success_url: str,
-    cancel_url: str
+    cancel_url: str,
+    trial_end: Optional[int] = None
 ) -> Dict:
     """
     Create a Stripe Checkout Session in subscription mode.
+
+    Args:
+        trial_end: Unix timestamp — delays first charge until this date (plan change)
 
     Returns:
         Dict with success, session_id, url
     """
     try:
-        session = stripe.checkout.Session.create(
+        params = dict(
             mode='subscription',
             customer=customer_id,
             line_items=[{
@@ -180,6 +184,11 @@ async def create_subscription_checkout(
             cancel_url=cancel_url,
             locale='pt-BR'
         )
+
+        if trial_end:
+            params['subscription_data'] = {'trial_end': trial_end}
+
+        session = stripe.checkout.Session.create(**params)
 
         logger.info(f"Created subscription checkout session {session.id}")
 
