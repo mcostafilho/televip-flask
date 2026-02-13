@@ -441,6 +441,7 @@ async def _show_stripe_checkout(query, checkout_data, stripe_url):
         [InlineKeyboardButton("Pagar", url=stripe_url)],
         [InlineKeyboardButton("✅ Já Paguei", callback_data="check_payment_status")],
         [InlineKeyboardButton("↩ Trocar Método", callback_data="back_to_methods")],
+        [InlineKeyboardButton("❌ Desistir", callback_data="abandon_payment")],
     ]
 
     await query.edit_message_text(

@@ -40,6 +40,14 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     logger.info(f"Start command - User: {user.id}, Args: {args}")
 
+    # Garantir que o teclado persistente está ativo (envia só 1x)
+    if not context.user_data.get('keyboard_sent'):
+        await update.message.reply_text(
+            "Use os botões abaixo para navegar:",
+            reply_markup=PERSISTENT_KEYBOARD
+        )
+        context.user_data['keyboard_sent'] = True
+
     # Tratar diferentes tipos de argumentos
     if args:
         if args[0].startswith('success_') or args[0] == 'payment_success':
@@ -163,13 +171,7 @@ async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE
         if is_callback:
             await message.edit_text(text, parse_mode=ParseMode.HTML, reply_markup=inline_markup)
         else:
-            # Mensagem nova: enviar teclado fixo + inline buttons
             await message.reply_text(text, parse_mode=ParseMode.HTML, reply_markup=inline_markup)
-            # Enviar teclado persistente separado (não pode misturar com inline)
-            await message.reply_text(
-                "Use os botões abaixo para navegar:",
-                reply_markup=PERSISTENT_KEYBOARD
-            )
 
 async def start_subscription_flow(update: Update, context: ContextTypes.DEFAULT_TYPE, group_identifier: str):
     """Iniciar fluxo de assinatura para um grupo específico (por slug ou ID legado)"""
