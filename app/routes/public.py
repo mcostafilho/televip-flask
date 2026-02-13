@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, abort
 from app import db
 from app.models import Group, Subscription, PricingPlan
 from app.models.user import Creator
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 bp = Blueprint('public', __name__, url_prefix='/c')
 
@@ -12,8 +12,10 @@ bp = Blueprint('public', __name__, url_prefix='/c')
 @bp.route('/<username>')
 def creator_page(username):
     """Pagina publica do criador — perfil + grid de grupos"""
-    creator = Creator.query.filter_by(
-        username=username, is_active=True, is_blocked=False
+    creator = Creator.query.filter(
+        Creator.username == username,
+        Creator.is_active == True,
+        or_(Creator.is_blocked == False, Creator.is_blocked.is_(None))
     ).first_or_404()
 
     groups = Group.query.filter_by(
@@ -39,8 +41,10 @@ def creator_page(username):
 @bp.route('/<username>/<invite_slug>')
 def group_landing(username, invite_slug):
     """Landing page de venda individual do grupo"""
-    creator = Creator.query.filter_by(
-        username=username, is_active=True, is_blocked=False
+    creator = Creator.query.filter(
+        Creator.username == username,
+        Creator.is_active == True,
+        or_(Creator.is_blocked == False, Creator.is_blocked.is_(None))
     ).first_or_404()
 
     group = Group.query.filter_by(
