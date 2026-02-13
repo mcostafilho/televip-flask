@@ -273,13 +273,27 @@
                                 </a>
                             </div>
                         </div>
-                        <div class="row-link-copy mt-1" style="width: 100%; padding-left: calc(40px + 0.85rem);">
-                            <input type="text" class="form-control form-control-sm"
-                                   value="https://t.me/{{ config.BOT_USERNAME or 'televipbra_bot' }}?start=g_{{ group.invite_slug }}"
-                                   id="link_{{ group.id }}" readonly>
-                            <button class="btn-copy" type="button" onclick="copyLink('link_{{ group.id }}')" title="Copiar link">
-                                <i class="bi bi-clipboard"></i>
-                            </button>
+                        <div class="mt-1" style="width: 100%; padding-left: calc(40px + 0.85rem);">
+                            <div class="row-link-copy mb-1">
+                                <span class="me-1" style="font-size: 0.72rem; color: #b0b4cc; white-space: nowrap;" title="Link do Bot"><i class="bi bi-robot"></i></span>
+                                <input type="text" class="form-control form-control-sm"
+                                       value="https://t.me/{{ config.BOT_USERNAME or 'televipbra_bot' }}?start=g_{{ group.invite_slug }}"
+                                       id="link_{{ group.id }}" readonly>
+                                <button class="btn-copy" type="button" onclick="copyLink('link_{{ group.id }}')" title="Copiar link do bot">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                            {% if group.is_public %}
+                            <div class="row-link-copy">
+                                <span class="me-1" style="font-size: 0.72rem; color: #b0b4cc; white-space: nowrap;" title="Página de Vendas"><i class="bi bi-globe"></i></span>
+                                <input type="text" class="form-control form-control-sm"
+                                       value="{{ request.host_url.rstrip('/') }}/c/{{ effective.username }}/{{ group.invite_slug }}"
+                                       id="page_{{ group.id }}" readonly>
+                                <button class="btn-copy" type="button" onclick="copyLink('page_{{ group.id }}')" title="Copiar link da página">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                     {% endfor %}

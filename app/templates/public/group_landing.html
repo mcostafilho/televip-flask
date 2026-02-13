@@ -568,14 +568,14 @@
 
         <!-- ===== BENEFITS ===== -->
         <div class="benefits-section">
-            <div class="section-label">O que voce recebe</div>
+            <div class="section-label">O que você recebe</div>
             <div class="benefits-grid">
                 <div class="benefit-item">
                     <div class="benefit-icon" style="background: rgba(124,92,252,0.12); color: #7c5cfc;">
                         <i class="bi bi-unlock-fill"></i>
                     </div>
                     <div class="benefit-text">
-                        Conteudo exclusivo
+                        Conteúdo exclusivo
                         <small>Acesso total ao grupo VIP</small>
                     </div>
                 </div>
@@ -602,8 +602,8 @@
                         <i class="bi bi-bell-fill"></i>
                     </div>
                     <div class="benefit-text">
-                        Atualizacoes diretas
-                        <small>Receba novidades em primeira mao</small>
+                        Atualizações diretas
+                        <small>Receba novidades em primeira mão</small>
                     </div>
                 </div>
             </div>
@@ -612,7 +612,7 @@
         <!-- ===== PLANS ===== -->
         {% if plans %}
         <div class="plans-section" id="planos">
-            <div class="section-label">Planos disponiveis</div>
+            <div class="section-label">Planos disponíveis</div>
             <div class="plans-heading">Escolha o plano ideal</div>
             <div class="plans-subheading">Selecione e comece agora mesmo</div>
             <div class="plans-grid">
@@ -626,7 +626,7 @@
                     <div class="plan-name">{{ plan.name }}</div>
                     <div class="plan-duration">
                         {% if plan.is_lifetime %}
-                            Acesso vitalicio
+                            Acesso vitalício
                         {% else %}
                             {{ plan.duration_days }} dia{{ 's' if plan.duration_days != 1 else '' }}
                         {% endif %}
@@ -636,7 +636,7 @@
                     </div>
                     <div class="plan-price-period">
                         {% if plan.is_lifetime %}
-                            pagamento unico
+                            pagamento único
                         {% else %}
                             por {{ plan.duration_days }} dia{{ 's' if plan.duration_days != 1 else '' }}
                         {% endif %}
@@ -656,7 +656,7 @@
                 <i class="bi bi-shield-check"></i> Pagamento seguro
             </div>
             <div class="trust-item">
-                <i class="bi bi-lightning-charge-fill"></i> Acesso instantaneo
+                <i class="bi bi-lightning-charge-fill"></i> Acesso instantâneo
             </div>
             <div class="trust-item">
                 <i class="bi bi-lock-fill"></i> Dados protegidos
@@ -672,7 +672,7 @@
                     <i class="bi bi-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    Apos o pagamento, voce recebe acesso imediato ao grupo exclusivo no Telegram. Um bot automatico libera sua entrada em segundos.
+                    Após o pagamento, você recebe acesso imediato ao grupo exclusivo no Telegram. Um bot automático libera sua entrada em segundos.
                 </div>
             </div>
             <div class="faq-item">
@@ -681,16 +681,16 @@
                     <i class="bi bi-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    Sim! Voce pode cancelar sua assinatura a qualquer momento. O acesso permanece ativo ate o final do periodo pago.
+                    Sim! Você pode cancelar sua assinatura a qualquer momento. O acesso permanece ativo até o final do período pago.
                 </div>
             </div>
             <div class="faq-item">
                 <div class="faq-question" onclick="toggleFaq(this)">
-                    O pagamento e seguro?
+                    O pagamento é seguro?
                     <i class="bi bi-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    Todos os pagamentos sao processados pela Stripe, uma das maiores plataformas de pagamento do mundo, com criptografia de ponta a ponta.
+                    Todos os pagamentos são processados pela Stripe, uma das maiores plataformas de pagamento do mundo, com criptografia de ponta a ponta.
                 </div>
             </div>
             <div class="faq-item">
@@ -699,7 +699,7 @@
                     <i class="bi bi-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    Sim, o conteudo exclusivo e entregue via Telegram. Basta ter o app instalado e uma conta ativa.
+                    Sim, o conteúdo exclusivo é entregue via Telegram. Basta ter o app instalado e uma conta ativa.
                 </div>
             </div>
         </div>
@@ -712,7 +712,7 @@
         </a>
         <div class="powered">
             Powered by TeleVIP &middot;
-            <a href="{{ url_for('auth.register') }}">Crie sua pagina gratis</a>
+            <a href="{{ url_for('auth.register') }}">Crie sua página grátis</a>
         </div>
     </div>
 

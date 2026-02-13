@@ -316,7 +316,7 @@
     <div class="groups-section">
         {% if groups %}
             <div class="section-heading">
-                <h2>Conteudo Exclusivo</h2>
+                <h2>Conteúdo Exclusivo</h2>
                 <div class="divider"></div>
             </div>
             <div class="groups-grid">
@@ -340,7 +340,7 @@
                         <div class="group-card-footer">
                             <div>
                                 {% if group.min_price is not none %}
-                                    <span class="group-price-tag">R$ {{ "%.2f"|format(group.min_price) }} <small>/ mes</small></span>
+                                    <span class="group-price-tag">R$ {{ "%.2f"|format(group.min_price) }} <small>/ mês</small></span>
                                 {% endif %}
                             </div>
                             <span class="group-cta-btn">
@@ -354,7 +354,7 @@
         {% else %}
             <div class="empty-groups">
                 <i class="bi bi-collection"></i>
-                <p class="mt-3" style="color: var(--galactic-text-secondary);">Nenhum grupo disponivel no momento.</p>
+                <p class="mt-3" style="color: var(--galactic-text-secondary);">Nenhum grupo disponível no momento.</p>
             </div>
         {% endif %}
     </div>
@@ -366,7 +366,7 @@
         </a>
         <div class="powered">
             Powered by TeleVIP &middot;
-            <a href="{{ url_for('auth.register') }}">Crie sua pagina gratis</a>
+            <a href="{{ url_for('auth.register') }}">Crie sua página grátis</a>
         </div>
     </div>
 
