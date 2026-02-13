@@ -1753,11 +1753,13 @@ class TestScheduledTasks:
         import asyncio
         asyncio.get_event_loop().run_until_complete(check_expired_subscriptions())
 
-        # Verificar que mensagem foi enviada
+        # Verificar que mensagem foi enviada (grace period ou remoção)
         mock_app.bot.send_message.assert_called()
         call_kwargs = mock_app.bot.send_message.call_args[1]
         assert call_kwargs['chat_id'] == user_id
-        assert 'Expirada' in call_kwargs['text'] or 'expirou' in call_kwargs['text']
+        text = call_kwargs['text']
+        assert ('removido' in text.lower() or 'expirou' in text or
+                'expirada' in text.lower() or 'renov' in text.lower())
 
     def test_active_not_expired_not_touched(self, app_ctx, group_a, plan_a_monthly):
         """Assinatura ativa nao expirada nao eh tocada"""
@@ -1872,14 +1874,14 @@ class TestRenewalFlow:
         text = query.edit_message_text.call_args[0][0]
         assert 'em dia' in text.lower() or 'Todas' in text
 
-    def test_process_renewal_with_discount(self, app_ctx, group_a, plan_a_monthly):
-        """Renovacao com mais de 5 dias restantes aplica 10% desconto"""
+    def test_process_renewal_active_sub_card_only(self, app_ctx, group_a, plan_a_monthly):
+        """Renovacao de sub ativa mostra apenas cartão (cobrança futura via trial_end)"""
         from bot.handlers.subscription import process_renewal
 
         user_id = 1002
         sub = Subscription(
             group_id=group_a.id, plan_id=plan_a_monthly.id,
-            telegram_user_id=str(user_id), telegram_username='discountuser',
+            telegram_user_id=str(user_id), telegram_username='activerenew',
             start_date=datetime.utcnow() - timedelta(days=20),
             end_date=datetime.utcnow() + timedelta(days=10),
             status='active',
@@ -1896,25 +1898,25 @@ class TestRenewalFlow:
         asyncio.get_event_loop().run_until_complete(process_renewal(update, ctx, sub.id))
 
         text = query.edit_message_text.call_args[0][0]
-        assert '10%' in text or 'desconto' in text.lower()
-        assert 'desconto' in text.lower()  # "Desconto de renovação aplicado!"
+        assert 'cartão' in text.lower()
 
-        # Verificar valor com desconto no contexto
-        renewal_data = ctx.user_data.get('renewal')
-        assert renewal_data is not None
-        assert renewal_data['discount'] == 0.1
+        # Checkout data deve ter trial_end (cobrança futura)
+        checkout = ctx.user_data.get('checkout')
+        assert checkout is not None
+        assert 'trial_end' in checkout
+        assert checkout['is_renewal'] is True
 
-    def test_process_renewal_no_discount(self, app_ctx, group_a, plan_a_monthly):
-        """Renovacao com menos de 5 dias restantes nao aplica desconto"""
+    def test_process_renewal_expired_sub_all_methods(self, app_ctx, group_a, plan_a_monthly):
+        """Renovacao de sub expirada mostra todos os metodos (cartão/boleto + PIX)"""
         from bot.handlers.subscription import process_renewal
 
         user_id = 1003
         sub = Subscription(
             group_id=group_a.id, plan_id=plan_a_monthly.id,
-            telegram_user_id=str(user_id), telegram_username='nodiscuser',
-            start_date=datetime.utcnow() - timedelta(days=28),
-            end_date=datetime.utcnow() + timedelta(days=2),
-            status='active',
+            telegram_user_id=str(user_id), telegram_username='expiredrenew',
+            start_date=datetime.utcnow() - timedelta(days=35),
+            end_date=datetime.utcnow() - timedelta(days=5),
+            status='expired',
         )
         _db.session.add(sub)
         _db.session.commit()
@@ -1927,8 +1929,17 @@ class TestRenewalFlow:
         import asyncio
         asyncio.get_event_loop().run_until_complete(process_renewal(update, ctx, sub.id))
 
-        renewal_data = ctx.user_data.get('renewal')
-        assert renewal_data['discount'] == 0
+        # Checkout data não deve ter trial_end
+        checkout = ctx.user_data.get('checkout')
+        assert checkout is not None
+        assert 'trial_end' not in checkout
+
+        # Keyboard deve ter boleto e PIX (plano 30 dias > 4)
+        call_kwargs = query.edit_message_text.call_args[1]
+        keyboard = call_kwargs['reply_markup'].inline_keyboard
+        button_texts = [btn.text for row in keyboard for btn in row]
+        assert any('Boleto' in t for t in button_texts)
+        assert any('PIX' in t for t in button_texts)
 
     def test_urgent_renewals(self, app_ctx, group_a, plan_a_monthly):
         """Lista urgente mostra apenas assinaturas com <= 3 dias"""
@@ -3126,3 +3137,485 @@ class TestConcurrentMultiCreatorLoad:
             _db.session.refresh(creator)
             assert creator.balance > 0, f"Creator {creator.name} balance={creator.balance}"
             assert creator.total_earned > 0
+
+
+# ===========================================================================
+# NO-BOLETO: PLANOS CURTOS (≤ 4 DIAS) EXCLUEM BOLETO, MANTÊM PIX
+# ===========================================================================
+
+class TestNoBoletoShortPlans:
+    """Testes para restricao de boleto em planos curtos (≤ 4 dias)"""
+
+    @pytest.fixture
+    def short_plan(self, db, group_a):
+        """Plano curto de 3 dias"""
+        p = PricingPlan(
+            group_id=group_a.id,
+            name='Teste 3 Dias',
+            duration_days=3,
+            price=Decimal('9.90'),
+            is_active=True,
+        )
+        db.session.add(p)
+        db.session.commit()
+        return p
+
+    @pytest.fixture
+    def plan_4_days(self, db, group_a):
+        """Plano de exatamente 4 dias (limite)"""
+        p = PricingPlan(
+            group_id=group_a.id,
+            name='Teste 4 Dias',
+            duration_days=4,
+            price=Decimal('14.90'),
+            is_active=True,
+        )
+        db.session.add(p)
+        db.session.commit()
+        return p
+
+    @pytest.fixture
+    def plan_5_days(self, db, group_a):
+        """Plano de 5 dias (acima do limite, boleto liberado)"""
+        p = PricingPlan(
+            group_id=group_a.id,
+            name='Teste 5 Dias',
+            duration_days=5,
+            price=Decimal('19.90'),
+            is_active=True,
+        )
+        db.session.add(p)
+        db.session.commit()
+        return p
+
+    def test_short_plan_no_boleto_button(self, app_ctx, group_a, short_plan):
+        """Plano de 3 dias: botão Stripe mostra 'Cartão' sem 'Boleto'"""
+        from bot.handlers.payment import start_payment
+
+        user = make_user(5001)
+        query = make_callback_query(user=user, data=f'plan_{group_a.id}_{short_plan.id}')
+        update = make_update(user=user, callback_query=query)
+        ctx = make_context()
+
+        import asyncio
+        asyncio.get_event_loop().run_until_complete(start_payment(update, ctx))
+
+        call_kwargs = query.edit_message_text.call_args[1]
+        keyboard = call_kwargs['reply_markup'].inline_keyboard
+        button_texts = [btn.text for row in keyboard for btn in row]
+
+        # Não deve ter "Boleto" no texto de nenhum botão
+        assert not any('Boleto' in t for t in button_texts), f"Boleto found in: {button_texts}"
+        # Deve ter "Cartão" (sem Boleto)
+        assert any('Cartão' in t and 'Boleto' not in t for t in button_texts)
+        # PIX deve estar presente
+        assert any('PIX' in t for t in button_texts)
+
+    def test_4day_plan_no_boleto(self, app_ctx, group_a, plan_4_days):
+        """Plano de 4 dias (limite): também sem boleto"""
+        from bot.handlers.payment import start_payment
+
+        user = make_user(5002)
+        query = make_callback_query(user=user, data=f'plan_{group_a.id}_{plan_4_days.id}')
+        update = make_update(user=user, callback_query=query)
+        ctx = make_context()
+
+        import asyncio
+        asyncio.get_event_loop().run_until_complete(start_payment(update, ctx))
+
+        checkout = ctx.user_data['checkout']
+        assert checkout.get('no_boleto') is True
+
+        call_kwargs = query.edit_message_text.call_args[1]
+        keyboard = call_kwargs['reply_markup'].inline_keyboard
+        button_texts = [btn.text for row in keyboard for btn in row]
+        assert not any('Boleto' in t for t in button_texts)
+
+    def test_5day_plan_has_boleto(self, app_ctx, group_a, plan_5_days):
+        """Plano de 5 dias: boleto deve estar disponível"""
+        from bot.handlers.payment import start_payment
+
+        user = make_user(5003)
+        query = make_callback_query(user=user, data=f'plan_{group_a.id}_{plan_5_days.id}')
+        update = make_update(user=user, callback_query=query)
+        ctx = make_context()
+
+        import asyncio
+        asyncio.get_event_loop().run_until_complete(start_payment(update, ctx))
+
+        checkout = ctx.user_data['checkout']
+        assert checkout.get('no_boleto') is not True
+
+        call_kwargs = query.edit_message_text.call_args[1]
+        keyboard = call_kwargs['reply_markup'].inline_keyboard
+        button_texts = [btn.text for row in keyboard for btn in row]
+        assert any('Boleto' in t for t in button_texts)
+
+    def test_30day_plan_has_boleto(self, app_ctx, group_a, plan_a_monthly):
+        """Plano de 30 dias: boleto deve estar disponível"""
+        from bot.handlers.payment import start_payment
+
+        user = make_user(5004)
+        query = make_callback_query(user=user, data=f'plan_{group_a.id}_{plan_a_monthly.id}')
+        update = make_update(user=user, callback_query=query)
+        ctx = make_context()
+
+        import asyncio
+        asyncio.get_event_loop().run_until_complete(start_payment(update, ctx))
+
+        call_kwargs = query.edit_message_text.call_args[1]
+        keyboard = call_kwargs['reply_markup'].inline_keyboard
+        button_texts = [btn.text for row in keyboard for btn in row]
+        assert any('Boleto' in t for t in button_texts)
+        assert any('PIX' in t for t in button_texts)
+
+    def test_short_plan_checkout_data_flag(self, app_ctx, group_a, short_plan):
+        """Checkout data marca no_boleto=True para plano curto"""
+        from bot.handlers.payment import start_payment
+
+        user = make_user(5005)
+        query = make_callback_query(user=user, data=f'plan_{group_a.id}_{short_plan.id}')
+        update = make_update(user=user, callback_query=query)
+        ctx = make_context()
+
+        import asyncio
+        asyncio.get_event_loop().run_until_complete(start_payment(update, ctx))
+
+        checkout = ctx.user_data['checkout']
+        assert checkout['no_boleto'] is True
+        assert checkout['duration_days'] == 3
+
+    def test_pix_coming_soon_short_plan_no_boleto(self, app_ctx, group_a, short_plan):
+        """PIX 'em breve' em plano curto mostra 'Cartão' sem 'Boleto'"""
+        from bot.handlers.payment import handle_payment_method
+
+        user = make_user(5006)
+        query = make_callback_query(user=user, data='pay_pix')
+        update = make_update(user=user, callback_query=query)
+        ctx = make_context(user_data={
+            'checkout': {
+                'group_id': group_a.id,
+                'plan_id': short_plan.id,
+                'amount': 9.90,
+                'platform_fee': 0.99,
+                'creator_amount': 8.91,
+                'duration_days': 3,
+                'is_lifetime': False,
+                'group_name': 'Alpha Premium',
+                'plan_name': 'Teste 3 Dias',
+                'no_boleto': True,
+            }
+        })
+
+        import asyncio
+        asyncio.get_event_loop().run_until_complete(handle_payment_method(update, ctx))
+
+        text = query.edit_message_text.call_args[0][0]
+        assert 'Em breve' in text
+        assert 'use Cartão:' in text  # não "Cartão ou Boleto"
+
+        call_kwargs = query.edit_message_text.call_args[1]
+        keyboard = call_kwargs['reply_markup'].inline_keyboard
+        button_texts = [btn.text for row in keyboard for btn in row]
+        assert not any('Boleto' in t for t in button_texts)
+        assert any('Cartão' in t for t in button_texts)
+
+    def test_pix_coming_soon_normal_plan_has_boleto(self, app_ctx, group_a, plan_a_monthly):
+        """PIX 'em breve' em plano normal mostra 'Cartão / Boleto'"""
+        from bot.handlers.payment import handle_payment_method
+
+        user = make_user(5007)
+        query = make_callback_query(user=user, data='pay_pix')
+        update = make_update(user=user, callback_query=query)
+        ctx = make_context(user_data={
+            'checkout': {
+                'group_id': group_a.id,
+                'plan_id': plan_a_monthly.id,
+                'amount': 29.90,
+                'platform_fee': 2.99,
+                'creator_amount': 26.91,
+                'duration_days': 30,
+                'is_lifetime': False,
+                'group_name': 'Alpha Premium',
+                'plan_name': 'Mensal Alpha',
+            }
+        })
+
+        import asyncio
+        asyncio.get_event_loop().run_until_complete(handle_payment_method(update, ctx))
+
+        text = query.edit_message_text.call_args[0][0]
+        assert 'Em breve' in text
+        assert 'Boleto' in text  # "use Cartão ou Boleto:"
+
+        call_kwargs = query.edit_message_text.call_args[1]
+        keyboard = call_kwargs['reply_markup'].inline_keyboard
+        button_texts = [btn.text for row in keyboard for btn in row]
+        assert any('Boleto' in t for t in button_texts)
+
+    def test_back_to_methods_respects_no_boleto(self, app_ctx, group_a, short_plan):
+        """Botão 'Voltar' respeita flag no_boleto"""
+        from bot.handlers.payment import back_to_methods
+
+        user = make_user(5008)
+        query = make_callback_query(user=user, data='back_to_methods')
+        update = make_update(user=user, callback_query=query)
+        ctx = make_context(user_data={
+            'checkout': {
+                'group_id': group_a.id,
+                'plan_id': short_plan.id,
+                'amount': 9.90,
+                'platform_fee': 0.99,
+                'creator_amount': 8.91,
+                'duration_days': 3,
+                'is_lifetime': False,
+                'group_name': 'Alpha Premium',
+                'plan_name': 'Teste 3 Dias',
+                'no_boleto': True,
+            }
+        })
+
+        import asyncio
+        asyncio.get_event_loop().run_until_complete(back_to_methods(update, ctx))
+
+        call_kwargs = query.edit_message_text.call_args[1]
+        keyboard = call_kwargs['reply_markup'].inline_keyboard
+        button_texts = [btn.text for row in keyboard for btn in row]
+        assert not any('Boleto' in t for t in button_texts)
+        assert any('Cartão' in t for t in button_texts)
+        assert any('PIX' in t for t in button_texts)
+
+    def test_renewal_expired_short_plan_no_boleto(self, app_ctx, group_a):
+        """Renovação de sub expirada com plano curto: sem boleto, com PIX"""
+        from bot.handlers.subscription import process_renewal
+
+        short = PricingPlan(
+            group_id=group_a.id, name='Curto 3d',
+            duration_days=3, price=Decimal('9.90'), is_active=True,
+        )
+        _db.session.add(short)
+        _db.session.flush()
+
+        user_id = 5010
+        sub = Subscription(
+            group_id=group_a.id, plan_id=short.id,
+            telegram_user_id=str(user_id), telegram_username='shortrenew',
+            start_date=datetime.utcnow() - timedelta(days=10),
+            end_date=datetime.utcnow() - timedelta(days=7),
+            status='expired',
+        )
+        _db.session.add(sub)
+        _db.session.commit()
+
+        user = make_user(user_id)
+        query = make_callback_query(user=user, data=f'renew_{sub.id}')
+        update = make_update(user=user, callback_query=query)
+        ctx = make_context()
+
+        import asyncio
+        asyncio.get_event_loop().run_until_complete(process_renewal(update, ctx, sub.id))
+
+        checkout = ctx.user_data['checkout']
+        assert checkout.get('no_boleto') is True
+
+        call_kwargs = query.edit_message_text.call_args[1]
+        keyboard = call_kwargs['reply_markup'].inline_keyboard
+        button_texts = [btn.text for row in keyboard for btn in row]
+        assert not any('Boleto' in t for t in button_texts)
+        assert any('PIX' in t for t in button_texts)
+        assert any('Cartão' in t for t in button_texts)
+
+    def test_renewal_expired_normal_plan_has_boleto(self, app_ctx, group_a, plan_a_monthly):
+        """Renovação de sub expirada com plano normal: boleto + PIX disponíveis"""
+        from bot.handlers.subscription import process_renewal
+
+        user_id = 5011
+        sub = Subscription(
+            group_id=group_a.id, plan_id=plan_a_monthly.id,
+            telegram_user_id=str(user_id), telegram_username='normalrenew',
+            start_date=datetime.utcnow() - timedelta(days=35),
+            end_date=datetime.utcnow() - timedelta(days=5),
+            status='expired',
+        )
+        _db.session.add(sub)
+        _db.session.commit()
+
+        user = make_user(user_id)
+        query = make_callback_query(user=user, data=f'renew_{sub.id}')
+        update = make_update(user=user, callback_query=query)
+        ctx = make_context()
+
+        import asyncio
+        asyncio.get_event_loop().run_until_complete(process_renewal(update, ctx, sub.id))
+
+        checkout = ctx.user_data['checkout']
+        assert checkout.get('no_boleto') is not True
+
+        call_kwargs = query.edit_message_text.call_args[1]
+        keyboard = call_kwargs['reply_markup'].inline_keyboard
+        button_texts = [btn.text for row in keyboard for btn in row]
+        assert any('Boleto' in t for t in button_texts)
+        assert any('PIX' in t for t in button_texts)
+
+
+# ===========================================================================
+# GRACE PERIOD: EXPIRAÇÃO EM 2 FASES
+# ===========================================================================
+
+class TestGracePeriod:
+    """Testes do grace period de 2 dias para assinaturas expiradas"""
+
+    def test_phase1_marks_expired_sends_warning(self, app_ctx, group_a, plan_a_monthly):
+        """Fase 1: sub recém-expirada é marcada expired + notificação de aviso"""
+        from bot.jobs.scheduled_tasks import check_expired_subscriptions
+        import bot.jobs.scheduled_tasks as tasks
+
+        user_id = 6001
+        sub = Subscription(
+            group_id=group_a.id, plan_id=plan_a_monthly.id,
+            telegram_user_id=str(user_id), telegram_username='grace1',
+            start_date=datetime.utcnow() - timedelta(days=31),
+            end_date=datetime.utcnow() - timedelta(hours=1),
+            status='active',
+            is_legacy=True,
+        )
+        _db.session.add(sub)
+        _db.session.commit()
+
+        mock_app = MagicMock()
+        mock_app.bot = AsyncMock()
+        tasks._application = mock_app
+
+        import asyncio
+        asyncio.get_event_loop().run_until_complete(check_expired_subscriptions())
+
+        _db.session.refresh(sub)
+        assert sub.status == 'expired'
+
+        # Deve enviar aviso (não remoção)
+        mock_app.bot.send_message.assert_called()
+
+    def test_phase2_removes_after_grace(self, app_ctx, group_a, plan_a_monthly):
+        """Fase 2: sub expirada há mais de 2 dias é removida do grupo"""
+        from bot.jobs.scheduled_tasks import check_expired_subscriptions
+        import bot.jobs.scheduled_tasks as tasks
+
+        user_id = 6002
+        sub = Subscription(
+            group_id=group_a.id, plan_id=plan_a_monthly.id,
+            telegram_user_id=str(user_id), telegram_username='grace2',
+            start_date=datetime.utcnow() - timedelta(days=35),
+            end_date=datetime.utcnow() - timedelta(days=5),
+            status='expired',
+            is_legacy=True,
+        )
+        _db.session.add(sub)
+        _db.session.commit()
+
+        mock_app = MagicMock()
+        mock_app.bot = AsyncMock()
+        tasks._application = mock_app
+
+        import asyncio
+        asyncio.get_event_loop().run_until_complete(check_expired_subscriptions())
+
+        # Deve tentar remover do grupo (ban)
+        mock_app.bot.ban_chat_member.assert_called()
+
+    def test_phase2_skips_pending_boleto(self, app_ctx, group_a, plan_a_monthly):
+        """Fase 2: NÃO remove se há transação pendente (boleto aguardando)"""
+        from bot.jobs.scheduled_tasks import check_expired_subscriptions
+        import bot.jobs.scheduled_tasks as tasks
+
+        user_id = 6003
+        sub = Subscription(
+            group_id=group_a.id, plan_id=plan_a_monthly.id,
+            telegram_user_id=str(user_id), telegram_username='boletopending',
+            start_date=datetime.utcnow() - timedelta(days=35),
+            end_date=datetime.utcnow() - timedelta(days=3),
+            status='expired',
+            is_legacy=True,
+        )
+        _db.session.add(sub)
+        _db.session.flush()
+
+        # Transação pendente (boleto aguardando compensação)
+        txn = Transaction(
+            subscription_id=sub.id,
+            amount=Decimal('29.90'),
+            status='pending',
+            payment_method='boleto',
+            stripe_session_id='cs_test_boleto_pending',
+        )
+        _db.session.add(txn)
+        _db.session.commit()
+
+        mock_app = MagicMock()
+        mock_app.bot = AsyncMock()
+        tasks._application = mock_app
+
+        import asyncio
+        asyncio.get_event_loop().run_until_complete(check_expired_subscriptions())
+
+        # NÃO deve tentar remover do grupo
+        mock_app.bot.ban_chat_member.assert_not_called()
+
+    def test_active_sub_not_touched_in_grace(self, app_ctx, group_a, plan_a_monthly):
+        """Sub ativa com data futura não é tocada pelo grace period"""
+        from bot.jobs.scheduled_tasks import check_expired_subscriptions
+        import bot.jobs.scheduled_tasks as tasks
+
+        user_id = 6004
+        sub = Subscription(
+            group_id=group_a.id, plan_id=plan_a_monthly.id,
+            telegram_user_id=str(user_id), telegram_username='activesafe',
+            start_date=datetime.utcnow(),
+            end_date=datetime.utcnow() + timedelta(days=25),
+            status='active',
+            is_legacy=True,
+        )
+        _db.session.add(sub)
+        _db.session.commit()
+
+        tasks._application = MagicMock()
+
+        import asyncio
+        asyncio.get_event_loop().run_until_complete(check_expired_subscriptions())
+
+        _db.session.refresh(sub)
+        assert sub.status == 'active'
+
+
+# ===========================================================================
+# PAYMENT KEYBOARD HELPER: _payment_method_keyboard
+# ===========================================================================
+
+class TestPaymentMethodKeyboard:
+    """Testes unitários do helper _payment_method_keyboard"""
+
+    def test_default_keyboard_has_boleto_and_pix(self, app_ctx):
+        """Keyboard padrão: Cartão/Boleto + PIX"""
+        from bot.handlers.payment import _payment_method_keyboard
+        kb = _payment_method_keyboard(1)
+        texts = [btn.text for row in kb for btn in row]
+        assert any('Boleto' in t for t in texts)
+        assert any('PIX' in t for t in texts)
+
+    def test_no_boleto_keyboard_has_pix_no_boleto(self, app_ctx):
+        """Keyboard no_boleto: Cartão (sem Boleto) + PIX"""
+        from bot.handlers.payment import _payment_method_keyboard
+        kb = _payment_method_keyboard(1, no_boleto=True)
+        texts = [btn.text for row in kb for btn in row]
+        assert not any('Boleto' in t for t in texts)
+        assert any('PIX' in t for t in texts)
+        assert any('Cartão' in t for t in texts)
+
+    def test_keyboard_has_back_button(self, app_ctx):
+        """Keyboard sempre tem botão Voltar"""
+        from bot.handlers.payment import _payment_method_keyboard
+        kb = _payment_method_keyboard(42)
+        texts = [btn.text for row in kb for btn in row]
+        assert any('Voltar' in t for t in texts)
+        # Voltar aponta para group_42
+        callbacks = [btn.callback_data for row in kb for btn in row]
+        assert 'group_42' in callbacks
