@@ -24,24 +24,42 @@
     <style>
         body { padding-top: 0; min-height: 100vh; }
 
-        .creator-header {
+        /* Hero profile section */
+        .creator-hero {
             text-align: center;
-            padding: 60px 20px 40px;
+            padding: 70px 20px 50px;
+            position: relative;
+            overflow: hidden;
+        }
+        .creator-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at 50% 20%, rgba(124,92,252,0.18) 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 80%, rgba(56,189,248,0.08) 0%, transparent 50%);
+            pointer-events: none;
         }
         .creator-avatar {
-            width: 100px;
-            height: 100px;
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 16px;
-            font-size: 2.2rem;
+            margin: 0 auto 20px;
+            font-size: 2.8rem;
             font-weight: 700;
             color: #fff;
             background: linear-gradient(135deg, #7c5cfc 0%, #38bdf8 100%);
-            border: 3px solid rgba(124, 92, 252, 0.3);
+            border: 4px solid rgba(124, 92, 252, 0.4);
             overflow: hidden;
+            position: relative;
+            box-shadow: 0 0 40px rgba(124, 92, 252, 0.3), 0 0 80px rgba(124, 92, 252, 0.1);
+            animation: avatarGlow 4s ease-in-out infinite alternate;
+        }
+        @keyframes avatarGlow {
+            0% { box-shadow: 0 0 30px rgba(124,92,252,0.2), 0 0 60px rgba(124,92,252,0.08); }
+            100% { box-shadow: 0 0 50px rgba(124,92,252,0.4), 0 0 100px rgba(56,189,248,0.15); }
         }
         .creator-avatar img {
             width: 100%;
@@ -49,58 +67,98 @@
             object-fit: cover;
         }
         .creator-name {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: var(--galactic-text-primary);
+            font-size: 2rem;
+            font-weight: 800;
+            color: #fff;
             margin-bottom: 4px;
+            position: relative;
         }
         .creator-username {
-            font-size: 0.9rem;
-            color: var(--galactic-text-secondary);
-            margin-bottom: 12px;
-        }
-        .creator-bio {
             font-size: 0.95rem;
             color: var(--galactic-text-secondary);
-            max-width: 500px;
-            margin: 0 auto;
-            line-height: 1.6;
+            margin-bottom: 16px;
+            position: relative;
+        }
+        .creator-bio {
+            font-size: 1rem;
+            color: var(--galactic-text-secondary);
+            max-width: 520px;
+            margin: 0 auto 24px;
+            line-height: 1.7;
+            position: relative;
+        }
+        .creator-stats {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            position: relative;
+        }
+        .creator-stat {
+            text-align: center;
+        }
+        .creator-stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .creator-stat-label {
+            font-size: 0.78rem;
+            color: var(--galactic-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
+        /* Section title */
+        .section-heading {
+            text-align: center;
+            margin-bottom: 32px;
+            padding: 0 20px;
+        }
+        .section-heading h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--galactic-text-primary);
+        }
+        .section-heading .divider {
+            width: 60px;
+            height: 3px;
+            background: var(--gradient-primary);
+            margin: 12px auto 0;
+            border-radius: 3px;
+        }
+
+        /* Groups grid */
         .groups-section {
             padding: 0 20px 60px;
-            max-width: 900px;
+            max-width: 960px;
             margin: 0 auto;
-        }
-        .groups-section h3 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--galactic-text-secondary);
-            margin-bottom: 20px;
-            text-align: center;
         }
         .groups-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
         }
         .group-card {
-            background: var(--galactic-card);
-            border: 1px solid var(--galactic-card-border);
-            border-radius: 16px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(124,92,252,0.12);
+            border-radius: 20px;
             overflow: hidden;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: all 0.3s ease;
             text-decoration: none;
-            display: block;
+            display: flex;
+            flex-direction: column;
         }
         .group-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 30px rgba(124, 92, 252, 0.15);
-            border-color: rgba(124, 92, 252, 0.3);
+            transform: translateY(-6px);
+            box-shadow: 0 12px 40px rgba(124, 92, 252, 0.2), 0 0 0 1px rgba(124,92,252,0.25);
+            border-color: rgba(124, 92, 252, 0.35);
         }
         .group-cover {
-            height: 120px;
-            background: linear-gradient(135deg, #7c5cfc 0%, #38bdf8 50%, #f093fb 100%);
+            height: 140px;
+            background: linear-gradient(135deg, #1a0a3e 0%, #2d1b69 50%, #0f1b3d 100%);
             position: relative;
             overflow: hidden;
         }
@@ -108,51 +166,93 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+        .group-card:hover .group-cover img {
+            transform: scale(1.05);
+        }
+        .group-cover-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(8px);
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 0.72rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
         .group-card-body {
-            padding: 16px;
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
         .group-card-name {
-            font-size: 1.05rem;
+            font-size: 1.1rem;
             font-weight: 700;
             color: var(--galactic-text-primary);
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
         .group-card-desc {
-            font-size: 0.82rem;
+            font-size: 0.85rem;
             color: var(--galactic-text-secondary);
-            margin-bottom: 12px;
+            margin-bottom: 16px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            line-height: 1.5;
+            line-height: 1.6;
+            flex: 1;
         }
         .group-card-footer {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 8px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255,255,255,0.06);
         }
-        .group-price {
-            font-size: 0.82rem;
-            color: var(--secondary);
-            font-weight: 600;
+        .group-price-tag {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #34d399;
         }
-        .group-subs {
-            font-size: 0.78rem;
+        .group-price-tag small {
+            font-weight: 400;
+            font-size: 0.75rem;
             color: var(--galactic-text-secondary);
         }
-        .group-card-cta {
+        .group-cta-btn {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            font-size: 0.82rem;
+            gap: 6px;
+            padding: 8px 18px;
+            border-radius: 10px;
             font-weight: 600;
-            color: var(--primary);
-            margin-top: 12px;
+            font-size: 0.82rem;
+            color: #fff;
+            background: var(--gradient-primary);
+            transition: all 0.2s;
+        }
+        .group-card:hover .group-cta-btn {
+            box-shadow: 0 4px 16px rgba(124,92,252,0.4);
         }
 
+        /* Empty state */
+        .empty-groups {
+            text-align: center;
+            padding: 50px 20px;
+        }
+        .empty-groups i {
+            font-size: 3rem;
+            opacity: 0.2;
+            color: var(--galactic-text-secondary);
+        }
+
+        /* Footer */
         .page-footer {
             text-align: center;
             padding: 30px 20px 40px;
@@ -171,21 +271,18 @@
             margin-top: 12px;
         }
 
-        .empty-groups {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--galactic-text-secondary);
-        }
-
         @media (max-width: 576px) {
-            .creator-header { padding: 40px 16px 30px; }
+            .creator-hero { padding: 50px 16px 36px; }
+            .creator-avatar { width: 100px; height: 100px; font-size: 2.2rem; }
+            .creator-name { font-size: 1.6rem; }
+            .creator-stats { gap: 24px; }
             .groups-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    <!-- Creator Header -->
-    <div class="creator-header">
+    <!-- Creator Hero -->
+    <div class="creator-hero">
         <div class="creator-avatar">
             {% if creator.avatar_url %}
                 <img src="{{ creator.avatar_url }}" alt="{{ creator.name }}">
@@ -198,18 +295,41 @@
         {% if creator.bio %}
             <div class="creator-bio">{{ creator.bio }}</div>
         {% endif %}
+        {% if groups %}
+        <div class="creator-stats">
+            <div class="creator-stat">
+                <div class="creator-stat-value">{{ groups|length }}</div>
+                <div class="creator-stat-label">{{ 'Grupos' if groups|length != 1 else 'Grupo' }}</div>
+            </div>
+            {% set total_subs = groups|sum(attribute='subscriber_count') %}
+            {% if total_subs > 0 %}
+            <div class="creator-stat">
+                <div class="creator-stat-value">{{ total_subs }}</div>
+                <div class="creator-stat-label">Membros</div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
 
     <!-- Groups Grid -->
     <div class="groups-section">
         {% if groups %}
-            <h3>{{ groups|length }} grupo{{ 's' if groups|length != 1 else '' }}</h3>
+            <div class="section-heading">
+                <h2>Conteudo Exclusivo</h2>
+                <div class="divider"></div>
+            </div>
             <div class="groups-grid">
                 {% for group in groups %}
                 <a href="{{ url_for('public.group_landing', username=creator.username, invite_slug=group.invite_slug) }}" class="group-card">
                     <div class="group-cover">
                         {% if group.cover_image_url %}
                             <img src="{{ group.cover_image_url }}" alt="{{ group.name }}">
+                        {% endif %}
+                        {% if group.subscriber_count > 0 %}
+                        <div class="group-cover-badge">
+                            <i class="bi bi-people-fill"></i> {{ group.subscriber_count }} membro{{ 's' if group.subscriber_count != 1 else '' }}
+                        </div>
                         {% endif %}
                     </div>
                     <div class="group-card-body">
@@ -220,15 +340,12 @@
                         <div class="group-card-footer">
                             <div>
                                 {% if group.min_price is not none %}
-                                    <span class="group-price">a partir de R$ {{ "%.2f"|format(group.min_price) }}/mes</span>
+                                    <span class="group-price-tag">R$ {{ "%.2f"|format(group.min_price) }} <small>/ mes</small></span>
                                 {% endif %}
                             </div>
-                            <span class="group-subs">
-                                <i class="bi bi-people-fill"></i> {{ group.subscriber_count }}
+                            <span class="group-cta-btn">
+                                Acessar <i class="bi bi-arrow-right"></i>
                             </span>
-                        </div>
-                        <div class="group-card-cta">
-                            Ver grupo <i class="bi bi-arrow-right"></i>
                         </div>
                     </div>
                 </a>
@@ -236,8 +353,8 @@
             </div>
         {% else %}
             <div class="empty-groups">
-                <i class="bi bi-collection" style="font-size: 2.5rem; opacity: 0.3;"></i>
-                <p class="mt-3">Nenhum grupo disponivel no momento.</p>
+                <i class="bi bi-collection"></i>
+                <p class="mt-3" style="color: var(--galactic-text-secondary);">Nenhum grupo disponivel no momento.</p>
             </div>
         {% endif %}
     </div>

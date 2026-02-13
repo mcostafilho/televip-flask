@@ -13,8 +13,12 @@
             <!-- Header -->
             <div class="dashboard-header welcome-header">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="welcome-avatar">
+                    <div class="welcome-avatar" {% if user.avatar_url %}style="overflow:hidden; padding:0;"{% endif %}>
+                        {% if user.avatar_url %}
+                        <img src="{{ user.avatar_url }}" alt="{{ user.name }}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">
+                        {% else %}
                         {{ user.name[0]|upper if user.name else 'U' }}
+                        {% endif %}
                     </div>
                     <div>
                         <h1 class="h3 mb-1">{{ user.name }}</h1>
@@ -43,15 +47,17 @@
                 <!-- Coluna Esquerda - Perfil -->
                 <div class="col-lg-4">
                     <div class="profile-card text-center">
-                        <div class="profile-avatar" style="position: relative; cursor: {% if not is_admin_viewing %}pointer{% else %}default{% endif %};" {% if not is_admin_viewing %}onclick="document.getElementById('avatarFileInput').click()"{% endif %}>
-                            {% if user.avatar_url %}
-                            <img src="{{ user.avatar_url }}" alt="Avatar" id="profileAvatarImg"
-                                 style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
-                            {% else %}
-                            <span id="profileAvatarInitial">{{ user.name[0] if user.name else 'U' }}</span>
-                            {% endif %}
+                        <div style="position: relative; width: 100px; height: 100px; margin: 0 auto 1rem;">
+                            <div class="profile-avatar" style="cursor: {% if not is_admin_viewing %}pointer{% else %}default{% endif %}; overflow: hidden; margin: 0;" {% if not is_admin_viewing %}onclick="document.getElementById('avatarFileInput').click()"{% endif %}>
+                                {% if user.avatar_url %}
+                                <img src="{{ user.avatar_url }}" alt="Avatar" id="profileAvatarImg"
+                                     style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                {% else %}
+                                <span id="profileAvatarInitial">{{ user.name[0] if user.name else 'U' }}</span>
+                                {% endif %}
+                            </div>
                             {% if not is_admin_viewing %}
-                            <div style="position: absolute; bottom: 0; right: 0; width: 32px; height: 32px; background: var(--galactic-accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--galactic-dark); cursor: pointer;">
+                            <div onclick="document.getElementById('avatarFileInput').click()" style="position: absolute; bottom: 2px; right: 2px; width: 32px; height: 32px; background: #7c5cfc; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #0b0e1a; cursor: pointer; z-index: 2;">
                                 <i class="bi bi-pencil-fill" style="font-size: 14px; color: #fff;"></i>
                             </div>
                             {% endif %}

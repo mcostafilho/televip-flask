@@ -27,186 +27,468 @@
     <style>
         body { padding-top: 0; min-height: 100vh; }
 
-        /* Hero */
+        /* ===== HERO ===== */
         .group-hero {
             position: relative;
-            height: 220px;
-            background: linear-gradient(135deg, #7c5cfc 0%, #38bdf8 50%, #f093fb 100%);
+            min-height: 320px;
+            display: flex;
+            align-items: flex-end;
             overflow: hidden;
         }
-        .group-hero img {
+        .group-hero-bg {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #1a0a3e 0%, #2d1b69 50%, #0f1b3d 100%);
+        }
+        .group-hero-bg img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            opacity: 0.7;
         }
         .group-hero-overlay {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 80px;
-            background: linear-gradient(transparent, rgba(5, 8, 22, 0.9));
+            inset: 0;
+            background: linear-gradient(180deg, rgba(5,8,22,0.3) 0%, rgba(5,8,22,0.6) 50%, rgba(5,8,22,0.95) 100%);
+        }
+        .group-hero-content {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 20px 36px;
+        }
+        .group-hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #34d399;
+            background: rgba(52, 211, 153, 0.12);
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            margin-bottom: 16px;
+        }
+        .group-hero-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.2;
+            margin-bottom: 12px;
+        }
+        .group-hero-desc {
+            font-size: 1rem;
+            color: var(--galactic-text-secondary);
+            line-height: 1.8;
+            white-space: pre-line;
+            max-width: 600px;
+        }
+        .group-hero-stats {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .group-hero-stat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: var(--galactic-text-secondary);
+        }
+        .group-hero-stat i {
+            font-size: 0.9rem;
+            color: var(--primary);
         }
 
-        .group-content {
-            max-width: 700px;
+        /* ===== MAIN CONTENT ===== */
+        .page-content {
+            max-width: 720px;
             margin: 0 auto;
             padding: 0 20px;
         }
 
-        /* Group Info */
-        .group-info {
-            margin-top: -30px;
-            position: relative;
-            z-index: 1;
-            padding-bottom: 30px;
-        }
-        .group-title {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: var(--galactic-text-primary);
-            margin-bottom: 8px;
-        }
-        .group-description {
-            font-size: 0.95rem;
-            color: var(--galactic-text-secondary);
-            line-height: 1.7;
-            white-space: pre-line;
-        }
-        .group-meta {
+        /* ===== CREATOR CARD ===== */
+        .creator-card {
             display: flex;
             align-items: center;
-            gap: 16px;
-            margin-top: 14px;
-            font-size: 0.85rem;
-            color: var(--galactic-text-secondary);
-        }
-        .group-meta i { margin-right: 4px; }
-
-        /* Creator mini-profile */
-        .creator-mini {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 16px;
-            background: var(--galactic-card);
-            border: 1px solid var(--galactic-card-border);
-            border-radius: 12px;
-            margin-bottom: 30px;
+            gap: 14px;
+            padding: 18px 20px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(124,92,252,0.15);
+            border-radius: 16px;
+            margin: 28px 0;
             text-decoration: none;
-            transition: border-color 0.2s;
+            transition: all 0.3s ease;
         }
-        .creator-mini:hover {
-            border-color: rgba(124, 92, 252, 0.3);
+        .creator-card:hover {
+            border-color: rgba(124,92,252,0.35);
+            background: rgba(255,255,255,0.06);
+            transform: translateY(-2px);
         }
-        .creator-mini-avatar {
-            width: 48px;
-            height: 48px;
+        .creator-card-avatar {
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             font-weight: 700;
             color: #fff;
             background: linear-gradient(135deg, #7c5cfc 0%, #38bdf8 100%);
             flex-shrink: 0;
             overflow: hidden;
+            border: 2px solid rgba(124,92,252,0.3);
         }
-        .creator-mini-avatar img {
+        .creator-card-avatar img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        .creator-mini-name {
+        .creator-card-info { flex: 1; min-width: 0; }
+        .creator-card-name {
             font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--galactic-text-primary);
-        }
-        .creator-mini-bio {
-            font-size: 0.8rem;
-            color: var(--galactic-text-secondary);
-            display: -webkit-box;
-            -webkit-line-clamp: 1;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        /* Plans */
-        .plans-title {
-            font-size: 1.15rem;
             font-weight: 700;
             color: var(--galactic-text-primary);
-            margin-bottom: 16px;
+        }
+        .creator-card-label {
+            font-size: 0.78rem;
+            color: var(--galactic-text-secondary);
+        }
+        .creator-card-arrow {
+            color: var(--galactic-text-secondary);
+            font-size: 1rem;
+            transition: transform 0.2s;
+        }
+        .creator-card:hover .creator-card-arrow {
+            transform: translateX(3px);
+            color: var(--primary);
+        }
+
+        /* ===== BENEFITS ===== */
+        .benefits-section {
+            margin: 36px 0;
+        }
+        .section-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--primary);
+            margin-bottom: 14px;
+        }
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        .benefit-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(124,92,252,0.08);
+            border-radius: 14px;
+            transition: all 0.25s ease;
+        }
+        .benefit-item:hover {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(124,92,252,0.2);
+        }
+        .benefit-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 1rem;
+        }
+        .benefit-text {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--galactic-text-primary);
+            line-height: 1.4;
+        }
+        .benefit-text small {
+            display: block;
+            font-weight: 400;
+            font-size: 0.78rem;
+            color: var(--galactic-text-secondary);
+            margin-top: 2px;
+        }
+
+        /* ===== PLANS ===== */
+        .plans-section {
+            margin: 40px 0;
+        }
+        .plans-section .section-label {
             text-align: center;
+        }
+        .plans-heading {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+        .plans-subheading {
+            text-align: center;
+            font-size: 0.88rem;
+            color: var(--galactic-text-secondary);
+            margin-bottom: 28px;
         }
         .plans-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 40px;
+            gap: 18px;
         }
         .plan-card {
-            background: var(--galactic-card);
-            border: 1px solid var(--galactic-card-border);
-            border-radius: 14px;
-            padding: 24px 20px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(124,92,252,0.15);
+            border-radius: 18px;
+            padding: 28px 22px;
             text-align: center;
-            transition: transform 0.2s, border-color 0.2s;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .plan-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+            opacity: 0;
+            transition: opacity 0.3s;
         }
         .plan-card:hover {
-            transform: translateY(-3px);
-            border-color: rgba(124, 92, 252, 0.35);
+            transform: translateY(-5px);
+            border-color: rgba(124,92,252,0.4);
+            box-shadow: 0 12px 40px rgba(124,92,252,0.15);
+        }
+        .plan-card:hover::before { opacity: 1; }
+        .plan-card.featured {
+            border-color: rgba(124,92,252,0.4);
+            background: rgba(124,92,252,0.08);
+        }
+        .plan-card.featured::before { opacity: 1; }
+        .plan-featured-badge {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #fff;
+            background: var(--gradient-primary);
+            margin-bottom: 12px;
         }
         .plan-name {
             font-size: 0.95rem;
             font-weight: 600;
             color: var(--galactic-text-primary);
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
         .plan-duration {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             color: var(--galactic-text-secondary);
-            margin-bottom: 12px;
-        }
-        .plan-price {
-            font-size: 1.6rem;
-            font-weight: 800;
-            color: #fff;
             margin-bottom: 16px;
         }
-        .plan-price small {
+        .plan-price {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 4px;
+            line-height: 1;
+        }
+        .plan-price-currency {
             font-size: 0.55em;
-            font-weight: 400;
+            font-weight: 600;
+            vertical-align: super;
+            color: #34d399;
+        }
+        .plan-price-period {
+            font-size: 0.78rem;
             color: var(--galactic-text-secondary);
+            margin-bottom: 20px;
         }
         .plan-cta {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 8px;
             width: 100%;
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-weight: 600;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 700;
             font-size: 0.9rem;
             text-decoration: none;
             color: #fff;
             background: linear-gradient(135deg, #7c5cfc 0%, #38bdf8 100%);
             border: none;
-            transition: opacity 0.2s, transform 0.2s;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .plan-cta::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 30%,
+                rgba(255,255,255,0.12) 50%,
+                transparent 70%
+            );
+            animation: shimmer 3s infinite;
+        }
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) rotate(25deg); }
+            100% { transform: translateX(100%) rotate(25deg); }
         }
         .plan-cta:hover {
-            opacity: 0.9;
-            transform: scale(1.02);
+            transform: scale(1.03);
+            box-shadow: 0 6px 24px rgba(124,92,252,0.4);
             color: #fff;
         }
+        .plan-cta i { font-size: 1.1rem; }
 
-        /* Footer */
+        /* ===== TRUST BAR ===== */
+        .trust-bar {
+            display: flex;
+            justify-content: center;
+            gap: 28px;
+            flex-wrap: wrap;
+            padding: 28px 0;
+            margin: 12px 0 36px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: var(--galactic-text-secondary);
+        }
+        .trust-item i {
+            font-size: 1rem;
+            color: #34d399;
+        }
+
+        /* ===== FAQ ===== */
+        .faq-section {
+            margin: 0 0 50px;
+        }
+        .faq-item {
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding: 18px 0;
+        }
+        .faq-item:last-child { border-bottom: none; }
+        .faq-question {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--galactic-text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .faq-question i {
+            font-size: 0.8rem;
+            color: var(--galactic-text-secondary);
+            transition: transform 0.3s;
+            flex-shrink: 0;
+        }
+        .faq-question.active i { transform: rotate(180deg); }
+        .faq-answer {
+            font-size: 0.85rem;
+            color: var(--galactic-text-secondary);
+            line-height: 1.7;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            padding-top: 0;
+        }
+        .faq-answer.open {
+            max-height: 200px;
+            padding-top: 12px;
+        }
+
+        /* ===== STICKY CTA (mobile) ===== */
+        .sticky-cta {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 14px 20px;
+            background: rgba(5,8,22,0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(124,92,252,0.15);
+        }
+        .sticky-cta-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 720px;
+            margin: 0 auto;
+        }
+        .sticky-cta-price {
+            font-size: 0.82rem;
+            color: var(--galactic-text-secondary);
+        }
+        .sticky-cta-price strong {
+            display: block;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #fff;
+        }
+        .sticky-cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-decoration: none;
+            color: #fff;
+            background: linear-gradient(135deg, #7c5cfc 0%, #38bdf8 100%);
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+        .sticky-cta-btn::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.12) 50%, transparent 70%);
+            animation: shimmer 3s infinite;
+        }
+
+        /* ===== FOOTER ===== */
         .page-footer {
             text-align: center;
             padding: 30px 20px 40px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: 1px solid rgba(255,255,255,0.05);
         }
         .page-footer a {
             color: var(--galactic-text-secondary);
@@ -217,87 +499,213 @@
         .page-footer a:hover { color: var(--primary); }
         .page-footer .powered {
             font-size: 0.78rem;
-            color: rgba(255, 255, 255, 0.3);
+            color: rgba(255,255,255,0.3);
             margin-top: 12px;
         }
 
+        /* ===== RESPONSIVE ===== */
         @media (max-width: 576px) {
-            .group-hero { height: 160px; }
-            .group-title { font-size: 1.4rem; }
+            .group-hero { min-height: 260px; }
+            .group-hero-title { font-size: 1.6rem; }
+            .benefits-grid { grid-template-columns: 1fr; }
             .plans-grid { grid-template-columns: 1fr; }
-            .plan-price { font-size: 1.4rem; }
+            .plan-price { font-size: 1.7rem; }
+            .sticky-cta { display: block; }
+            .page-footer { padding-bottom: 90px; }
+            .trust-bar { gap: 16px; }
         }
     </style>
 </head>
 <body>
-    <!-- Hero -->
+    <!-- ===== HERO ===== -->
     <div class="group-hero">
-        {% if group.cover_image_url %}
-            <img src="{{ group.cover_image_url }}" alt="{{ group.name }}">
-        {% endif %}
-        <div class="group-hero-overlay"></div>
-    </div>
-
-    <div class="group-content">
-        <!-- Group Info -->
-        <div class="group-info">
-            <h1 class="group-title">{{ group.name }}</h1>
-            {% if group.description %}
-                <div class="group-description">{{ group.description }}</div>
+        <div class="group-hero-bg">
+            {% if group.cover_image_url %}
+                <img src="{{ group.cover_image_url }}" alt="{{ group.name }}">
             {% endif %}
-            <div class="group-meta">
-                <span><i class="bi bi-people-fill"></i> {{ subscriber_count }} assinante{{ 's' if subscriber_count != 1 else '' }}</span>
-                <span><i class="bi bi-calendar3"></i> Criado em {{ group.created_at.strftime('%d/%m/%Y') if group.created_at else '' }}</span>
+        </div>
+        <div class="group-hero-overlay"></div>
+        <div class="group-hero-content">
+            {% if subscriber_count > 0 %}
+            <div class="group-hero-badge">
+                <i class="bi bi-people-fill"></i>
+                {{ subscriber_count }} membro{{ 's' if subscriber_count != 1 else '' }} ativo{{ 's' if subscriber_count != 1 else '' }}
+            </div>
+            {% endif %}
+            <h1 class="group-hero-title">{{ group.name }}</h1>
+            {% if group.description %}
+                <div class="group-hero-desc">{{ group.description }}</div>
+            {% endif %}
+            <div class="group-hero-stats">
+                <div class="group-hero-stat">
+                    <i class="bi bi-telegram"></i> Grupo exclusivo no Telegram
+                </div>
+                {% if plans %}
+                <div class="group-hero-stat">
+                    <i class="bi bi-lightning-charge-fill"></i> Acesso imediato
+                </div>
+                {% endif %}
             </div>
         </div>
+    </div>
 
-        <!-- Creator mini-profile -->
-        <a href="{{ url_for('public.creator_page', username=creator.username) }}" class="creator-mini">
-            <div class="creator-mini-avatar">
+    <div class="page-content">
+        <!-- ===== CREATOR ===== -->
+        <a href="{{ url_for('public.creator_page', username=creator.username) }}" class="creator-card">
+            <div class="creator-card-avatar">
                 {% if creator.avatar_url %}
                     <img src="{{ creator.avatar_url }}" alt="{{ creator.name }}">
                 {% else %}
                     {{ creator.name[0]|upper if creator.name else 'U' }}
                 {% endif %}
             </div>
-            <div>
-                <div class="creator-mini-name">{{ creator.name }}</div>
-                {% if creator.bio %}
-                    <div class="creator-mini-bio">{{ creator.bio }}</div>
-                {% endif %}
+            <div class="creator-card-info">
+                <div class="creator-card-name">{{ creator.name }}</div>
+                <div class="creator-card-label">Criador do grupo</div>
             </div>
+            <i class="bi bi-chevron-right creator-card-arrow"></i>
         </a>
 
-        <!-- Plans -->
-        {% if plans %}
-        <div class="plans-title">Escolha seu plano</div>
-        <div class="plans-grid">
-            {% for plan in plans %}
-            <div class="plan-card">
-                <div class="plan-name">{{ plan.name }}</div>
-                <div class="plan-duration">
-                    {% if plan.is_lifetime %}
-                        Acesso vitalicio
-                    {% else %}
-                        {{ plan.duration_days }} dia{{ 's' if plan.duration_days != 1 else '' }}
-                    {% endif %}
+        <!-- ===== BENEFITS ===== -->
+        <div class="benefits-section">
+            <div class="section-label">O que voce recebe</div>
+            <div class="benefits-grid">
+                <div class="benefit-item">
+                    <div class="benefit-icon" style="background: rgba(124,92,252,0.12); color: #7c5cfc;">
+                        <i class="bi bi-unlock-fill"></i>
+                    </div>
+                    <div class="benefit-text">
+                        Conteudo exclusivo
+                        <small>Acesso total ao grupo VIP</small>
+                    </div>
                 </div>
-                <div class="plan-price">
-                    R$ {{ "%.2f"|format(plan.price) }}
-                    {% if not plan.is_lifetime %}
-                        <small>/ {{ plan.duration_days }} dias</small>
-                    {% endif %}
+                <div class="benefit-item">
+                    <div class="benefit-icon" style="background: rgba(56,189,248,0.12); color: #38bdf8;">
+                        <i class="bi bi-chat-dots-fill"></i>
+                    </div>
+                    <div class="benefit-text">
+                        Comunidade ativa
+                        <small>Interaja com outros membros</small>
+                    </div>
                 </div>
-                <a href="{{ bot_link }}" target="_blank" rel="noopener" class="plan-cta">
-                    <i class="bi bi-telegram"></i> Assinar
-                </a>
+                <div class="benefit-item">
+                    <div class="benefit-icon" style="background: rgba(52,211,153,0.12); color: #34d399;">
+                        <i class="bi bi-lightning-charge-fill"></i>
+                    </div>
+                    <div class="benefit-text">
+                        Acesso imediato
+                        <small>Liberado automaticamente</small>
+                    </div>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon" style="background: rgba(251,191,36,0.12); color: #fbbf24;">
+                        <i class="bi bi-bell-fill"></i>
+                    </div>
+                    <div class="benefit-text">
+                        Atualizacoes diretas
+                        <small>Receba novidades em primeira mao</small>
+                    </div>
+                </div>
             </div>
-            {% endfor %}
+        </div>
+
+        <!-- ===== PLANS ===== -->
+        {% if plans %}
+        <div class="plans-section" id="planos">
+            <div class="section-label">Planos disponiveis</div>
+            <div class="plans-heading">Escolha o plano ideal</div>
+            <div class="plans-subheading">Selecione e comece agora mesmo</div>
+            <div class="plans-grid">
+                {% for plan in plans %}
+                <div class="plan-card {% if loop.length > 1 and loop.index == (loop.length // 2 + 1) %}featured{% elif loop.length == 1 %}featured{% endif %}">
+                    {% if loop.length > 1 and loop.index == (loop.length // 2 + 1) %}
+                        <div class="plan-featured-badge">Mais popular</div>
+                    {% elif loop.length == 1 %}
+                        <div class="plan-featured-badge">Melhor oferta</div>
+                    {% endif %}
+                    <div class="plan-name">{{ plan.name }}</div>
+                    <div class="plan-duration">
+                        {% if plan.is_lifetime %}
+                            Acesso vitalicio
+                        {% else %}
+                            {{ plan.duration_days }} dia{{ 's' if plan.duration_days != 1 else '' }}
+                        {% endif %}
+                    </div>
+                    <div class="plan-price">
+                        <span class="plan-price-currency">R$</span> {{ "%.2f"|format(plan.price) }}
+                    </div>
+                    <div class="plan-price-period">
+                        {% if plan.is_lifetime %}
+                            pagamento unico
+                        {% else %}
+                            por {{ plan.duration_days }} dia{{ 's' if plan.duration_days != 1 else '' }}
+                        {% endif %}
+                    </div>
+                    <a href="{{ bot_link }}" target="_blank" rel="noopener" class="plan-cta">
+                        <i class="bi bi-telegram"></i> Assinar agora
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
         </div>
         {% endif %}
+
+        <!-- ===== TRUST BAR ===== -->
+        <div class="trust-bar">
+            <div class="trust-item">
+                <i class="bi bi-shield-check"></i> Pagamento seguro
+            </div>
+            <div class="trust-item">
+                <i class="bi bi-lightning-charge-fill"></i> Acesso instantaneo
+            </div>
+            <div class="trust-item">
+                <i class="bi bi-lock-fill"></i> Dados protegidos
+            </div>
+        </div>
+
+        <!-- ===== FAQ ===== -->
+        <div class="faq-section">
+            <div class="section-label">Perguntas frequentes</div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Como funciona o acesso?
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Apos o pagamento, voce recebe acesso imediato ao grupo exclusivo no Telegram. Um bot automatico libera sua entrada em segundos.
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Posso cancelar a qualquer momento?
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Sim! Voce pode cancelar sua assinatura a qualquer momento. O acesso permanece ativo ate o final do periodo pago.
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    O pagamento e seguro?
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Todos os pagamentos sao processados pela Stripe, uma das maiores plataformas de pagamento do mundo, com criptografia de ponta a ponta.
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Preciso ter Telegram?
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Sim, o conteudo exclusivo e entregue via Telegram. Basta ter o app instalado e uma conta ativa.
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Footer -->
+    <!-- ===== FOOTER ===== -->
     <div class="page-footer">
         <a href="/">
             <i class="bi bi-telegram"></i> TeleVIP
@@ -308,6 +716,56 @@
         </div>
     </div>
 
+    <!-- ===== STICKY CTA (mobile) ===== -->
+    {% if plans %}
+    <div class="sticky-cta" id="stickyCta">
+        <div class="sticky-cta-inner">
+            <div class="sticky-cta-price">
+                A partir de
+                <strong>R$ {{ "%.2f"|format(plans[0].price) }}</strong>
+            </div>
+            <a href="{{ bot_link }}" target="_blank" rel="noopener" class="sticky-cta-btn">
+                <i class="bi bi-telegram"></i> Assinar
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleFaq(el) {
+            const answer = el.nextElementSibling;
+            const isOpen = answer.classList.contains('open');
+            // Close all
+            document.querySelectorAll('.faq-answer').forEach(a => a.classList.remove('open'));
+            document.querySelectorAll('.faq-question').forEach(q => q.classList.remove('active'));
+            // Toggle clicked
+            if (!isOpen) {
+                answer.classList.add('open');
+                el.classList.add('active');
+            }
+        }
+
+        // Show/hide sticky CTA based on scroll (only on mobile via CSS)
+        const stickyCta = document.getElementById('stickyCta');
+        if (stickyCta) {
+            let lastScroll = 0;
+            window.addEventListener('scroll', () => {
+                const st = window.scrollY;
+                if (st > 400) {
+                    stickyCta.style.transform = 'translateY(0)';
+                    stickyCta.style.opacity = '1';
+                } else {
+                    stickyCta.style.transform = 'translateY(100%)';
+                    stickyCta.style.opacity = '0';
+                }
+                lastScroll = st;
+            }, { passive: true });
+            // Initially hidden
+            stickyCta.style.transform = 'translateY(100%)';
+            stickyCta.style.opacity = '0';
+            stickyCta.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+        }
+    </script>
 </body>
 </html>
