@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, abort
 from app import db
 from app.models import Group, Subscription, PricingPlan
 from app.models.user import Creator
-from sqlalchemy import func, or_
+from sqlalchemy import or_
 
 bp = Blueprint('public', __name__, url_prefix='/c')
 
@@ -28,11 +28,18 @@ def creator_page(username):
             group_id=group.id, status='active'
         ).count()
 
-        min_price = db.session.query(func.min(PricingPlan.price)).filter(
+        cheapest_plan = PricingPlan.query.filter(
             PricingPlan.group_id == group.id,
             PricingPlan.is_active == True
-        ).scalar()
-        group.min_price = float(min_price) if min_price else None
+        ).order_by(PricingPlan.price.asc()).first()
+        if cheapest_plan:
+            group.min_price = float(cheapest_plan.price)
+            group.min_price_duration = cheapest_plan.duration_days
+            group.min_price_lifetime = getattr(cheapest_plan, 'is_lifetime', False) or cheapest_plan.duration_days == 0
+        else:
+            group.min_price = None
+            group.min_price_duration = None
+            group.min_price_lifetime = False
 
     return render_template('public/creator_page.html',
                            creator=creator, groups=groups)

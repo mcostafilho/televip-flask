@@ -346,7 +346,7 @@
                                 {% if not group.is_active %}
                                     <span style="font-size: 0.82rem; color: #fbbf24; font-weight: 600;">Indisponível</span>
                                 {% elif group.min_price is not none %}
-                                    <span class="group-price-tag">R$ {{ "%.2f"|format(group.min_price) }} <small>/ mês</small></span>
+                                    <span class="group-price-tag">R$ {{ "%.2f"|format(group.min_price) }} <small>/ {% if group.min_price_lifetime %}único{% elif group.min_price_duration == 7 %}semana{% elif group.min_price_duration == 30 %}mês{% elif group.min_price_duration == 90 %}trimestre{% elif group.min_price_duration == 365 %}ano{% else %}{{ group.min_price_duration }} dia{{ 's' if group.min_price_duration != 1 else '' }}{% endif %}</small></span>
                                 {% endif %}
                             </div>
                             <span class="group-cta-btn">

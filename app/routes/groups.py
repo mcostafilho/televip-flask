@@ -58,8 +58,8 @@ def _validate_plan_input(name, price_str, duration_str, description=None, is_lif
 
     if not name or len(name.strip()) == 0:
         errors.append('Nome do plano é obrigatório')
-    elif len(name) > 100:
-        errors.append('Nome do plano deve ter no máximo 100 caracteres')
+    elif len(name) > 30:
+        errors.append('Nome do plano deve ter no máximo 30 caracteres')
 
     try:
         price = float(price_str)
@@ -266,7 +266,7 @@ def create():
                         continue
                     plan = PricingPlan(
                         group_id=group.id,
-                        name=plan_names[i][:100],
+                        name=plan_names[i][:30],
                         duration_days=duration,
                         price=price,
                         is_lifetime=lifetime,
@@ -399,7 +399,7 @@ def edit(id):
                     continue
                 plan = PricingPlan(
                     group_id=group.id,
-                    name=plan_names[i][:100],
+                    name=plan_names[i][:30],
                     duration_days=duration,
                     price=price,
                     is_lifetime=lifetime,

@@ -205,7 +205,7 @@
                                                 <div class="col-md-4">
                                                     <label class="form-label">Nome do Plano</label>
                                                     <input type="text" name="plan_name[]" class="form-control"
-                                                           value="{{ plan.name }}" required>
+                                                           value="{{ plan.name }}" maxlength="30" required>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <label class="form-label">Duração (dias)</label>
@@ -240,7 +240,7 @@
                                                 <div class="col-md-4">
                                                     <label class="form-label">Nome do Plano</label>
                                                     <input type="text" name="plan_name[]" class="form-control"
-                                                           value="Mensal" required>
+                                                           value="Mensal" maxlength="30" required>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <label class="form-label">Duração (dias)</label>
@@ -603,7 +603,7 @@ function addPlan() {
         <div class="row g-3">
             <div class="col-md-4">
                 <label class="form-label">Nome do Plano</label>
-                <input type="text" name="plan_name[]" class="form-control" required>
+                <input type="text" name="plan_name[]" class="form-control" maxlength="30" required>
             </div>
             <div class="col-md-3">
                 <label class="form-label">Duração (dias)</label>
