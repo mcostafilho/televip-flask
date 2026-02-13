@@ -34,6 +34,9 @@ class Creator(UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     is_blocked = db.Column(db.Boolean, default=False)
 
+    # Aparencia da pagina publica
+    page_theme = db.Column(db.String(20), default='galactic', nullable=False, server_default='galactic')
+
     # Aceite dos termos (prova jurídica)
     terms_accepted_at = db.Column(db.DateTime)
     terms_ip = db.Column(db.String(45))

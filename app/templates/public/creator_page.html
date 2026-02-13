@@ -21,6 +21,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="{{ url_for('static', filename='css/landing.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/themes.css') }}" rel="stylesheet">
     <style>
         body { padding-top: 0; min-height: 100vh; }
 
@@ -35,8 +36,7 @@
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: radial-gradient(ellipse at 50% 20%, rgba(124,92,252,0.18) 0%, transparent 60%),
-                        radial-gradient(ellipse at 80% 80%, rgba(56,189,248,0.08) 0%, transparent 50%);
+            background: var(--theme-hero-radial);
             pointer-events: none;
         }
         .creator-avatar {
@@ -50,16 +50,16 @@
             font-size: 2.8rem;
             font-weight: 700;
             color: #fff;
-            background: linear-gradient(135deg, #7c5cfc 0%, #38bdf8 100%);
-            border: 4px solid rgba(124, 92, 252, 0.4);
+            background: var(--theme-avatar-gradient);
+            border: 4px solid var(--theme-avatar-border);
             overflow: hidden;
             position: relative;
-            box-shadow: 0 0 40px rgba(124, 92, 252, 0.3), 0 0 80px rgba(124, 92, 252, 0.1);
+            box-shadow: var(--theme-avatar-glow);
             animation: avatarGlow 4s ease-in-out infinite alternate;
         }
         @keyframes avatarGlow {
-            0% { box-shadow: 0 0 30px rgba(124,92,252,0.2), 0 0 60px rgba(124,92,252,0.08); }
-            100% { box-shadow: 0 0 50px rgba(124,92,252,0.4), 0 0 100px rgba(56,189,248,0.15); }
+            0% { opacity: 0.9; }
+            100% { opacity: 1; }
         }
         .creator-avatar img {
             width: 100%;
@@ -69,19 +69,19 @@
         .creator-name {
             font-size: 2rem;
             font-weight: 800;
-            color: #fff;
+            color: var(--theme-text);
             margin-bottom: 4px;
             position: relative;
         }
         .creator-username {
             font-size: 0.95rem;
-            color: var(--galactic-text-secondary);
+            color: var(--theme-text-secondary);
             margin-bottom: 16px;
             position: relative;
         }
         .creator-bio {
             font-size: 1rem;
-            color: var(--galactic-text-secondary);
+            color: var(--theme-text-secondary);
             max-width: 520px;
             margin: 0 auto 24px;
             line-height: 1.7;
@@ -99,14 +99,14 @@
         .creator-stat-value {
             font-size: 1.5rem;
             font-weight: 800;
-            background: var(--gradient-primary);
+            background: var(--theme-cta-bg);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
         .creator-stat-label {
             font-size: 0.78rem;
-            color: var(--galactic-text-secondary);
+            color: var(--theme-text-secondary);
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
@@ -120,12 +120,12 @@
         .section-heading h2 {
             font-size: 1.3rem;
             font-weight: 700;
-            color: var(--galactic-text-primary);
+            color: var(--theme-text);
         }
         .section-heading .divider {
             width: 60px;
             height: 3px;
-            background: var(--gradient-primary);
+            background: var(--theme-cta-bg);
             margin: 12px auto 0;
             border-radius: 3px;
         }
@@ -142,23 +142,24 @@
             gap: 24px;
         }
         .group-card {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(124,92,252,0.12);
+            background: var(--theme-surface);
+            border: 1px solid var(--theme-border);
             border-radius: 20px;
             overflow: hidden;
             transition: all 0.3s ease;
             text-decoration: none;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
         .group-card:hover {
             transform: translateY(-6px);
-            box-shadow: 0 12px 40px rgba(124, 92, 252, 0.2), 0 0 0 1px rgba(124,92,252,0.25);
-            border-color: rgba(124, 92, 252, 0.35);
+            box-shadow: 0 12px 40px var(--theme-cta-shadow), 0 0 0 1px var(--theme-border-hover);
+            border-color: var(--theme-border-hover);
         }
         .group-cover {
             height: 140px;
-            background: linear-gradient(135deg, #1a0a3e 0%, #2d1b69 50%, #0f1b3d 100%);
+            background: var(--theme-cover-fallback);
             position: relative;
             overflow: hidden;
         }
@@ -194,12 +195,12 @@
         .group-card-name {
             font-size: 1.1rem;
             font-weight: 700;
-            color: var(--galactic-text-primary);
+            color: var(--theme-text);
             margin-bottom: 8px;
         }
         .group-card-desc {
             font-size: 0.85rem;
-            color: var(--galactic-text-secondary);
+            color: var(--theme-text-secondary);
             margin-bottom: 16px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -213,17 +214,17 @@
             align-items: center;
             justify-content: space-between;
             padding-top: 14px;
-            border-top: 1px solid rgba(255,255,255,0.06);
+            border-top: 1px solid var(--theme-divider);
         }
         .group-price-tag {
             font-size: 0.9rem;
             font-weight: 700;
-            color: #34d399;
+            color: var(--theme-price-color);
         }
         .group-price-tag small {
             font-weight: 400;
             font-size: 0.75rem;
-            color: var(--galactic-text-secondary);
+            color: var(--theme-text-secondary);
         }
         .group-cta-btn {
             display: inline-flex;
@@ -233,12 +234,28 @@
             border-radius: 10px;
             font-weight: 600;
             font-size: 0.82rem;
-            color: #fff;
-            background: var(--gradient-primary);
+            color: var(--theme-cta-text);
+            background: var(--theme-cta-bg);
             transition: all 0.2s;
         }
         .group-card:hover .group-cta-btn {
-            box-shadow: 0 4px 16px rgba(124,92,252,0.4);
+            box-shadow: 0 4px 16px var(--theme-cta-shadow);
+        }
+
+        /* Popular badge */
+        .popular-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: var(--theme-cta-bg);
+            color: var(--theme-cta-text);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            z-index: 2;
         }
 
         /* Empty state */
@@ -249,25 +266,25 @@
         .empty-groups i {
             font-size: 3rem;
             opacity: 0.2;
-            color: var(--galactic-text-secondary);
+            color: var(--theme-text-secondary);
         }
 
         /* Footer */
         .page-footer {
             text-align: center;
             padding: 30px 20px 40px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: 1px solid var(--theme-footer-border);
         }
         .page-footer a {
-            color: var(--galactic-text-secondary);
+            color: var(--theme-text-secondary);
             text-decoration: none;
             font-size: 0.85rem;
             transition: color 0.2s;
         }
-        .page-footer a:hover { color: var(--primary); }
+        .page-footer a:hover { color: var(--theme-primary); }
         .page-footer .powered {
             font-size: 0.78rem;
-            color: rgba(255, 255, 255, 0.3);
+            color: var(--theme-footer-powered);
             margin-top: 12px;
         }
 
@@ -280,9 +297,16 @@
         }
     </style>
 </head>
-<body>
+<body class="theme-{{ theme }}">
     <!-- Creator Hero -->
     <div class="creator-hero">
+        <!-- Social proof badge -->
+        {% if total_subscribers > 0 %}
+        <div class="social-proof-badge">
+            <i class="bi bi-people-fill"></i> {{ total_subscribers }} membro{{ 's' if total_subscribers != 1 else '' }} ativo{{ 's' if total_subscribers != 1 else '' }}
+        </div>
+        {% endif %}
+
         <div class="creator-avatar">
             {% if creator.avatar_url %}
                 <img src="{{ creator.avatar_url }}" alt="{{ creator.name }}">
@@ -301,27 +325,45 @@
                 <div class="creator-stat-value">{{ groups|length }}</div>
                 <div class="creator-stat-label">{{ 'Grupos' if groups|length != 1 else 'Grupo' }}</div>
             </div>
-            {% set total_subs = groups|sum(attribute='subscriber_count') %}
-            {% if total_subs > 0 %}
+            {% if total_subscribers > 0 %}
             <div class="creator-stat">
-                <div class="creator-stat-value">{{ total_subs }}</div>
+                <div class="creator-stat-value">{{ total_subscribers }}</div>
                 <div class="creator-stat-label">Membros</div>
             </div>
             {% endif %}
         </div>
+
+        <!-- Hero CTA -->
+        <a href="#grupos" class="hero-cta-btn" onclick="event.preventDefault(); document.getElementById('grupos').scrollIntoView({behavior:'smooth'})">
+            <i class="bi bi-grid-fill"></i> Ver Grupos
+        </a>
         {% endif %}
     </div>
 
     <!-- Groups Grid -->
-    <div class="groups-section">
+    <div class="groups-section" id="grupos">
         {% if groups %}
             <div class="section-heading">
                 <h2>Conteúdo Exclusivo</h2>
                 <div class="divider"></div>
             </div>
+
+            {# Find the most popular group (most subscribers) for badge #}
+            {% set max_subs = namespace(val=0, idx=-1) %}
+            {% for group in groups %}
+                {% if group.subscriber_count > max_subs.val %}
+                    {% set max_subs.val = group.subscriber_count %}
+                    {% set max_subs.idx = loop.index0 %}
+                {% endif %}
+            {% endfor %}
+
             <div class="groups-grid">
                 {% for group in groups %}
                 <a href="{{ url_for('public.group_landing', username=creator.username, invite_slug=group.invite_slug) }}" class="group-card" {% if not group.is_active %}style="opacity: 0.65;"{% endif %}>
+                    {# Popular badge on most subscribed group #}
+                    {% if groups|length > 1 and loop.index0 == max_subs.idx and max_subs.val > 0 %}
+                    <div class="popular-badge"><i class="bi bi-fire"></i> Popular</div>
+                    {% endif %}
                     <div class="group-cover">
                         {% if group.cover_image_url %}
                             <img src="{{ group.cover_image_url }}" alt="{{ group.name }}">
@@ -364,7 +406,7 @@
         {% else %}
             <div class="empty-groups">
                 <i class="bi bi-collection"></i>
-                <p class="mt-3" style="color: var(--galactic-text-secondary);">Nenhum grupo disponível no momento.</p>
+                <p class="mt-3" style="color: var(--theme-text-secondary);">Nenhum grupo disponível no momento.</p>
             </div>
         {% endif %}
     </div>

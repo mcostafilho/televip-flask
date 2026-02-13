@@ -1,0 +1,702 @@
+/* ========================================
+   TeleVIP Page Themes
+   4 visual themes for creator public pages
+   ======================================== */
+
+/* === GALACTIC (default) — Espacial/Tech === */
+body.theme-galactic {
+    --theme-bg: #0b0e1a;
+    --theme-bg-image:
+        radial-gradient(ellipse 80% 60% at 20% 50%, rgba(26, 10, 62, 0.7) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 50% at 82% 18%, rgba(56, 189, 248, 0.12) 0%, transparent 50%),
+        radial-gradient(ellipse 70% 60% at 75% 75%, rgba(124, 92, 252, 0.18) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 50% at 45% 25%, rgba(240, 147, 251, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse 90% 70% at 50% 50%, rgba(18, 8, 46, 0.5) 0%, rgba(11, 14, 26, 0.8) 50%, transparent 80%),
+        linear-gradient(180deg, #050816 0%, #0a0d1f 15%, #0b0e1a 30%, #1a0a3e 50%, #0d1b2a 70%, #080b16 85%, #050816 100%);
+    --theme-surface: rgba(255, 255, 255, 0.04);
+    --theme-surface-hover: rgba(255, 255, 255, 0.08);
+    --theme-border: rgba(124, 92, 252, 0.15);
+    --theme-border-hover: rgba(124, 92, 252, 0.35);
+    --theme-text: #e2e8f0;
+    --theme-text-secondary: #b0b4cc;
+    --theme-primary: #7c5cfc;
+    --theme-accent: #38bdf8;
+    --theme-cta-bg: linear-gradient(135deg, #7c5cfc, #38bdf8);
+    --theme-cta-text: #fff;
+    --theme-cta-shadow: rgba(124, 92, 252, 0.4);
+    --theme-price-color: #34d399;
+    --theme-hero-overlay: linear-gradient(180deg, rgba(5,8,22,0.3) 0%, rgba(5,8,22,0.6) 50%, rgba(5,8,22,0.95) 100%);
+    --theme-hero-radial: radial-gradient(ellipse at 50% 20%, rgba(124,92,252,0.18) 0%, transparent 60%),
+                         radial-gradient(ellipse at 80% 80%, rgba(56,189,248,0.08) 0%, transparent 50%);
+    --theme-avatar-gradient: linear-gradient(135deg, #7c5cfc 0%, #38bdf8 100%);
+    --theme-avatar-border: rgba(124, 92, 252, 0.4);
+    --theme-avatar-glow: 0 0 40px rgba(124, 92, 252, 0.3), 0 0 80px rgba(124, 92, 252, 0.1);
+    --theme-badge-bg: rgba(52, 211, 153, 0.12);
+    --theme-badge-border: rgba(52, 211, 153, 0.2);
+    --theme-badge-text: #34d399;
+    --theme-trust-icon: #34d399;
+    --theme-divider: rgba(255, 255, 255, 0.06);
+    --theme-footer-border: rgba(255, 255, 255, 0.05);
+    --theme-footer-powered: rgba(255, 255, 255, 0.3);
+    --theme-sticky-bg: rgba(5, 8, 22, 0.92);
+    --theme-sticky-border: rgba(124, 92, 252, 0.15);
+    --theme-cover-fallback: linear-gradient(135deg, #1a0a3e 0%, #2d1b69 50%, #0f1b3d 100%);
+    --theme-featured-bg: rgba(124, 92, 252, 0.08);
+    --theme-featured-border: rgba(124, 92, 252, 0.4);
+    --theme-font-heading: 'Poppins', sans-serif;
+    --theme-plan-top-bar: linear-gradient(135deg, #7c5cfc, #38bdf8);
+}
+
+/* === CLEAN — Claro/Profissional === */
+body.theme-clean {
+    --theme-bg: #f8fafc;
+    --theme-bg-image: none;
+    --theme-surface: #ffffff;
+    --theme-surface-hover: #f1f5f9;
+    --theme-border: #e2e8f0;
+    --theme-border-hover: #c7d2fe;
+    --theme-text: #1e293b;
+    --theme-text-secondary: #64748b;
+    --theme-primary: #6366f1;
+    --theme-accent: #3b82f6;
+    --theme-cta-bg: linear-gradient(135deg, #6366f1, #8b5cf6);
+    --theme-cta-text: #fff;
+    --theme-cta-shadow: rgba(99, 102, 241, 0.35);
+    --theme-price-color: #059669;
+    --theme-hero-overlay: linear-gradient(180deg, rgba(248,250,252,0.1) 0%, rgba(248,250,252,0.7) 50%, rgba(248,250,252,0.97) 100%);
+    --theme-hero-radial: radial-gradient(ellipse at 50% 30%, rgba(99,102,241,0.08) 0%, transparent 60%);
+    --theme-avatar-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    --theme-avatar-border: rgba(99, 102, 241, 0.3);
+    --theme-avatar-glow: 0 4px 24px rgba(99, 102, 241, 0.15);
+    --theme-badge-bg: rgba(5, 150, 105, 0.08);
+    --theme-badge-border: rgba(5, 150, 105, 0.2);
+    --theme-badge-text: #059669;
+    --theme-trust-icon: #059669;
+    --theme-divider: #e2e8f0;
+    --theme-footer-border: #e2e8f0;
+    --theme-footer-powered: #94a3b8;
+    --theme-sticky-bg: rgba(255, 255, 255, 0.95);
+    --theme-sticky-border: #e2e8f0;
+    --theme-cover-fallback: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 50%, #ddd6fe 100%);
+    --theme-featured-bg: rgba(99, 102, 241, 0.06);
+    --theme-featured-border: rgba(99, 102, 241, 0.3);
+    --theme-font-heading: 'Poppins', sans-serif;
+    --theme-plan-top-bar: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+
+body.theme-clean {
+    background-color: #f8fafc;
+    background-image: none;
+    color: #1e293b;
+}
+
+/* === NEON — Dark Vibrante === */
+body.theme-neon {
+    --theme-bg: #0a0a0f;
+    --theme-bg-image:
+        radial-gradient(ellipse 60% 50% at 30% 40%, rgba(244,114,182,0.1) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 50% at 70% 60%, rgba(34,211,238,0.08) 0%, transparent 55%),
+        linear-gradient(180deg, #0a0a0f 0%, #0f0a18 40%, #0a0a0f 100%);
+    --theme-surface: rgba(255, 255, 255, 0.03);
+    --theme-surface-hover: rgba(255, 255, 255, 0.07);
+    --theme-border: rgba(244, 114, 182, 0.2);
+    --theme-border-hover: rgba(244, 114, 182, 0.45);
+    --theme-text: #f1f5f9;
+    --theme-text-secondary: #a1a1aa;
+    --theme-primary: #f472b6;
+    --theme-accent: #22d3ee;
+    --theme-cta-bg: linear-gradient(135deg, #f472b6, #22d3ee);
+    --theme-cta-text: #fff;
+    --theme-cta-shadow: rgba(244, 114, 182, 0.4);
+    --theme-price-color: #22d3ee;
+    --theme-hero-overlay: linear-gradient(180deg, rgba(10,10,15,0.2) 0%, rgba(10,10,15,0.6) 50%, rgba(10,10,15,0.95) 100%);
+    --theme-hero-radial: radial-gradient(ellipse at 40% 20%, rgba(244,114,182,0.12) 0%, transparent 55%),
+                         radial-gradient(ellipse at 70% 70%, rgba(34,211,238,0.08) 0%, transparent 50%);
+    --theme-avatar-gradient: linear-gradient(135deg, #f472b6 0%, #22d3ee 100%);
+    --theme-avatar-border: rgba(244, 114, 182, 0.4);
+    --theme-avatar-glow: 0 0 40px rgba(244, 114, 182, 0.3), 0 0 80px rgba(34, 211, 238, 0.15);
+    --theme-badge-bg: rgba(34, 211, 238, 0.1);
+    --theme-badge-border: rgba(34, 211, 238, 0.25);
+    --theme-badge-text: #22d3ee;
+    --theme-trust-icon: #22d3ee;
+    --theme-divider: rgba(244, 114, 182, 0.1);
+    --theme-footer-border: rgba(244, 114, 182, 0.08);
+    --theme-footer-powered: rgba(255, 255, 255, 0.3);
+    --theme-sticky-bg: rgba(10, 10, 15, 0.92);
+    --theme-sticky-border: rgba(244, 114, 182, 0.2);
+    --theme-cover-fallback: linear-gradient(135deg, #1a0a1e 0%, #0f1a2e 50%, #1e0a2a 100%);
+    --theme-featured-bg: rgba(244, 114, 182, 0.08);
+    --theme-featured-border: rgba(244, 114, 182, 0.35);
+    --theme-font-heading: 'Poppins', sans-serif;
+    --theme-plan-top-bar: linear-gradient(135deg, #f472b6, #22d3ee);
+}
+
+body.theme-neon .plan-cta:hover,
+body.theme-neon .group-cta-btn:hover {
+    text-shadow: 0 0 12px rgba(255,255,255,0.3);
+}
+
+/* Neon pulse on CTA */
+@keyframes neonPulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(244,114,182,0.3), 0 0 24px rgba(34,211,238,0.15); }
+    50% { box-shadow: 0 0 16px rgba(244,114,182,0.5), 0 0 40px rgba(34,211,238,0.25); }
+}
+body.theme-neon .plan-cta {
+    animation: neonPulse 2.5s ease-in-out infinite;
+}
+
+/* === PREMIUM — Dark Luxo === */
+body.theme-premium {
+    --theme-bg: #0f0f14;
+    --theme-bg-image:
+        radial-gradient(ellipse 70% 50% at 50% 30%, rgba(212,168,83,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 80% 70%, rgba(245,215,153,0.04) 0%, transparent 50%),
+        linear-gradient(180deg, #0f0f14 0%, #141018 40%, #0f0f14 100%);
+    --theme-surface: rgba(212, 168, 83, 0.04);
+    --theme-surface-hover: rgba(212, 168, 83, 0.08);
+    --theme-border: rgba(212, 168, 83, 0.15);
+    --theme-border-hover: rgba(212, 168, 83, 0.35);
+    --theme-text: #f5f0e8;
+    --theme-text-secondary: #b8a88a;
+    --theme-primary: #d4a853;
+    --theme-accent: #f5d799;
+    --theme-cta-bg: linear-gradient(135deg, #d4a853, #f5d799);
+    --theme-cta-text: #0f0f14;
+    --theme-cta-shadow: rgba(212, 168, 83, 0.35);
+    --theme-price-color: #d4a853;
+    --theme-hero-overlay: linear-gradient(180deg, rgba(15,15,20,0.2) 0%, rgba(15,15,20,0.6) 50%, rgba(15,15,20,0.95) 100%);
+    --theme-hero-radial: radial-gradient(ellipse at 50% 25%, rgba(212,168,83,0.08) 0%, transparent 55%);
+    --theme-avatar-gradient: linear-gradient(135deg, #d4a853 0%, #f5d799 100%);
+    --theme-avatar-border: rgba(212, 168, 83, 0.4);
+    --theme-avatar-glow: 0 0 40px rgba(212, 168, 83, 0.2), 0 0 80px rgba(212, 168, 83, 0.08);
+    --theme-badge-bg: rgba(212, 168, 83, 0.1);
+    --theme-badge-border: rgba(212, 168, 83, 0.2);
+    --theme-badge-text: #d4a853;
+    --theme-trust-icon: #d4a853;
+    --theme-divider: rgba(212, 168, 83, 0.1);
+    --theme-footer-border: rgba(212, 168, 83, 0.08);
+    --theme-footer-powered: rgba(245, 240, 232, 0.3);
+    --theme-sticky-bg: rgba(15, 15, 20, 0.95);
+    --theme-sticky-border: rgba(212, 168, 83, 0.15);
+    --theme-cover-fallback: linear-gradient(135deg, #1a1508 0%, #1f1a10 50%, #14120e 100%);
+    --theme-featured-bg: rgba(212, 168, 83, 0.06);
+    --theme-featured-border: rgba(212, 168, 83, 0.3);
+    --theme-font-heading: 'Poppins', sans-serif;
+    --theme-plan-top-bar: linear-gradient(135deg, #d4a853, #f5d799);
+}
+
+/* Gold shimmer on premium CTA */
+@keyframes goldShimmer {
+    0% { transform: translateX(-100%) rotate(25deg); }
+    100% { transform: translateX(100%) rotate(25deg); }
+}
+body.theme-premium .plan-cta::before {
+    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.25) 50%, transparent 70%);
+    animation: goldShimmer 2.5s infinite;
+}
+
+/* ========================================
+   Themed Component Styles
+   Applied via CSS vars to all themes
+   ======================================== */
+
+/* Body background */
+body[class*="theme-"] {
+    background-color: var(--theme-bg);
+    background-image: var(--theme-bg-image);
+    background-attachment: fixed;
+    background-size: cover;
+    color: var(--theme-text);
+    font-family: 'Poppins', sans-serif;
+}
+
+/* === Creator Page Themed Styles === */
+body[class*="theme-"] .creator-hero::before {
+    background: var(--theme-hero-radial);
+}
+body[class*="theme-"] .creator-avatar {
+    background: var(--theme-avatar-gradient);
+    border-color: var(--theme-avatar-border);
+    box-shadow: var(--theme-avatar-glow);
+}
+body[class*="theme-"] .creator-name {
+    color: var(--theme-text);
+}
+body[class*="theme-"] .creator-username {
+    color: var(--theme-text-secondary);
+}
+body[class*="theme-"] .creator-bio {
+    color: var(--theme-text-secondary);
+}
+body[class*="theme-"] .creator-stat-value {
+    background: var(--theme-cta-bg);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+body[class*="theme-"] .creator-stat-label {
+    color: var(--theme-text-secondary);
+}
+body[class*="theme-"] .section-heading h2 {
+    color: var(--theme-text);
+}
+body[class*="theme-"] .section-heading .divider {
+    background: var(--theme-cta-bg);
+}
+
+/* Group cards */
+body[class*="theme-"] .group-card {
+    background: var(--theme-surface);
+    border-color: var(--theme-border);
+}
+body[class*="theme-"] .group-card:hover {
+    box-shadow: 0 12px 40px var(--theme-cta-shadow), 0 0 0 1px var(--theme-border-hover);
+    border-color: var(--theme-border-hover);
+}
+body[class*="theme-"] .group-cover {
+    background: var(--theme-cover-fallback);
+}
+body[class*="theme-"] .group-card-name {
+    color: var(--theme-text);
+}
+body[class*="theme-"] .group-card-desc {
+    color: var(--theme-text-secondary);
+}
+body[class*="theme-"] .group-card-footer {
+    border-top-color: var(--theme-divider);
+}
+body[class*="theme-"] .group-price-tag {
+    color: var(--theme-price-color);
+}
+body[class*="theme-"] .group-price-tag small {
+    color: var(--theme-text-secondary);
+}
+body[class*="theme-"] .group-cta-btn {
+    background: var(--theme-cta-bg);
+    color: var(--theme-cta-text);
+}
+body[class*="theme-"] .group-card:hover .group-cta-btn {
+    box-shadow: 0 4px 16px var(--theme-cta-shadow);
+}
+
+/* Hero CTA button (creator page) */
+body[class*="theme-"] .hero-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 32px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-decoration: none;
+    color: var(--theme-cta-text);
+    background: var(--theme-cta-bg);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 24px;
+    position: relative;
+    overflow: hidden;
+}
+body[class*="theme-"] .hero-cta-btn::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.12) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+body[class*="theme-"] .hero-cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px var(--theme-cta-shadow);
+}
+
+/* Popular badge */
+body[class*="theme-"] .popular-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: var(--theme-cta-bg);
+    color: var(--theme-cta-text);
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    z-index: 2;
+}
+
+/* Social proof badge (creator page) */
+body[class*="theme-"] .social-proof-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--theme-badge-text);
+    background: var(--theme-badge-bg);
+    border: 1px solid var(--theme-badge-border);
+    margin-bottom: 20px;
+    position: relative;
+}
+
+/* Empty state */
+body[class*="theme-"] .empty-groups i {
+    color: var(--theme-text-secondary);
+}
+body[class*="theme-"] .empty-groups p {
+    color: var(--theme-text-secondary);
+}
+
+/* Footer */
+body[class*="theme-"] .page-footer {
+    border-top-color: var(--theme-footer-border);
+}
+body[class*="theme-"] .page-footer a {
+    color: var(--theme-text-secondary);
+}
+body[class*="theme-"] .page-footer a:hover {
+    color: var(--theme-primary);
+}
+body[class*="theme-"] .page-footer .powered {
+    color: var(--theme-footer-powered);
+}
+
+/* === Group Landing Themed Styles === */
+
+/* Hero */
+body[class*="theme-"] .group-hero-bg {
+    background: var(--theme-cover-fallback);
+}
+body[class*="theme-"] .group-hero-overlay {
+    background: var(--theme-hero-overlay);
+}
+body[class*="theme-"] .group-hero-badge {
+    color: var(--theme-badge-text);
+    background: var(--theme-badge-bg);
+    border-color: var(--theme-badge-border);
+}
+body[class*="theme-"] .group-hero-title {
+    color: var(--theme-text);
+}
+body[class*="theme-"] .group-hero-desc {
+    color: var(--theme-text-secondary);
+}
+body[class*="theme-"] .group-hero-stat {
+    color: var(--theme-text-secondary);
+}
+body[class*="theme-"] .group-hero-stat i {
+    color: var(--theme-primary);
+}
+
+/* Creator card */
+body[class*="theme-"] .creator-card {
+    background: var(--theme-surface);
+    border-color: var(--theme-border);
+}
+body[class*="theme-"] .creator-card:hover {
+    border-color: var(--theme-border-hover);
+    background: var(--theme-surface-hover);
+}
+body[class*="theme-"] .creator-card-avatar {
+    background: var(--theme-avatar-gradient);
+    border-color: var(--theme-avatar-border);
+}
+body[class*="theme-"] .creator-card-name {
+    color: var(--theme-text);
+}
+body[class*="theme-"] .creator-card-label {
+    color: var(--theme-text-secondary);
+}
+body[class*="theme-"] .creator-card-arrow {
+    color: var(--theme-text-secondary);
+}
+body[class*="theme-"] .creator-card:hover .creator-card-arrow {
+    color: var(--theme-primary);
+}
+
+/* Benefits */
+body[class*="theme-"] .section-label {
+    color: var(--theme-primary);
+}
+body[class*="theme-"] .benefit-item {
+    background: var(--theme-surface);
+    border-color: var(--theme-border);
+}
+body[class*="theme-"] .benefit-item:hover {
+    background: var(--theme-surface-hover);
+    border-color: var(--theme-border-hover);
+}
+body[class*="theme-"] .benefit-text {
+    color: var(--theme-text);
+}
+body[class*="theme-"] .benefit-text small {
+    color: var(--theme-text-secondary);
+}
+
+/* How it works */
+body[class*="theme-"] .how-it-works {
+    margin: 36px 0;
+}
+body[class*="theme-"] .steps-grid {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+body[class*="theme-"] .step-item {
+    flex: 1;
+    min-width: 140px;
+    max-width: 200px;
+    text-align: center;
+    padding: 20px 14px;
+    background: var(--theme-surface);
+    border: 1px solid var(--theme-border);
+    border-radius: 16px;
+    position: relative;
+}
+body[class*="theme-"] .step-number {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--theme-cta-text);
+    background: var(--theme-cta-bg);
+    margin-bottom: 10px;
+}
+body[class*="theme-"] .step-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--theme-text);
+    margin-bottom: 4px;
+}
+body[class*="theme-"] .step-desc {
+    font-size: 0.78rem;
+    color: var(--theme-text-secondary);
+    line-height: 1.5;
+}
+body[class*="theme-"] .step-arrow {
+    position: absolute;
+    right: -16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--theme-text-secondary);
+    font-size: 0.8rem;
+    opacity: 0.5;
+}
+
+/* Guarantee bar */
+body[class*="theme-"] .guarantee-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px 20px;
+    margin: 24px 0;
+    background: var(--theme-badge-bg);
+    border: 1px solid var(--theme-badge-border);
+    border-radius: 14px;
+    font-size: 0.85rem;
+    color: var(--theme-badge-text);
+    font-weight: 600;
+}
+body[class*="theme-"] .guarantee-bar i {
+    font-size: 1.1rem;
+}
+
+/* Mid-page CTA */
+body[class*="theme-"] .mid-cta {
+    text-align: center;
+    margin: 8px 0 32px;
+}
+body[class*="theme-"] .mid-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 36px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-decoration: none;
+    color: var(--theme-cta-text);
+    background: var(--theme-cta-bg);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+body[class*="theme-"] .mid-cta-btn::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.12) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+body[class*="theme-"] .mid-cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px var(--theme-cta-shadow);
+}
+
+/* Plans */
+body[class*="theme-"] .plans-heading {
+    color: var(--theme-text);
+}
+body[class*="theme-"] .plans-subheading {
+    color: var(--theme-text-secondary);
+}
+body[class*="theme-"] .plan-card {
+    background: var(--theme-surface);
+    border-color: var(--theme-border);
+}
+body[class*="theme-"] .plan-card:hover {
+    border-color: var(--theme-border-hover);
+    box-shadow: 0 12px 40px var(--theme-cta-shadow);
+}
+body[class*="theme-"] .plan-card::before {
+    background: var(--theme-plan-top-bar);
+}
+body[class*="theme-"] .plan-card.featured {
+    border-color: var(--theme-featured-border);
+    background: var(--theme-featured-bg);
+}
+body[class*="theme-"] .plan-featured-badge {
+    background: var(--theme-cta-bg);
+    color: var(--theme-cta-text);
+}
+body[class*="theme-"] .plan-name {
+    color: var(--theme-text);
+}
+body[class*="theme-"] .plan-duration {
+    color: var(--theme-text-secondary);
+}
+body[class*="theme-"] .plan-price {
+    color: var(--theme-text);
+}
+body[class*="theme-"] .plan-price-currency {
+    color: var(--theme-price-color);
+}
+body[class*="theme-"] .plan-price-period {
+    color: var(--theme-text-secondary);
+}
+body[class*="theme-"] .plan-daily {
+    font-size: 0.78rem;
+    color: var(--theme-text-secondary);
+    margin-bottom: 16px;
+    font-weight: 500;
+}
+body[class*="theme-"] .plan-daily strong {
+    color: var(--theme-price-color);
+}
+body[class*="theme-"] .plan-cta {
+    background: var(--theme-cta-bg);
+    color: var(--theme-cta-text);
+}
+body[class*="theme-"] .plan-cta:hover {
+    box-shadow: 0 6px 24px var(--theme-cta-shadow);
+    color: var(--theme-cta-text);
+}
+
+/* Trust bar */
+body[class*="theme-"] .trust-bar {
+    border-top-color: var(--theme-divider);
+    border-bottom-color: var(--theme-divider);
+}
+body[class*="theme-"] .trust-item {
+    color: var(--theme-text-secondary);
+}
+body[class*="theme-"] .trust-item i {
+    color: var(--theme-trust-icon);
+}
+
+/* FAQ */
+body[class*="theme-"] .faq-item {
+    border-bottom-color: var(--theme-divider);
+}
+body[class*="theme-"] .faq-question {
+    color: var(--theme-text);
+}
+body[class*="theme-"] .faq-question i {
+    color: var(--theme-text-secondary);
+}
+body[class*="theme-"] .faq-answer {
+    color: var(--theme-text-secondary);
+}
+
+/* Sticky CTA */
+body[class*="theme-"] .sticky-cta {
+    background: var(--theme-sticky-bg);
+    border-top-color: var(--theme-sticky-border);
+}
+body[class*="theme-"] .sticky-cta-price {
+    color: var(--theme-text-secondary);
+}
+body[class*="theme-"] .sticky-cta-price strong {
+    color: var(--theme-text);
+}
+body[class*="theme-"] .sticky-cta-btn {
+    background: var(--theme-cta-bg);
+    color: var(--theme-cta-text);
+}
+
+/* Stripe badge */
+body[class*="theme-"] .stripe-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--theme-text-secondary);
+    opacity: 0.7;
+}
+body[class*="theme-"] .stripe-badge svg {
+    height: 16px;
+    width: auto;
+}
+
+/* ========================================
+   Clean theme overrides (light mode fixes)
+   ======================================== */
+body.theme-clean .group-hero-title {
+    color: #1e293b;
+}
+body.theme-clean .plans-heading {
+    color: #1e293b;
+}
+body.theme-clean .plan-price {
+    color: #1e293b;
+}
+body.theme-clean .sticky-cta-price strong {
+    color: #1e293b;
+}
+body.theme-clean .group-cover-badge {
+    background: rgba(255,255,255,0.85);
+    color: #334155;
+}
+body.theme-clean .benefit-icon {
+    border: 1px solid #e2e8f0;
+}
+body.theme-clean .plan-card {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+body.theme-clean .group-card {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+body.theme-clean .creator-card {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* ========================================
+   Shimmer keyframe (shared)
+   ======================================== */
+@keyframes shimmer {
+    0% { transform: translateX(-100%) rotate(25deg); }
+    100% { transform: translateX(100%) rotate(25deg); }
+}

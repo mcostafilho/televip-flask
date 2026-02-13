@@ -522,6 +522,11 @@ def update_profile():
     bio = request.form.get('bio', '').strip()
     current_user.bio = bio if bio else None
 
+    # Update page theme (no password required)
+    page_theme = request.form.get('page_theme', '').strip()
+    if page_theme in ('galactic', 'clean', 'neon', 'premium'):
+        current_user.page_theme = page_theme
+
     db.session.commit()
     flash('Perfil atualizado com sucesso!', 'success')
 

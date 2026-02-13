@@ -41,8 +41,12 @@ def creator_page(username):
             group.min_price_duration = None
             group.min_price_lifetime = False
 
+    total_subscribers = sum(g.subscriber_count for g in groups)
+
     return render_template('public/creator_page.html',
-                           creator=creator, groups=groups)
+                           creator=creator, groups=groups,
+                           theme=creator.page_theme or 'galactic',
+                           total_subscribers=total_subscribers)
 
 
 @bp.route('/<username>/<invite_slug>')
@@ -79,4 +83,5 @@ def group_landing(username, invite_slug):
                            plans=plans,
                            bot_link=bot_link,
                            subscriber_count=subscriber_count,
-                           group_inactive=not group.is_active)
+                           group_inactive=not group.is_active,
+                           theme=creator.page_theme or 'galactic')

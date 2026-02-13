@@ -4,6 +4,61 @@
 
 {% block extra_css %}
 <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+<style>
+.theme-card {
+    cursor: pointer;
+    border: 2px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 10px;
+    text-align: center;
+    transition: all 0.25s ease;
+    background: rgba(255,255,255,0.02);
+}
+.theme-card:hover {
+    border-color: rgba(124,92,252,0.3);
+    background: rgba(255,255,255,0.04);
+}
+.theme-card.active {
+    border-color: #7c5cfc;
+    box-shadow: 0 0 0 1px #7c5cfc, 0 4px 16px rgba(124,92,252,0.25);
+    background: rgba(124,92,252,0.06);
+}
+.theme-preview {
+    border-radius: 8px;
+    padding: 12px 10px;
+    margin-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-height: 80px;
+    justify-content: center;
+}
+.theme-preview-bar {
+    width: 80%;
+    height: 4px;
+    border-radius: 4px;
+}
+.theme-preview-text {
+    font-size: 1.2rem;
+    font-weight: 800;
+    line-height: 1;
+}
+.theme-preview-btn {
+    width: 60%;
+    height: 10px;
+    border-radius: 6px;
+}
+.theme-name {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--galactic-text-primary, #e2e8f0);
+}
+.theme-label {
+    font-size: 0.7rem;
+    color: var(--galactic-text-secondary, #b0b4cc);
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -265,6 +320,64 @@
                                     {% endif %}
                                 </div>
 
+                                <!-- Aparencia da Pagina -->
+                                <div class="col-12">
+                                    <hr class="my-3">
+                                    <h6 class="text-muted mb-3">
+                                        <i class="bi bi-palette"></i> Aparência da Página de Vendas
+                                    </h6>
+                                    <p class="text-muted small mb-3">
+                                        Escolha o visual da sua página pública (<code>/c/{{ user.username }}</code>)
+                                    </p>
+                                    <input type="hidden" name="page_theme" id="pageThemeInput" value="{{ user.page_theme or 'galactic' }}">
+                                    <div class="row g-3">
+                                        <div class="col-6 col-md-3">
+                                            <div class="theme-card {% if (user.page_theme or 'galactic') == 'galactic' %}active{% endif %}" data-theme="galactic" onclick="selectTheme(this)">
+                                                <div class="theme-preview" style="background: linear-gradient(135deg, #0b0e1a, #1a0a3e);">
+                                                    <div class="theme-preview-bar" style="background: linear-gradient(90deg, #7c5cfc, #38bdf8);"></div>
+                                                    <div class="theme-preview-text" style="color: #e2e8f0;">Aa</div>
+                                                    <div class="theme-preview-btn" style="background: linear-gradient(135deg, #7c5cfc, #38bdf8);"></div>
+                                                </div>
+                                                <div class="theme-name">Galactic</div>
+                                                <div class="theme-label">Espacial</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <div class="theme-card {% if user.page_theme == 'clean' %}active{% endif %}" data-theme="clean" onclick="selectTheme(this)">
+                                                <div class="theme-preview" style="background: #f8fafc;">
+                                                    <div class="theme-preview-bar" style="background: linear-gradient(90deg, #6366f1, #8b5cf6);"></div>
+                                                    <div class="theme-preview-text" style="color: #1e293b;">Aa</div>
+                                                    <div class="theme-preview-btn" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);"></div>
+                                                </div>
+                                                <div class="theme-name">Clean</div>
+                                                <div class="theme-label">Profissional</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <div class="theme-card {% if user.page_theme == 'neon' %}active{% endif %}" data-theme="neon" onclick="selectTheme(this)">
+                                                <div class="theme-preview" style="background: #0a0a0f;">
+                                                    <div class="theme-preview-bar" style="background: linear-gradient(90deg, #f472b6, #22d3ee);"></div>
+                                                    <div class="theme-preview-text" style="color: #f1f5f9;">Aa</div>
+                                                    <div class="theme-preview-btn" style="background: linear-gradient(135deg, #f472b6, #22d3ee);"></div>
+                                                </div>
+                                                <div class="theme-name">Neon</div>
+                                                <div class="theme-label">Vibrante</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <div class="theme-card {% if user.page_theme == 'premium' %}active{% endif %}" data-theme="premium" onclick="selectTheme(this)">
+                                                <div class="theme-preview" style="background: #0f0f14;">
+                                                    <div class="theme-preview-bar" style="background: linear-gradient(90deg, #d4a853, #f5d799);"></div>
+                                                    <div class="theme-preview-text" style="color: #f5f0e8;">Aa</div>
+                                                    <div class="theme-preview-btn" style="background: linear-gradient(135deg, #d4a853, #f5d799);"></div>
+                                                </div>
+                                                <div class="theme-name">Premium</div>
+                                                <div class="theme-label">Luxo</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Botões -->
                                 <div class="col-12">
                                     <button type="submit" class="btn btn-primary">
@@ -520,6 +633,13 @@ if (avatarFileInput) {
         })
         .catch(function() { alert('Erro de conexao.'); });
     });
+}
+
+// Theme selector
+function selectTheme(el) {
+    document.querySelectorAll('.theme-card').forEach(function(c) { c.classList.remove('active'); });
+    el.classList.add('active');
+    document.getElementById('pageThemeInput').value = el.getAttribute('data-theme');
 }
 
 // Phone mask

@@ -24,6 +24,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="{{ url_for('static', filename='css/landing.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/themes.css') }}" rel="stylesheet">
     <style>
         body { padding-top: 0; min-height: 100vh; }
 
@@ -38,7 +39,7 @@
         .group-hero-bg {
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, #1a0a3e 0%, #2d1b69 50%, #0f1b3d 100%);
+            background: var(--theme-cover-fallback);
         }
         .group-hero-bg img {
             width: 100%;
@@ -49,7 +50,7 @@
         .group-hero-overlay {
             position: absolute;
             inset: 0;
-            background: linear-gradient(180deg, rgba(5,8,22,0.3) 0%, rgba(5,8,22,0.6) 50%, rgba(5,8,22,0.95) 100%);
+            background: var(--theme-hero-overlay);
         }
         .group-hero-content {
             position: relative;
@@ -67,21 +68,21 @@
             border-radius: 20px;
             font-size: 0.75rem;
             font-weight: 600;
-            color: #34d399;
-            background: rgba(52, 211, 153, 0.12);
-            border: 1px solid rgba(52, 211, 153, 0.2);
+            color: var(--theme-badge-text);
+            background: var(--theme-badge-bg);
+            border: 1px solid var(--theme-badge-border);
             margin-bottom: 16px;
         }
         .group-hero-title {
             font-size: 2.2rem;
             font-weight: 800;
-            color: #fff;
+            color: var(--theme-text);
             line-height: 1.2;
             margin-bottom: 12px;
         }
         .group-hero-desc {
             font-size: 1rem;
-            color: var(--galactic-text-secondary);
+            color: var(--theme-text-secondary);
             line-height: 1.8;
             white-space: pre-line;
             max-width: 600px;
@@ -98,11 +99,11 @@
             align-items: center;
             gap: 6px;
             font-size: 0.85rem;
-            color: var(--galactic-text-secondary);
+            color: var(--theme-text-secondary);
         }
         .group-hero-stat i {
             font-size: 0.9rem;
-            color: var(--primary);
+            color: var(--theme-primary);
         }
 
         /* ===== MAIN CONTENT ===== */
@@ -118,16 +119,16 @@
             align-items: center;
             gap: 14px;
             padding: 18px 20px;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(124,92,252,0.15);
+            background: var(--theme-surface);
+            border: 1px solid var(--theme-border);
             border-radius: 16px;
             margin: 28px 0;
             text-decoration: none;
             transition: all 0.3s ease;
         }
         .creator-card:hover {
-            border-color: rgba(124,92,252,0.35);
-            background: rgba(255,255,255,0.06);
+            border-color: var(--theme-border-hover);
+            background: var(--theme-surface-hover);
             transform: translateY(-2px);
         }
         .creator-card-avatar {
@@ -140,10 +141,10 @@
             font-size: 1.2rem;
             font-weight: 700;
             color: #fff;
-            background: linear-gradient(135deg, #7c5cfc 0%, #38bdf8 100%);
+            background: var(--theme-avatar-gradient);
             flex-shrink: 0;
             overflow: hidden;
-            border: 2px solid rgba(124,92,252,0.3);
+            border: 2px solid var(--theme-avatar-border);
         }
         .creator-card-avatar img {
             width: 100%;
@@ -154,20 +155,20 @@
         .creator-card-name {
             font-size: 0.95rem;
             font-weight: 700;
-            color: var(--galactic-text-primary);
+            color: var(--theme-text);
         }
         .creator-card-label {
             font-size: 0.78rem;
-            color: var(--galactic-text-secondary);
+            color: var(--theme-text-secondary);
         }
         .creator-card-arrow {
-            color: var(--galactic-text-secondary);
+            color: var(--theme-text-secondary);
             font-size: 1rem;
             transition: transform 0.2s;
         }
         .creator-card:hover .creator-card-arrow {
             transform: translateX(3px);
-            color: var(--primary);
+            color: var(--theme-primary);
         }
 
         /* ===== BENEFITS ===== */
@@ -179,7 +180,7 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.1em;
-            color: var(--primary);
+            color: var(--theme-primary);
             margin-bottom: 14px;
         }
         .benefits-grid {
@@ -192,14 +193,14 @@
             align-items: flex-start;
             gap: 12px;
             padding: 16px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(124,92,252,0.08);
+            background: var(--theme-surface);
+            border: 1px solid var(--theme-border);
             border-radius: 14px;
             transition: all 0.25s ease;
         }
         .benefit-item:hover {
-            background: rgba(255,255,255,0.06);
-            border-color: rgba(124,92,252,0.2);
+            background: var(--theme-surface-hover);
+            border-color: var(--theme-border-hover);
         }
         .benefit-icon {
             width: 38px;
@@ -214,15 +215,125 @@
         .benefit-text {
             font-size: 0.85rem;
             font-weight: 600;
-            color: var(--galactic-text-primary);
+            color: var(--theme-text);
             line-height: 1.4;
         }
         .benefit-text small {
             display: block;
             font-weight: 400;
             font-size: 0.78rem;
-            color: var(--galactic-text-secondary);
+            color: var(--theme-text-secondary);
             margin-top: 2px;
+        }
+
+        /* ===== HOW IT WORKS ===== */
+        .how-it-works {
+            margin: 36px 0;
+        }
+        .steps-grid {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .step-item {
+            flex: 1;
+            min-width: 140px;
+            max-width: 200px;
+            text-align: center;
+            padding: 20px 14px;
+            background: var(--theme-surface);
+            border: 1px solid var(--theme-border);
+            border-radius: 16px;
+            position: relative;
+        }
+        .step-number {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--theme-cta-text);
+            background: var(--theme-cta-bg);
+            margin-bottom: 10px;
+        }
+        .step-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--theme-text);
+            margin-bottom: 4px;
+        }
+        .step-desc {
+            font-size: 0.78rem;
+            color: var(--theme-text-secondary);
+            line-height: 1.5;
+        }
+        .step-arrow {
+            position: absolute;
+            right: -16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--theme-text-secondary);
+            font-size: 0.8rem;
+            opacity: 0.5;
+        }
+
+        /* ===== GUARANTEE BAR ===== */
+        .guarantee-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px 20px;
+            margin: 24px 0;
+            background: var(--theme-badge-bg);
+            border: 1px solid var(--theme-badge-border);
+            border-radius: 14px;
+            font-size: 0.85rem;
+            color: var(--theme-badge-text);
+            font-weight: 600;
+        }
+        .guarantee-bar i {
+            font-size: 1.1rem;
+        }
+
+        /* ===== MID CTA ===== */
+        .mid-cta {
+            text-align: center;
+            margin: 8px 0 32px;
+        }
+        .mid-cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 36px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-decoration: none;
+            color: var(--theme-cta-text);
+            background: var(--theme-cta-bg);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .mid-cta-btn::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.12) 50%, transparent 70%);
+            animation: shimmer 3s infinite;
+        }
+        .mid-cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px var(--theme-cta-shadow);
+            color: var(--theme-cta-text);
         }
 
         /* ===== PLANS ===== */
@@ -236,13 +347,13 @@
             text-align: center;
             font-size: 1.5rem;
             font-weight: 800;
-            color: #fff;
+            color: var(--theme-text);
             margin-bottom: 6px;
         }
         .plans-subheading {
             text-align: center;
             font-size: 0.88rem;
-            color: var(--galactic-text-secondary);
+            color: var(--theme-text-secondary);
             margin-bottom: 28px;
         }
         .plans-grid {
@@ -251,8 +362,8 @@
             gap: 18px;
         }
         .plan-card {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(124,92,252,0.15);
+            background: var(--theme-surface);
+            border: 1px solid var(--theme-border);
             border-radius: 18px;
             padding: 28px 22px;
             text-align: center;
@@ -265,19 +376,19 @@
             position: absolute;
             top: 0; left: 0; right: 0;
             height: 3px;
-            background: var(--gradient-primary);
+            background: var(--theme-plan-top-bar);
             opacity: 0;
             transition: opacity 0.3s;
         }
         .plan-card:hover {
             transform: translateY(-5px);
-            border-color: rgba(124,92,252,0.4);
-            box-shadow: 0 12px 40px rgba(124,92,252,0.15);
+            border-color: var(--theme-border-hover);
+            box-shadow: 0 12px 40px var(--theme-cta-shadow);
         }
         .plan-card:hover::before { opacity: 1; }
         .plan-card.featured {
-            border-color: rgba(124,92,252,0.4);
-            background: rgba(124,92,252,0.08);
+            border-color: var(--theme-featured-border);
+            background: var(--theme-featured-bg);
         }
         .plan-card.featured::before { opacity: 1; }
         .plan-featured-badge {
@@ -288,25 +399,25 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            color: #fff;
-            background: var(--gradient-primary);
+            color: var(--theme-cta-text);
+            background: var(--theme-cta-bg);
             margin-bottom: 12px;
         }
         .plan-name {
             font-size: 0.95rem;
             font-weight: 600;
-            color: var(--galactic-text-primary);
+            color: var(--theme-text);
             margin-bottom: 4px;
         }
         .plan-duration {
             font-size: 0.78rem;
-            color: var(--galactic-text-secondary);
+            color: var(--theme-text-secondary);
             margin-bottom: 16px;
         }
         .plan-price {
             font-size: 2rem;
             font-weight: 800;
-            color: #fff;
+            color: var(--theme-text);
             margin-bottom: 4px;
             line-height: 1;
         }
@@ -314,12 +425,21 @@
             font-size: 0.55em;
             font-weight: 600;
             vertical-align: super;
-            color: #34d399;
+            color: var(--theme-price-color);
         }
         .plan-price-period {
             font-size: 0.78rem;
-            color: var(--galactic-text-secondary);
-            margin-bottom: 20px;
+            color: var(--theme-text-secondary);
+            margin-bottom: 4px;
+        }
+        .plan-daily {
+            font-size: 0.78rem;
+            color: var(--theme-text-secondary);
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+        .plan-daily strong {
+            color: var(--theme-price-color);
         }
         .plan-cta {
             display: inline-flex;
@@ -332,8 +452,8 @@
             font-weight: 700;
             font-size: 0.9rem;
             text-decoration: none;
-            color: #fff;
-            background: linear-gradient(135deg, #7c5cfc 0%, #38bdf8 100%);
+            color: var(--theme-cta-text);
+            background: var(--theme-cta-bg);
             border: none;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -361,8 +481,8 @@
         }
         .plan-cta:hover {
             transform: scale(1.03);
-            box-shadow: 0 6px 24px rgba(124,92,252,0.4);
-            color: #fff;
+            box-shadow: 0 6px 24px var(--theme-cta-shadow);
+            color: var(--theme-cta-text);
         }
         .plan-cta i { font-size: 1.1rem; }
 
@@ -374,19 +494,29 @@
             flex-wrap: wrap;
             padding: 28px 0;
             margin: 12px 0 36px;
-            border-top: 1px solid rgba(255,255,255,0.05);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-top: 1px solid var(--theme-divider);
+            border-bottom: 1px solid var(--theme-divider);
         }
         .trust-item {
             display: flex;
             align-items: center;
             gap: 8px;
             font-size: 0.8rem;
-            color: var(--galactic-text-secondary);
+            color: var(--theme-text-secondary);
         }
         .trust-item i {
             font-size: 1rem;
-            color: #34d399;
+            color: var(--theme-trust-icon);
+        }
+
+        /* Stripe badge */
+        .stripe-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: var(--theme-text-secondary);
+            opacity: 0.7;
         }
 
         /* ===== FAQ ===== */
@@ -394,14 +524,14 @@
             margin: 0 0 50px;
         }
         .faq-item {
-            border-bottom: 1px solid rgba(255,255,255,0.06);
+            border-bottom: 1px solid var(--theme-divider);
             padding: 18px 0;
         }
         .faq-item:last-child { border-bottom: none; }
         .faq-question {
             font-size: 0.92rem;
             font-weight: 600;
-            color: var(--galactic-text-primary);
+            color: var(--theme-text);
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -410,14 +540,14 @@
         }
         .faq-question i {
             font-size: 0.8rem;
-            color: var(--galactic-text-secondary);
+            color: var(--theme-text-secondary);
             transition: transform 0.3s;
             flex-shrink: 0;
         }
         .faq-question.active i { transform: rotate(180deg); }
         .faq-answer {
             font-size: 0.85rem;
-            color: var(--galactic-text-secondary);
+            color: var(--theme-text-secondary);
             line-height: 1.7;
             max-height: 0;
             overflow: hidden;
@@ -438,10 +568,10 @@
             right: 0;
             z-index: 100;
             padding: 14px 20px;
-            background: rgba(5,8,22,0.92);
+            background: var(--theme-sticky-bg);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border-top: 1px solid rgba(124,92,252,0.15);
+            border-top: 1px solid var(--theme-sticky-border);
         }
         .sticky-cta-inner {
             display: flex;
@@ -452,13 +582,13 @@
         }
         .sticky-cta-price {
             font-size: 0.82rem;
-            color: var(--galactic-text-secondary);
+            color: var(--theme-text-secondary);
         }
         .sticky-cta-price strong {
             display: block;
             font-size: 1.15rem;
             font-weight: 800;
-            color: #fff;
+            color: var(--theme-text);
         }
         .sticky-cta-btn {
             display: inline-flex;
@@ -469,8 +599,8 @@
             font-weight: 700;
             font-size: 0.9rem;
             text-decoration: none;
-            color: #fff;
-            background: linear-gradient(135deg, #7c5cfc 0%, #38bdf8 100%);
+            color: var(--theme-cta-text);
+            background: var(--theme-cta-bg);
             border: none;
             position: relative;
             overflow: hidden;
@@ -488,18 +618,18 @@
         .page-footer {
             text-align: center;
             padding: 30px 20px 40px;
-            border-top: 1px solid rgba(255,255,255,0.05);
+            border-top: 1px solid var(--theme-footer-border);
         }
         .page-footer a {
-            color: var(--galactic-text-secondary);
+            color: var(--theme-text-secondary);
             text-decoration: none;
             font-size: 0.85rem;
             transition: color 0.2s;
         }
-        .page-footer a:hover { color: var(--primary); }
+        .page-footer a:hover { color: var(--theme-primary); }
         .page-footer .powered {
             font-size: 0.78rem;
-            color: rgba(255,255,255,0.3);
+            color: var(--theme-footer-powered);
             margin-top: 12px;
         }
 
@@ -513,10 +643,13 @@
             .sticky-cta { display: block; }
             .page-footer { padding-bottom: 90px; }
             .trust-bar { gap: 16px; }
+            .steps-grid { flex-direction: column; align-items: center; }
+            .step-arrow { display: none; }
+            .step-item { max-width: 100%; }
         }
     </style>
 </head>
-<body>
+<body class="theme-{{ theme }}">
     <!-- ===== HERO ===== -->
     <div class="group-hero">
         <div class="group-hero-bg">
@@ -557,11 +690,11 @@
                 <i class="bi bi-exclamation-triangle-fill" style="color: #fbbf24; font-size: 1.3rem; flex-shrink: 0; margin-top: 2px;"></i>
                 <div>
                     <div style="font-weight: 700; color: #fbbf24; margin-bottom: 4px;">Este grupo não está aceitando novas assinaturas</div>
-                    <div style="font-size: 0.88rem; color: var(--galactic-text-secondary); line-height: 1.6;">
+                    <div style="font-size: 0.88rem; color: var(--theme-text-secondary); line-height: 1.6;">
                         O criador pausou as inscrições para este grupo. Confira outros grupos disponíveis na página de {{ creator.name }}.
                     </div>
                     <a href="{{ url_for('public.creator_page', username=creator.username) }}"
-                       style="display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 8px 18px; border-radius: 10px; font-weight: 600; font-size: 0.85rem; color: #fff; background: var(--gradient-primary); text-decoration: none;">
+                       style="display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 8px 18px; border-radius: 10px; font-weight: 600; font-size: 0.85rem; color: var(--theme-cta-text); background: var(--theme-cta-bg); text-decoration: none;">
                         <i class="bi bi-grid-fill"></i> Ver todos os grupos de {{ creator.name.split(' ')[0] }}
                     </a>
                 </div>
@@ -584,6 +717,32 @@
             </div>
             <i class="bi bi-chevron-right creator-card-arrow"></i>
         </a>
+
+        <!-- ===== HOW IT WORKS ===== -->
+        {% if plans %}
+        <div class="how-it-works">
+            <div class="section-label">Como funciona</div>
+            <div class="steps-grid">
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <div class="step-title">Escolha</div>
+                    <div class="step-desc">Selecione o plano ideal para você</div>
+                    <span class="step-arrow"><i class="bi bi-chevron-right"></i></span>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <div class="step-title">Pague</div>
+                    <div class="step-desc">Pagamento seguro via Stripe</div>
+                    <span class="step-arrow"><i class="bi bi-chevron-right"></i></span>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <div class="step-title">Acesse</div>
+                    <div class="step-desc">Entrada liberada automaticamente</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
         <!-- ===== BENEFITS ===== -->
         <div class="benefits-section">
@@ -628,6 +787,31 @@
             </div>
         </div>
 
+        <!-- ===== GUARANTEE ===== -->
+        {% if plans %}
+        <div class="guarantee-bar">
+            <i class="bi bi-shield-check"></i>
+            Cancele quando quiser — acesso até o fim do período pago
+        </div>
+
+        <!-- ===== MID CTA ===== -->
+        <div class="mid-cta">
+            <a href="#planos" class="mid-cta-btn" onclick="event.preventDefault(); document.getElementById('planos').scrollIntoView({behavior:'smooth'})">
+                <i class="bi bi-telegram"></i> Assinar agora
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- ===== SOCIAL PROOF ===== -->
+        {% if subscriber_count > 0 and plans %}
+        <div style="text-align: center; margin-bottom: 28px;">
+            <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--theme-text-secondary);">
+                <i class="bi bi-people-fill" style="color: var(--theme-primary);"></i>
+                {{ subscriber_count }} pessoa{{ 's' if subscriber_count != 1 else '' }} já assinou{{ 'ram' if subscriber_count != 1 else '' }}
+            </span>
+        </div>
+        {% endif %}
+
         <!-- ===== PLANS ===== -->
         {% if plans %}
         <div class="plans-section" id="planos">
@@ -660,6 +844,11 @@
                             por {{ plan.duration_days }} dia{{ 's' if plan.duration_days != 1 else '' }}
                         {% endif %}
                     </div>
+                    {% if not plan.is_lifetime and plan.duration_days > 1 %}
+                    <div class="plan-daily">
+                        ≈ <strong>R$ {{ "%.2f"|format(plan.price / plan.duration_days) }}</strong>/dia
+                    </div>
+                    {% endif %}
                     <a href="{{ bot_link }}" target="_blank" rel="noopener" class="plan-cta">
                         <i class="bi bi-telegram"></i> Assinar agora
                     </a>
@@ -679,6 +868,12 @@
             </div>
             <div class="trust-item">
                 <i class="bi bi-lock-fill"></i> Dados protegidos
+            </div>
+            <div class="trust-item stripe-badge">
+                <svg viewBox="0 0 60 25" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style="height:14px;width:auto;">
+                    <path d="M5 10.2c0-.7.6-1 1.5-1 1.3 0 3 .4 4.3 1.1V6.7c-1.5-.6-2.9-.8-4.3-.8C3.4 5.9 1 7.7 1 10.5c0 4.3 6 3.6 6 5.5 0 .8-.7 1.1-1.7 1.1-1.5 0-3.4-.6-4.9-1.4v3.6c1.7.7 3.3 1 4.9 1 3.2 0 5.5-1.6 5.5-4.4 0-4.7-6-3.8-6-5.6zM17.2 3.3l-3.9.8v14.2c0 2.6 2 4.5 4.5 4.5 1.4 0 2.5-.3 3.1-.6v-3.2c-.5.2-3.2 1-3.2-1.5v-5.9h3.2V8.3h-3.2l-.5-5zm7.8 7.1l-.3-1.1h-3.5v13.2h3.9v-9c.9-1.2 2.5-1 3-.8V8.3c-.5-.2-2.4-.5-3.1 1.1zm4.1-1.1h3.9v13.2h-3.9V9.3zM31 7.8l-1.5-.3-2.4.5 2.4-4.7h3.5L31 7.8zM38.3 5.9c-1.4 0-2.3.7-2.8 1.1l-.2-.9h-3.4v17.5l3.9-.8v-4.3c.5.4 1.3.9 2.5.9 2.6 0 4.9-2 4.9-6.6-.1-4.2-2.5-6.9-4.9-6.9zm-.9 10.6c-.8 0-1.3-.3-1.7-.7v-5.5c.4-.4.9-.8 1.7-.8 1.3 0 2.2 1.5 2.2 3.5 0 2-1 3.5-2.2 3.5zm14.2-4c0-3.8-1.8-6.6-5.3-6.6s-5.6 2.8-5.6 6.6c0 4.3 2.5 6.5 6.1 6.5 1.7 0 3.1-.4 4.1-1v-3c-1 .5-2.1.8-3.5.8-1.4 0-2.6-.5-2.7-2.1h6.8c0-.2.1-1 .1-1.2zm-6.9-1.4c0-1.6 1-2.2 1.8-2.2.9 0 1.7.7 1.7 2.2h-3.5z"/>
+                </svg>
+                Powered by Stripe
             </div>
         </div>
 
