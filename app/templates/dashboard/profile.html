@@ -64,6 +64,7 @@
                         </div>
                         {% if not is_admin_viewing %}
                         <input type="file" id="avatarFileInput" accept="image/png,image/jpeg,image/gif" style="display: none;">
+                        <small class="text-muted d-block mt-1">200 x 200px &middot; PNG, JPG ou GIF &middot; Max 2MB</small>
                         {% endif %}
                         <h4 class="mb-1">{{ user.name }}</h4>
                         <p class="text-muted mb-2">{{ user.email }}</p>
@@ -71,10 +72,13 @@
                         {% if not is_admin_viewing %}
                         <div class="text-start mt-3">
                             <label class="form-label small">Bio</label>
-                            <textarea class="form-control form-control-sm" name="bio" rows="3"
+                            <textarea class="form-control form-control-sm" name="bio" rows="3" id="bioTextarea"
                                       form="mainProfileForm"
-                                      placeholder="Conte sobre voce..." maxlength="500">{{ user.bio or '' }}</textarea>
-                            <small class="text-muted">Aparece em /c/{{ user.username }}</small>
+                                      placeholder="Conte sobre voce..." maxlength="160">{{ user.bio or '' }}</textarea>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">Aparece em /c/{{ user.username }}</small>
+                                <small class="text-muted"><span id="bioCharCount">{{ (user.bio or '')|length }}</span>/160</small>
+                            </div>
                         </div>
                         {% elif user.bio %}
                         <p class="text-muted small mt-3 text-start">{{ user.bio }}</p>
@@ -466,6 +470,15 @@ function togglePhoneRequired() {
 pixType.addEventListener('change', togglePhoneRequired);
 pixValue.addEventListener('input', togglePhoneRequired);
 togglePhoneRequired();
+
+// Bio character counter
+var bioTextarea = document.getElementById('bioTextarea');
+var bioCharCount = document.getElementById('bioCharCount');
+if (bioTextarea && bioCharCount) {
+    bioTextarea.addEventListener('input', function() {
+        bioCharCount.textContent = this.value.length;
+    });
+}
 
 // Avatar file upload
 var avatarFileInput = document.getElementById('avatarFileInput');

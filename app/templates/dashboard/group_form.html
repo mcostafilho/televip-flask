@@ -113,8 +113,13 @@
 
                                 <div class="mb-3">
                                     <label class="form-label">Descrição</label>
-                                    <textarea class="form-control" name="description" rows="3"
+                                    <textarea class="form-control" name="description" rows="3" id="descriptionTextarea"
+                                              maxlength="500"
                                               placeholder="Descreva o conteúdo exclusivo do seu grupo...">{{ group.description if group else '' }}</textarea>
+                                    <div class="d-flex justify-content-between">
+                                        <small class="form-text" style="color: #b0b4cc;">Aparece na pagina de venda do grupo.</small>
+                                        <small class="form-text" style="color: #b0b4cc;"><span id="descCharCount">{{ (group.description if group else '')|length }}</span>/500</small>
+                                    </div>
                                 </div>
 
                                 <div class="mb-3">
@@ -136,7 +141,7 @@
                                     </div>
                                     <input type="file" name="cover_image" id="coverFileInput" accept="image/png,image/jpeg,image/gif" style="display: none;">
                                     <small class="form-text" style="color: #b0b4cc;">
-                                        Aparece na pagina de venda. Opcional.
+                                        Recomendado: 1200 x 400px &middot; PNG, JPG ou GIF &middot; Max 2MB
                                     </small>
                                 </div>
                             </div>
@@ -760,6 +765,15 @@ function removeWhitelistEntry(telegramId) {
         emptyMsg.textContent = 'Nenhuma pessoa na lista de exceção.';
         container.prepend(emptyMsg);
     }
+}
+
+// Description character counter
+var descTextarea = document.getElementById('descriptionTextarea');
+var descCharCount = document.getElementById('descCharCount');
+if (descTextarea && descCharCount) {
+    descTextarea.addEventListener('input', function() {
+        descCharCount.textContent = this.value.length;
+    });
 }
 
 // Cover image file upload preview
