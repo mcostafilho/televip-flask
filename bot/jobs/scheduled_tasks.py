@@ -10,7 +10,7 @@ from telegram.error import TelegramError
 from telegram.constants import ParseMode
 
 from bot.utils.database import get_db_session
-from app.models import Subscription, Group
+from app.models import Subscription, Group, Transaction
 
 logger = logging.getLogger(__name__)
 
@@ -121,6 +121,22 @@ async def check_expired_subscriptions():
                     Subscription.end_date > now
                 ).first()
                 if has_active:
+                    continue
+
+                # Pular se tem pagamento pendente (ex: boleto aguardando compensação)
+                has_pending_payment = session.query(Transaction).join(
+                    Subscription
+                ).filter(
+                    Subscription.group_id == sub.group_id,
+                    Subscription.telegram_user_id == sub.telegram_user_id,
+                    Transaction.status == 'pending',
+                    Transaction.created_at > now - timedelta(days=5)
+                ).first()
+                if has_pending_payment:
+                    logger.info(
+                        f"Sub {sub.id}: pagamento pendente encontrado, "
+                        f"adiando remoção do usuario {sub.telegram_user_id}"
+                    )
                     continue
 
                 was_removed = await remove_from_group(sub)
@@ -407,17 +423,19 @@ async def audit_group_members():
 
 
 async def send_renewal_reminders():
-    """Enviar lembretes de renovacao para assinaturas proximas de expirar"""
+    """Enviar lembretes de renovação (pré-expiração + grace period)"""
     if not _application:
         return
 
     try:
         with get_db_session() as session:
+            now = datetime.utcnow()
             reminders_sent = 0
 
+            # ── Pré-expiração: 3 dias e 1 dia antes ──
             for days in [3, 1]:
-                target_start = datetime.utcnow() + timedelta(days=days - 1)
-                target_end = datetime.utcnow() + timedelta(days=days)
+                target_start = now + timedelta(days=days - 1)
+                target_end = now + timedelta(days=days)
 
                 subs = session.query(Subscription).filter(
                     Subscription.status == 'active',
@@ -428,6 +446,31 @@ async def send_renewal_reminders():
                 for sub in subs:
                     await send_renewal_notification(sub, days)
                     reminders_sent += 1
+
+            # ── Grace period: lembrete diário para expiradas há 1 dia ──
+            # (dia 0 já foi avisado pelo check_expired_subscriptions)
+            grace_start = now - timedelta(days=1, hours=12)
+            grace_end = now - timedelta(hours=12)
+
+            expired_in_grace = session.query(Subscription).filter(
+                Subscription.status == 'expired',
+                Subscription.end_date >= grace_start,
+                Subscription.end_date < grace_end
+            ).all()
+
+            for sub in expired_in_grace:
+                # Pular se já tem outra sub ativa para o mesmo grupo
+                has_active = session.query(Subscription).filter(
+                    Subscription.group_id == sub.group_id,
+                    Subscription.telegram_user_id == sub.telegram_user_id,
+                    Subscription.status == 'active',
+                    Subscription.end_date > now
+                ).first()
+                if has_active:
+                    continue
+
+                await send_grace_period_reminder(sub)
+                reminders_sent += 1
 
             logger.info(f"{reminders_sent} lembretes enviados")
 
@@ -575,6 +618,47 @@ async def send_renewal_notification(subscription, days_left):
         pass  # Usuario bloqueou o bot
     except Exception as e:
         logger.error(f"Erro ao enviar lembrete: {e}")
+
+
+async def send_grace_period_reminder(subscription):
+    """Lembrete durante grace period — 'último dia para renovar antes da remoção'"""
+    if not _application:
+        return
+
+    try:
+        group = subscription.group
+        user_id = int(subscription.telegram_user_id)
+
+        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+        from bot.utils.format_utils import escape_html
+
+        group_name = escape_html(group.name)
+        type_label = "canal" if group.chat_type == 'channel' else "grupo"
+
+        text = (
+            f"<b>Último dia para renovar</b>\n\n"
+            f"Sua assinatura de <b>{group_name}</b> expirou.\n\n"
+            f"Renove hoje para não ser removido do {type_label}."
+        )
+
+        keyboard = [[
+            InlineKeyboardButton(
+                "Renovar Agora",
+                callback_data=f"plan_{group.id}_{subscription.plan_id}"
+            )
+        ]]
+
+        await _application.bot.send_message(
+            chat_id=user_id,
+            text=text,
+            parse_mode=ParseMode.HTML,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+
+    except TelegramError:
+        pass
+    except Exception as e:
+        logger.error(f"Erro ao enviar lembrete de grace period: {e}")
 
 
 # ──────────────────────────────────────────────
