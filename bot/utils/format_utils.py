@@ -153,13 +153,14 @@ def format_phone(phone: str) -> str:
 def format_remaining_text(end_date: datetime) -> str:
     """
     Formatar tempo restante como texto simples (sem emoji).
-    Mostra horas quando < 24h, dias caso contrário.
+    Mostra horas quando ≤ 72h (3 dias) para maior precisão em planos curtos.
+    Acima de 72h mostra dias.
 
     Args:
         end_date: Data final
 
     Returns:
-        String como '5 dias', '12 horas', '30 minutos', ou 'Expirado'
+        String como '5 dias', '48 horas', '30 minutos', ou 'Expirado'
     """
     if not end_date:
         return "N/A"
@@ -171,7 +172,7 @@ def format_remaining_text(end_date: datetime) -> str:
 
     hours = int(total_seconds // 3600)
 
-    if hours >= 24:
+    if hours > 72:
         days = hours // 24
         return f"{days} {'dia' if days == 1 else 'dias'}"
     elif hours >= 1:
