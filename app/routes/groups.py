@@ -244,8 +244,8 @@ def create():
                 if cover_url:
                     group.cover_image_url = cover_url
 
-            # Adicionar planos (create)
-            plan_names = request.form.getlist('plan_name[]')
+            # Adicionar planos (create) — máximo 5
+            plan_names = request.form.getlist('plan_name[]')[:5]
             plan_durations = request.form.getlist('plan_duration[]')
             plan_prices = request.form.getlist('plan_price[]')
             plan_lifetimes = request.form.getlist('plan_lifetime[]')
@@ -378,8 +378,8 @@ def edit(id):
             else:
                 db.session.delete(plan)
 
-        # Add new plans from form with validation
-        plan_names = request.form.getlist('plan_name[]')
+        # Add new plans from form with validation — máximo 5
+        plan_names = request.form.getlist('plan_name[]')[:5]
         plan_durations = request.form.getlist('plan_duration[]')
         plan_prices = request.form.getlist('plan_price[]')
         plan_lifetimes = request.form.getlist('plan_lifetime[]')
