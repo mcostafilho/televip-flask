@@ -159,12 +159,16 @@
 
                         <div class="financial-summary">
                             <h3 class="text-center">R$ {{ "%.2f"|format(stats.balance) }}</h3>
-                            <p class="text-center text-muted mb-0">Saldo disponível</p>
+                            <p class="text-center text-muted mb-0">Saldo disponível para saque</p>
                         </div>
 
                         <div class="financial-item">
-                            <span>Total ganho</span>
+                            <span>Total ganho <small class="text-muted">(líquido)</small></span>
                             <span class="text-success">R$ {{ "%.2f"|format(stats.total_earned) }}</span>
+                        </div>
+                        <div class="financial-item">
+                            <span><i class="bi bi-lock-fill text-warning"></i> Bloqueado <small class="text-muted">(7 dias)</small></span>
+                            <span class="text-warning">R$ {{ "%.2f"|format(stats.blocked_balance) }}</span>
                         </div>
                         <div class="financial-item">
                             <span>Total sacado</span>
@@ -723,10 +727,10 @@ if (usernameInput && !usernameInput.disabled) {
                     } else {
                         var html = '<small class="text-danger"><i class="bi bi-x-circle"></i> @' + val + ' já está em uso</small>';
                         if (data.suggestions && data.suggestions.length) {
-                            html += '<div class="mt-1">';
-                            html += '<small class="text-muted">Sugestões: </small>';
+                            html += '<div class="mt-1 d-flex flex-wrap align-items-center gap-1">';
+                            html += '<small class="text-muted">Sugestões:</small> ';
                             data.suggestions.forEach(function(s) {
-                                html += '<a href="#" class="badge bg-secondary text-decoration-none me-1 username-suggestion" style="cursor:pointer;">' + s + '</a>';
+                                html += '<a href="#" class="badge bg-secondary text-decoration-none username-suggestion" style="cursor:pointer;font-size:0.72rem;">' + s + '</a>';
                             });
                             html += '</div>';
                         }

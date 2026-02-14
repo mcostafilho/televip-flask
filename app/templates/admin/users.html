@@ -52,16 +52,16 @@
         <div class="col-md-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h4 class="text-info">{{ "{:,.2f}".format(users|sum(attribute='balance')) }}</h4>
-                    <p class="mb-0">Saldo Total (R$)</p>
+                    <h4 class="text-info">{{ "{:,.2f}".format(users|sum(attribute='display_available')) }}</h4>
+                    <p class="mb-0">Saldo Disponível (R$)</p>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h4 class="text-warning">{{ "{:,.2f}".format(users|sum(attribute='total_earned') or 0) }}</h4>
-                    <p class="mb-0">Receita Total (R$)</p>
+                    <h4 class="text-warning">{{ "{:,.2f}".format(users|sum(attribute='display_total_earned') or 0) }}</h4>
+                    <p class="mb-0">Total Ganho Líquido (R$)</p>
                 </div>
             </div>
         </div>
@@ -134,8 +134,8 @@
                         {% for user in users %}
                         <tr data-created="{{ user.created_at.timestamp() }}"
                             data-groups="{{ user.groups.count() }}"
-                            data-balance="{{ user.balance }}"
-                            data-earned="{{ user.total_earned or 0 }}">
+                            data-balance="{{ user.display_available }}"
+                            data-earned="{{ user.display_total_earned }}">
                             <td>
                                 <input type="checkbox" class="form-check-input user-checkbox" value="{{ user.id }}">
                             </td>
@@ -151,10 +151,10 @@
                             <td>
                                 <span class="badge bg-primary">{{ user.groups.count() }}</span>
                             </td>
-                            <td class="fw-bold {{ 'text-success' if user.balance > 0 else 'text-muted' }}">
-                                R$ {{ "%.2f"|format(user.balance) }}
+                            <td class="fw-bold {{ 'text-success' if user.display_available > 0 else 'text-muted' }}">
+                                R$ {{ "%.2f"|format(user.display_available) }}
                             </td>
-                            <td>R$ {{ "%.2f"|format(user.total_earned or 0) }}</td>
+                            <td>R$ {{ "%.2f"|format(user.display_total_earned) }}</td>
                             <td>
                                 <small>{{ user.created_at.strftime('%d/%m/%Y') }}</small>
                             </td>

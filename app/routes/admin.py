@@ -62,13 +62,9 @@ def index():
             Subscription.status == 'active'
         ).scalar() or 0
 
-        # Calcular total ganho real a partir das transações completadas
-        real_total_earned = db.session.query(
-            func.coalesce(func.sum(Transaction.net_amount), 0)
-        ).join(Subscription).join(Group).filter(
-            Group.creator_id == creator.id,
-            Transaction.status == 'completed'
-        ).scalar() or 0
+        # Usar calculate_balance para saldo correto (disponível vs bloqueado)
+        from app.routes.dashboard import calculate_balance
+        bal = calculate_balance(creator.id)
 
         # Calcular total já sacado
         total_withdrawn = 0
@@ -81,8 +77,10 @@ def index():
             ).scalar() or 0
 
         # Usar atributos temporários para exibição (não persistem no DB)
-        creator.display_total_earned = real_total_earned
-        creator.display_balance = real_total_earned - total_withdrawn
+        creator.display_total_earned = bal['total_balance']
+        creator.display_available = bal['available_balance'] - float(total_withdrawn)
+        creator.display_blocked = bal['blocked_balance']
+        creator.display_balance = bal['available_balance'] - float(total_withdrawn)
 
         # Verificar se tem saque pendente
         creator.pending_withdrawal = False
@@ -138,7 +136,20 @@ def process_withdrawal(id):
 @admin_required
 def users():
     """Lista de todos os usuários"""
+    from app.routes.dashboard import calculate_balance
     users = Creator.query.order_by(Creator.created_at.desc()).all()
+    for user in users:
+        bal = calculate_balance(user.id)
+        withdrawn = 0
+        if has_withdrawal_model and Withdrawal:
+            withdrawn = db.session.query(
+                func.coalesce(func.sum(Withdrawal.amount), 0)
+            ).filter(
+                Withdrawal.creator_id == user.id,
+                Withdrawal.status == 'completed'
+            ).scalar() or 0
+        user.display_available = bal['available_balance'] - float(withdrawn)
+        user.display_total_earned = bal['total_balance']
     return render_template('admin/users.html', users=users)
 
 @bp.route('/creator/<int:creator_id>/dashboard')
@@ -177,14 +188,26 @@ def creator_details(creator_id):
             status='active'
         ).count()
     
-    # Receita total (usando amount ao invés de net_amount)
-    stats['total_revenue'] = db.session.query(
-        func.sum(Transaction.amount)
-    ).join(Subscription).join(Group).filter(
-        Group.creator_id == creator_id,
-        Transaction.status == 'completed'
-    ).scalar() or 0
-    
+    # Receita e saldo usando calculate_balance
+    from app.routes.dashboard import calculate_balance
+    bal = calculate_balance(creator_id)
+    stats['total_revenue'] = bal['total_received']
+    stats['total_earned_net'] = bal['total_balance']
+    stats['available_balance'] = bal['available_balance']
+    stats['blocked_balance'] = bal['blocked_balance']
+
+    # Total sacado
+    total_withdrawn = 0
+    if has_withdrawal_model and Withdrawal:
+        total_withdrawn = db.session.query(
+            func.coalesce(func.sum(Withdrawal.amount), 0)
+        ).filter(
+            Withdrawal.creator_id == creator_id,
+            Withdrawal.status == 'completed'
+        ).scalar() or 0
+    stats['total_withdrawn'] = float(total_withdrawn)
+    stats['withdrawable_balance'] = bal['available_balance'] - float(total_withdrawn)
+
     # Saques pendentes
     pending_withdrawals = []
     if has_withdrawal_model and Withdrawal:

@@ -40,8 +40,10 @@
                 </div>
                 <div class="col-md-6">
                     <p><strong>Cadastro:</strong> {{ creator.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
-                    <p><strong>Saldo Atual:</strong> <span class="text-success fw-bold">R$ {{ "%.2f"|format(creator.balance) }}</span></p>
-                    <p><strong>Total Ganho:</strong> R$ {{ "%.2f"|format(creator.total_earned or 0) }}</p>
+                    <p><strong>Disponível p/ saque:</strong> <span class="text-success fw-bold">R$ {{ "%.2f"|format(stats.withdrawable_balance) }}</span></p>
+                    <p><strong>Bloqueado (7 dias):</strong> <span class="text-warning fw-bold">R$ {{ "%.2f"|format(stats.blocked_balance) }}</span></p>
+                    <p><strong>Total ganho (líquido):</strong> R$ {{ "%.2f"|format(stats.total_earned_net) }}</p>
+                    <p><strong>Total sacado:</strong> R$ {{ "%.2f"|format(stats.total_withdrawn) }}</p>
                 </div>
             </div>
         </div>

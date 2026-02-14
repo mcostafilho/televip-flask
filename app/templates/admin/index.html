@@ -174,8 +174,12 @@
                                 <span class="row-metric-label">assinantes</span>
                             </div>
                             <div class="row-metric">
-                                <span class="row-metric-value yellow">R$ {{ "%.2f"|format(creator.display_balance) }}</span>
-                                <span class="row-metric-label">saldo</span>
+                                <span class="row-metric-value green">R$ {{ "%.2f"|format(creator.display_available) }}</span>
+                                <span class="row-metric-label">disponível</span>
+                            </div>
+                            <div class="row-metric">
+                                <span class="row-metric-value yellow">R$ {{ "%.2f"|format(creator.display_blocked) }}</span>
+                                <span class="row-metric-label">bloqueado</span>
                             </div>
                         </div>
                         <div class="row-actions">

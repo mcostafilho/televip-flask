@@ -352,15 +352,8 @@ def profile():
     """Perfil do criador"""
     effective = get_effective_creator()
 
-    # Calcular estatísticas do usuário (líquido = após taxas)
-    total_earned = db.session.query(func.sum(Transaction.net_amount)).join(
-        Subscription
-    ).join(
-        Group
-    ).filter(
-        Group.creator_id == effective.id,
-        Transaction.status == 'completed'
-    ).scalar() or 0
+    # Usar calculate_balance para saldo correto (disponível vs bloqueado)
+    balance_info = calculate_balance(effective.id)
 
     # Total de assinantes ativos
     total_subscribers = db.session.query(func.count(Subscription.id)).join(
@@ -373,11 +366,14 @@ def profile():
     # Total de grupos
     total_groups = Group.query.filter_by(creator_id=effective.id).count()
 
-    # Total sacado
-    total_withdrawn = 0
-
-    # Calcular saldo disponível
-    balance = total_earned - total_withdrawn
+    # Total sacado (completados)
+    from app.models import Withdrawal
+    total_withdrawn = db.session.query(
+        func.coalesce(func.sum(Withdrawal.amount), 0)
+    ).filter(
+        Withdrawal.creator_id == effective.id,
+        Withdrawal.status == 'completed'
+    ).scalar() or 0
 
     # Data de cadastro formatada
     member_since = effective.created_at.strftime('%d/%m/%Y') if effective.created_at else 'N/A'
@@ -395,9 +391,11 @@ def profile():
 
     # Preparar dados das estatísticas
     stats = {
-        'total_earned': total_earned,
-        'balance': balance,
-        'total_withdrawn': total_withdrawn,
+        'total_earned': balance_info['total_balance'],
+        'available_balance': balance_info['available_balance'],
+        'blocked_balance': balance_info['blocked_balance'],
+        'balance': balance_info['available_balance'] - float(total_withdrawn),
+        'total_withdrawn': float(total_withdrawn),
         'total_groups': total_groups,
         'total_subscribers': total_subscribers,
         'member_since': member_since
