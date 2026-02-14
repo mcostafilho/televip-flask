@@ -37,6 +37,10 @@ class Creator(UserMixin, db.Model):
     # Aparencia da pagina publica
     page_theme = db.Column(db.String(20), default='galactic', nullable=False, server_default='galactic')
 
+    # Taxas personalizadas (NULL = usar padrao do sistema)
+    custom_fixed_fee = db.Column(db.Numeric(10, 2), nullable=True)
+    custom_percentage_fee = db.Column(db.Numeric(10, 4), nullable=True)
+
     # Controle de troca de username (cooldown 14 dias)
     username_changed_at = db.Column(db.DateTime, nullable=True)
 
@@ -82,6 +86,15 @@ class Creator(UserMixin, db.Model):
             return False
         return check_password_hash(self.password_hash, password)
     
+    def get_fee_rates(self):
+        """Retorna taxas efetivas (custom ou default)"""
+        from app.services.payment_service import PaymentService
+        return {
+            'fixed_fee': self.custom_fixed_fee if self.custom_fixed_fee is not None else PaymentService.FIXED_FEE,
+            'percentage_fee': self.custom_percentage_fee if self.custom_percentage_fee is not None else PaymentService.PERCENTAGE_FEE,
+            'is_custom': self.custom_fixed_fee is not None or self.custom_percentage_fee is not None
+        }
+
     def update_last_login(self):
         """Atualiza último login"""
         self.last_login = datetime.utcnow()

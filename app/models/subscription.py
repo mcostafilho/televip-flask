@@ -64,33 +64,39 @@ class Transaction(db.Model):
     
     def __init__(self, **kwargs):
         """Inicializa transação calculando taxas automaticamente"""
+        self._custom_fixed_fee = kwargs.pop('custom_fixed_fee', None)
+        self._custom_percentage_fee = kwargs.pop('custom_percentage_fee', None)
         super(Transaction, self).__init__(**kwargs)
-        
+
         # Se tem amount, calcular taxas automaticamente
         if 'amount' in kwargs and kwargs['amount'] > 0:
             self.calculate_fees()
-    
+
     def calculate_fees(self):
         """Calcula as taxas da transação"""
         # Importar aqui para evitar importação circular
         from app.services.payment_service import PaymentService
-        
+
         if not self.amount or self.amount <= 0:
             self.fixed_fee = 0
             self.percentage_fee = 0
             self.total_fee = 0
             self.net_amount = 0
             return
-        
-        fees = PaymentService.calculate_fees(self.amount)
+
+        fees = PaymentService.calculate_fees(
+            self.amount,
+            fixed_fee=getattr(self, '_custom_fixed_fee', None),
+            percentage_fee=getattr(self, '_custom_percentage_fee', None)
+        )
         self.fixed_fee = fees['fixed_fee']
         self.percentage_fee = fees['percentage_fee']
         self.total_fee = fees['total_fee']
         self.net_amount = fees['net_amount']
-        
+
         # Manter compatibilidade com campo 'fee' antigo
         self.fee = self.total_fee
-        
+
         return fees
     
     def __repr__(self):

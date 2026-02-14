@@ -49,6 +49,57 @@
         </div>
     </div>
 
+    <!-- Taxas Personalizadas -->
+    <div class="card mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-percent"></i> Taxas</h5>
+            {% if creator.custom_fixed_fee is not none or creator.custom_percentage_fee is not none %}
+                <span class="badge bg-primary">Personalizado</span>
+            {% else %}
+                <span class="badge bg-secondary">Padrao</span>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin.update_creator_fees', creator_id=creator.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="use_custom_fees" name="use_custom_fees"
+                           {% if creator.custom_fixed_fee is not none or creator.custom_percentage_fee is not none %}checked{% endif %}
+                           onchange="toggleCustomFees(this)">
+                    <label class="form-check-label" for="use_custom_fees">Usar taxas personalizadas</label>
+                </div>
+                <div id="custom-fees-fields" style="{% if creator.custom_fixed_fee is none and creator.custom_percentage_fee is none %}display:none{% endif %}">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="custom_fixed_fee" class="form-label">Taxa fixa (R$)</label>
+                            <input type="number" step="0.01" min="0" class="form-control" id="custom_fixed_fee"
+                                   name="custom_fixed_fee"
+                                   value="{{ '%.2f'|format(creator.custom_fixed_fee) if creator.custom_fixed_fee is not none else '%.2f'|format(fee_defaults.fixed) }}"
+                                   placeholder="{{ '%.2f'|format(fee_defaults.fixed) }}">
+                            <small class="text-muted">Padrao: R$ {{ '%.2f'|format(fee_defaults.fixed) }}</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="custom_percentage_fee" class="form-label">Taxa percentual (%)</label>
+                            <input type="number" step="0.01" min="0" max="100" class="form-control" id="custom_percentage_fee"
+                                   name="custom_percentage_fee"
+                                   value="{{ '%.2f'|format(creator.custom_percentage_fee * 100) if creator.custom_percentage_fee is not none else '%.2f'|format(fee_defaults.percentage) }}"
+                                   placeholder="{{ '%.2f'|format(fee_defaults.percentage) }}">
+                            <small class="text-muted">Padrao: {{ '%.2f'|format(fee_defaults.percentage) }}%</small>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Salvar Taxas
+                </button>
+            </form>
+        </div>
+    </div>
+    <script>
+    function toggleCustomFees(checkbox) {
+        document.getElementById('custom-fees-fields').style.display = checkbox.checked ? '' : 'none';
+    }
+    </script>
+
     <!-- Estatísticas -->
     <div class="row g-3 mb-4">
         <div class="col-md-3">

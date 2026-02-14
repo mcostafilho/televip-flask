@@ -443,6 +443,7 @@ def handle_invoice_paid(invoice):
                 pending_txn = existing_txn
             else:
                 # No transaction found at all — create one
+                fees = creator.get_fee_rates()
                 txn = Transaction(
                     subscription_id=subscription.id,
                     amount=amount_paid,
@@ -450,7 +451,9 @@ def handle_invoice_paid(invoice):
                     status='completed',
                     paid_at=datetime.utcnow(),
                     stripe_invoice_id=stripe_invoice_id,
-                    billing_reason='subscription_create'
+                    billing_reason='subscription_create',
+                    custom_fixed_fee=fees['fixed_fee'] if fees['is_custom'] else None,
+                    custom_percentage_fee=fees['percentage_fee'] if fees['is_custom'] else None,
                 )
                 db.session.add(txn)
                 db.session.flush()
@@ -494,6 +497,7 @@ def handle_invoice_paid(invoice):
             subscription.status = 'active'
 
             # Create renewal transaction
+            fees = creator.get_fee_rates()
             txn = Transaction(
                 subscription_id=subscription.id,
                 amount=amount_paid,
@@ -501,7 +505,9 @@ def handle_invoice_paid(invoice):
                 status='completed',
                 paid_at=datetime.utcnow(),
                 stripe_invoice_id=stripe_invoice_id,
-                billing_reason='subscription_cycle'
+                billing_reason='subscription_cycle',
+                custom_fixed_fee=fees['fixed_fee'] if fees['is_custom'] else None,
+                custom_percentage_fee=fees['percentage_fee'] if fees['is_custom'] else None,
             )
             db.session.add(txn)
             db.session.flush()

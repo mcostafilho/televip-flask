@@ -48,21 +48,16 @@ def calculate_balance(creator_id):
     blocked_balance = 0
     
     for transaction in transactions:
-        # Valor bruto da transação
         amount = float(transaction.amount)
-        
-        # Calcular taxas
-        fixed_fee = 0.99  # Taxa fixa
-        percentage_fee = amount * 0.0999  # 9,99%
-        total_fee = fixed_fee + percentage_fee
-        net_amount = amount - total_fee
-        
+        net_amount = float(transaction.net_amount) if transaction.net_amount else 0
+        total_fee = float(transaction.total_fee) if transaction.total_fee else (amount - net_amount)
+
         total_received += amount
         total_fees += total_fee
-        
+
         # Usar created_at se paid_at não existir
         payment_date = getattr(transaction, 'paid_at', None) or transaction.created_at
-        
+
         # Verificar se está disponível (mais de 7 dias)
         if payment_date and payment_date <= available_date:
             available_balance += net_amount
@@ -79,7 +74,7 @@ def calculate_balance(creator_id):
                 days_remaining = max(0, 7 - days_passed)
             else:
                 days_remaining = 7
-                
+
             blocked_transactions.append({
                 'transaction': transaction,
                 'net_amount': net_amount,

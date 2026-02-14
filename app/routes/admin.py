@@ -2,8 +2,10 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from app import db, limiter
 from app.models import Creator, Group, Subscription, Transaction
+from app.services.payment_service import PaymentService
 from app.utils.decorators import admin_required
 from datetime import datetime, timedelta
+from decimal import Decimal
 from sqlalchemy import func
 import requests as http_requests
 import os
@@ -239,12 +241,56 @@ def creator_details(creator_id):
         Group.creator_id == creator_id
     ).order_by(Transaction.created_at.desc()).limit(10).all()
     
+    fee_defaults = {
+        'fixed': float(PaymentService.FIXED_FEE),
+        'percentage': float(PaymentService.PERCENTAGE_FEE) * 100
+    }
+
     return render_template('admin/creator_details.html',
                          creator=creator,
                          groups=groups,
                          stats=stats,
                          recent_transactions=recent_transactions,
-                         pending_withdrawals=pending_withdrawals)
+                         pending_withdrawals=pending_withdrawals,
+                         fee_defaults=fee_defaults)
+
+@bp.route('/creator/<int:creator_id>/fees', methods=['POST'])
+@login_required
+@admin_required
+def update_creator_fees(creator_id):
+    """Atualizar taxas personalizadas de um criador"""
+    creator = Creator.query.get_or_404(creator_id)
+
+    use_custom = request.form.get('use_custom_fees') == 'on'
+
+    if use_custom:
+        fixed = request.form.get('custom_fixed_fee', '').strip()
+        pct = request.form.get('custom_percentage_fee', '').strip()
+
+        try:
+            fixed_val = Decimal(fixed) if fixed else None
+            pct_val = Decimal(pct) / 100 if pct else None
+        except Exception:
+            flash('Valores de taxa invalidos!', 'error')
+            return redirect(url_for('admin.creator_details', creator_id=creator_id))
+
+        if fixed_val is not None and fixed_val < 0:
+            flash('Taxa fixa nao pode ser negativa!', 'error')
+            return redirect(url_for('admin.creator_details', creator_id=creator_id))
+        if pct_val is not None and (pct_val < 0 or pct_val > 1):
+            flash('Taxa percentual deve ser entre 0% e 100%!', 'error')
+            return redirect(url_for('admin.creator_details', creator_id=creator_id))
+
+        creator.custom_fixed_fee = fixed_val
+        creator.custom_percentage_fee = pct_val
+    else:
+        creator.custom_fixed_fee = None
+        creator.custom_percentage_fee = None
+
+    db.session.commit()
+    flash('Taxas atualizadas com sucesso!', 'success')
+    return redirect(url_for('admin.creator_details', creator_id=creator_id))
+
 
 @bp.route('/creator/<int:creator_id>/message', methods=['POST'])
 @login_required

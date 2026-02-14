@@ -16,13 +16,14 @@ class PaymentService:
     PERCENTAGE_FEE = Decimal('0.0999')  # 9,99% de taxa percentual
 
     @staticmethod
-    def calculate_fees(gross_amount):
+    def calculate_fees(gross_amount, fixed_fee=None, percentage_fee=None):
         """
         Calcula as taxas sobre um valor bruto
-        Taxa: R$ 0,99 + 9,99% do valor
 
         Args:
             gross_amount: Valor bruto da transação (float ou Decimal)
+            fixed_fee: Taxa fixa override (None = usar default)
+            percentage_fee: Taxa percentual override (None = usar default)
 
         Returns:
             dict: Dicionário com os valores calculados (Decimal)
@@ -40,38 +41,45 @@ class PaymentService:
                 'fee_percentage': zero
             }
 
-        fixed_fee = PaymentService.FIXED_FEE
-        percentage_fee = (gross_amount * PaymentService.PERCENTAGE_FEE).quantize(TWO_PLACES, rounding=ROUND_HALF_UP)
-        total_fee = (fixed_fee + percentage_fee).quantize(TWO_PLACES, rounding=ROUND_HALF_UP)
+        _fixed = Decimal(str(fixed_fee)) if fixed_fee is not None else PaymentService.FIXED_FEE
+        _pct = Decimal(str(percentage_fee)) if percentage_fee is not None else PaymentService.PERCENTAGE_FEE
+
+        pct_fee = (gross_amount * _pct).quantize(TWO_PLACES, rounding=ROUND_HALF_UP)
+        total_fee = (_fixed + pct_fee).quantize(TWO_PLACES, rounding=ROUND_HALF_UP)
         net_amount = (gross_amount - total_fee).quantize(TWO_PLACES, rounding=ROUND_HALF_UP)
         fee_percentage = (total_fee / gross_amount * 100).quantize(TWO_PLACES, rounding=ROUND_HALF_UP) if gross_amount > 0 else Decimal('0')
 
         return {
             'gross_amount': gross_amount,
-            'fixed_fee': fixed_fee,
-            'percentage_fee': percentage_fee,
+            'fixed_fee': _fixed,
+            'percentage_fee': pct_fee,
             'total_fee': total_fee,
             'net_amount': net_amount,
             'fee_percentage': fee_percentage
         }
 
     @staticmethod
-    def format_fee_breakdown(gross_amount):
+    def format_fee_breakdown(gross_amount, fixed_fee=None, percentage_fee=None):
         """
         Formata a quebra de taxas para exibição
 
         Args:
             gross_amount: Valor bruto da transação
+            fixed_fee: Taxa fixa override (None = usar default)
+            percentage_fee: Taxa percentual override (None = usar default)
 
         Returns:
             dict: Dicionário com valores formatados
         """
-        fees = PaymentService.calculate_fees(gross_amount)
+        fees = PaymentService.calculate_fees(gross_amount, fixed_fee=fixed_fee, percentage_fee=percentage_fee)
+
+        _pct = Decimal(str(percentage_fee)) if percentage_fee is not None else PaymentService.PERCENTAGE_FEE
+        pct_display = f"{_pct * 100:.2f}".replace('.', ',') + "%"
 
         return {
             'gross': f"R$ {fees['gross_amount']:.2f}",
             'fixed_fee': f"R$ {fees['fixed_fee']:.2f}",
-            'percentage_fee': f"R$ {fees['percentage_fee']:.2f} (9,99%)",
+            'percentage_fee': f"R$ {fees['percentage_fee']:.2f} ({pct_display})",
             'total_fee': f"R$ {fees['total_fee']:.2f}",
             'net': f"R$ {fees['net_amount']:.2f}",
             'effective_rate': f"{fees['fee_percentage']:.2f}%"

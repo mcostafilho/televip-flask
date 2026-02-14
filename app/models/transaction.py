@@ -41,31 +41,36 @@ class Transaction(db.Model):
     
     def __init__(self, **kwargs):
         """Inicializar transação com cálculo automático de taxas"""
+        self._custom_fixed_fee = kwargs.pop('custom_fixed_fee', None)
+        self._custom_percentage_fee = kwargs.pop('custom_percentage_fee', None)
         super().__init__(**kwargs)
-        self.calculate_fees()
-    
+        if self.amount and self.amount > 0:
+            self.calculate_fees()
+
     def calculate_fees(self):
-        """
-        Calcular taxas automaticamente
-        Taxa fixa: R$ 0,99
-        Taxa percentual: 9,99%
-        """
-        if self.amount:
-            # Taxa fixa
-            self.fixed_fee = 0.99
-            
-            # Taxa percentual (9,99%)
-            self.percentage_fee = float(self.amount) * 0.0999
-            
-            # Taxa total
-            self.total_fee = self.fixed_fee + self.percentage_fee
-            
-            # Compatibilidade com campos antigos
-            self.fee = self.total_fee
-            self.fee_amount = self.total_fee
-            
-            # Valor líquido para o criador
-            self.net_amount = float(self.amount) - self.total_fee
+        """Calcular taxas automaticamente (usa custom fees se fornecidos)"""
+        from app.services.payment_service import PaymentService
+
+        if not self.amount or self.amount <= 0:
+            self.fixed_fee = 0
+            self.percentage_fee = 0
+            self.total_fee = 0
+            self.net_amount = 0
+            return
+
+        fees = PaymentService.calculate_fees(
+            self.amount,
+            fixed_fee=getattr(self, '_custom_fixed_fee', None),
+            percentage_fee=getattr(self, '_custom_percentage_fee', None)
+        )
+        self.fixed_fee = fees['fixed_fee']
+        self.percentage_fee = fees['percentage_fee']
+        self.total_fee = fees['total_fee']
+        self.net_amount = fees['net_amount']
+
+        # Compatibilidade com campos antigos
+        self.fee = self.total_fee
+        self.fee_amount = self.total_fee
     
     def get_fee_breakdown(self):
         """Retornar breakdown das taxas para exibição"""

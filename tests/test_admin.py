@@ -62,19 +62,21 @@ class TestAdminDashboard:
 
     def test_admin_balance_with_withdrawals(self, client, admin_user, db,
                                              creator, group, pricing_plan):
-        """Saldo = total_earned - saques completados"""
-        # Criar subscription + transaction completada
+        """Saldo disponível = available (>7 dias) - saques completados"""
+        # Criar subscription + transaction completada >7 dias atrás (available)
         sub = Subscription(
             group_id=group.id, plan_id=pricing_plan.id,
-            telegram_user_id='111', start_date=datetime.utcnow(),
-            end_date=datetime.utcnow() + timedelta(days=30), status='active',
+            telegram_user_id='111', start_date=datetime.utcnow() - timedelta(days=10),
+            end_date=datetime.utcnow() + timedelta(days=20), status='active',
         )
         db.session.add(sub)
         db.session.commit()
 
         txn = Transaction(
             subscription_id=sub.id, amount=Decimal('100'),
-            status='completed', paid_at=datetime.utcnow(),
+            status='completed',
+            paid_at=datetime.utcnow() - timedelta(days=10),
+            created_at=datetime.utcnow() - timedelta(days=10),
         )
         db.session.add(txn)
 
@@ -90,7 +92,7 @@ class TestAdminDashboard:
         login(client, 'admin@test.com', 'AdminPass123')
         resp = client.get('/admin/')
         html = resp.data.decode('utf-8')
-        # net_amount de R$100 = 89.02
+        # net_amount de R$100 = 89.02 (available, >7 days)
         # saldo = 89.02 - 20.00 = 69.02
         assert '69.02' in html
 

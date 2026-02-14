@@ -19,7 +19,7 @@ migrate = Migrate()
 limiter = Limiter(
     key_func=get_remote_address,
     default_limits=[],
-    storage_uri=os.environ.get('REDIS_URL', 'redis://localhost:6379/0'),
+    storage_uri=os.environ.get('RATELIMIT_STORAGE_URI', os.environ.get('REDIS_URL', 'redis://localhost:6379/0')),
 )
 csrf = CSRFProtect()
 sess = Session()

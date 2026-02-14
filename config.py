@@ -165,6 +165,8 @@ class TestingConfig(Config):
     WTF_CSRF_ENABLED = False
     SESSION_TYPE = 'filesystem'
     CACHE_TYPE = 'SimpleCache'
+    RATELIMIT_ENABLED = False
+    RATELIMIT_STORAGE_URI = 'memory://'
 
 # Dicionário de configurações
 config = {
