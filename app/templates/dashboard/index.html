@@ -346,7 +346,7 @@
                             </div>
                             <div class="row-info">
                                 <div class="row-title">
-                                    @{{ transaction.subscription.telegram_username }}
+                                    @{{ transaction.subscription.telegram_username or transaction.subscription.telegram_user_id }}
                                 </div>
                                 <div class="row-sub">
                                     {{ transaction.subscription.group.name }} &middot; {{ transaction.subscription.plan.name }}

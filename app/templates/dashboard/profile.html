@@ -230,6 +230,25 @@
                                     <input type="email" class="form-control" name="email"
                                            value="{{ user.email }}" required>
                                 </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Username</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">@</span>
+                                        <input type="text" class="form-control" name="username"
+                                               value="{{ user.username }}" required
+                                               pattern="[a-zA-Z0-9_]+" minlength="3" maxlength="30"
+                                               {% if not can_change_username %}disabled{% endif %}>
+                                    </div>
+                                    {% if can_change_username %}
+                                    <small class="text-muted">
+                                        Sua URL: /c/{{ user.username }}
+                                    </small>
+                                    {% else %}
+                                    <small class="text-warning">
+                                        <i class="bi bi-clock"></i> Próxima alteração disponível em {{ days_until_username_change }} dia{{ 's' if days_until_username_change != 1 else '' }}
+                                    </small>
+                                    {% endif %}
+                                </div>
 
                                 <!-- Dados para Saque -->
                                 <div class="col-12">
@@ -421,7 +440,7 @@
                                     </div>
                                     <div class="row-info">
                                         <div class="row-title">
-                                            @{{ transaction.subscription.telegram_username }}
+                                            @{{ transaction.subscription.telegram_username or transaction.subscription.telegram_user_id }}
                                         </div>
                                         <div class="row-sub">
                                             {{ transaction.subscription.group.name }} &middot; {{ transaction.subscription.plan.name }}

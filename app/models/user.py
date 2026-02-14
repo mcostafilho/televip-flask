@@ -37,6 +37,9 @@ class Creator(UserMixin, db.Model):
     # Aparencia da pagina publica
     page_theme = db.Column(db.String(20), default='galactic', nullable=False, server_default='galactic')
 
+    # Controle de troca de username (cooldown 14 dias)
+    username_changed_at = db.Column(db.DateTime, nullable=True)
+
     # Aceite dos termos (prova jurídica)
     terms_accepted_at = db.Column(db.DateTime)
     terms_ip = db.Column(db.String(45))

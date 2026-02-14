@@ -352,8 +352,8 @@ def profile():
     """Perfil do criador"""
     effective = get_effective_creator()
 
-    # Calcular estatísticas do usuário
-    total_earned = db.session.query(func.sum(Transaction.amount)).join(
+    # Calcular estatísticas do usuário (líquido = após taxas)
+    total_earned = db.session.query(func.sum(Transaction.net_amount)).join(
         Subscription
     ).join(
         Group
@@ -403,11 +403,22 @@ def profile():
         'member_since': member_since
     }
 
+    # Username change cooldown (14 dias)
+    can_change_username = True
+    days_until_username_change = 0
+    if effective.username_changed_at:
+        days_since = (datetime.utcnow() - effective.username_changed_at).days
+        if days_since < 14:
+            can_change_username = False
+            days_until_username_change = 14 - days_since
+
     return render_template('dashboard/profile.html',
         user=effective,
         stats=stats,
         recent_transactions=recent_transactions,
-        has_password=bool(effective.password_hash)
+        has_password=bool(effective.password_hash),
+        can_change_username=can_change_username,
+        days_until_username_change=days_until_username_change
     )
 
 
@@ -501,6 +512,26 @@ def update_profile():
     # Update name (no password required)
     if name:
         current_user.name = name
+
+    # Update username (14-day cooldown)
+    new_username = request.form.get('username', '').strip().lower()
+    if new_username and new_username != current_user.username:
+        import re
+        if not re.match(r'^[a-zA-Z0-9_]{3,30}$', new_username):
+            flash('Username inválido. Use apenas letras, números e _ (3-30 caracteres).', 'error')
+            return redirect(url_for('dashboard.profile'))
+        # Check cooldown
+        if current_user.username_changed_at:
+            days_since = (datetime.utcnow() - current_user.username_changed_at).days
+            if days_since < 14:
+                flash(f'Você só pode alterar o username novamente em {14 - days_since} dia(s).', 'error')
+                return redirect(url_for('dashboard.profile'))
+        # Check uniqueness
+        if Creator.query.filter(Creator.username == new_username, Creator.id != current_user.id).first():
+            flash('Este username já está em uso.', 'error')
+            return redirect(url_for('dashboard.profile'))
+        current_user.username = new_username
+        current_user.username_changed_at = datetime.utcnow()
 
     # Update email (password already verified above)
     if changing_email:
