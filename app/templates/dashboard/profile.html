@@ -410,8 +410,14 @@
                             {% for transaction in recent_transactions[:5] %}
                             <div class="row-item">
                                 <div class="row-item-left">
-                                    <div class="row-icon completed">
-                                        <i class="bi bi-check-lg"></i>
+                                    <div class="row-icon {% if transaction.status == 'completed' %}completed{% elif transaction.status == 'pending' %}pending{% else %}failed{% endif %}">
+                                        {% if transaction.status == 'completed' %}
+                                            <i class="bi bi-check-lg"></i>
+                                        {% elif transaction.status == 'pending' %}
+                                            <i class="bi bi-clock"></i>
+                                        {% else %}
+                                            <i class="bi bi-x-lg"></i>
+                                        {% endif %}
                                     </div>
                                     <div class="row-info">
                                         <div class="row-title">
@@ -419,11 +425,21 @@
                                         </div>
                                         <div class="row-sub">
                                             {{ transaction.subscription.group.name }} &middot; {{ transaction.subscription.plan.name }}
+                                            <span class="tx-status-badge {{ transaction.status }}">
+                                                {% if transaction.status == 'completed' %}<i class="bi bi-check-circle-fill"></i> Pago
+                                                {% elif transaction.status == 'pending' %}<i class="bi bi-hourglass-split"></i> Pendente
+                                                {% elif transaction.status == 'failed' %}<i class="bi bi-x-circle-fill"></i> Falhou
+                                                {% elif transaction.status == 'disputed' %}<i class="bi bi-exclamation-triangle-fill"></i> Disputado
+                                                {% else %}<i class="bi bi-dash-circle"></i> {{ transaction.status|capitalize }}
+                                                {% endif %}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="row-item-right">
-                                    <div class="tx-amount green">+R$ {{ "%.2f"|format(transaction.amount) }}</div>
+                                    <div class="tx-amount {% if transaction.status == 'completed' %}green{% elif transaction.status == 'pending' %}yellow{% else %}red{% endif %}">
+                                        {% if transaction.status == 'completed' %}+{% endif %}R$ {{ "%.2f"|format(transaction.amount) }}
+                                    </div>
                                     <div class="tx-date">{{ (transaction.created_at|to_brt).strftime('%d/%m %H:%M') }}</div>
                                 </div>
                             </div>

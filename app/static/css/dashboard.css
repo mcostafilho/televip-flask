@@ -945,6 +945,42 @@ html:has(.dashboard-wrapper) body {
     white-space: nowrap;
 }
 
+/* Transaction status badge — explicit text label */
+.tx-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    line-height: 1.5;
+}
+.tx-status-badge i { font-size: 0.65rem; }
+
+.tx-status-badge.completed {
+    background: rgba(52, 211, 153, 0.12);
+    color: var(--galactic-success);
+}
+.tx-status-badge.pending {
+    background: rgba(251, 191, 36, 0.12);
+    color: var(--galactic-warning);
+}
+.tx-status-badge.failed {
+    background: rgba(248, 113, 113, 0.12);
+    color: var(--galactic-danger);
+}
+.tx-status-badge.disputed {
+    background: rgba(251, 146, 60, 0.12);
+    color: #fb923c;
+}
+.tx-status-badge.suspended {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--galactic-text-secondary);
+}
+
 /* === Empty State v2 === */
 .empty-state-v2 {
     text-align: center;

@@ -154,14 +154,13 @@ def index():
         if group.is_active:
             active_groups += 1
 
-    # Transações recentes
+    # Transações recentes (todas, para visibilidade completa de status)
     recent_transactions = Transaction.query.join(
         Subscription
     ).join(
         Group
     ).filter(
-        Group.creator_id == effective.id,
-        Transaction.status == 'completed'
+        Group.creator_id == effective.id
     ).order_by(
         Transaction.created_at.desc()
     ).limit(10).all()

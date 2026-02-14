@@ -72,11 +72,14 @@
                         <div class="row-info">
                             <div class="row-title">
                                 @{{ txn.subscription.telegram_username or txn.subscription.telegram_user_id }}
-                                {% if txn.status == 'completed' %}
-                                    <span class="glow-dot green"></span>
-                                {% elif txn.status == 'pending' %}
-                                    <span class="glow-dot yellow"></span>
-                                {% endif %}
+                                <span class="tx-status-badge {{ txn.status }}">
+                                    {% if txn.status == 'completed' %}<i class="bi bi-check-circle-fill"></i> Pago
+                                    {% elif txn.status == 'pending' %}<i class="bi bi-hourglass-split"></i> Pendente
+                                    {% elif txn.status == 'failed' %}<i class="bi bi-x-circle-fill"></i> Falhou
+                                    {% elif txn.status == 'disputed' %}<i class="bi bi-exclamation-triangle-fill"></i> Disputado
+                                    {% else %}<i class="bi bi-dash-circle"></i> {{ txn.status|capitalize }}
+                                    {% endif %}
+                                </span>
                             </div>
                             <div class="row-sub">
                                 {{ txn.subscription.group.name }} &middot; {{ txn.subscription.plan.name }}
@@ -86,7 +89,7 @@
                     <div class="row-item-right">
                         <div class="row-metrics">
                             <div class="row-metric">
-                                <span class="row-metric-value green">+R$ {{ "%.2f"|format(txn.amount) }}</span>
+                                <span class="row-metric-value {% if txn.status == 'completed' %}green{% elif txn.status == 'pending' %}yellow{% else %}red{% endif %}">{% if txn.status == 'completed' %}+{% endif %}R$ {{ "%.2f"|format(txn.amount) }}</span>
                                 <span class="row-metric-label">bruto</span>
                             </div>
                             <div class="row-metric">
