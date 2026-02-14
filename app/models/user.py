@@ -87,12 +87,38 @@ class Creator(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
     
     def get_fee_rates(self):
-        """Retorna taxas efetivas (custom ou default)"""
+        """Retorna taxas efetivas (custom > faixa por assinantes > default)"""
         from app.services.payment_service import PaymentService
+
+        # Custom fees (admin) tem prioridade
+        if self.custom_fixed_fee is not None or self.custom_percentage_fee is not None:
+            return {
+                'fixed_fee': self.custom_fixed_fee if self.custom_fixed_fee is not None else PaymentService.FIXED_FEE,
+                'percentage_fee': self.custom_percentage_fee if self.custom_percentage_fee is not None else PaymentService.PERCENTAGE_FEE,
+                'is_custom': True,
+                'tier_info': None
+            }
+
+        # Contar assinantes ativos para determinar faixa
+        from app.models.group import Group, Subscription
+        from sqlalchemy import func
+        subscriber_count = db.session.query(func.count(Subscription.id)).join(
+            Group
+        ).filter(
+            Group.creator_id == self.id,
+            Subscription.status == 'active'
+        ).scalar() or 0
+
+        tiered_pct = PaymentService.get_tiered_percentage(subscriber_count)
+
         return {
-            'fixed_fee': self.custom_fixed_fee if self.custom_fixed_fee is not None else PaymentService.FIXED_FEE,
-            'percentage_fee': self.custom_percentage_fee if self.custom_percentage_fee is not None else PaymentService.PERCENTAGE_FEE,
-            'is_custom': self.custom_fixed_fee is not None or self.custom_percentage_fee is not None
+            'fixed_fee': PaymentService.FIXED_FEE,
+            'percentage_fee': tiered_pct,
+            'is_custom': tiered_pct != PaymentService.PERCENTAGE_FEE,
+            'tier_info': {
+                'subscriber_count': subscriber_count,
+                'percentage_display': f"{tiered_pct * 100:.2f}".replace('.', ',') + "%"
+            }
         }
 
     def update_last_login(self):

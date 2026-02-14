@@ -130,11 +130,18 @@
                 <h5 class="mb-0">
                     <i class="bi bi-percent"></i> Taxas
                 </h5>
-                {% if creator.custom_fixed_fee is not none or creator.custom_percentage_fee is not none %}
-                    <span class="badge bg-primary">Personalizado</span>
-                {% else %}
-                    <span class="badge bg-secondary">Padrao</span>
-                {% endif %}
+                <div class="d-flex gap-2 align-items-center">
+                    {% if creator.custom_fixed_fee is not none or creator.custom_percentage_fee is not none %}
+                        <span class="badge bg-primary">Personalizado</span>
+                    {% elif fee_rates.tier_info and fee_rates.tier_info.subscriber_count > 1000 %}
+                        <span class="badge" style="background: rgba(56, 189, 248, 0.2); color: var(--galactic-accent-2);">
+                            <i class="bi bi-graph-down-arrow"></i>
+                            Faixa: {{ fee_rates.tier_info.subscriber_count | int }} assinantes &rarr; {{ fee_rates.tier_info.percentage_display }}
+                        </span>
+                    {% else %}
+                        <span class="badge bg-secondary">Padrao</span>
+                    {% endif %}
+                </div>
             </div>
             <form method="POST" action="{{ url_for('admin.update_creator_fees', creator_id=creator.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -168,6 +175,40 @@
                     <i class="bi bi-save"></i> Salvar Taxas
                 </button>
             </form>
+
+            <!-- Tabela de faixas escalonadas -->
+            <div class="mt-4 pt-3" style="border-top: 1px solid rgba(255,255,255,0.06);">
+                <h6 class="mb-2" style="font-size: 0.85rem;">
+                    <i class="bi bi-bar-chart-steps"></i> Faixas Escalonadas por Assinantes
+                </h6>
+                <p class="text-muted mb-2" style="font-size: 0.75rem;">
+                    Taxa percentual automatica quando nao ha taxa personalizada. Taxa fixa (R$ 0,99) nao muda.
+                </p>
+                <table class="table table-sm mb-0" style="font-size: 0.8rem;">
+                    <thead>
+                        <tr>
+                            <th style="border-color: rgba(255,255,255,0.06);">Assinantes</th>
+                            <th style="border-color: rgba(255,255,255,0.06);">Taxa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set tiers = [
+                            ('0 - 1.000', '9,99%', '9,99%'),
+                            ('1.001 - 5.000', '8,99%', '8,99%'),
+                            ('5.001 - 15.000', '7,99%', '7,99%'),
+                            ('15.001 - 50.000', '6,99%', '6,99%'),
+                            ('50.001+', '5,99%', '5,99%')
+                        ] %}
+                        {% set active_pct = fee_rates.tier_info.percentage_display if fee_rates.tier_info and not (creator.custom_fixed_fee is not none or creator.custom_percentage_fee is not none) else none %}
+                        {% for label, pct, match_pct in tiers %}
+                        <tr {% if active_pct and active_pct == match_pct %}style="background: rgba(56, 189, 248, 0.08); font-weight: 600;"{% endif %}>
+                            <td style="border-color: rgba(255,255,255,0.06);">{{ label }}</td>
+                            <td style="border-color: rgba(255,255,255,0.06);">{{ pct }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Grupos -->

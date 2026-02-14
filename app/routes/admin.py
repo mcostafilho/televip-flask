@@ -246,13 +246,16 @@ def creator_details(creator_id):
         'percentage': float(PaymentService.PERCENTAGE_FEE) * 100
     }
 
+    fee_rates = creator.get_fee_rates()
+
     return render_template('admin/creator_details.html',
                          creator=creator,
                          groups=groups,
                          stats=stats,
                          recent_transactions=recent_transactions,
                          pending_withdrawals=pending_withdrawals,
-                         fee_defaults=fee_defaults)
+                         fee_defaults=fee_defaults,
+                         fee_rates=fee_rates)
 
 @bp.route('/creator/<int:creator_id>/fees', methods=['POST'])
 @login_required

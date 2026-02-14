@@ -15,6 +15,24 @@ class PaymentService:
     FIXED_FEE = Decimal('0.99')  # Taxa fixa por transação
     PERCENTAGE_FEE = Decimal('0.0999')  # 9,99% de taxa percentual
 
+    # Faixas de taxa por quantidade de assinantes ativos
+    # (limite_superior, percentual_decimal)
+    FEE_TIERS = [
+        (1000,  Decimal('0.0999')),  # 0-1000: 9,99%
+        (5000,  Decimal('0.0899')),  # 1001-5000: 8,99%
+        (15000, Decimal('0.0799')),  # 5001-15000: 7,99%
+        (50000, Decimal('0.0699')),  # 15001-50000: 6,99%
+        (None,  Decimal('0.0599')),  # 50001+: 5,99%
+    ]
+
+    @staticmethod
+    def get_tiered_percentage(subscriber_count):
+        """Retorna taxa percentual baseada na faixa de assinantes"""
+        for limit, rate in PaymentService.FEE_TIERS:
+            if limit is None or subscriber_count <= limit:
+                return rate
+        return PaymentService.PERCENTAGE_FEE  # fallback
+
     @staticmethod
     def calculate_fees(gross_amount, fixed_fee=None, percentage_fee=None):
         """
