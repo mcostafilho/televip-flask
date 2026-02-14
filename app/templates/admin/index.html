@@ -64,6 +64,16 @@
                     <div class="ms-3">
                         <p class="text-muted mb-1 small">Saques Pendentes</p>
                         <h3 class="mb-0">{{ stats.pending_withdrawals }}</h3>
+                        <small class="text-muted">R$ {{ "%.2f"|format(total_to_pay) }}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card" style="border-left: 3px solid var(--galactic-success);">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon" style="background: rgba(52, 211, 153, 0.12); color: var(--galactic-success);"><i class="bi bi-wallet-fill"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Total Pago</p>
+                        <h3 class="mb-0" style="color: var(--galactic-success);">R$ {{ "%.2f"|format(total_paid) }}</h3>
                     </div>
                 </div>
             </div>
@@ -117,6 +127,61 @@
             <div class="empty-state-v2">
                 <div class="empty-icon"><i class="bi bi-check-circle"></i></div>
                 <p class="text-muted mb-0">Nenhum saque pendente</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Histórico de Saques Processados -->
+        <div class="content-card mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history"></i> Histórico de Saques
+                </h5>
+                <span class="badge bg-success">Total pago: R$ {{ "%.2f"|format(total_paid) }}</span>
+            </div>
+
+            {% if completed_withdrawals %}
+            <div class="row-list">
+                {% for withdrawal in completed_withdrawals %}
+                <div class="row-item">
+                    <div class="row-item-left">
+                        <div class="row-icon {% if withdrawal.status == 'completed' %}completed{% else %}failed{% endif %}">
+                            {% if withdrawal.status == 'completed' %}
+                                <i class="bi bi-check-lg"></i>
+                            {% else %}
+                                <i class="bi bi-x-lg"></i>
+                            {% endif %}
+                        </div>
+                        <div class="row-info">
+                            <div class="row-title">
+                                {{ withdrawal.creator.name }}
+                                <span class="tx-status-badge {{ withdrawal.status }}">
+                                    {% if withdrawal.status == 'completed' %}<i class="bi bi-check-circle-fill"></i> Pago
+                                    {% else %}<i class="bi bi-x-circle-fill"></i> Falhou
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="row-sub">
+                                <code style="background: rgba(124, 92, 252, 0.15); color: var(--galactic-accent-2); padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.72rem;">{{ withdrawal.pix_key }}</code>
+                                &middot; Solicitado {{ withdrawal.created_at.strftime('%d/%m/%Y %H:%M') }}
+                                {% if withdrawal.processed_at %}
+                                &middot; Processado {{ withdrawal.processed_at.strftime('%d/%m/%Y %H:%M') }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row-item-right">
+                        <div class="tx-amount {% if withdrawal.status == 'completed' %}green{% else %}red{% endif %}">
+                            R$ {{ "%.2f"|format(withdrawal.amount) }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state-v2">
+                <div class="empty-icon"><i class="bi bi-clock-history"></i></div>
+                <p class="text-muted mb-0">Nenhum saque processado ainda</p>
             </div>
             {% endif %}
         </div>

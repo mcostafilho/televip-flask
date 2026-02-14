@@ -48,7 +48,20 @@ def index():
         
         # Calcular total a pagar
         total_to_pay = sum(w.amount for w in pending_withdrawals)
-    
+
+    # Histórico de saques processados (últimos 20)
+    completed_withdrawals = []
+    total_paid = 0
+    if has_withdrawal_model and Withdrawal:
+        completed_withdrawals = Withdrawal.query.filter(
+            Withdrawal.status.in_(['completed', 'failed'])
+        ).order_by(
+            Withdrawal.processed_at.desc()
+        ).limit(20).all()
+        total_paid = db.session.query(
+            func.coalesce(func.sum(Withdrawal.amount), 0)
+        ).filter(Withdrawal.status == 'completed').scalar() or 0
+
     # Todos os criadores com informações adicionais
     creators = Creator.query.order_by(Creator.created_at.desc()).all()
     
@@ -94,6 +107,8 @@ def index():
                          stats=stats,
                          pending_withdrawals=pending_withdrawals,
                          total_to_pay=total_to_pay,
+                         completed_withdrawals=completed_withdrawals,
+                         total_paid=total_paid,
                          creators=creators)
 
 @bp.route('/withdrawal/<int:id>/process', methods=['POST'])
