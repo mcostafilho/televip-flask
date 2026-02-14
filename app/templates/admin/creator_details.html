@@ -2,64 +2,140 @@
 
 {% block title %}Detalhes: {{ creator.name }} - Admin TeleVIP{% endblock %}
 
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-<div class="bg-danger text-white py-4 mb-4">
-    <div class="container">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{{ url_for('admin.index') }}" class="text-white">Admin</a></li>
-                <li class="breadcrumb-item active text-white">{{ creator.name }}</li>
-            </ol>
-        </nav>
-    </div>
-</div>
-
-<div class="container">
-    <!-- Informações do Criador -->
-    <div class="card mb-4">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <h4 class="mb-0">
-                <i class="bi bi-person-circle"></i> {{ creator.name }}
-            </h4>
-            <div>
-                <a href="{{ url_for('admin.view_creator_dashboard', creator_id=creator.id) }}"
-                   class="btn btn-primary me-2">
-                    <i class="bi bi-speedometer2"></i> Ver Dashboard
-                </a>
-                <a href="{{ url_for('admin.index') }}" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left"></i> Voltar
-                </a>
-            </div>
+<div class="dashboard-wrapper">
+    <div class="dashboard-container">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb-nav">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin.index') }}">Admin</a></li>
+                    <li class="breadcrumb-item active">{{ creator.name }}</li>
+                </ol>
+            </nav>
         </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <p><strong>Email:</strong> {{ creator.email }}</p>
-                    <p><strong>Username:</strong> @{{ creator.username }}</p>
-                    <p><strong>Telegram ID:</strong> {{ creator.telegram_id or 'Não configurado' }}</p>
+
+        <!-- Creator Header -->
+        <div class="dashboard-header welcome-header">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="welcome-avatar">
+                        <i class="bi bi-person-circle" style="font-size: 1.3rem;"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 mb-1">{{ creator.name }}</h1>
+                        <p class="text-muted mb-0">
+                            {{ creator.email }} &middot; @{{ creator.username }}
+                            &middot; Telegram: {{ creator.telegram_id or 'Nao configurado' }}
+                            &middot; Cadastro: {{ creator.created_at.strftime('%d/%m/%Y %H:%M') }}
+                        </p>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <p><strong>Cadastro:</strong> {{ creator.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
-                    <p><strong>Disponível p/ saque:</strong> <span class="text-success fw-bold">R$ {{ "%.2f"|format(stats.withdrawable_balance) }}</span></p>
-                    <p><strong>Bloqueado (7 dias):</strong> <span class="text-warning fw-bold">R$ {{ "%.2f"|format(stats.blocked_balance) }}</span></p>
-                    <p><strong>Total ganho (líquido):</strong> R$ {{ "%.2f"|format(stats.total_earned_net) }}</p>
-                    <p><strong>Total sacado:</strong> R$ {{ "%.2f"|format(stats.total_withdrawn) }}</p>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('admin.view_creator_dashboard', creator_id=creator.id) }}"
+                       class="btn btn-sm btn-primary" style="border-radius: 20px;">
+                        <i class="bi bi-speedometer2"></i> Ver Dashboard
+                    </a>
+                    <a href="{{ url_for('admin.index') }}"
+                       class="btn btn-sm btn-outline-secondary" style="border-radius: 20px;">
+                        <i class="bi bi-arrow-left"></i> Voltar
+                    </a>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Taxas Personalizadas -->
-    <div class="card mb-4">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="bi bi-percent"></i> Taxas</h5>
-            {% if creator.custom_fixed_fee is not none or creator.custom_percentage_fee is not none %}
-                <span class="badge bg-primary">Personalizado</span>
-            {% else %}
-                <span class="badge bg-secondary">Padrao</span>
-            {% endif %}
+        <!-- Stat Cards -->
+        <div class="stats-grid">
+            <div class="stat-card stat-primary">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon primary"><i class="bi bi-collection"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Grupos</p>
+                        <h3 class="mb-0">{{ stats.total_groups }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card stat-info">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon info"><i class="bi bi-people"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Assinantes Ativos</p>
+                        <h3 class="mb-0">{{ stats.active_subscribers }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card stat-success">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon success"><i class="bi bi-cash-stack"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Receita Total</p>
+                        <h3 class="mb-0">R$ {{ "%.2f"|format(stats.total_revenue) }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card stat-warning">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon warning"><i class="bi bi-hourglass-split"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Saque Pendente</p>
+                        <h3 class="mb-0">R$ {{ "%.2f"|format(stats.pending_withdrawal) }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card" style="border-left: 3px solid var(--galactic-success);">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon" style="background: rgba(52, 211, 153, 0.12); color: var(--galactic-success);"><i class="bi bi-wallet2"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Disponivel p/ Saque</p>
+                        <h3 class="mb-0" style="color: var(--galactic-success);">R$ {{ "%.2f"|format(stats.withdrawable_balance) }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card" style="border-left: 3px solid var(--galactic-warning);">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon" style="background: rgba(251, 191, 36, 0.12); color: var(--galactic-warning);"><i class="bi bi-lock"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Bloqueado (7 dias)</p>
+                        <h3 class="mb-0" style="color: var(--galactic-warning);">R$ {{ "%.2f"|format(stats.blocked_balance) }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card" style="border-left: 3px solid var(--galactic-accent-2);">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon" style="background: rgba(56, 189, 248, 0.12); color: var(--galactic-accent-2);"><i class="bi bi-graph-up-arrow"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Total Ganho (liquido)</p>
+                        <h3 class="mb-0" style="color: var(--galactic-accent-2);">R$ {{ "%.2f"|format(stats.total_earned_net) }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card" style="border-left: 3px solid var(--galactic-danger);">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon" style="background: rgba(248, 113, 113, 0.12); color: var(--galactic-danger);"><i class="bi bi-arrow-up-circle"></i></div>
+                    <div class="ms-3">
+                        <p class="text-muted mb-1 small">Total Sacado</p>
+                        <h3 class="mb-0" style="color: var(--galactic-danger);">R$ {{ "%.2f"|format(stats.total_withdrawn) }}</h3>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="card-body">
+
+        <!-- Taxas Personalizadas -->
+        <div class="content-card mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">
+                    <i class="bi bi-percent"></i> Taxas
+                </h5>
+                {% if creator.custom_fixed_fee is not none or creator.custom_percentage_fee is not none %}
+                    <span class="badge bg-primary">Personalizado</span>
+                {% else %}
+                    <span class="badge bg-secondary">Padrao</span>
+                {% endif %}
+            </div>
             <form method="POST" action="{{ url_for('admin.update_creator_fees', creator_id=creator.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="form-check form-switch mb-3">
@@ -76,7 +152,7 @@
                                    name="custom_fixed_fee"
                                    value="{{ '%.2f'|format(creator.custom_fixed_fee) if creator.custom_fixed_fee is not none else '%.2f'|format(fee_defaults.fixed) }}"
                                    placeholder="{{ '%.2f'|format(fee_defaults.fixed) }}">
-                            <small class="text-muted">Padrao: R$ {{ '%.2f'|format(fee_defaults.fixed) }}</small>
+                            <small class="form-text">Padrao: R$ {{ '%.2f'|format(fee_defaults.fixed) }}</small>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="custom_percentage_fee" class="form-label">Taxa percentual (%)</label>
@@ -84,184 +160,175 @@
                                    name="custom_percentage_fee"
                                    value="{{ '%.2f'|format(creator.custom_percentage_fee * 100) if creator.custom_percentage_fee is not none else '%.2f'|format(fee_defaults.percentage) }}"
                                    placeholder="{{ '%.2f'|format(fee_defaults.percentage) }}">
-                            <small class="text-muted">Padrao: {{ '%.2f'|format(fee_defaults.percentage) }}%</small>
+                            <small class="form-text">Padrao: {{ '%.2f'|format(fee_defaults.percentage) }}%</small>
                         </div>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn btn-primary" style="border-radius: 10px;">
                     <i class="bi bi-save"></i> Salvar Taxas
                 </button>
             </form>
         </div>
-    </div>
-    <script>
-    function toggleCustomFees(checkbox) {
-        document.getElementById('custom-fees-fields').style.display = checkbox.checked ? '' : 'none';
-    }
-    </script>
 
-    <!-- Estatísticas -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3 class="text-primary">{{ stats.total_groups }}</h3>
-                    <p class="mb-0">Grupos</p>
-                </div>
+        <!-- Grupos -->
+        <div class="content-card mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">
+                    <i class="bi bi-telegram"></i> Grupos
+                </h5>
+                <span class="badge bg-primary">{{ groups|length }}</span>
             </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3 class="text-info">{{ stats.active_subscribers }}</h3>
-                    <p class="mb-0">Assinantes Ativos</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3 class="text-success">R$ {{ "%.2f"|format(stats.total_revenue) }}</h3>
-                    <p class="mb-0">Receita Total</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3 class="text-warning">R$ {{ "%.2f"|format(stats.pending_withdrawal) }}</h3>
-                    <p class="mb-0">Saque Pendente</p>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Grupos -->
-    <div class="card mb-4">
-        <div class="card-header bg-white">
-            <h5 class="mb-0"><i class="bi bi-telegram"></i> Grupos</h5>
-        </div>
-        <div class="card-body">
             {% if groups %}
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Nome</th>
-                            <th>ID Telegram</th>
-                            <th>Assinantes</th>
-                            <th>Planos</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for group in groups %}
-                        <tr>
-                            <td>{{ group.name }}</td>
-                            <td><code>{{ group.telegram_id }}</code></td>
-                            <td>
-                                {{ group.subscriptions.filter_by(status='active').count() }}
-                            </td>
-                            <td>{{ group.pricing_plans.count() }}</td>
-                            <td>
+            <div class="row-list">
+                {% for group in groups %}
+                <div class="row-item">
+                    <div class="row-item-left">
+                        <div class="row-icon {% if group.is_active %}active{% else %}inactive{% endif %}">
+                            {% if group.is_active %}
+                                <i class="bi bi-telegram"></i>
+                            {% else %}
+                                <i class="bi bi-pause-circle"></i>
+                            {% endif %}
+                        </div>
+                        <div class="row-info">
+                            <div class="row-title">
+                                {{ group.name }}
                                 {% if group.is_active %}
-                                    <span class="badge bg-success">Ativo</span>
+                                    <span class="badge bg-success" style="font-size: 0.65rem;">Ativo</span>
                                 {% else %}
-                                    <span class="badge bg-secondary">Inativo</span>
+                                    <span class="badge bg-secondary" style="font-size: 0.65rem;">Inativo</span>
                                 {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                            </div>
+                            <div class="row-sub">
+                                <code style="background: rgba(124, 92, 252, 0.15); color: var(--galactic-accent-2); padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.72rem;">{{ group.telegram_id }}</code>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row-item-right">
+                        <div class="row-metrics">
+                            <div class="row-metric">
+                                <span class="row-metric-value cyan">{{ group.subscriptions.filter_by(status='active').count() }}</span>
+                                <span class="row-metric-label">assinantes</span>
+                            </div>
+                            <div class="row-metric">
+                                <span class="row-metric-value green">{{ group.pricing_plans.count() }}</span>
+                                <span class="row-metric-label">planos</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
             {% else %}
-            <p class="text-muted text-center py-3">Nenhum grupo criado ainda</p>
+            <div class="empty-state-v2">
+                <div class="empty-icon"><i class="bi bi-collection"></i></div>
+                <p class="text-muted mb-0">Nenhum grupo criado ainda</p>
+            </div>
             {% endif %}
         </div>
-    </div>
 
-    <!-- Transações Recentes -->
-    <div class="card mb-4">
-        <div class="card-header bg-white">
-            <h5 class="mb-0"><i class="bi bi-clock-history"></i> Transações Recentes</h5>
-        </div>
-        <div class="card-body">
+        <!-- Transacoes Recentes -->
+        <div class="content-card mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history"></i> Transacoes Recentes
+                </h5>
+            </div>
+
             {% if recent_transactions %}
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Grupo</th>
-                            <th>Assinante</th>
-                            <th>Valor</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for transaction in recent_transactions %}
-                        <tr>
-                            <td>{{ transaction.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                            <td>{{ transaction.subscription.group.name }}</td>
-                            <td>@{{ transaction.subscription.telegram_username }}</td>
-                            <td class="text-success">R$ {{ "%.2f"|format(transaction.amount) }}</td>
-                            <td>
-                                {% if transaction.status == 'completed' %}
-                                    <span class="badge bg-success">Pago</span>
-                                {% else %}
-                                    <span class="badge bg-warning">{{ transaction.status }}</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="row-list">
+                {% for transaction in recent_transactions %}
+                <div class="row-item">
+                    <div class="row-item-left">
+                        <div class="row-icon {% if transaction.status == 'completed' %}completed{% else %}pending{% endif %}">
+                            {% if transaction.status == 'completed' %}
+                                <i class="bi bi-check-lg"></i>
+                            {% else %}
+                                <i class="bi bi-clock"></i>
+                            {% endif %}
+                        </div>
+                        <div class="row-info">
+                            <div class="row-title">
+                                {{ transaction.subscription.group.name }}
+                                <span class="tx-status-badge {{ transaction.status }}">
+                                    {% if transaction.status == 'completed' %}
+                                        <i class="bi bi-check-circle-fill"></i> Pago
+                                    {% else %}
+                                        <i class="bi bi-clock-fill"></i> {{ transaction.status }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="row-sub">
+                                @{{ transaction.subscription.telegram_username }}
+                                &middot; {{ transaction.created_at.strftime('%d/%m/%Y %H:%M') }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row-item-right">
+                        <div class="tx-amount green">R$ {{ "%.2f"|format(transaction.amount) }}</div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
             {% else %}
-            <p class="text-muted text-center py-3">Nenhuma transação ainda</p>
+            <div class="empty-state-v2">
+                <div class="empty-icon"><i class="bi bi-clock-history"></i></div>
+                <p class="text-muted mb-0">Nenhuma transacao ainda</p>
+            </div>
             {% endif %}
         </div>
-    </div>
 
-    <!-- Saques Pendentes -->
-    {% if pending_withdrawals %}
-    <div class="card">
-        <div class="card-header bg-warning">
-            <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Saques Pendentes</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Data Solicitação</th>
-                            <th>Valor</th>
-                            <th>Chave PIX</th>
-                            <th>Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for withdrawal in pending_withdrawals %}
-                        <tr>
-                            <td>{{ withdrawal.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                            <td class="text-danger fw-bold">R$ {{ "%.2f"|format(withdrawal.amount) }}</td>
-                            <td>{{ withdrawal.pix_key }}</td>
-                            <td>
-                                <form method="POST" action="{{ url_for('admin.process_withdrawal', id=withdrawal.id) }}" style="display: inline;">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                    <button type="submit" class="btn btn-sm btn-success">
-                                        <i class="bi bi-check"></i> Processar
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <!-- Saques Pendentes -->
+        {% if pending_withdrawals %}
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle"></i> Saques Pendentes
+                </h5>
+                <span class="badge bg-warning">{{ pending_withdrawals|length }}</span>
+            </div>
+
+            <div class="row-list">
+                {% for withdrawal in pending_withdrawals %}
+                <div class="row-item">
+                    <div class="row-item-left">
+                        <div class="row-icon pending">
+                            <i class="bi bi-clock"></i>
+                        </div>
+                        <div class="row-info">
+                            <div class="row-title">
+                                R$ {{ "%.2f"|format(withdrawal.amount) }}
+                            </div>
+                            <div class="row-sub">
+                                <code style="background: rgba(124, 92, 252, 0.15); color: var(--galactic-accent-2); padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.72rem;">{{ withdrawal.pix_key }}</code>
+                                &middot; {{ withdrawal.created_at.strftime('%d/%m/%Y %H:%M') }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row-item-right">
+                        <div class="tx-amount yellow">R$ {{ "%.2f"|format(withdrawal.amount) }}</div>
+                        <form method="POST" action="{{ url_for('admin.process_withdrawal', id=withdrawal.id) }}" style="display: inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="btn btn-sm btn-success"
+                                    onclick="return confirm('Confirma que o PIX foi realizado?')">
+                                <i class="bi bi-check-circle"></i> Pago
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
         </div>
+        {% endif %}
     </div>
-    {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleCustomFees(checkbox) {
+    document.getElementById('custom-fees-fields').style.display = checkbox.checked ? '' : 'none';
+}
+</script>
 {% endblock %}
