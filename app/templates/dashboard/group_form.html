@@ -270,7 +270,7 @@
                                 </div>
                                 
                                 <button type="button" class="add-plan-btn" onclick="addPlan()">
-                                    <i class="bi bi-plus-circle"></i> Adicionar Plano <small class="text-muted">(máx. 5)</small>
+                                    <i class="bi bi-plus-circle"></i> Adicionar Plano <small class="text-muted">(máx. 6)</small>
                                 </button>
                             </div>
 
@@ -594,7 +594,7 @@ function selectChatType(type) {
 }
 
 // Adicionar novo plano (máximo 5)
-var MAX_PLANS = 5;
+var MAX_PLANS = 6;
 function addPlan() {
     const container = document.getElementById('plansContainer');
     const planCount = container.querySelectorAll('.plan-item').length;
