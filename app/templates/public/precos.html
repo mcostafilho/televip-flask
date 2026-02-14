@@ -453,8 +453,8 @@
                         </div>
 
                         <div class="fee-highlight">
-                            <div class="fee-text">R$ 0,99 + 9,99% por transação</div>
-                            <div class="fee-sub">A menor taxa do mercado</div>
+                            <div class="fee-text">R$ 0,99 + a partir de 5,99%</div>
+                            <div class="fee-sub">Quanto mais assinantes, menor a taxa!</div>
                         </div>
 
                         <ul style="list-style: none; padding: 0; margin: 24px 0;">
@@ -484,6 +484,36 @@
                             </li>
                         </ul>
 
+                        <!-- Tabela de faixas escalonadas -->
+                        <div style="background: rgba(124, 92, 252, 0.08); border-radius: 12px; border: 1px solid rgba(124, 92, 252, 0.15); padding: 16px 20px; margin: 8px 0 20px;">
+                            <p style="font-size: 14px; font-weight: 700; color: #e2e8f0; margin-bottom: 10px;">
+                                <i class="bi bi-graph-down-arrow"></i> Taxa percentual regressiva:
+                            </p>
+                            <table style="width: 100%; font-size: 13px; color: #b0b4cc; border-collapse: collapse;">
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                                    <td style="padding: 6px 0;">0 - 1.000 assinantes</td>
+                                    <td style="text-align: right; font-weight: 600; color: #e2e8f0; padding: 6px 0;">9,99%</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                                    <td style="padding: 6px 0;">1.001 - 5.000</td>
+                                    <td style="text-align: right; font-weight: 600; color: #e2e8f0; padding: 6px 0;">8,99%</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                                    <td style="padding: 6px 0;">5.001 - 15.000</td>
+                                    <td style="text-align: right; font-weight: 600; color: #e2e8f0; padding: 6px 0;">7,99%</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                                    <td style="padding: 6px 0;">15.001 - 50.000</td>
+                                    <td style="text-align: right; font-weight: 600; color: #e2e8f0; padding: 6px 0;">6,99%</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px 0;">50.001+</td>
+                                    <td style="text-align: right; font-weight: 700; color: #34d399; padding: 6px 0;">5,99%</td>
+                                </tr>
+                            </table>
+                            <p style="font-size: 11px; color: #8b8fa3; margin: 8px 0 0;">Taxa fixa de R$ 0,99 não muda. Redução automática por total de assinantes ativos.</p>
+                        </div>
+
                         <a href="{{ url_for('auth.register') }}" class="btn-pricing" style="background: var(--gradient-primary); color: white; border: none;">
                             <i class="bi bi-rocket-takeoff"></i> Criar Conta Grátis
                         </a>
@@ -491,6 +521,93 @@
                         <p class="text-center text-muted mt-3" style="font-size: 14px;">
                             Sem cartão de crédito &bull; Cadastre em 30 segundos
                         </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Taxas Escalonadas - Destaque -->
+    <section style="padding: 80px 0; background: rgba(26, 16, 64, 0.5);">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold">Quanto mais cresce, <span class="text-gradient">menos paga</span></h2>
+                <p class="lead text-muted">Taxa percentual reduz automaticamente conforme seu total de assinantes ativos</p>
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div style="background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+                                border: 1px solid rgba(124, 92, 252, 0.15); border-radius: 20px; padding: 40px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
+
+                        <!-- Visual tier bars -->
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                        <span style="font-size: 14px; font-weight: 600; color: #e2e8f0;">0 - 1.000 assinantes</span>
+                                        <span style="font-size: 14px; font-weight: 700; color: #b0b4cc;">9,99%</span>
+                                    </div>
+                                    <div style="height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden;">
+                                        <div style="width: 100%; height: 100%; background: linear-gradient(90deg, #7c5cfc, #a78bfa); border-radius: 4px;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                        <span style="font-size: 14px; font-weight: 600; color: #e2e8f0;">1.001 - 5.000 assinantes</span>
+                                        <span style="font-size: 14px; font-weight: 700; color: #c4b5fd;">8,99%</span>
+                                    </div>
+                                    <div style="height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden;">
+                                        <div style="width: 85%; height: 100%; background: linear-gradient(90deg, #7c5cfc, #38bdf8); border-radius: 4px;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                        <span style="font-size: 14px; font-weight: 600; color: #e2e8f0;">5.001 - 15.000 assinantes</span>
+                                        <span style="font-size: 14px; font-weight: 700; color: #38bdf8;">7,99%</span>
+                                    </div>
+                                    <div style="height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden;">
+                                        <div style="width: 70%; height: 100%; background: linear-gradient(90deg, #38bdf8, #34d399); border-radius: 4px;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                        <span style="font-size: 14px; font-weight: 600; color: #e2e8f0;">15.001 - 50.000 assinantes</span>
+                                        <span style="font-size: 14px; font-weight: 700; color: #34d399;">6,99%</span>
+                                    </div>
+                                    <div style="height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden;">
+                                        <div style="width: 55%; height: 100%; background: linear-gradient(90deg, #34d399, #22c55e); border-radius: 4px;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                        <span style="font-size: 14px; font-weight: 600; color: #e2e8f0;">50.001+ assinantes</span>
+                                        <span style="font-size: 16px; font-weight: 800; color: #22c55e;">5,99%</span>
+                                    </div>
+                                    <div style="height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden;">
+                                        <div style="width: 40%; height: 100%; background: linear-gradient(90deg, #22c55e, #fbbf24); border-radius: 4px;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-4 pt-3" style="border-top: 1px solid rgba(255,255,255,0.06);">
+                            <p style="font-size: 14px; color: #b0b4cc; margin-bottom: 4px;">
+                                <i class="bi bi-info-circle"></i> A taxa fixa de <strong style="color: #e2e8f0;">R$ 0,99</strong> não muda.
+                                Apenas o percentual diminui automaticamente.
+                            </p>
+                            <p style="font-size: 13px; color: #8b8fa3; margin-bottom: 0;">
+                                A faixa é calculada pelo total de assinantes ativos em todos os seus grupos.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -517,7 +634,7 @@
                             <i class="bi bi-calculator"></i> Calcular
                         </button>
                         <div id="calcWarning" style="display: none; margin-top: 10px; padding: 10px 14px; background: rgba(248, 113, 113, 0.15); border: 1px solid rgba(248, 113, 113, 0.3); border-radius: 10px; color: #f87171; font-size: 14px; text-align: center;">
-                            O valor minimo por plano é R$ 5,00
+                            O valor mínimo por plano é R$ 5,00
                         </div>
                     </div>
 
@@ -578,7 +695,7 @@
                                 <tr>
                                     <td>Taxa por transação</td>
                                     <td>12% + R$ 1,49</td>
-                                    <td class="highlight">9,99% + R$ 0,99</td>
+                                    <td class="highlight">5,99% a 9,99% + R$ 0,99</td>
                                     <td>15% + R$ 0,99</td>
                                 </tr>
                                 <tr>
@@ -707,7 +824,7 @@
                             </h2>
                             <div id="pfaq1" class="accordion-collapse collapse show" data-bs-parent="#pricingFaq">
                                 <div class="accordion-body">
-                                    Não! A única taxa é R$ 0,99 + 9,99% por transação. Sem mensalidade, sem taxa de setup, sem taxa de saque, sem surpresas. Você só paga quando recebe.
+                                    Não! A taxa é R$ 0,99 fixo + uma porcentagem que varia de 9,99% a 5,99% conforme o total de assinantes ativos. Quanto mais você cresce, menor a taxa. Sem mensalidade, sem taxa de setup, sem taxa de saque, sem surpresas.
                                 </div>
                             </div>
                         </div>
@@ -720,7 +837,7 @@
                             </h2>
                             <div id="pfaq2" class="accordion-collapse collapse" data-bs-parent="#pricingFaq">
                                 <div class="accordion-body">
-                                    A taxa é descontada automaticamente de cada transação. Por exemplo, em uma venda de R$ 100, a taxa é R$ 0,99 + R$ 9,99 = R$ 10,98. Você recebe R$ 89,02. O valor já chega líquido no seu saldo.
+                                    A taxa é descontada automaticamente de cada transação. Por exemplo, com até 1.000 assinantes, uma venda de R$ 100 desconta R$ 0,99 + R$ 9,99 = R$ 10,98 (você recebe R$ 89,02). Com mais de 50.000 assinantes, a mesma venda desconta R$ 0,99 + R$ 5,99 = R$ 6,98 (você recebe R$ 93,02). A redução é automática.
                                 </div>
                             </div>
                         </div>
@@ -759,7 +876,7 @@
                             </h2>
                             <div id="pfaq5" class="accordion-collapse collapse" data-bs-parent="#pricingFaq">
                                 <div class="accordion-body">
-                                    Não existe limite. Você pode faturar quanto quiser, com quantos grupos e membros desejar. A taxa é sempre a mesma: R$ 0,99 + 9,99% por transação.
+                                    Não existe limite. Você pode faturar quanto quiser, com quantos grupos e membros desejar. E quanto mais assinantes ativos você tiver, menor a taxa percentual: de 9,99% até 5,99%.
                                 </div>
                             </div>
                         </div>
@@ -812,7 +929,7 @@
                         A plataforma definitiva para monetização de grupos no Telegram.
                     </p>
                     <div class="badge bg-warning text-dark p-2 mt-2">
-                        <i class="bi bi-tag-fill"></i> Taxa: R$ 0,99 + 9,99% por transação
+                        <i class="bi bi-tag-fill"></i> Taxa: R$ 0,99 + a partir de 5,99%
                     </div>
                     <div class="social-links mt-3">
                         <a href="#" onclick="openSocialModal(event)"><i class="bi bi-facebook"></i></a>

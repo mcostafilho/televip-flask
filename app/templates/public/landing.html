@@ -110,9 +110,9 @@
                 <!-- Taxa destacada no Hero -->
                 <div class="alert alert-warning d-inline-block px-4 py-2 mt-3 mb-4">
                     <i class="bi bi-tag-fill text-warning"></i>
-                    <strong>Apenas R$ 0,99 por transação + 9,99% do valor</strong>
+                    <strong>R$ 0,99 + a partir de 5,99% por transação</strong>
                     <br>
-                    <small>A menor taxa do mercado! 💰</small>
+                    <small>Quanto mais assinantes, menor a taxa!</small>
                 </div>
 
                 <!-- Stats -->
@@ -245,7 +245,7 @@
                         </div>
                         <h3>Pagamento via Stripe</h3>
                         <p>Receba pagamentos via cartão de crédito e boleto com processamento seguro via Stripe.</p>
-                        <span class="badge bg-warning text-dark">R$ 0,99 + 9,99% por transação</span>
+                        <span class="badge bg-warning text-dark">R$ 0,99 + a partir de 5,99%</span>
                     </div>
                 </div>
 
@@ -306,7 +306,9 @@
                 </p>
                 <div class="alert alert-success d-inline-block mt-3">
                     <i class="bi bi-check-circle-fill text-success"></i>
-                    <strong>Taxa única: R$ 0,99 por transação + 9,99% do valor</strong>
+                    <strong>R$ 0,99 fixo + a partir de 5,99% por transação</strong>
+                    <br>
+                    <small>Taxa diminui automaticamente conforme você cresce</small>
                 </div>
             </div>
 
@@ -325,9 +327,24 @@
                         <div class="price-details mt-3 p-3">
                             <p class="mb-2"><strong>Você paga apenas:</strong></p>
                             <p class="mb-0" style="font-size: 1.1rem;">
-                                <mark>R$ 0,99 + 9,99% por transação</mark>
+                                <mark>R$ 0,99 + a partir de 5,99%</mark>
                             </p>
-                            <small>Ex: Venda de R$ 100 = R$ 10,98 de taxa</small>
+                            <small>Taxa percentual diminui com mais assinantes</small>
+                        </div>
+
+                        <!-- Tabela de faixas escalonadas -->
+                        <div class="mt-3 p-3" style="background: rgba(124, 92, 252, 0.08); border-radius: 12px; border: 1px solid rgba(124, 92, 252, 0.15);">
+                            <p class="mb-2" style="font-size: 13px; font-weight: 700; color: #e2e8f0;">
+                                <i class="bi bi-graph-down-arrow"></i> Quanto mais cresce, menos paga:
+                            </p>
+                            <table style="width: 100%; font-size: 13px; color: #b0b4cc;">
+                                <tr><td>0 - 1.000 assinantes</td><td style="text-align: right; font-weight: 600; color: #e2e8f0;">9,99%</td></tr>
+                                <tr><td>1.001 - 5.000</td><td style="text-align: right; font-weight: 600; color: #e2e8f0;">8,99%</td></tr>
+                                <tr><td>5.001 - 15.000</td><td style="text-align: right; font-weight: 600; color: #e2e8f0;">7,99%</td></tr>
+                                <tr><td>15.001 - 50.000</td><td style="text-align: right; font-weight: 600; color: #e2e8f0;">6,99%</td></tr>
+                                <tr><td>50.001+</td><td style="text-align: right; font-weight: 600; color: #34d399;">5,99%</td></tr>
+                            </table>
+                            <p class="mb-0 mt-2" style="font-size: 11px; color: #8b8fa3;">Taxa fixa de R$ 0,99 não muda. Redução automática.</p>
                         </div>
 
                         <ul class="features-list">
@@ -365,8 +382,8 @@
                     <div class="col-md-4 mb-3 mb-md-0">
                         <div class="comparison-card featured">
                             <h5><i class="bi bi-check-circle text-success"></i> TeleVIP</h5>
-                            <p>Sem mensalidade, taxa única e transparente</p>
-                            <strong class="text-success">R$ 0,99 + 9,99%</strong>
+                            <p>Sem mensalidade, taxa regressiva por volume</p>
+                            <strong class="text-success">R$ 0,99 + 5,99% a 9,99%</strong>
                         </div>
                     </div>
                     <div class="col-md-4 mb-3 mb-md-0">
@@ -471,9 +488,9 @@
                 </p>
                 <div class="alert alert-info d-inline-block mt-3 mb-4">
                     <i class="bi bi-info-circle-fill text-info"></i>
-                    <strong>Lembre-se: apenas R$ 0,99 + 9,99% por venda!</strong>
+                    <strong>R$ 0,99 fixo + a partir de 5,99% por venda!</strong>
                     <br>
-                    <small>Sem mensalidade, sem surpresas!</small>
+                    <small>Sem mensalidade. Quanto mais você cresce, menor a taxa!</small>
                 </div>
                 <br>
                 <a href="{{ url_for('auth.register') }}" class="btn-cta">
@@ -498,7 +515,7 @@
                         A plataforma definitiva para monetização de grupos no Telegram.
                     </p>
                     <div class="badge bg-warning text-dark p-2 mt-2">
-                        <i class="bi bi-tag-fill"></i> Taxa: R$ 0,99 + 9,99% por transação
+                        <i class="bi bi-tag-fill"></i> Taxa: R$ 0,99 + a partir de 5,99%
                     </div>
                     <div class="social-links mt-3">
                         <a href="#" aria-label="Facebook" onclick="openSocialModal(event)"><i class="bi bi-facebook"></i></a>

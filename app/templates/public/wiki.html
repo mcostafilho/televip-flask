@@ -648,13 +648,59 @@
                                     <h6>Taxas</h6>
                                     <div class="wiki-highlight warning">
                                         <strong><i class="bi bi-tag-fill" style="color: #fbbf24;"></i> Taxa por transação:</strong>
-                                        <strong>R$ 0,99 (fixo) + 9,99% do valor da venda</strong><br>
-                                        <small>Exemplo: venda de R$ 100,00 &rarr; taxa de R$ 10,98 &rarr; você recebe R$ 89,02</small>
+                                        <strong>R$ 0,99 (fixo) + de 5,99% a 9,99% do valor da venda</strong><br>
+                                        <small>O percentual diminui automaticamente conforme o total de assinantes ativos do criador.</small>
                                     </div>
+
+                                    <h6>Faixas Escalonadas por Assinantes</h6>
+                                    <p>
+                                        A taxa percentual é regressiva: quanto mais assinantes ativos você tem (somando todos os grupos),
+                                        menor o percentual cobrado em cada transação. A taxa fixa de R$ 0,99 não muda.
+                                    </p>
+                                    <div class="wiki-highlight">
+                                        <table style="width: 100%; font-size: 14px;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="text-align: left; padding: 6px 0; color: #e2e8f0;">Assinantes ativos</th>
+                                                    <th style="text-align: right; padding: 6px 0; color: #e2e8f0;">Taxa percentual</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody style="color: #b0b4cc;">
+                                                <tr style="border-top: 1px solid rgba(124,92,252,0.15);">
+                                                    <td style="padding: 8px 0;">0 - 1.000</td>
+                                                    <td style="text-align: right; padding: 8px 0; font-weight: 600; color: #e2e8f0;">9,99%</td>
+                                                </tr>
+                                                <tr style="border-top: 1px solid rgba(124,92,252,0.1);">
+                                                    <td style="padding: 8px 0;">1.001 - 5.000</td>
+                                                    <td style="text-align: right; padding: 8px 0; font-weight: 600; color: #c4b5fd;">8,99%</td>
+                                                </tr>
+                                                <tr style="border-top: 1px solid rgba(124,92,252,0.1);">
+                                                    <td style="padding: 8px 0;">5.001 - 15.000</td>
+                                                    <td style="text-align: right; padding: 8px 0; font-weight: 600; color: #38bdf8;">7,99%</td>
+                                                </tr>
+                                                <tr style="border-top: 1px solid rgba(124,92,252,0.1);">
+                                                    <td style="padding: 8px 0;">15.001 - 50.000</td>
+                                                    <td style="text-align: right; padding: 8px 0; font-weight: 600; color: #34d399;">6,99%</td>
+                                                </tr>
+                                                <tr style="border-top: 1px solid rgba(124,92,252,0.1);">
+                                                    <td style="padding: 8px 0;">50.001+</td>
+                                                    <td style="text-align: right; padding: 8px 0; font-weight: 700; color: #22c55e;">5,99%</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="wiki-highlight success">
+                                        <strong><i class="bi bi-check-circle-fill text-success"></i> Exemplo prático:</strong>
+                                        Com 1.500 assinantes ativos, você está na faixa de 8,99%.
+                                        Uma venda de R$ 100,00 desconta R$ 0,99 + R$ 8,99 = R$ 9,98. Você recebe <strong>R$ 90,02</strong>.
+                                    </div>
+
                                     <ul>
                                         <li><strong>Sem mensalidade</strong> &mdash; você só paga quando recebe.</li>
                                         <li><strong>Sem taxa de setup</strong> &mdash; criar conta é gratuito.</li>
                                         <li><strong>Sem taxa de saque</strong> &mdash; transferências para sua conta são grátis.</li>
+                                        <li><strong>Redução automática</strong> &mdash; não precisa solicitar, a faixa é calculada em tempo real.</li>
                                     </ul>
 
                                     <h6>Saldo e Saques</h6>
@@ -1173,7 +1219,7 @@
                         A plataforma definitiva para monetização de grupos e canais no Telegram.
                     </p>
                     <div class="badge bg-warning text-dark p-2 mt-2">
-                        <i class="bi bi-tag-fill"></i> Taxa: R$ 0,99 + 9,99% por transação
+                        <i class="bi bi-tag-fill"></i> Taxa: R$ 0,99 + a partir de 5,99%
                     </div>
                     <div class="social-links mt-3">
                         <a href="#" onclick="openSocialModal(event)"><i class="bi bi-facebook"></i></a>
