@@ -2566,6 +2566,12 @@ html:has(.dashboard-wrapper) body {
     color: rgba(176, 180, 204, 0.5);
 }
 
+.dashboard-wrapper .form-select option,
+.profile-page .form-select option {
+    background: #1a1d2e;
+    color: #e2e8f0;
+}
+
 .dashboard-wrapper .input-group-text,
 .profile-page .input-group-text {
     background: rgba(124, 92, 252, 0.1);

@@ -129,7 +129,7 @@
                             <label class="form-label small">Bio</label>
                             <textarea class="form-control form-control-sm" name="bio" rows="3" id="bioTextarea"
                                       form="mainProfileForm"
-                                      placeholder="Conte sobre voce..." maxlength="160">{{ user.bio or '' }}</textarea>
+                                      placeholder="Conte sobre você..." maxlength="160">{{ user.bio or '' }}</textarea>
                             <div class="d-flex justify-content-between">
                                 <small class="text-muted">Aparece em /c/{{ user.username }}</small>
                                 <small class="text-muted"><span id="bioCharCount">{{ (user.bio or '')|length }}</span>/160</small>
@@ -234,20 +234,22 @@
                                     <label class="form-label">Username</label>
                                     <div class="input-group">
                                         <span class="input-group-text">@</span>
-                                        <input type="text" class="form-control" name="username"
+                                        <input type="text" class="form-control" name="username" id="usernameInput"
                                                value="{{ user.username }}" required
                                                pattern="[a-zA-Z0-9_]+" minlength="3" maxlength="30"
                                                {% if not can_change_username %}disabled{% endif %}>
                                     </div>
-                                    {% if can_change_username %}
-                                    <small class="text-muted">
-                                        Sua URL: /c/{{ user.username }}
-                                    </small>
-                                    {% else %}
-                                    <small class="text-warning">
-                                        <i class="bi bi-clock"></i> Próxima alteração disponível em {{ days_until_username_change }} dia{{ 's' if days_until_username_change != 1 else '' }}
-                                    </small>
-                                    {% endif %}
+                                    <div id="usernameFeedback">
+                                        {% if can_change_username %}
+                                        <small class="text-muted">
+                                            Sua URL: /c/{{ user.username }}
+                                        </small>
+                                        {% else %}
+                                        <small class="text-warning">
+                                            <i class="bi bi-clock"></i> Próxima alteração disponível em {{ days_until_username_change }} dia{{ 's' if days_until_username_change != 1 else '' }}
+                                        </small>
+                                        {% endif %}
+                                    </div>
                                 </div>
 
                                 <!-- Dados para Saque -->
@@ -689,6 +691,59 @@ phoneInput.addEventListener('input', function() {
         this.value = '(' + v;
     }
 });
+
+// Username availability check
+var usernameInput = document.getElementById('usernameInput');
+var usernameFeedback = document.getElementById('usernameFeedback');
+var usernameTimer = null;
+var originalUsername = '{{ user.username }}';
+
+if (usernameInput && !usernameInput.disabled) {
+    usernameInput.addEventListener('input', function() {
+        var val = this.value.trim().toLowerCase();
+        clearTimeout(usernameTimer);
+
+        if (!val || val.length < 3) {
+            usernameFeedback.innerHTML = '<small class="text-muted">Mínimo 3 caracteres</small>';
+            return;
+        }
+        if (val === originalUsername) {
+            usernameFeedback.innerHTML = '<small class="text-muted">Sua URL: /c/' + val + '</small>';
+            return;
+        }
+
+        usernameFeedback.innerHTML = '<small class="text-muted"><i class="bi bi-arrow-repeat"></i> Verificando...</small>';
+
+        usernameTimer = setTimeout(function() {
+            fetch('{{ url_for("dashboard.check_username") }}?username=' + encodeURIComponent(val))
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.available) {
+                        usernameFeedback.innerHTML = '<small class="text-success"><i class="bi bi-check-circle"></i> @' + val + ' disponível — /c/' + val + '</small>';
+                    } else {
+                        var html = '<small class="text-danger"><i class="bi bi-x-circle"></i> @' + val + ' já está em uso</small>';
+                        if (data.suggestions && data.suggestions.length) {
+                            html += '<div class="mt-1">';
+                            html += '<small class="text-muted">Sugestões: </small>';
+                            data.suggestions.forEach(function(s) {
+                                html += '<a href="#" class="badge bg-secondary text-decoration-none me-1 username-suggestion" style="cursor:pointer;">' + s + '</a>';
+                            });
+                            html += '</div>';
+                        }
+                        usernameFeedback.innerHTML = html;
+                        // Click to apply suggestion
+                        usernameFeedback.querySelectorAll('.username-suggestion').forEach(function(el) {
+                            el.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                usernameInput.value = this.textContent;
+                                usernameInput.dispatchEvent(new Event('input'));
+                            });
+                        });
+                    }
+                });
+        }, 400);
+    });
+}
 </script>
 {% endif %}
 {% endblock %}

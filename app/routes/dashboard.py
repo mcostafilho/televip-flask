@@ -563,6 +563,36 @@ def update_profile():
     return redirect(url_for('dashboard.profile'))
 
 
+@bp.route('/profile/check-username')
+@login_required
+@limiter.limit("30 per minute")
+def check_username():
+    """Verifica disponibilidade de username e sugere alternativas"""
+    import re
+    username = request.args.get('username', '').strip().lower()
+    if not username or not re.match(r'^[a-zA-Z0-9_]{3,30}$', username):
+        return jsonify({'available': False, 'error': 'Formato inválido'})
+
+    if username == current_user.username:
+        return jsonify({'available': True, 'current': True})
+
+    exists = Creator.query.filter(Creator.username == username, Creator.id != current_user.id).first()
+    if not exists:
+        return jsonify({'available': True})
+
+    # Gerar sugestões
+    suggestions = []
+    base = re.sub(r'\d+$', '', username)
+    for i in range(1, 100):
+        candidate = f"{base}{i}"
+        if not Creator.query.filter_by(username=candidate).first():
+            suggestions.append(candidate)
+            if len(suggestions) >= 3:
+                break
+
+    return jsonify({'available': False, 'suggestions': suggestions})
+
+
 @bp.route('/profile/upload-avatar', methods=['POST'])
 @login_required
 @limiter.limit("10 per hour")

@@ -113,7 +113,17 @@ def register():
         elif len(username) < 3:
             errors.append('Username deve ter pelo menos 3 caracteres')
         elif Creator.query.filter_by(username=username).first():
-            errors.append('Email ou username já em uso.')
+            # Sugerir alternativas
+            base = re.sub(r'\d+$', '', username)
+            suggestions = []
+            for i in range(1, 100):
+                candidate = f"{base}{i}"
+                if not Creator.query.filter_by(username=candidate).first():
+                    suggestions.append(candidate)
+                    if len(suggestions) >= 3:
+                        break
+            hint = ', '.join(suggestions)
+            errors.append(f'Username já em uso. Sugestões: {hint}')
 
         # Validar senha
         if len(password) < 8:
