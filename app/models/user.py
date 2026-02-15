@@ -100,7 +100,8 @@ class Creator(UserMixin, db.Model):
             }
 
         # Contar assinantes ativos para determinar faixa
-        from app.models.group import Group, Subscription
+        from app.models.group import Group
+        from app.models.subscription import Subscription
         from sqlalchemy import func
         subscriber_count = db.session.query(func.count(Subscription.id)).join(
             Group
