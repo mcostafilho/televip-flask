@@ -322,6 +322,7 @@
                         <a href="#sec-payments"><i class="bi bi-credit-card"></i> Pagamentos e Taxas</a>
                         <a href="#sec-subscriptions"><i class="bi bi-arrow-repeat"></i> Assinaturas</a>
                         <a href="#sec-bot-flow"><i class="bi bi-chat-dots"></i> Bot do Assinante</a>
+                        <a href="#sec-antileak"><i class="bi bi-shield-lock"></i> Anti-Vazamento</a>
                         <a href="#sec-security"><i class="bi bi-shield-check"></i> Segurança</a>
                         <a href="#sec-not"><i class="bi bi-x-octagon"></i> O que NÃO Faz</a>
                         <a href="#sec-faq"><i class="bi bi-question-circle"></i> FAQ</a>
@@ -970,6 +971,103 @@
                                             Confirmação automática &rarr; Entra no grupo &rarr; Renovação automática &rarr;
                                             [Se cancelar] &rarr; Acesso até vencer &rarr; Grace period 2 dias &rarr; Remoção &rarr; Lembretes
                                         </code>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Anti-Vazamento -->
+                        <div class="accordion-item" id="sec-antileak">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#wikiAntiLeak">
+                                    <div class="section-icon" style="background: rgba(124, 92, 252, 0.15); color: #7c5cfc;">
+                                        <i class="bi bi-shield-lock"></i>
+                                    </div>
+                                    Anti-Vazamento
+                                </button>
+                            </h2>
+                            <div id="wikiAntiLeak" class="accordion-collapse collapse" data-bs-parent="#wikiAccordion">
+                                <div class="accordion-body">
+
+                                    <h6 class="fw-bold mb-2"><i class="bi bi-info-circle text-info"></i> O que e</h6>
+                                    <p>
+                                        O sistema Anti-Vazamento do TeleVIP adiciona multiplas camadas de protecao ao seu grupo ou canal para impedir que conteudo exclusivo seja compartilhado fora.
+                                        Ele funciona de forma automatica apos ser ativado no dashboard.
+                                    </p>
+
+                                    <h6 class="fw-bold mt-4 mb-2"><i class="bi bi-layers text-info"></i> Camadas de protecao</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm" style="color: #b0b4cc;">
+                                            <thead>
+                                                <tr style="border-color: rgba(124,92,252,0.15);">
+                                                    <th style="color: #e2e8f0;">Camada</th>
+                                                    <th style="color: #e2e8f0;">O que faz</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr style="border-color: rgba(124,92,252,0.08);">
+                                                    <td><i class="bi bi-shield-check text-success"></i> Bloqueio de forwards</td>
+                                                    <td>Mensagens do bot sao enviadas com <code>protect_content</code>, impedindo forward e copia</td>
+                                                </tr>
+                                                <tr style="border-color: rgba(124,92,252,0.08);">
+                                                    <td><i class="bi bi-fingerprint text-success"></i> Watermark invisivel</td>
+                                                    <td>Cada broadcast recebe uma marca invisivel unica por assinante, permitindo rastrear vazamentos</td>
+                                                </tr>
+                                                <tr style="border-color: rgba(124,92,252,0.08);">
+                                                    <td><i class="bi bi-lock text-success"></i> Protecao de conteudo</td>
+                                                    <td>Todas as mensagens de broadcast sao protegidas contra copia e salvamento</td>
+                                                </tr>
+                                                <tr style="border-color: rgba(124,92,252,0.08);">
+                                                    <td><i class="bi bi-person-x text-success"></i> Bloqueio de convites</td>
+                                                    <td>Membros nao conseguem convidar outras pessoas para o grupo</td>
+                                                </tr>
+                                                <tr style="border-color: rgba(124,92,252,0.08);">
+                                                    <td><i class="bi bi-eye text-success"></i> Monitoramento</td>
+                                                    <td>Forwards e links de convite postados por membros sao removidos automaticamente</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <h6 class="fw-bold mt-4 mb-2"><i class="bi bi-toggles text-info"></i> Como ativar</h6>
+                                    <ol>
+                                        <li>Acesse o <strong>Dashboard</strong> do TeleVIP</li>
+                                        <li>Va em <strong>Grupos</strong> e clique em <strong>Editar</strong> no grupo desejado</li>
+                                        <li>Na secao <em>Protecao Anti-Vazamento</em>, clique em <strong>Ativar</strong></li>
+                                        <li>Pronto! A protecao entra em vigor imediatamente para novos broadcasts</li>
+                                    </ol>
+
+                                    <div class="wiki-highlight mt-3">
+                                        <h6 class="fw-bold mb-2"><i class="bi bi-telegram text-info"></i> Protecao nativa do Telegram (recomendado)</h6>
+                                        <p class="mb-2">Para protecao maxima, ative tambem a restricao nativa do Telegram:</p>
+                                        <ol class="mb-0">
+                                            <li>Abra o grupo ou canal no Telegram</li>
+                                            <li>Toque no nome do grupo (topo) para abrir as configuracoes</li>
+                                            <li>Va em <strong>Permissoes</strong> (ou <strong>Permissions</strong>)</li>
+                                            <li>Desative <strong>Salvar conteudo</strong> (ou <strong>Save content</strong>)</li>
+                                            <li>Isso impede screenshots em dispositivos que respeitam essa restricao e bloqueia forward nativo</li>
+                                        </ol>
+                                    </div>
+
+                                    <h6 class="fw-bold mt-4 mb-2"><i class="bi bi-search text-info"></i> Como identificar vazadores</h6>
+                                    <p>
+                                        Se voce encontrar um texto do seu grupo vazado em outro lugar:
+                                    </p>
+                                    <ol>
+                                        <li>Va em <strong>Dashboard &gt; Editar Grupo</strong></li>
+                                        <li>Na secao Anti-Vazamento, use a ferramenta <strong>Identificar Vazador</strong></li>
+                                        <li>Cole o texto vazado no campo indicado</li>
+                                        <li>O sistema decodifica a watermark e mostra o <strong>username</strong>, <strong>Telegram ID</strong>, <strong>plano</strong> e <strong>status</strong> do assinante que vazou</li>
+                                    </ol>
+
+                                    <div class="wiki-highlight danger mt-3">
+                                        <h6 class="fw-bold mb-2"><i class="bi bi-exclamation-triangle text-warning"></i> Limitacoes</h6>
+                                        <ul class="mb-0">
+                                            <li>O anti-vazamento <strong>nao impede screenshots</strong> &mdash; nenhuma plataforma consegue impedir isso em 100% dos dispositivos</li>
+                                            <li>A watermark funciona apenas em <strong>broadcasts de texto</strong> enviados pelo bot</li>
+                                            <li>A protecao <code>protect_content</code> depende do app do Telegram respeitar a flag (apps oficiais respeitam)</li>
+                                        </ul>
                                     </div>
 
                                 </div>

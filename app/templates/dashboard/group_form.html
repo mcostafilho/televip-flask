@@ -361,23 +361,40 @@
                             </div>
 
                             <!-- Anti-Vazamento -->
-                            {% if group %}
                             <div class="form-section">
                                 <h5 class="section-title">
                                     <i class="bi bi-shield-lock"></i> Protecao Anti-Vazamento
                                 </h5>
-                                <p class="text-muted">
-                                    Proteja o conteudo do seu grupo contra vazamentos com multiplas camadas de seguranca.
-                                </p>
 
+                                <!-- Bloco informativo -->
+                                <div class="alert alert-secondary small mb-3" style="background: rgba(124,92,252,0.06); border: 1px solid rgba(124,92,252,0.15); color: #b0b4cc;">
+                                    <i class="bi bi-info-circle text-info"></i>
+                                    <strong>O que muda ao ativar:</strong>
+                                    <ol class="mb-0 mt-1" style="padding-left: 18px;">
+                                        <li>Broadcasts enviados com <strong>protecao contra copia</strong> (protect_content)</li>
+                                        <li><strong>Marca d'agua invisivel</strong> inserida em cada broadcast para identificar vazadores</li>
+                                        <li>Forwards e links de convite <strong>removidos automaticamente</strong> pelo bot</li>
+                                        <li>Convites desativados &mdash; membros <strong>nao podem convidar</strong> outros</li>
+                                        <li>Ferramenta para <strong>identificar vazadores</strong> pelo texto vazado</li>
+                                    </ol>
+                                </div>
+
+                                <div class="alert alert-info small mb-3">
+                                    <i class="bi bi-lightbulb"></i>
+                                    <strong>Dica:</strong> Para protecao maxima, ative tambem a protecao nativa do Telegram:
+                                    <br><em>Configuracoes do grupo &gt; Permissoes &gt; Restringir salvar conteudo</em>
+                                    <br><small class="text-muted">Isso impede que membros facam forward de mensagens e salvem midias diretamente pelo Telegram.</small>
+                                </div>
+
+                                {% if group %}
                                 <div class="d-flex align-items-center justify-content-between mb-3 p-3" style="background: rgba(124,92,252,0.08); border-radius: 12px; border: 1px solid rgba(124,92,252,0.2);">
                                     <div>
                                         <strong style="font-size: 1rem;">Anti-Vazamento</strong>
-                                        <span class="badge {{ 'bg-success' if group.anti_leak_enabled else 'bg-secondary' }} ms-2">
+                                        <span id="antiLeakBadge" class="badge {{ 'bg-success' if group.anti_leak_enabled else 'bg-secondary' }} ms-2">
                                             {{ 'Ativado' if group.anti_leak_enabled else 'Desativado' }}
                                         </span>
                                         <br>
-                                        <small class="text-muted">
+                                        <small class="text-muted" id="antiLeakDesc">
                                             {% if group.anti_leak_enabled %}
                                                 Broadcasts protegidos, forwards bloqueados, watermark ativa.
                                             {% else %}
@@ -385,13 +402,12 @@
                                             {% endif %}
                                         </small>
                                     </div>
-                                    <form method="POST" action="{{ url_for('groups.toggle_antileak', id=group.id) }}" style="display:inline;">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                        <button type="submit" class="btn {{ 'btn-outline-danger' if group.anti_leak_enabled else 'btn-primary' }} btn-sm">
-                                            <i class="bi {{ 'bi-shield-x' if group.anti_leak_enabled else 'bi-shield-check' }}"></i>
-                                            {{ 'Desativar' if group.anti_leak_enabled else 'Ativar' }}
-                                        </button>
-                                    </form>
+                                    <button type="button" id="antiLeakToggleBtn"
+                                            class="btn {{ 'btn-outline-danger' if group.anti_leak_enabled else 'btn-primary' }} btn-sm"
+                                            onclick="toggleAntiLeak()">
+                                        <i class="bi {{ 'bi-shield-x' if group.anti_leak_enabled else 'bi-shield-check' }}"></i>
+                                        {{ 'Desativar' if group.anti_leak_enabled else 'Ativar' }}
+                                    </button>
                                 </div>
 
                                 {% if group.anti_leak_enabled %}
@@ -403,12 +419,6 @@
                                         <li class="mb-1"><i class="bi bi-check-circle text-success"></i> Marca d'agua invisivel — identificacao de vazadores em broadcasts</li>
                                         <li class="mb-1"><i class="bi bi-check-circle text-success"></i> Monitoramento — forwards e links de convite removidos automaticamente</li>
                                     </ul>
-                                </div>
-
-                                <div class="alert alert-info small">
-                                    <i class="bi bi-lightbulb"></i>
-                                    <strong>Dica:</strong> Ative tambem a protecao nativa do Telegram no grupo:
-                                    <em>Configuracoes do grupo &gt; Permissoes &gt; Restringir salvar conteudo</em>
                                 </div>
 
                                 <!-- Decodificador de Watermark -->
@@ -429,8 +439,18 @@
                                     <div id="watermarkResult" class="mt-2" style="display:none;"></div>
                                 </div>
                                 {% endif %}
+
+                                {% else %}
+                                <!-- Criacao de grupo: checkbox simples -->
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="anti_leak_enabled"
+                                           id="antiLeakCreate">
+                                    <label class="form-check-label" for="antiLeakCreate">
+                                        Ativar protecao anti-vazamento
+                                    </label>
+                                </div>
+                                {% endif %}
                             </div>
-                            {% endif %}
 
                             <!-- Status -->
                             <div class="form-section">
@@ -948,6 +968,27 @@ function decodeWatermark() {
     .catch(function() {
         resultDiv.style.display = 'block';
         resultDiv.innerHTML = '<div class="alert alert-danger small mb-0">Erro ao decodificar. Tente novamente.</div>';
+    });
+    {% endif %}
+}
+
+// Toggle anti-leak via fetch (avoids nested form issue)
+function toggleAntiLeak() {
+    var btn = document.getElementById('antiLeakToggleBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Aguarde...';
+
+    {% if group %}
+    fetch('{{ url_for("groups.toggle_antileak", id=group.id) }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'csrf_token={{ csrf_token() }}'
+    }).then(function() {
+        location.reload();
+    }).catch(function() {
+        alert('Erro ao alterar anti-vazamento. Tente novamente.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-shield-check"></i> Tentar novamente';
     });
     {% endif %}
 }

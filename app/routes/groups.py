@@ -232,7 +232,8 @@ def create():
                 is_active=True,
                 is_public='is_public' in request.form,
                 chat_type=chat_type,
-                whitelist_json=json.dumps(whitelist_data) if whitelist_data else '[]'
+                whitelist_json=json.dumps(whitelist_data) if whitelist_data else '[]',
+                anti_leak_enabled='anti_leak_enabled' in request.form
             )
             db.session.add(group)
             db.session.flush()  # gera group.id sem commitar
