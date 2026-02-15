@@ -80,12 +80,18 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 group_name = escape_html(group.name)
                 plan_name = escape_html(plan.name)
 
+                now = datetime.utcnow()
+                renewing = is_sub_renewing(sub, now)
+
                 if is_lifetime:
                     emoji = "♾️"
+                elif renewing:
+                    emoji = "🔄"
+                    remaining = "Renovando..."
                 else:
                     remaining = format_remaining_text(sub.end_date)
                     emoji = get_expiry_emoji(sub.end_date)
-                    days_left = (sub.end_date - datetime.utcnow()).days
+                    days_left = (sub.end_date - now).days
 
                     # Classificar urgência
                     if days_left <= 3:
@@ -98,6 +104,8 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 if is_lifetime:
                     text += f"   Acesso vitalício\n"
+                elif renewing:
+                    text += f"   Status: Renovando...\n"
                 else:
                     text += f"   Expira: {format_date_code(sub.end_date)} ({remaining})\n"
 
@@ -747,6 +755,9 @@ async def show_active_subscriptions(update: Update, context: ContextTypes.DEFAUL
             if is_lifetime:
                 emoji = "♾️"
                 remaining = "Vitalício"
+            elif is_sub_renewing(sub, now):
+                emoji = "🔄"
+                remaining = "Renovando..."
             else:
                 emoji = get_expiry_emoji(sub.end_date)
                 remaining = format_remaining_text(sub.end_date)
