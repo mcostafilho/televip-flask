@@ -363,7 +363,7 @@
                             <!-- Anti-Vazamento -->
                             <div class="form-section">
                                 <h5 class="section-title">
-                                    <i class="bi bi-shield-lock"></i> Protecao Anti-Vazamento
+                                    <i class="bi bi-shield-lock"></i> Proteção Anti-Vazamento
                                 </h5>
 
                                 <!-- Bloco informativo -->
@@ -371,19 +371,19 @@
                                     <i class="bi bi-info-circle text-info"></i>
                                     <strong>O que muda ao ativar:</strong>
                                     <ol class="mb-0 mt-1" style="padding-left: 18px;">
-                                        <li>Broadcasts enviados com <strong>protecao contra copia</strong> (protect_content)</li>
-                                        <li><strong>Marca d'agua invisivel</strong> inserida em cada broadcast para identificar vazadores</li>
+                                        <li>Broadcasts enviados com <strong>proteção contra cópia</strong> (protect_content)</li>
+                                        <li><strong>Marca d'água invisível</strong> inserida em cada broadcast para identificar vazadores</li>
                                         <li>Forwards e links de convite <strong>removidos automaticamente</strong> pelo bot</li>
-                                        <li>Convites desativados &mdash; membros <strong>nao podem convidar</strong> outros</li>
+                                        <li>Convites desativados &mdash; membros <strong>não podem convidar</strong> outros</li>
                                         <li>Ferramenta para <strong>identificar vazadores</strong> pelo texto vazado</li>
                                     </ol>
                                 </div>
 
                                 <div class="alert alert-info small mb-3">
                                     <i class="bi bi-lightbulb"></i>
-                                    <strong>Dica:</strong> Para protecao maxima, ative tambem a protecao nativa do Telegram:
-                                    <br><em>Configuracoes do grupo &gt; Permissoes &gt; Restringir salvar conteudo</em>
-                                    <br><small class="text-muted">Isso impede que membros facam forward de mensagens e salvem midias diretamente pelo Telegram.</small>
+                                    <strong>Dica:</strong> Para proteção máxima, ative também a proteção nativa do Telegram:
+                                    <br><em>Configurações do grupo &gt; Permissões &gt; Restringir salvar conteúdo</em>
+                                    <br><small class="text-muted">Isso impede que membros façam forward de mensagens e salvem mídias diretamente pelo Telegram.</small>
                                 </div>
 
                                 {% if group %}
@@ -398,7 +398,7 @@
                                             {% if group.anti_leak_enabled %}
                                                 Broadcasts protegidos, forwards bloqueados, watermark ativa.
                                             {% else %}
-                                                Ative para proteger o conteudo do grupo.
+                                                Ative para proteger o conteúdo do grupo.
                                             {% endif %}
                                         </small>
                                     </div>
@@ -412,11 +412,11 @@
 
                                 {% if group.anti_leak_enabled %}
                                 <div class="mb-3">
-                                    <h6 style="font-size: 0.9rem; font-weight: 600;">Camadas de protecao ativas:</h6>
+                                    <h6 style="font-size: 0.9rem; font-weight: 600;">Camadas de proteção ativas:</h6>
                                     <ul class="list-unstyled small" style="color: #b0b4cc;">
-                                        <li class="mb-1"><i class="bi bi-check-circle text-success"></i> Bloqueio de convites — membros nao podem convidar outros</li>
-                                        <li class="mb-1"><i class="bi bi-check-circle text-success"></i> Mensagens protegidas — broadcasts com protecao contra copia</li>
-                                        <li class="mb-1"><i class="bi bi-check-circle text-success"></i> Marca d'agua invisivel — identificacao de vazadores em broadcasts</li>
+                                        <li class="mb-1"><i class="bi bi-check-circle text-success"></i> Bloqueio de convites — membros não podem convidar outros</li>
+                                        <li class="mb-1"><i class="bi bi-check-circle text-success"></i> Mensagens protegidas — broadcasts com proteção contra cópia</li>
+                                        <li class="mb-1"><i class="bi bi-check-circle text-success"></i> Marca d'água invisível — identificação de vazadores em broadcasts</li>
                                         <li class="mb-1"><i class="bi bi-check-circle text-success"></i> Monitoramento — forwards e links de convite removidos automaticamente</li>
                                     </ul>
                                 </div>
@@ -446,7 +446,7 @@
                                     <input class="form-check-input" type="checkbox" name="anti_leak_enabled"
                                            id="antiLeakCreate">
                                     <label class="form-check-label" for="antiLeakCreate">
-                                        Ativar protecao anti-vazamento
+                                        Ativar proteção anti-vazamento
                                     </label>
                                 </div>
                                 {% endif %}
