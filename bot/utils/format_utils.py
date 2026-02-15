@@ -150,12 +150,43 @@ def try_fix_stale_end_date(sub):
             _logger.warning(f"try_fix: erro ao consultar Stripe sub {stripe_sub_id}: {e}")
             return False
 
-        if stripe_sub.get('status') not in ('active', 'trialing'):
+        stripe_status = stripe_sub.get('status') or getattr(stripe_sub, 'status', None)
+        if stripe_status not in ('active', 'trialing'):
             return False  # Stripe também diz que não está ativa
 
-        # Stripe diz que está ativa — sincronizar end_date
-        current_period_end = stripe_sub.get('current_period_end')
+        # Stripe diz que está ativa — buscar period_end
+        # API nova: current_period_end removido, buscar via latest invoice
+        current_period_end = None
+
+        # Tentar campo direto (API antiga)
+        try:
+            current_period_end = stripe_sub.get('current_period_end') or getattr(stripe_sub, 'current_period_end', None)
+        except (AttributeError, KeyError):
+            pass
+
+        # Fallback: buscar do latest invoice line items (API nova)
+        latest_invoice_id = None
+        try:
+            latest_invoice_id = stripe_sub.get('latest_invoice') or getattr(stripe_sub, 'latest_invoice', None)
+        except (AttributeError, KeyError):
+            pass
+
+        if not current_period_end and latest_invoice_id:
+            try:
+                invoice = stripe.Invoice.retrieve(latest_invoice_id)
+                lines = invoice.get('lines', {}).get('data', [])
+                if not lines:
+                    lines_obj = getattr(invoice, 'lines', None)
+                    if lines_obj:
+                        lines = getattr(lines_obj, 'data', [])
+                if lines:
+                    period = lines[0].get('period', {}) if isinstance(lines[0], dict) else getattr(lines[0], 'period', {})
+                    current_period_end = period.get('end') if isinstance(period, dict) else getattr(period, 'end', None)
+            except Exception as e:
+                _logger.warning(f"try_fix: erro ao buscar period do invoice: {e}")
+
         if not current_period_end:
+            _logger.warning(f"try_fix: nao conseguiu obter period_end para sub {stripe_sub_id}")
             return False
 
         new_end = datetime.utcfromtimestamp(current_period_end)
@@ -167,17 +198,25 @@ def try_fix_stale_end_date(sub):
             sub.status = 'active'
 
         # Criar Transaction que o webhook não criou
-        latest_invoice_id = stripe_sub.get('latest_invoice')
+        if not latest_invoice_id:
+            try:
+                latest_invoice_id = stripe_sub.get('latest_invoice') or getattr(stripe_sub, 'latest_invoice', None)
+            except (AttributeError, KeyError):
+                pass
+
         if latest_invoice_id:
             existing = Transaction.query.filter_by(
                 stripe_invoice_id=latest_invoice_id
             ).first()
             if not existing:
                 try:
-                    invoice = stripe.Invoice.retrieve(latest_invoice_id)
-                    amount = invoice.get('amount_paid', 0) / 100
-                    billing_reason = invoice.get('billing_reason', 'subscription_cycle')
-                    paid_at_ts = invoice.get('status_transitions', {}).get('paid_at')
+                    if 'invoice' not in dir():
+                        invoice = stripe.Invoice.retrieve(latest_invoice_id)
+                    amount_paid = invoice.get('amount_paid', 0) if isinstance(invoice, dict) else getattr(invoice, 'amount_paid', 0)
+                    amount = amount_paid / 100
+                    billing_reason = invoice.get('billing_reason', 'subscription_cycle') if isinstance(invoice, dict) else getattr(invoice, 'billing_reason', 'subscription_cycle')
+                    st = invoice.get('status_transitions', {}) if isinstance(invoice, dict) else getattr(invoice, 'status_transitions', {})
+                    paid_at_ts = st.get('paid_at') if isinstance(st, dict) else getattr(st, 'paid_at', None)
 
                     group = sub.group
                     creator = group.creator if group else None
