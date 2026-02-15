@@ -46,7 +46,8 @@ from bot.handlers.subscription import (
 from bot.handlers.admin import (
     setup_command, stats_command, broadcast_command,
     handle_join_request, handle_new_chat_members, handle_chat_member_update,
-    handle_broadcast_to_group, handle_broadcast_confirm, handle_cancel_broadcast
+    handle_broadcast_to_group, handle_broadcast_confirm, handle_cancel_broadcast,
+    handle_broadcast_text
 )
 from bot.handlers.payment_verification import check_payment_status
 from bot.handlers.antileak import (
@@ -266,6 +267,12 @@ def setup_handlers(application: Application) -> None:
         handle_chat_member_update,
         ChatMemberHandler.CHAT_MEMBER
     ))
+
+    # Handler para capturar texto do broadcast (group separado, prioridade)
+    application.add_handler(MessageHandler(
+        filters.TEXT & ~filters.COMMAND & filters.ChatType.PRIVATE,
+        handle_broadcast_text
+    ), group=-1)
 
     # Handlers para botões fixos do teclado persistente (texto exato)
     application.add_handler(MessageHandler(

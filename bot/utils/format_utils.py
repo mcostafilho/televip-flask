@@ -59,6 +59,9 @@ def is_sub_renewing(sub, now=None) -> bool:
     Retorna True se a sub está na janela de renovação do Stripe
     (end_date passou mas dentro de 2h, Stripe auto-renew ativo).
     Útil para mostrar 'Renovando...' ao invés de 'Expirada'.
+
+    Retorna False se já existir transação completed de renovação
+    após o end_date (webhook já processou, só falta atualizar end_date).
     """
     if now is None:
         now = datetime.utcnow()
@@ -77,7 +80,22 @@ def is_sub_renewing(sub, now=None) -> bool:
 
     if is_stripe_autorenew:
         grace = timedelta(hours=2)
-        return sub.end_date > (now - grace)
+        if sub.end_date > (now - grace):
+            # Verificar se já existe transação de renovação concluída
+            # Se sim, o pagamento já foi processado — não é mais "renovando"
+            try:
+                from app.models.subscription import Transaction
+                has_renewal = Transaction.query.filter(
+                    Transaction.subscription_id == sub.id,
+                    Transaction.status == 'completed',
+                    Transaction.billing_reason == 'subscription_cycle',
+                    Transaction.paid_at >= sub.end_date - timedelta(hours=1)
+                ).first()
+                if has_renewal:
+                    return False  # Já renovado, webhook processou
+            except Exception:
+                pass
+            return True
 
     return False
 

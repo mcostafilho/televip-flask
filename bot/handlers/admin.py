@@ -4,7 +4,7 @@ Comandos administrativos para criadores
 import logging
 from datetime import datetime, timedelta
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ContextTypes
+from telegram.ext import ContextTypes, ApplicationHandlerStop
 from telegram.constants import ParseMode
 from sqlalchemy import func
 
@@ -188,13 +188,25 @@ async def setup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await _reply_private(update, context, text, reply_markup=InlineKeyboardMarkup(keyboard))
 
 async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Mostrar estatísticas do grupo ou do criador"""
+    """Mostrar estatísticas — redireciona para o dashboard"""
     chat = update.effective_chat
     user = update.effective_user
 
-    # Se for no privado, mostrar stats de todos os grupos
+    # Se for no privado, mostrar resumo com link
     if chat.type == 'private':
-        await show_creator_stats(update, context)
+        text = (
+            "<b>Relatorios e Estatisticas</b>\n\n"
+            "Acesse o painel completo com graficos, receita, "
+            "assinantes e historico de transacoes pelo portal:"
+        )
+        keyboard = [
+            [InlineKeyboardButton("Abrir Dashboard", url="https://televip.app/dashboard")]
+        ]
+        await update.message.reply_text(
+            text,
+            parse_mode=ParseMode.HTML,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
         return
 
     # No grupo, verificar permissões
@@ -205,187 +217,39 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception:
         return
 
-    # Deletar comando do grupo e mostrar stats no privado
+    # Responder no privado com link pro dashboard
+    group_title = escape_html(chat.title or 'Grupo')
+    text = (
+        f"<b>Relatorios — {group_title}</b>\n\n"
+        "Acesse o painel completo com graficos, receita, "
+        "assinantes e historico de transacoes pelo portal:"
+        f"\n\n<i>Respondido no privado para nao expor no grupo "
+        f"<b>{group_title}</b>.</i>"
+    )
+    keyboard = [
+        [InlineKeyboardButton("Abrir Dashboard", url="https://televip.app/dashboard")]
+    ]
+
+    # Deletar comando do grupo
     try:
         await update.message.delete()
     except Exception:
         pass
-    await show_group_stats(update, context, chat.id)
 
-async def show_group_stats(update: Update, context: ContextTypes.DEFAULT_TYPE, group_telegram_id: str):
-    """Mostrar estatísticas detalhadas de um grupo (envia no privado)"""
-    user = update.effective_user
-
-    with get_db_session() as session:
-        group = session.query(Group).filter_by(
-            telegram_id=str(group_telegram_id)
-        ).first()
-
-        if not group:
-            await _reply_private(update, context, "Grupo nao configurado. Use /setup primeiro.")
-            return
-
-        # Estatísticas gerais
-        total_subs = session.query(Subscription).filter_by(
-            group_id=group.id
-        ).count()
-
-        active_subs = session.query(Subscription).filter_by(
-            group_id=group.id,
-            status='active'
-        ).count()
-
-        # Receitas
-        total_revenue = session.query(func.sum(Transaction.net_amount)).filter(
-            Transaction.group_id == group.id,
-            Transaction.status == 'completed'
-        ).scalar() or 0
-
-        # Receita dos últimos 30 dias
-        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-        last_30_days_revenue = session.query(func.sum(Transaction.net_amount)).filter(
-            Transaction.group_id == group.id,
-            Transaction.created_at >= thirty_days_ago,
-            Transaction.status == 'completed'
-        ).scalar() or 0
-
-        # Novos assinantes (últimos 30 dias)
-        new_subs = session.query(Subscription).filter(
-            Subscription.group_id == group.id,
-            Subscription.created_at >= thirty_days_ago
-        ).count()
-
-        # Cancelados (últimos 30 dias)
-        cancelled = session.query(Subscription).filter(
-            Subscription.group_id == group.id,
-            Subscription.status.in_(['cancelled', 'expired']),
-            Subscription.end_date >= thirty_days_ago
-        ).count()
-
-        avg_ticket = (total_revenue / total_subs) if total_subs > 0 else 0
-
-        group_name = escape_html(group.name)
-
-        text = (
-            f"<b>Estatisticas — {group_name}</b>\n\n"
-            f"<pre>"
-            f"Assinantes ativos:    {active_subs}\n"
-            f"Novos (30d):          {new_subs}\n"
-            f"Cancelados (30d):     {cancelled}\n"
-            f"─────────────────────────────\n"
-            f"Receita total:        {format_currency(total_revenue)}\n"
-            f"Receita (30d):        {format_currency(last_30_days_revenue)}\n"
-            f"Ticket medio:         {format_currency(avg_ticket)}"
-            f"</pre>"
-            f"\n\n<i>Respondido no privado para nao expor no grupo "
-            f"<b>{group_name}</b>.</i>"
-        )
-
-        keyboard = [
-            [InlineKeyboardButton("Dashboard", url="https://televip.app/dashboard")]
-        ]
-
-        # Enviar no privado do admin
-        try:
-            await context.bot.send_message(
-                chat_id=user.id,
-                text=text,
-                parse_mode=ParseMode.HTML,
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
-        except Exception:
-            # Fallback: avisar no grupo sem expor dados
-            bot_me = await context.bot.get_me()
-            await context.bot.send_message(
-                chat_id=update.effective_chat.id,
-                text=f"{user.mention_html()}, te enviei as estatisticas no privado. "
-                     f"Se nao recebeu, inicie o bot: @{bot_me.username}",
-                parse_mode=ParseMode.HTML,
-            )
-
-async def show_creator_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Mostrar estatísticas gerais do criador"""
-    user = update.effective_user
-
-    with get_db_session() as session:
-        creator = session.query(Creator).filter_by(
-            telegram_id=str(user.id)
-        ).first()
-
-        if not creator:
-            text = (
-                "<b>Você não é um criador cadastrado</b>\n\n"
-                "Para se tornar criador:\n"
-                "1. Acesse https://televip.app/register\n"
-                "2. Complete seu perfil\n"
-                "3. Volte aqui para ver suas estatísticas"
-            )
-            await update.message.reply_text(text, parse_mode=ParseMode.HTML)
-            return
-
-        # Buscar todos os grupos do criador
-        groups = session.query(Group).filter_by(
-            creator_id=creator.id,
-            is_active=True
-        ).all()
-
-        if not groups:
-            text = (
-                "<b>Suas estatísticas</b>\n\n"
-                "Você ainda não tem grupos configurados.\n\n"
-                "Para começar:\n"
-                "1. Adicione o bot a um grupo\n"
-                "2. Promova o bot a administrador\n"
-                "3. Use /setup dentro do grupo"
-            )
-            await update.message.reply_text(text, parse_mode=ParseMode.HTML)
-            return
-
-        # Calcular estatísticas totais
-        total_active = 0
-        total_revenue = 0
-
-        start_of_month = datetime.now().replace(day=1, hour=0, minute=0, second=0)
-
-        group_lines = ""
-
-        for group in groups:
-            # Stats por grupo
-            active = session.query(Subscription).filter_by(
-                group_id=group.id,
-                status='active'
-            ).count()
-
-            revenue = session.query(func.sum(Transaction.net_amount)).filter(
-                Transaction.group_id == group.id,
-                Transaction.status == 'completed'
-            ).scalar() or 0
-
-            total_active += active
-            total_revenue += revenue
-
-            group_name = escape_html(group.name)
-            group_lines += f"\n<b>{group_name}</b> — {active} assinantes · {format_currency(revenue)}"
-
-        text = (
-            f"<b>Dashboard do Criador</b>\n\n"
-            f"<pre>"
-            f"Grupos ativos:      {len(groups)}\n"
-            f"Total assinantes:   {total_active}\n"
-            f"Receita total:      {format_currency(total_revenue)}\n"
-            f"Saldo disponível:   {format_currency(creator.available_balance)}"
-            f"</pre>"
-            f"{group_lines}"
-        )
-
-        keyboard = [
-            [InlineKeyboardButton("Dashboard", url="https://televip.app/dashboard")]
-        ]
-
-        await update.message.reply_text(
-            text,
+    try:
+        await context.bot.send_message(
+            chat_id=user.id,
+            text=text,
             parse_mode=ParseMode.HTML,
             reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+    except Exception:
+        bot_me = await context.bot.get_me()
+        await context.bot.send_message(
+            chat_id=chat.id,
+            text=f"{user.mention_html()}, te enviei no privado. "
+                 f"Se nao recebeu, inicie o bot: @{bot_me.username}",
+            parse_mode=ParseMode.HTML,
         )
 
 async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -410,12 +274,44 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Verificar se tem texto
     if not context.args:
-        await _reply_private(update, context,
-            "<b>Como usar o Broadcast</b>\n\n"
-            "Envie sua mensagem apos o comando:\n"
-            "<code>/broadcast Sua mensagem aqui</code>\n\n"
-            "<i>A mensagem sera enviada para TODOS os assinantes ativos do grupo.</i>"
+        # Salvar grupo de origem para o fluxo conversacional
+        if chat.type != 'private':
+            context.user_data['awaiting_broadcast_from_group'] = str(chat.id)
+
+        text = (
+            "<b>Broadcast</b>\n\n"
+            "Escreva a mensagem que deseja enviar para todos os assinantes ativos.\n\n"
+            "<i>Basta digitar sua mensagem aqui neste chat e enviar.</i>"
         )
+        keyboard = [[InlineKeyboardButton("Cancelar", callback_data="cancel_broadcast")]]
+
+        if chat.type == 'private':
+            await update.message.reply_text(
+                text, parse_mode=ParseMode.HTML,
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+        else:
+            group_title = escape_html(chat.title or 'Grupo')
+            text += (
+                f"\n\n<i>Respondido no privado para nao expor no grupo "
+                f"<b>{group_title}</b>.</i>"
+            )
+            try:
+                await context.bot.send_message(
+                    chat_id=user.id, text=text,
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
+            except Exception:
+                bot_me = await context.bot.get_me()
+                await context.bot.send_message(
+                    chat_id=chat.id,
+                    text=f"{user.mention_html()}, te enviei no privado. "
+                         f"Se nao recebeu, inicie o bot: @{bot_me.username}",
+                    parse_mode=ParseMode.HTML,
+                )
+
+        context.user_data['awaiting_broadcast'] = True
         return
 
     # Pegar mensagem
@@ -682,6 +578,65 @@ async def handle_cancel_broadcast(update: Update, context: ContextTypes.DEFAULT_
     context.user_data.pop('broadcast_group_id', None)
     context.user_data.pop('broadcast_group_telegram_id', None)
     await query.edit_message_text("Broadcast cancelado.")
+
+async def handle_broadcast_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handler para capturar texto do broadcast quando awaiting_broadcast está ativo.
+    Roda em group=-1 para interceptar antes dos botões fixos.
+    Quando NÃO está esperando broadcast, retorna sem ApplicationHandlerStop
+    para que os handlers normais (group=0) processem."""
+    if not context.user_data.get('awaiting_broadcast'):
+        return  # Não está esperando broadcast — deixa handlers normais processarem
+
+    # Limpar flag
+    context.user_data.pop('awaiting_broadcast', None)
+
+    broadcast_text = update.message.text
+    group_telegram_id = context.user_data.pop('awaiting_broadcast_from_group', None)
+
+    if group_telegram_id:
+        # Veio de um grupo — confirmar diretamente para aquele grupo
+        await confirm_broadcast_private_from_text(update, context, group_telegram_id, broadcast_text)
+    else:
+        # Veio do privado — selecionar grupo
+        await select_group_for_broadcast(update, context, broadcast_text)
+
+    # Impedir que handlers do group=0 (botões fixos) processem esta mensagem
+    raise ApplicationHandlerStop
+
+
+async def confirm_broadcast_private_from_text(update: Update, context: ContextTypes.DEFAULT_TYPE, group_telegram_id: str, message: str):
+    """Confirmar broadcast quando a mensagem foi digitada no privado após /broadcast no grupo"""
+    context.user_data['broadcast_message'] = message
+    context.user_data['broadcast_group_telegram_id'] = str(group_telegram_id)
+
+    escaped_message = escape_html(message)
+
+    with get_db_session() as session:
+        group = session.query(Group).filter_by(telegram_id=str(group_telegram_id)).first()
+        group_title = escape_html(group.name) if group else 'Grupo'
+        active_count = 0
+        if group:
+            active_count = session.query(Subscription).filter_by(
+                group_id=group.id, status='active'
+            ).count()
+
+    text = (
+        f"<b>Confirmar Broadcast — {group_title}</b>\n"
+        f"<i>{active_count} assinantes ativos</i>\n\n"
+        f"<b>Mensagem:</b>\n{escaped_message}\n\n"
+        f"Deseja enviar?"
+    )
+    keyboard = [
+        [
+            InlineKeyboardButton("Enviar", callback_data="broadcast_confirm"),
+            InlineKeyboardButton("Cancelar", callback_data="cancel_broadcast")
+        ]
+    ]
+    await update.message.reply_text(
+        text, parse_mode=ParseMode.HTML,
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+
 
 # ==================== FUNÇÕES EXTRAS ADICIONADAS ====================
 
