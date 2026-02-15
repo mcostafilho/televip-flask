@@ -630,7 +630,28 @@
                             <span class="input-prefix">R$</span>
                             <input type="text" inputmode="decimal" id="saleValue" value="100" placeholder="Ex: 49,90">
                         </div>
-                        <button type="button" id="calcBtn" onclick="calculate()" style="margin-top: 12px; width: 100%; padding: 14px; background: var(--gradient-primary); color: white; border: none; border-radius: 12px; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label for="tierSelect" style="display: block; font-weight: 600; margin-bottom: 8px; color: #e2e8f0;">
+                            <i class="bi bi-graph-down-arrow"></i> Sua faixa de assinantes
+                        </label>
+                        <select id="tierSelect" onchange="calculate()" style="width: 100%; padding: 14px 16px; border: 2px solid rgba(124, 92, 252, 0.2);
+                            border-radius: 12px; font-size: 15px; font-weight: 600; font-family: 'Poppins', sans-serif;
+                            color: #e2e8f0; background: rgba(255, 255, 255, 0.05); cursor: pointer; transition: border-color 0.3s;
+                            appearance: none; -webkit-appearance: none;
+                            background-image: url('data:image/svg+xml;utf8,<svg fill=\"%23b0b4cc\" viewBox=\"0 0 16 16\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M8 11L3 6h10z\"/></svg>');
+                            background-repeat: no-repeat; background-position: right 14px center; background-size: 14px;">
+                            <option value="0.0999">0 - 1.000 assinantes → 9,99%</option>
+                            <option value="0.0899">1.001 - 5.000 assinantes → 8,99%</option>
+                            <option value="0.0799">5.001 - 15.000 assinantes → 7,99%</option>
+                            <option value="0.0699">15.001 - 50.000 assinantes → 6,99%</option>
+                            <option value="0.0599">50.001+ assinantes → 5,99%</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 24px;">
+                        <button type="button" id="calcBtn" onclick="calculate()" style="width: 100%; padding: 14px; background: var(--gradient-primary); color: white; border: none; border-radius: 12px; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
                             <i class="bi bi-calculator"></i> Calcular
                         </button>
                         <div id="calcWarning" style="display: none; margin-top: 10px; padding: 10px 14px; background: rgba(248, 113, 113, 0.15); border: 1px solid rgba(248, 113, 113, 0.3); border-radius: 10px; color: #f87171; font-size: 14px; text-align: center;">
@@ -648,7 +669,7 @@
                             <span class="value" id="calcFixed">- R$ 0,99</span>
                         </div>
                         <div class="calc-row">
-                            <span class="label">Taxa percentual (9,99%)</span>
+                            <span class="label" id="calcPercentLabel">Taxa percentual (9,99%)</span>
                             <span class="value" id="calcPercent">- R$ 9,99</span>
                         </div>
                         <div class="calc-row">
@@ -1042,8 +1063,11 @@
                 if (warningEl) warningEl.style.display = 'none';
             }
 
+            var pctRate = parseFloat(document.getElementById('tierSelect').value);
+            var pctDisplay = (pctRate * 100).toFixed(2).replace('.', ',');
+
             var fixedFee = sale > 0 ? 0.99 : 0;
-            var percentFee = sale * 0.0999;
+            var percentFee = sale * pctRate;
             var totalFee = fixedFee + percentFee;
             var net = sale - totalFee;
             if (net < 0) net = 0;
@@ -1052,6 +1076,7 @@
 
             document.getElementById('calcSale').innerText = fmt(sale);
             document.getElementById('calcFixed').innerText = '- ' + fmt(fixedFee);
+            document.getElementById('calcPercentLabel').innerText = 'Taxa percentual (' + pctDisplay + '%)';
             document.getElementById('calcPercent').innerText = '- ' + fmt(percentFee);
             document.getElementById('calcTotalFee').innerText = '- ' + fmt(totalFee);
             document.getElementById('calcNet').innerText = fmt(net);
