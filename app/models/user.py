@@ -87,32 +87,51 @@ class Creator(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
     
     def get_fee_rates(self, group_id=None):
-        """Retorna taxas efetivas (custom > faixa por assinantes do grupo > default)
+        """Retorna taxas efetivas. Prioridade:
+        1. Taxa custom do grupo (mais específica)
+        2. Taxa custom do criador (aplica a todos os grupos)
+        3. Faixa escalonada por assinantes do grupo
+        4. Taxa padrão
 
         Args:
-            group_id: ID do grupo para calcular faixa. Se None, usa taxa padrão.
+            group_id: ID do grupo para calcular faixa. Se None, usa taxa do criador ou padrão.
         """
         from app.services.payment_service import PaymentService
 
-        # Custom fees (admin) tem prioridade
+        # 1. Taxa custom do GRUPO tem prioridade máxima
+        if group_id is not None:
+            from app.models.group import Group
+            group = Group.query.get(group_id)
+            if group and (group.custom_fixed_fee is not None or group.custom_percentage_fee is not None):
+                return {
+                    'fixed_fee': group.custom_fixed_fee if group.custom_fixed_fee is not None else PaymentService.FIXED_FEE,
+                    'percentage_fee': group.custom_percentage_fee if group.custom_percentage_fee is not None else PaymentService.PERCENTAGE_FEE,
+                    'is_custom': True,
+                    'custom_source': 'group',
+                    'tier_info': None
+                }
+
+        # 2. Taxa custom do CRIADOR
         if self.custom_fixed_fee is not None or self.custom_percentage_fee is not None:
             return {
                 'fixed_fee': self.custom_fixed_fee if self.custom_fixed_fee is not None else PaymentService.FIXED_FEE,
                 'percentage_fee': self.custom_percentage_fee if self.custom_percentage_fee is not None else PaymentService.PERCENTAGE_FEE,
                 'is_custom': True,
+                'custom_source': 'creator',
                 'tier_info': None
             }
 
-        # Sem group_id, retorna taxa padrão
+        # 3. Sem group_id, retorna taxa padrão
         if group_id is None:
             return {
                 'fixed_fee': PaymentService.FIXED_FEE,
                 'percentage_fee': PaymentService.PERCENTAGE_FEE,
                 'is_custom': False,
+                'custom_source': None,
                 'tier_info': None
             }
 
-        # Contar assinantes ativos DO GRUPO ESPECÍFICO
+        # 4. Faixa escalonada por assinantes DO GRUPO ESPECÍFICO
         from app.models.subscription import Subscription
         from sqlalchemy import func
         subscriber_count = db.session.query(func.count(Subscription.id)).filter(
@@ -126,6 +145,7 @@ class Creator(UserMixin, db.Model):
             'fixed_fee': PaymentService.FIXED_FEE,
             'percentage_fee': tiered_pct,
             'is_custom': tiered_pct != PaymentService.PERCENTAGE_FEE,
+            'custom_source': None,
             'tier_info': {
                 'subscriber_count': subscriber_count,
                 'percentage_display': f"{tiered_pct * 100:.2f}".replace('.', ',') + "%"

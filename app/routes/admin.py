@@ -297,7 +297,46 @@ def update_creator_fees(creator_id):
         creator.custom_percentage_fee = None
 
     db.session.commit()
-    flash('Taxas atualizadas com sucesso!', 'success')
+    flash('Taxas do criador atualizadas com sucesso!', 'success')
+    return redirect(url_for('admin.creator_details', creator_id=creator_id))
+
+
+@bp.route('/group/<int:group_id>/fees', methods=['POST'])
+@login_required
+@admin_required
+def update_group_fees(group_id):
+    """Atualizar taxas personalizadas de um grupo específico"""
+    group = Group.query.get_or_404(group_id)
+    creator_id = group.creator_id
+
+    use_custom = request.form.get('use_custom_group_fees') == 'on'
+
+    if use_custom:
+        fixed = request.form.get('group_custom_fixed_fee', '').strip()
+        pct = request.form.get('group_custom_percentage_fee', '').strip()
+
+        try:
+            fixed_val = Decimal(fixed) if fixed else None
+            pct_val = Decimal(pct) / 100 if pct else None
+        except Exception:
+            flash('Valores de taxa invalidos!', 'error')
+            return redirect(url_for('admin.creator_details', creator_id=creator_id))
+
+        if fixed_val is not None and fixed_val < 0:
+            flash('Taxa fixa nao pode ser negativa!', 'error')
+            return redirect(url_for('admin.creator_details', creator_id=creator_id))
+        if pct_val is not None and (pct_val < 0 or pct_val > 1):
+            flash('Taxa percentual deve ser entre 0% e 100%!', 'error')
+            return redirect(url_for('admin.creator_details', creator_id=creator_id))
+
+        group.custom_fixed_fee = fixed_val
+        group.custom_percentage_fee = pct_val
+    else:
+        group.custom_fixed_fee = None
+        group.custom_percentage_fee = None
+
+    db.session.commit()
+    flash(f'Taxas do grupo "{group.name}" atualizadas com sucesso!', 'success')
     return redirect(url_for('admin.creator_details', creator_id=creator_id))
 
 

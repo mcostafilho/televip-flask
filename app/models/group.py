@@ -28,6 +28,9 @@ class Group(db.Model):
     cover_image_url = db.Column(db.String(500))
     is_public = db.Column(db.Boolean, default=False)
     anti_leak_enabled = db.Column(db.Boolean, default=False)
+    # Taxas personalizadas por grupo (sobrescreve taxa do criador e faixa escalonada)
+    custom_fixed_fee = db.Column(db.Numeric(10, 2), nullable=True)
+    custom_percentage_fee = db.Column(db.Numeric(10, 4), nullable=True)
 
     # Relacionamentos
     pricing_plans = db.relationship('PricingPlan', backref='group', lazy='dynamic', cascade='all, delete-orphan')
