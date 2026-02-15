@@ -86,8 +86,12 @@ class Creator(UserMixin, db.Model):
             return False
         return check_password_hash(self.password_hash, password)
     
-    def get_fee_rates(self):
-        """Retorna taxas efetivas (custom > faixa por assinantes > default)"""
+    def get_fee_rates(self, group_id=None):
+        """Retorna taxas efetivas (custom > faixa por assinantes do grupo > default)
+
+        Args:
+            group_id: ID do grupo para calcular faixa. Se None, usa taxa padrão.
+        """
         from app.services.payment_service import PaymentService
 
         # Custom fees (admin) tem prioridade
@@ -99,14 +103,20 @@ class Creator(UserMixin, db.Model):
                 'tier_info': None
             }
 
-        # Contar assinantes ativos para determinar faixa
-        from app.models.group import Group
+        # Sem group_id, retorna taxa padrão
+        if group_id is None:
+            return {
+                'fixed_fee': PaymentService.FIXED_FEE,
+                'percentage_fee': PaymentService.PERCENTAGE_FEE,
+                'is_custom': False,
+                'tier_info': None
+            }
+
+        # Contar assinantes ativos DO GRUPO ESPECÍFICO
         from app.models.subscription import Subscription
         from sqlalchemy import func
-        subscriber_count = db.session.query(func.count(Subscription.id)).join(
-            Group
-        ).filter(
-            Group.creator_id == self.id,
+        subscriber_count = db.session.query(func.count(Subscription.id)).filter(
+            Subscription.group_id == group_id,
             Subscription.status == 'active'
         ).scalar() or 0
 

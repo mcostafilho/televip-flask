@@ -443,7 +443,7 @@ def handle_invoice_paid(invoice):
                 pending_txn = existing_txn
             else:
                 # No transaction found at all — create one
-                fees = creator.get_fee_rates()
+                fees = creator.get_fee_rates(group_id=subscription.group_id)
                 txn = Transaction(
                     subscription_id=subscription.id,
                     amount=amount_paid,
@@ -497,7 +497,7 @@ def handle_invoice_paid(invoice):
             subscription.status = 'active'
 
             # Create renewal transaction
-            fees = creator.get_fee_rates()
+            fees = creator.get_fee_rates(group_id=subscription.group_id)
             txn = Transaction(
                 subscription_id=subscription.id,
                 amount=amount_paid,

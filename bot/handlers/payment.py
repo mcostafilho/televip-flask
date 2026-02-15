@@ -19,6 +19,7 @@ from bot.utils.format_utils import (
     is_sub_renewing
 )
 from app.models import Group, PricingPlan, Subscription, Transaction, Creator
+from app.services.payment_service import PaymentService
 
 logger = logging.getLogger(__name__)
 
@@ -356,15 +357,30 @@ async def start_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         amount = float(plan.price)
-        platform_fee = amount * 0.10
         is_lifetime = getattr(plan, 'is_lifetime', False) or plan.duration_days == 0
+
+        # Calcular taxas usando PaymentService (faixa por grupo)
+        creator = session.query(Creator).get(group.creator_id)
+        if creator:
+            fees = creator.get_fee_rates(group_id=group_id)
+            fee_result = PaymentService.calculate_fees(
+                amount,
+                fixed_fee=fees['fixed_fee'] if fees['is_custom'] else None,
+                percentage_fee=fees['percentage_fee'] if fees['is_custom'] else None
+            )
+            platform_fee = float(fee_result['total_fee'])
+            creator_amount = float(fee_result['net_amount'])
+        else:
+            fee_result = PaymentService.calculate_fees(amount)
+            platform_fee = float(fee_result['total_fee'])
+            creator_amount = float(fee_result['net_amount'])
 
         checkout_data = {
             'group_id': group_id,
             'plan_id': plan_id,
             'amount': amount,
             'platform_fee': platform_fee,
-            'creator_amount': amount - platform_fee,
+            'creator_amount': creator_amount,
             'duration_days': plan.duration_days,
             'is_lifetime': is_lifetime,
             'group_name': group.name,

@@ -248,6 +248,11 @@ def creator_details(creator_id):
 
     fee_rates = creator.get_fee_rates()
 
+    # Fee rates por grupo (para tabela de faixas)
+    group_fee_rates = {}
+    for group in groups:
+        group_fee_rates[group.id] = creator.get_fee_rates(group_id=group.id)
+
     return render_template('admin/creator_details.html',
                          creator=creator,
                          groups=groups,
@@ -255,7 +260,8 @@ def creator_details(creator_id):
                          recent_transactions=recent_transactions,
                          pending_withdrawals=pending_withdrawals,
                          fee_defaults=fee_defaults,
-                         fee_rates=fee_rates)
+                         fee_rates=fee_rates,
+                         group_fee_rates=group_fee_rates)
 
 @bp.route('/creator/<int:creator_id>/fees', methods=['POST'])
 @login_required

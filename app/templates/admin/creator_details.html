@@ -179,10 +179,10 @@
             <!-- Tabela de faixas escalonadas -->
             <div class="mt-4 pt-3" style="border-top: 1px solid rgba(255,255,255,0.06);">
                 <h6 class="mb-2" style="font-size: 0.85rem;">
-                    <i class="bi bi-bar-chart-steps"></i> Faixas Escalonadas por Assinantes
+                    <i class="bi bi-bar-chart-steps"></i> Faixas Escalonadas por Grupo
                 </h6>
                 <p class="text-muted mb-2" style="font-size: 0.75rem;">
-                    Taxa percentual automática quando não há taxa personalizada. Taxa fixa (R$ 0,99) não muda.
+                    Taxa percentual calculada por grupo individual. Cada grupo conquista sua faixa com base nos seus próprios assinantes. Taxa fixa (R$ 0,99) não muda.
                 </p>
                 <table style="width: 100%; font-size: 0.8rem; border-collapse: collapse;">
                     <thead>
@@ -199,18 +199,32 @@
                             ('15.001 - 50.000', '6,99%', '6,99%', '#34d399'),
                             ('50.001+', '5,99%', '5,99%', '#22c55e')
                         ] %}
-                        {% set active_pct = fee_rates.tier_info.percentage_display if fee_rates.tier_info and not (creator.custom_fixed_fee is not none or creator.custom_percentage_fee is not none) else none %}
                         {% for label, pct, match_pct, color in tiers %}
-                        <tr style="border-top: 1px solid rgba(124,92,252,0.1);{% if active_pct and active_pct == match_pct %} background: rgba(56, 189, 248, 0.12);{% endif %}">
-                            <td style="padding: 7px 8px; color: #b0b4cc;">{{ label }}{% if active_pct and active_pct == match_pct %} <span style="font-size: 0.7rem; color: #38bdf8;">(atual)</span>{% endif %}</td>
+                        <tr style="border-top: 1px solid rgba(124,92,252,0.1);">
+                            <td style="padding: 7px 8px; color: #b0b4cc;">{{ label }}</td>
                             <td style="text-align: right; padding: 7px 8px; font-weight: 600; color: {{ color }};">{{ pct }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
+
+                {% if groups and not (creator.custom_fixed_fee is not none or creator.custom_percentage_fee is not none) %}
+                <div class="mt-3" style="font-size: 0.78rem;">
+                    <strong style="color: #e2e8f0;">Taxa atual por grupo:</strong>
+                    {% for group in groups %}
+                    {% set gfr = group_fee_rates.get(group.id, {}) %}
+                    {% set gi = gfr.get('tier_info') %}
+                    <div style="padding: 4px 8px; margin-top: 4px; border-left: 2px solid {% if gi and gi.subscriber_count > 50000 %}#22c55e{% elif gi and gi.subscriber_count > 15000 %}#34d399{% elif gi and gi.subscriber_count > 5000 %}#38bdf8{% elif gi and gi.subscriber_count > 1000 %}#c4b5fd{% else %}#e2e8f0{% endif %}; background: rgba(255,255,255,0.03);">
+                        <span style="color: #b0b4cc;">{{ group.name }}</span>
+                        <span style="float: right; font-weight: 600; color: #e2e8f0;">{{ gi.percentage_display if gi else '9,99%' }} <span style="font-size: 0.7rem; color: #64748b;">({{ gi.subscriber_count if gi else 0 }} assinantes)</span></span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% elif creator.custom_fixed_fee is not none or creator.custom_percentage_fee is not none %}
                 <p class="text-muted mt-2 mb-0" style="font-size: 0.72rem;">
-                    Total de assinantes ativos (todos os grupos): <strong style="color: #e2e8f0;">{{ fee_rates.tier_info.subscriber_count if fee_rates.tier_info else 0 }}</strong>
+                    <i class="bi bi-info-circle"></i> Este criador usa taxa personalizada — faixas não se aplicam.
                 </p>
+                {% endif %}
             </div>
         </div>
 
