@@ -17,6 +17,41 @@ from app.models import Group, Creator, Subscription, Transaction, PricingPlan
 
 logger = logging.getLogger(__name__)
 
+
+async def _reply_private(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, reply_markup=None):
+    """Responde no privado do admin e deleta o comando do grupo.
+    Se não conseguir enviar no privado (usuário não iniciou o bot), responde no grupo."""
+    chat = update.effective_chat
+    user = update.effective_user
+
+    if chat.type == 'private':
+        await update.message.reply_text(text, parse_mode=ParseMode.HTML, reply_markup=reply_markup)
+        return
+
+    # Tentar deletar o comando do grupo
+    try:
+        await update.message.delete()
+    except Exception:
+        pass  # Sem permissão para deletar
+
+    # Enviar no privado
+    try:
+        await context.bot.send_message(
+            chat_id=user.id,
+            text=text,
+            parse_mode=ParseMode.HTML,
+            reply_markup=reply_markup
+        )
+    except Exception:
+        # Usuário não iniciou o bot no privado — responde no grupo como fallback
+        await context.bot.send_message(
+            chat_id=chat.id,
+            text=f"{user.mention_html()}, enviei a resposta no seu privado. "
+                 f"Se não recebeu, inicie o bot primeiro: @{(await context.bot.get_me()).username}",
+            parse_mode=ParseMode.HTML,
+        )
+
+
 async def setup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Configurar bot no grupo"""
     chat = update.effective_chat
@@ -39,25 +74,20 @@ async def setup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         bot_member = await context.bot.get_chat_member(chat.id, context.bot.id)
         if bot_member.status not in ['administrator', 'creator']:
-            text = (
-                "<b>Bot sem permissão</b>\n\n"
+            await _reply_private(update, context,
+                "<b>Bot sem permissao</b>\n\n"
                 "O bot precisa ser administrador deste grupo.\n\n"
                 "<i>Promova o bot a administrador e tente novamente.</i>"
             )
-            await update.message.reply_text(text, parse_mode=ParseMode.HTML)
             return
     except Exception:
-        await update.message.reply_text("Erro ao verificar permissões do bot.")
         return
 
     # Verificar se o usuário é admin do grupo
     try:
         user_member = await context.bot.get_chat_member(chat.id, user.id)
         if user_member.status not in ['administrator', 'creator']:
-            await update.message.reply_text(
-                "Apenas administradores do grupo podem usar este comando!"
-            )
-            return
+            return  # Silencioso — não é admin, não mostra nada
     except Exception:
         return
 
@@ -68,19 +98,18 @@ async def setup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ).first()
 
         if not creator:
-            chat_title = escape_html(chat.title)
             text = (
-                f"<b>Informações do grupo</b>\n\n"
+                f"<b>Informacoes do grupo</b>\n\n"
                 f"<pre>"
                 f"Grupo:       {chat.title}\n"
                 f"Telegram ID: {chat.id}"
                 f"</pre>\n\n"
-                f"Copie o ID acima e cole no formulário de criação de grupo no site.\n\n"
-                f"<i>Conta Telegram não vinculada.\n"
+                f"Copie o ID acima e cole no formulario de criacao de grupo no site.\n\n"
+                f"<i>Conta Telegram nao vinculada.\n"
                 f"Seu Telegram ID: <code>{user.id}</code>\n"
                 f"Acesse seu perfil no site e adicione seu Telegram ID.</i>"
             )
-            await update.message.reply_text(text, parse_mode=ParseMode.HTML)
+            await _reply_private(update, context, text)
             return
 
         # Buscar ou criar grupo
@@ -95,21 +124,11 @@ async def setup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 status='active'
             ).count()
 
-            # Receita do mês
-            start_of_month = datetime.now().replace(day=1, hour=0, minute=0, second=0)
-            monthly_revenue = session.query(func.sum(Transaction.net_amount)).filter(
-                Transaction.group_id == group.id,
-                Transaction.created_at >= start_of_month,
-                Transaction.status == 'completed'
-            ).scalar() or 0
-
             # Receita total
             total_revenue = session.query(func.sum(Transaction.net_amount)).filter(
                 Transaction.group_id == group.id,
                 Transaction.status == 'completed'
             ).scalar() or 0
-
-            group_name = escape_html(group.name)
 
             text = (
                 f"<b>Painel do grupo</b>\n\n"
@@ -126,13 +145,7 @@ async def setup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
             keyboard = [
-                [
-                    InlineKeyboardButton("Estatísticas", callback_data="admin_stats"),
-                    InlineKeyboardButton("Broadcast", callback_data="admin_broadcast")
-                ],
-                [
-                    InlineKeyboardButton("Dashboard", url="https://televip.app/dashboard")
-                ]
+                [InlineKeyboardButton("Dashboard", url="https://televip.app/dashboard")]
             ]
 
         else:
@@ -153,23 +166,16 @@ async def setup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"Grupo:       {chat.title}\n"
                 f"Telegram ID: {chat.id}"
                 f"</pre>\n\n"
-                f"<b>Próximos passos:</b>\n"
+                f"<b>Proximos passos:</b>\n"
                 f"1. Crie planos de assinatura no painel web\n"
                 f"2. Compartilhe o link de convite com seus clientes"
             )
 
             keyboard = [
-                [
-                    InlineKeyboardButton("Configurar Planos", url="https://televip.app/dashboard"),
-                    InlineKeyboardButton("Ver Stats", callback_data="admin_stats")
-                ]
+                [InlineKeyboardButton("Dashboard", url="https://televip.app/dashboard")]
             ]
 
-        await update.message.reply_text(
-            text,
-            parse_mode=ParseMode.HTML,
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        await _reply_private(update, context, text, reply_markup=InlineKeyboardMarkup(keyboard))
 
 async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Mostrar estatísticas do grupo ou do criador"""
@@ -185,27 +191,28 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         user_member = await context.bot.get_chat_member(chat.id, user.id)
         if user_member.status not in ['administrator', 'creator']:
-            await update.message.reply_text(
-                "Apenas administradores podem ver estatísticas!"
-            )
-            return
+            return  # Silencioso
     except Exception:
         return
 
-    # Mostrar stats do grupo
+    # Deletar comando do grupo e mostrar stats no privado
+    try:
+        await update.message.delete()
+    except Exception:
+        pass
     await show_group_stats(update, context, chat.id)
 
 async def show_group_stats(update: Update, context: ContextTypes.DEFAULT_TYPE, group_telegram_id: str):
-    """Mostrar estatísticas detalhadas de um grupo"""
+    """Mostrar estatísticas detalhadas de um grupo (envia no privado)"""
+    user = update.effective_user
+
     with get_db_session() as session:
         group = session.query(Group).filter_by(
             telegram_id=str(group_telegram_id)
         ).first()
 
         if not group:
-            await update.message.reply_text(
-                "Grupo não configurado. Use /setup primeiro."
-            )
+            await _reply_private(update, context, "Grupo nao configurado. Use /setup primeiro.")
             return
 
         # Estatísticas gerais
@@ -266,11 +273,21 @@ async def show_group_stats(update: Update, context: ContextTypes.DEFAULT_TYPE, g
             [InlineKeyboardButton("Dashboard", url="https://televip.app/dashboard")]
         ]
 
-        await update.message.reply_text(
-            text,
-            parse_mode=ParseMode.HTML,
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        # Enviar no privado do admin
+        try:
+            await context.bot.send_message(
+                chat_id=user.id,
+                text=text,
+                parse_mode=ParseMode.HTML,
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+        except Exception:
+            # Fallback: responder no grupo se não conseguir enviar no privado
+            await update.message.reply_text(
+                text,
+                parse_mode=ParseMode.HTML,
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
 
 async def show_creator_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Mostrar estatísticas gerais do criador"""
@@ -367,22 +384,24 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             user_member = await context.bot.get_chat_member(chat.id, user.id)
             if user_member.status not in ['administrator', 'creator']:
-                await update.message.reply_text(
-                    "Apenas administradores podem enviar broadcast!"
-                )
-                return
+                return  # Silencioso
         except Exception:
             return
 
+        # Deletar comando do grupo
+        try:
+            await update.message.delete()
+        except Exception:
+            pass
+
     # Verificar se tem texto
     if not context.args:
-        text = (
+        await _reply_private(update, context,
             "<b>Como usar o Broadcast</b>\n\n"
-            "Envie sua mensagem após o comando:\n"
+            "Envie sua mensagem apos o comando:\n"
             "<code>/broadcast Sua mensagem aqui</code>\n\n"
-            "<i>A mensagem será enviada para TODOS os assinantes ativos do grupo.</i>"
+            "<i>A mensagem sera enviada para TODOS os assinantes ativos do grupo.</i>"
         )
-        await update.message.reply_text(text, parse_mode=ParseMode.HTML)
         return
 
     # Pegar mensagem
@@ -392,8 +411,8 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if chat.type == 'private':
         await select_group_for_broadcast(update, context, broadcast_text)
     else:
-        # Broadcast para o grupo atual
-        await confirm_broadcast(update, context, chat.id, broadcast_text)
+        # Broadcast para o grupo atual — confirmar no privado
+        await confirm_broadcast_private(update, context, chat.id, broadcast_text)
 
 async def select_group_for_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE, message: str):
     """Selecionar grupo para broadcast quando no privado"""
@@ -472,6 +491,42 @@ async def confirm_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE, 
         parse_mode=ParseMode.HTML,
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
+
+
+async def confirm_broadcast_private(update: Update, context: ContextTypes.DEFAULT_TYPE, group_telegram_id: str, message: str):
+    """Confirmar envio de broadcast — envia confirmação no privado do admin"""
+    user = update.effective_user
+    context.user_data['broadcast_message'] = message
+    context.user_data['broadcast_group_telegram_id'] = str(group_telegram_id)
+
+    escaped_message = escape_html(message)
+
+    text = (
+        f"<b>Confirmar Broadcast</b>\n\n"
+        f"<b>Mensagem:</b>\n{escaped_message}\n\n"
+        f"Deseja enviar esta mensagem para todos os assinantes ativos?"
+    )
+    keyboard = [
+        [
+            InlineKeyboardButton("Enviar", callback_data="broadcast_confirm"),
+            InlineKeyboardButton("Cancelar", callback_data="cancel_broadcast")
+        ]
+    ]
+    try:
+        await context.bot.send_message(
+            chat_id=user.id,
+            text=text,
+            parse_mode=ParseMode.HTML,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+    except Exception:
+        # Fallback no grupo se não conseguir enviar no privado
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=text,
+            parse_mode=ParseMode.HTML,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
 
 
 async def handle_broadcast_to_group(update: Update, context: ContextTypes.DEFAULT_TYPE):

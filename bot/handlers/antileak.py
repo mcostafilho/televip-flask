@@ -65,23 +65,31 @@ async def antileak_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
+    # Deletar comando do grupo
+    try:
+        await update.message.delete()
+    except Exception:
+        pass
+
     # Verificar se é admin
     try:
         member = await context.bot.get_chat_member(chat.id, user.id)
         if member.status not in ['administrator', 'creator']:
-            await update.message.reply_text(
-                "Apenas administradores podem usar este comando."
-            )
-            return
+            return  # Silencioso
     except Exception:
         return
 
     with get_db_session() as session:
         group = session.query(Group).filter_by(telegram_id=str(chat.id)).first()
         if not group:
-            await update.message.reply_text(
-                "Grupo não configurado. Use /setup primeiro."
-            )
+            try:
+                await context.bot.send_message(
+                    chat_id=user.id,
+                    text="Grupo nao configurado. Use /setup primeiro.",
+                    parse_mode=ParseMode.HTML,
+                )
+            except Exception:
+                pass
             return
 
         # Verificar proteção nativa do Telegram
@@ -134,11 +142,22 @@ async def antileak_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             InlineKeyboardButton(btn_label, callback_data=f"antileak_toggle_{group.id}")
         ]]
 
-        await update.message.reply_text(
-            text,
-            parse_mode=ParseMode.HTML,
-            reply_markup=InlineKeyboardMarkup(keyboard),
-        )
+        # Enviar no privado do admin
+        try:
+            await context.bot.send_message(
+                chat_id=user.id,
+                text=text,
+                parse_mode=ParseMode.HTML,
+                reply_markup=InlineKeyboardMarkup(keyboard),
+            )
+        except Exception:
+            # Fallback no grupo
+            await context.bot.send_message(
+                chat_id=chat.id,
+                text=text,
+                parse_mode=ParseMode.HTML,
+                reply_markup=InlineKeyboardMarkup(keyboard),
+            )
 
 
 async def handle_antileak_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE):
