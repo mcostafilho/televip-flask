@@ -15,7 +15,7 @@ from bot.keyboards.menus import get_renewal_keyboard
 from bot.utils.format_utils import (
     format_remaining_text, get_expiry_emoji, format_date, format_date_code,
     format_currency, format_currency_code, escape_html,
-    is_sub_effectively_active, is_sub_renewing
+    is_sub_effectively_active, is_sub_renewing, try_fix_stale_end_date
 )
 from app import db
 from app.models import Subscription, Group, Creator, PricingPlan, Transaction
@@ -81,6 +81,11 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 plan_name = escape_html(plan.name)
 
                 now = datetime.utcnow()
+
+                # Corrigir end_date defasado (webhook pode ter falhado antes)
+                if sub.end_date and sub.end_date <= now:
+                    try_fix_stale_end_date(sub)
+
                 renewing = is_sub_renewing(sub, now)
 
                 if is_lifetime:

@@ -113,7 +113,6 @@ async def antileak_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         status_text = "Ativado" if enabled else "Desativado"
 
         layer1 = "ON" if has_protected else "OFF"
-        layer1_text = "ativada no grupo" if has_protected else "desativada"
         layer2 = "ON" if invite_blocked else "OFF"
         layer2_text = "membros nao podem convidar" if invite_blocked else "membros podem convidar"
         layer3 = "ON" if enabled else "OFF"
@@ -125,7 +124,17 @@ async def antileak_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"<b>Anti-Vazamento — {group_name}</b>\n"
             f"Status: <b>[{status_icon}] {status_text}</b>\n\n"
             f"<b>Camadas de protecao:</b>\n"
-            f"[{layer1}] Protecao de conteudo (Telegram) — {layer1_text}\n"
+        )
+
+        if not has_protected:
+            text += (
+                f"[OFF] Protecao de conteudo (Telegram)\n"
+                f"      <b>ESSENCIAL para bloquear encaminhamentos!</b>\n"
+            )
+        else:
+            text += f"[ON] Protecao de conteudo (Telegram) — ativada\n"
+
+        text += (
             f"[{layer2}] Bloqueio de convites — {layer2_text}\n"
             f"[{layer3}] Mensagens protegidas — {layer3_text}\n"
             f"[{layer4}] Marca d'agua — {layer4_text}\n"
@@ -133,8 +142,16 @@ async def antileak_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if not has_protected:
             text += (
-                "\n<i>Para ativar a protecao nativa do Telegram:\n"
-                "Configuracoes do grupo > Permissoes > Restringir salvar conteudo</i>\n"
+                "\n<b>IMPORTANTE:</b> Sem a protecao nativa do Telegram, "
+                "membros podem encaminhar mensagens para fora do grupo. "
+                "O bot so consegue monitorar o que acontece <b>dentro</b> "
+                "do grupo.\n\n"
+                "<b>Como ativar:</b>\n"
+                "1. Abra as configuracoes do grupo\n"
+                "2. Toque em <b>Permissoes</b>\n"
+                "3. Ative <b>Restringir salvar conteudo</b>\n\n"
+                "<i>Isso impede forward, copia e print de todas as "
+                "mensagens do grupo.</i>\n"
             )
 
         text += (
@@ -198,6 +215,13 @@ async def handle_antileak_toggle(update: Update, context: ContextTypes.DEFAULT_T
         status = "ativado" if enabled else "desativado"
         btn_label = "Desativar Anti-Leak" if enabled else "Ativar Anti-Leak"
 
+        # Verificar protect_content
+        try:
+            chat_info = await context.bot.get_chat(int(group.telegram_id))
+            has_protected = getattr(chat_info, 'has_protected_content', False)
+        except Exception:
+            has_protected = False
+
         text = (
             f"<b>Anti-Vazamento — {group_name}</b>\n\n"
             f"Anti-leak <b>{status}</b> com sucesso!\n\n"
@@ -211,6 +235,14 @@ async def handle_antileak_toggle(update: Update, context: ContextTypes.DEFAULT_T
                 "- Marca d'agua invisivel em broadcasts\n"
                 "- Forwards e links de convite detectados e removidos\n"
             )
+            if not has_protected:
+                text += (
+                    "\n<b>IMPORTANTE:</b> Para bloquear encaminhamentos "
+                    "para fora do grupo, ative tambem a protecao nativa "
+                    "do Telegram:\n"
+                    "Configuracoes do grupo > Permissoes > "
+                    "<b>Restringir salvar conteudo</b>\n"
+                )
         else:
             text += "Todas as protecoes foram desativadas.\n"
 

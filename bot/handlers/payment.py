@@ -16,7 +16,7 @@ from bot.utils.stripe_integration import (
 from bot.utils.format_utils import (
     format_currency, format_currency_code, format_remaining_text,
     get_expiry_emoji, format_date, format_date_code, escape_html,
-    is_sub_renewing
+    is_sub_renewing, try_fix_stale_end_date
 )
 from app.models import Group, PricingPlan, Subscription, Transaction, Creator
 from app.services.payment_service import PaymentService
@@ -954,12 +954,16 @@ async def list_user_subscriptions(update: Update, context: ContextTypes.DEFAULT_
                 if is_lifetime:
                     expiry_text = "Acesso vitalício"
                     emoji = "♾️"
-                elif is_sub_renewing(sub):
-                    expiry_text = "Renovando..."
-                    emoji = "🔄"
                 else:
-                    expiry_text = f"Expira: {format_date_code(sub.end_date)}"
-                    emoji = get_expiry_emoji(sub.end_date)
+                    # Corrigir end_date defasado antes de avaliar
+                    if sub.end_date and sub.end_date <= datetime.utcnow():
+                        try_fix_stale_end_date(sub)
+                    if is_sub_renewing(sub):
+                        expiry_text = "Renovando..."
+                        emoji = "🔄"
+                    else:
+                        expiry_text = f"Expira: {format_date_code(sub.end_date)}"
+                        emoji = get_expiry_emoji(sub.end_date)
 
                 text += (
                     f"\n{emoji} <b>{group_name}</b>\n"

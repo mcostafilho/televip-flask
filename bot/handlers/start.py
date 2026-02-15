@@ -13,7 +13,8 @@ from bot.utils.database import get_db_session
 from bot.keyboards.menus import get_plans_menu
 from bot.utils.format_utils import (
     format_remaining_text, get_expiry_emoji, format_date, format_date_code,
-    format_currency, escape_html, is_sub_effectively_active, is_sub_renewing
+    format_currency, escape_html, is_sub_effectively_active, is_sub_renewing,
+    try_fix_stale_end_date
 )
 from app.models import Group, Creator, PricingPlan, Subscription, Transaction
 from bot.handlers.payment_verification import check_payment_from_start
@@ -127,6 +128,9 @@ async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE
             for sub in active[:5]:
                 group_name = escape_html(sub.group.name) if sub.group else "N/A"
                 is_lifetime = getattr(sub.plan, 'is_lifetime', False) or (sub.plan and sub.plan.duration_days == 0)
+                # Corrigir end_date defasado
+                if sub.end_date and sub.end_date <= now:
+                    try_fix_stale_end_date(sub)
                 if is_lifetime:
                     remaining = "Vitalício"
                     emoji = "♾️"

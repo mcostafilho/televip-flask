@@ -61,7 +61,7 @@ def is_sub_renewing(sub, now=None) -> bool:
     Útil para mostrar 'Renovando...' ao invés de 'Expirada'.
 
     Retorna False se já existir transação completed de renovação
-    após o end_date (webhook já processou, só falta atualizar end_date).
+    (webhook já processou). Também tenta corrigir end_date defasado.
     """
     if now is None:
         now = datetime.utcnow()
@@ -79,24 +79,63 @@ def is_sub_renewing(sub, now=None) -> bool:
     )
 
     if is_stripe_autorenew:
+        # Verificar se já existe transação de renovação concluída
+        try:
+            from app.models.subscription import Transaction
+            has_renewal = Transaction.query.filter(
+                Transaction.subscription_id == sub.id,
+                Transaction.status == 'completed',
+                Transaction.billing_reason == 'subscription_cycle',
+                Transaction.paid_at >= sub.end_date - timedelta(hours=1)
+            ).first()
+            if has_renewal:
+                return False  # Já renovado
+        except Exception:
+            pass
+
+        # Dentro da janela de graça de 2h — ainda esperando webhook
         grace = timedelta(hours=2)
         if sub.end_date > (now - grace):
-            # Verificar se já existe transação de renovação concluída
-            # Se sim, o pagamento já foi processado — não é mais "renovando"
-            try:
-                from app.models.subscription import Transaction
-                has_renewal = Transaction.query.filter(
-                    Transaction.subscription_id == sub.id,
-                    Transaction.status == 'completed',
-                    Transaction.billing_reason == 'subscription_cycle',
-                    Transaction.paid_at >= sub.end_date - timedelta(hours=1)
-                ).first()
-                if has_renewal:
-                    return False  # Já renovado, webhook processou
-            except Exception:
-                pass
             return True
 
+    return False
+
+
+def try_fix_stale_end_date(sub):
+    """Se a sub tem uma transação de renovação completed mas end_date defasado,
+    corrige o end_date baseado no plano. Retorna True se corrigiu."""
+    try:
+        from app.models.subscription import Transaction
+        from app.models.group import PricingPlan
+        from app import db
+
+        if not sub.end_date or sub.status != 'active':
+            return False
+
+        now = datetime.utcnow()
+        if sub.end_date > now:
+            return False  # end_date está no futuro, ok
+
+        # Buscar transação de renovação completed após o end_date
+        renewal_txn = Transaction.query.filter(
+            Transaction.subscription_id == sub.id,
+            Transaction.status == 'completed',
+            Transaction.billing_reason == 'subscription_cycle',
+            Transaction.paid_at >= sub.end_date - timedelta(hours=1)
+        ).order_by(Transaction.paid_at.desc()).first()
+
+        if not renewal_txn:
+            return False
+
+        # Corrigir end_date baseado no plano
+        plan = PricingPlan.query.get(sub.plan_id) if sub.plan_id else None
+        if plan and plan.duration_days > 0:
+            sub.end_date = renewal_txn.paid_at + timedelta(days=plan.duration_days)
+            db.session.commit()
+            return True
+
+    except Exception:
+        pass
     return False
 
 
