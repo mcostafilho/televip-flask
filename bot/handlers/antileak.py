@@ -137,6 +137,11 @@ async def antileak_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "Configuracoes do grupo > Permissoes > Restringir salvar conteudo</i>\n"
             )
 
+        text += (
+            f"\n<i>Respondido no privado para nao expor no grupo "
+            f"<b>{group_name}</b>.</i>"
+        )
+
         btn_label = "Desativar Anti-Leak" if enabled else "Ativar Anti-Leak"
         keyboard = [[
             InlineKeyboardButton(btn_label, callback_data=f"antileak_toggle_{group.id}")
@@ -151,12 +156,13 @@ async def antileak_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 reply_markup=InlineKeyboardMarkup(keyboard),
             )
         except Exception:
-            # Fallback no grupo
+            # Avisar no grupo sem expor dados
+            bot_me = await context.bot.get_me()
             await context.bot.send_message(
                 chat_id=chat.id,
-                text=text,
+                text=f"{user.mention_html()}, te enviei o status no privado. "
+                     f"Se nao recebeu, inicie o bot: @{bot_me.username}",
                 parse_mode=ParseMode.HTML,
-                reply_markup=InlineKeyboardMarkup(keyboard),
             )
 
 

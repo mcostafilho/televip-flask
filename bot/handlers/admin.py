@@ -20,13 +20,22 @@ logger = logging.getLogger(__name__)
 
 async def _reply_private(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, reply_markup=None):
     """Responde no privado do admin e deleta o comando do grupo.
-    Se não conseguir enviar no privado (usuário não iniciou o bot), responde no grupo."""
+    Adiciona nota de contexto indicando o grupo de origem.
+    Se não conseguir enviar no privado (usuário não iniciou o bot), avisa no grupo."""
     chat = update.effective_chat
     user = update.effective_user
 
     if chat.type == 'private':
         await update.message.reply_text(text, parse_mode=ParseMode.HTML, reply_markup=reply_markup)
         return
+
+    # Adicionar nota de contexto ao texto
+    group_name = escape_html(chat.title or 'Grupo')
+    private_note = (
+        f"\n\n<i>Respondido no privado para nao expor no grupo "
+        f"<b>{group_name}</b>.</i>"
+    )
+    text_with_note = text + private_note
 
     # Tentar deletar o comando do grupo
     try:
@@ -38,16 +47,17 @@ async def _reply_private(update: Update, context: ContextTypes.DEFAULT_TYPE, tex
     try:
         await context.bot.send_message(
             chat_id=user.id,
-            text=text,
+            text=text_with_note,
             parse_mode=ParseMode.HTML,
             reply_markup=reply_markup
         )
     except Exception:
-        # Usuário não iniciou o bot no privado — responde no grupo como fallback
+        # Usuário não iniciou o bot no privado — avisar no grupo sem revelar dados
+        bot_me = await context.bot.get_me()
         await context.bot.send_message(
             chat_id=chat.id,
-            text=f"{user.mention_html()}, enviei a resposta no seu privado. "
-                 f"Se não recebeu, inicie o bot primeiro: @{(await context.bot.get_me()).username}",
+            text=f"{user.mention_html()}, te enviei uma mensagem no privado. "
+                 f"Se nao recebeu, inicie o bot primeiro: @{bot_me.username}",
             parse_mode=ParseMode.HTML,
         )
 
@@ -257,7 +267,7 @@ async def show_group_stats(update: Update, context: ContextTypes.DEFAULT_TYPE, g
         group_name = escape_html(group.name)
 
         text = (
-            f"<b>Estatísticas — {group_name}</b>\n\n"
+            f"<b>Estatisticas — {group_name}</b>\n\n"
             f"<pre>"
             f"Assinantes ativos:    {active_subs}\n"
             f"Novos (30d):          {new_subs}\n"
@@ -265,8 +275,10 @@ async def show_group_stats(update: Update, context: ContextTypes.DEFAULT_TYPE, g
             f"─────────────────────────────\n"
             f"Receita total:        {format_currency(total_revenue)}\n"
             f"Receita (30d):        {format_currency(last_30_days_revenue)}\n"
-            f"Ticket médio:         {format_currency(avg_ticket)}"
+            f"Ticket medio:         {format_currency(avg_ticket)}"
             f"</pre>"
+            f"\n\n<i>Respondido no privado para nao expor no grupo "
+            f"<b>{group_name}</b>.</i>"
         )
 
         keyboard = [
@@ -282,11 +294,13 @@ async def show_group_stats(update: Update, context: ContextTypes.DEFAULT_TYPE, g
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
         except Exception:
-            # Fallback: responder no grupo se não conseguir enviar no privado
-            await update.message.reply_text(
-                text,
+            # Fallback: avisar no grupo sem expor dados
+            bot_me = await context.bot.get_me()
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text=f"{user.mention_html()}, te enviei as estatisticas no privado. "
+                     f"Se nao recebeu, inicie o bot: @{bot_me.username}",
                 parse_mode=ParseMode.HTML,
-                reply_markup=InlineKeyboardMarkup(keyboard)
             )
 
 async def show_creator_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -496,15 +510,25 @@ async def confirm_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE, 
 async def confirm_broadcast_private(update: Update, context: ContextTypes.DEFAULT_TYPE, group_telegram_id: str, message: str):
     """Confirmar envio de broadcast — envia confirmação no privado do admin"""
     user = update.effective_user
+    chat = update.effective_chat
     context.user_data['broadcast_message'] = message
     context.user_data['broadcast_group_telegram_id'] = str(group_telegram_id)
 
     escaped_message = escape_html(message)
+    group_title = escape_html(chat.title or 'Grupo')
+
+    # Buscar nome do grupo do banco
+    with get_db_session() as session:
+        group = session.query(Group).filter_by(telegram_id=str(group_telegram_id)).first()
+        if group:
+            group_title = escape_html(group.name)
 
     text = (
-        f"<b>Confirmar Broadcast</b>\n\n"
+        f"<b>Confirmar Broadcast — {group_title}</b>\n\n"
         f"<b>Mensagem:</b>\n{escaped_message}\n\n"
         f"Deseja enviar esta mensagem para todos os assinantes ativos?"
+        f"\n\n<i>Respondido no privado para nao expor no grupo "
+        f"<b>{group_title}</b>.</i>"
     )
     keyboard = [
         [
@@ -520,12 +544,13 @@ async def confirm_broadcast_private(update: Update, context: ContextTypes.DEFAUL
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
     except Exception:
-        # Fallback no grupo se não conseguir enviar no privado
+        # Avisar no grupo sem expor a mensagem
+        bot_me = await context.bot.get_me()
         await context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text=text,
+            chat_id=chat.id,
+            text=f"{user.mention_html()}, te enviei a confirmacao no privado. "
+                 f"Se nao recebeu, inicie o bot: @{bot_me.username}",
             parse_mode=ParseMode.HTML,
-            reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
 
