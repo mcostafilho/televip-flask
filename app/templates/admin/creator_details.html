@@ -184,30 +184,33 @@
                 <p class="text-muted mb-2" style="font-size: 0.75rem;">
                     Taxa percentual automática quando não há taxa personalizada. Taxa fixa (R$ 0,99) não muda.
                 </p>
-                <table class="table table-sm mb-0" style="font-size: 0.8rem;">
+                <table style="width: 100%; font-size: 0.8rem; border-collapse: collapse;">
                     <thead>
                         <tr>
-                            <th style="border-color: rgba(255,255,255,0.06);">Assinantes</th>
-                            <th style="border-color: rgba(255,255,255,0.06);">Taxa</th>
+                            <th style="text-align: left; padding: 6px 8px; color: #e2e8f0; border-bottom: 1px solid rgba(124,92,252,0.2);">Assinantes ativos</th>
+                            <th style="text-align: right; padding: 6px 8px; color: #e2e8f0; border-bottom: 1px solid rgba(124,92,252,0.2);">Taxa</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% set tiers = [
-                            ('0 - 1.000', '9,99%', '9,99%'),
-                            ('1.001 - 5.000', '8,99%', '8,99%'),
-                            ('5.001 - 15.000', '7,99%', '7,99%'),
-                            ('15.001 - 50.000', '6,99%', '6,99%'),
-                            ('50.001+', '5,99%', '5,99%')
+                            ('0 - 1.000', '9,99%', '9,99%', '#e2e8f0'),
+                            ('1.001 - 5.000', '8,99%', '8,99%', '#c4b5fd'),
+                            ('5.001 - 15.000', '7,99%', '7,99%', '#38bdf8'),
+                            ('15.001 - 50.000', '6,99%', '6,99%', '#34d399'),
+                            ('50.001+', '5,99%', '5,99%', '#22c55e')
                         ] %}
                         {% set active_pct = fee_rates.tier_info.percentage_display if fee_rates.tier_info and not (creator.custom_fixed_fee is not none or creator.custom_percentage_fee is not none) else none %}
-                        {% for label, pct, match_pct in tiers %}
-                        <tr {% if active_pct and active_pct == match_pct %}style="background: rgba(56, 189, 248, 0.08); font-weight: 600;"{% endif %}>
-                            <td style="border-color: rgba(255,255,255,0.06);">{{ label }}</td>
-                            <td style="border-color: rgba(255,255,255,0.06);">{{ pct }}</td>
+                        {% for label, pct, match_pct, color in tiers %}
+                        <tr style="border-top: 1px solid rgba(124,92,252,0.1);{% if active_pct and active_pct == match_pct %} background: rgba(56, 189, 248, 0.12);{% endif %}">
+                            <td style="padding: 7px 8px; color: #b0b4cc;">{{ label }}{% if active_pct and active_pct == match_pct %} <span style="font-size: 0.7rem; color: #38bdf8;">(atual)</span>{% endif %}</td>
+                            <td style="text-align: right; padding: 7px 8px; font-weight: 600; color: {{ color }};">{{ pct }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
+                <p class="text-muted mt-2 mb-0" style="font-size: 0.72rem;">
+                    Total de assinantes ativos (todos os grupos): <strong style="color: #e2e8f0;">{{ fee_rates.tier_info.subscriber_count if fee_rates.tier_info else 0 }}</strong>
+                </p>
             </div>
         </div>
 
