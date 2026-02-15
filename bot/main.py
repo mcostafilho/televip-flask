@@ -49,6 +49,10 @@ from bot.handlers.admin import (
     handle_broadcast_to_group, handle_broadcast_confirm, handle_cancel_broadcast
 )
 from bot.handlers.payment_verification import check_payment_status
+from bot.handlers.antileak import (
+    antileak_command, handle_antileak_toggle,
+    antileak_message_monitor
+)
 from bot.utils.database import get_db_session
 
 # Configurar logging
@@ -181,6 +185,7 @@ def setup_handlers(application: Application) -> None:
     application.add_handler(CommandHandler("setup", setup_command))
     application.add_handler(CommandHandler("stats", stats_command))
     application.add_handler(CommandHandler("broadcast", broadcast_command))
+    application.add_handler(CommandHandler("antileak", antileak_command))
     
     # Callbacks de pagamento
     application.add_handler(CallbackQueryHandler(start_payment, pattern=r"^plan_\d+_\d+$"))
@@ -220,6 +225,9 @@ def setup_handlers(application: Application) -> None:
     application.add_handler(CallbackQueryHandler(handle_broadcast_confirm, pattern=r"^broadcast_confirm$"))
     application.add_handler(CallbackQueryHandler(handle_cancel_broadcast, pattern=r"^cancel_broadcast$"))
 
+    # Callback anti-leak toggle
+    application.add_handler(CallbackQueryHandler(handle_antileak_toggle, pattern=r"^antileak_toggle_\d+$"))
+
     # Handlers de grupo
     application.add_handler(MessageHandler(
         filters.StatusUpdate.NEW_CHAT_MEMBERS,
@@ -249,6 +257,12 @@ def setup_handlers(application: Application) -> None:
         filters.Text(["📋 Histórico"]) & filters.ChatType.PRIVATE,
         handle_history_button
     ))
+
+    # Monitor anti-leak de mensagens no grupo (group=1 para não conflitar)
+    application.add_handler(MessageHandler(
+        filters.ChatType.GROUPS & ~filters.StatusUpdate.ALL & ~filters.COMMAND,
+        antileak_message_monitor
+    ), group=1)
 
     # Handler genérico para callbacks não reconhecidos (deve ser o último)
     application.add_handler(CallbackQueryHandler(handle_unknown_callback))

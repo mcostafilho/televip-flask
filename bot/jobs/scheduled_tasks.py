@@ -418,6 +418,15 @@ async def audit_group_members():
 
             logger.info(f"Auditoria concluida: {total_removed} usuarios removidos")
 
+            # Reforçar permissões anti-leak em grupos com proteção ativa
+            from bot.handlers.antileak import enforce_antileak_permissions
+            for group in groups:
+                if group.anti_leak_enabled:
+                    try:
+                        await enforce_antileak_permissions(_application.bot, group)
+                    except Exception as e:
+                        logger.warning(f"Erro ao reforcar anti-leak no grupo {group.id}: {e}")
+
     except Exception as e:
         logger.error(f"Erro na auditoria de membros: {e}")
 

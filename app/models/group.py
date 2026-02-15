@@ -27,6 +27,7 @@ class Group(db.Model):
     chat_type = db.Column(db.String(20), default='group')
     cover_image_url = db.Column(db.String(500))
     is_public = db.Column(db.Boolean, default=False)
+    anti_leak_enabled = db.Column(db.Boolean, default=False)
 
     # Relacionamentos
     pricing_plans = db.relationship('PricingPlan', backref='group', lazy='dynamic', cascade='all, delete-orphan')

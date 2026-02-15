@@ -360,6 +360,78 @@
                                 </div>
                             </div>
 
+                            <!-- Anti-Vazamento -->
+                            {% if group %}
+                            <div class="form-section">
+                                <h5 class="section-title">
+                                    <i class="bi bi-shield-lock"></i> Protecao Anti-Vazamento
+                                </h5>
+                                <p class="text-muted">
+                                    Proteja o conteudo do seu grupo contra vazamentos com multiplas camadas de seguranca.
+                                </p>
+
+                                <div class="d-flex align-items-center justify-content-between mb-3 p-3" style="background: rgba(124,92,252,0.08); border-radius: 12px; border: 1px solid rgba(124,92,252,0.2);">
+                                    <div>
+                                        <strong style="font-size: 1rem;">Anti-Vazamento</strong>
+                                        <span class="badge {{ 'bg-success' if group.anti_leak_enabled else 'bg-secondary' }} ms-2">
+                                            {{ 'Ativado' if group.anti_leak_enabled else 'Desativado' }}
+                                        </span>
+                                        <br>
+                                        <small class="text-muted">
+                                            {% if group.anti_leak_enabled %}
+                                                Broadcasts protegidos, forwards bloqueados, watermark ativa.
+                                            {% else %}
+                                                Ative para proteger o conteudo do grupo.
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                    <form method="POST" action="{{ url_for('groups.toggle_antileak', id=group.id) }}" style="display:inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn {{ 'btn-outline-danger' if group.anti_leak_enabled else 'btn-primary' }} btn-sm">
+                                            <i class="bi {{ 'bi-shield-x' if group.anti_leak_enabled else 'bi-shield-check' }}"></i>
+                                            {{ 'Desativar' if group.anti_leak_enabled else 'Ativar' }}
+                                        </button>
+                                    </form>
+                                </div>
+
+                                {% if group.anti_leak_enabled %}
+                                <div class="mb-3">
+                                    <h6 style="font-size: 0.9rem; font-weight: 600;">Camadas de protecao ativas:</h6>
+                                    <ul class="list-unstyled small" style="color: #b0b4cc;">
+                                        <li class="mb-1"><i class="bi bi-check-circle text-success"></i> Bloqueio de convites — membros nao podem convidar outros</li>
+                                        <li class="mb-1"><i class="bi bi-check-circle text-success"></i> Mensagens protegidas — broadcasts com protecao contra copia</li>
+                                        <li class="mb-1"><i class="bi bi-check-circle text-success"></i> Marca d'agua invisivel — identificacao de vazadores em broadcasts</li>
+                                        <li class="mb-1"><i class="bi bi-check-circle text-success"></i> Monitoramento — forwards e links de convite removidos automaticamente</li>
+                                    </ul>
+                                </div>
+
+                                <div class="alert alert-info small">
+                                    <i class="bi bi-lightbulb"></i>
+                                    <strong>Dica:</strong> Ative tambem a protecao nativa do Telegram no grupo:
+                                    <em>Configuracoes do grupo &gt; Permissoes &gt; Restringir salvar conteudo</em>
+                                </div>
+
+                                <!-- Decodificador de Watermark -->
+                                <div class="mt-3 p-3" style="background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+                                    <h6 style="font-size: 0.9rem; font-weight: 600;">
+                                        <i class="bi bi-search"></i> Identificar Vazador
+                                    </h6>
+                                    <p class="text-muted small mb-2">
+                                        Cole abaixo o texto vazado para identificar qual assinante o compartilhou.
+                                    </p>
+                                    <div class="mb-2">
+                                        <textarea class="form-control" id="leakedTextInput" rows="3"
+                                                  placeholder="Cole o texto vazado aqui..." style="font-size: 0.85rem;"></textarea>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-warning btn-sm" onclick="decodeWatermark()">
+                                        <i class="bi bi-fingerprint"></i> Identificar Vazador
+                                    </button>
+                                    <div id="watermarkResult" class="mt-2" style="display:none;"></div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+
                             <!-- Status -->
                             <div class="form-section">
                                 <h5 class="section-title">Status e Visibilidade</h5>
@@ -837,6 +909,47 @@ if (coverFileInput) {
         };
         reader.readAsDataURL(file);
     });
+}
+
+// Decodificar marca d'água invisível
+function decodeWatermark() {
+    var text = document.getElementById('leakedTextInput').value;
+    var resultDiv = document.getElementById('watermarkResult');
+
+    if (!text.trim()) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '<div class="alert alert-warning small mb-0"><i class="bi bi-exclamation-triangle"></i> Cole o texto vazado acima.</div>';
+        return;
+    }
+
+    {% if group %}
+    fetch('{{ url_for("groups.decode_watermark_route", id=group.id) }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'leaked_text=' + encodeURIComponent(text) + '&csrf_token={{ csrf_token() }}'
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        resultDiv.style.display = 'block';
+        if (data.found) {
+            resultDiv.innerHTML =
+                '<div class="alert alert-danger small mb-0">' +
+                '<i class="bi bi-person-exclamation"></i> <strong>Vazador identificado!</strong><br>' +
+                '<pre class="mb-0 mt-1" style="color: inherit;">' +
+                'Username:  ' + data.username + '\n' +
+                'Telegram:  ' + data.telegram_id + '\n' +
+                'Plano:     ' + data.plan + '\n' +
+                'Status:    ' + data.status +
+                '</pre></div>';
+        } else {
+            resultDiv.innerHTML = '<div class="alert alert-secondary small mb-0"><i class="bi bi-question-circle"></i> Nenhuma marca d\'agua encontrada neste texto.</div>';
+        }
+    })
+    .catch(function() {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '<div class="alert alert-danger small mb-0">Erro ao decodificar. Tente novamente.</div>';
+    });
+    {% endif %}
 }
 
 // Copiar para área de transferência

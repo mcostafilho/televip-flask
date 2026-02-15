@@ -517,13 +517,22 @@ def broadcast(group_id):
                 try:
                     group_name_safe = group.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
                     msg_safe = message.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                    msg_text = f"<b>Mensagem de {group_name_safe}</b>\n\n{msg_safe}"
+
+                    payload = {
+                        'chat_id': sub.telegram_user_id,
+                        'text': msg_text,
+                        'parse_mode': 'HTML',
+                    }
+
+                    if group.anti_leak_enabled:
+                        from bot.utils.watermark import watermark_text
+                        payload['text'] = watermark_text(msg_text, sub.id)
+                        payload['protect_content'] = True
+
                     response = requests.post(
                         f'https://api.telegram.org/bot{bot_token}/sendMessage',
-                        json={
-                            'chat_id': sub.telegram_user_id,
-                            'text': f"<b>Mensagem de {group_name_safe}</b>\n\n{msg_safe}",
-                            'parse_mode': 'HTML'
-                        }
+                        json=payload,
                     )
                     if response.status_code == 200:
                         sent_count += 1
@@ -790,6 +799,47 @@ def stats(id):
                          daily_revenue=daily_revenue,
                          daily_subscriptions=daily_subscriptions,
                          plan_distribution=plan_distribution)
+
+@bp.route('/<int:id>/antileak', methods=['POST'])
+@login_required
+def toggle_antileak(id):
+    """Ativar/Desativar proteção anti-vazamento"""
+    if is_admin_viewing():
+        flash('Ação não permitida no modo admin.', 'warning')
+        return redirect(url_for('groups.list'))
+
+    group = Group.query.filter_by(id=id, creator_id=current_user.id).first_or_404()
+    group.anti_leak_enabled = not group.anti_leak_enabled
+    db.session.commit()
+    status = 'ativado' if group.anti_leak_enabled else 'desativado'
+    flash(f'Anti-vazamento {status} para {group.name}!', 'success')
+    return redirect(url_for('groups.edit', id=id))
+
+
+@bp.route('/<int:id>/decode-watermark', methods=['POST'])
+@login_required
+def decode_watermark_route(id):
+    """Decodificar marca d'água invisível para identificar vazador"""
+    group = Group.query.filter_by(id=id, creator_id=current_user.id).first_or_404()
+    text = request.form.get('leaked_text', '')
+
+    from bot.utils.watermark import decode_watermark
+    sub_id = decode_watermark(text)
+
+    if sub_id:
+        sub = Subscription.query.get(sub_id)
+        if sub and sub.group_id == group.id:
+            return jsonify({
+                'found': True,
+                'subscription_id': sub.id,
+                'username': sub.telegram_username or 'N/A',
+                'telegram_id': sub.telegram_user_id,
+                'plan': sub.plan.name if sub.plan else 'N/A',
+                'status': sub.status,
+            })
+
+    return jsonify({'found': False})
+
 
 @bp.route('/<int:id>/link')
 @login_required

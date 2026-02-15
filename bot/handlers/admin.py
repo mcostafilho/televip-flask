@@ -554,15 +554,23 @@ async def handle_broadcast_confirm(update: Update, context: ContextTypes.DEFAULT
 
         group_name = escape_html(group.name)
         escaped_message = escape_html(message)
+        anti_leak = group.anti_leak_enabled
 
         sent = 0
         failed = 0
         for sub in subs:
             try:
+                msg_text = f"<b>Mensagem de {group_name}</b>\n\n{escaped_message}"
+
+                if anti_leak:
+                    from bot.utils.watermark import watermark_text
+                    msg_text = watermark_text(msg_text, sub.id)
+
                 await context.bot.send_message(
                     chat_id=int(sub.telegram_user_id),
-                    text=f"<b>Mensagem de {group_name}</b>\n\n{escaped_message}",
-                    parse_mode=ParseMode.HTML
+                    text=msg_text,
+                    parse_mode=ParseMode.HTML,
+                    protect_content=anti_leak,
                 )
                 sent += 1
             except Exception as e:
