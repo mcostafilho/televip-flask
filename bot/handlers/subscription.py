@@ -14,7 +14,8 @@ from bot.utils.database import get_db_session
 from bot.keyboards.menus import get_renewal_keyboard
 from bot.utils.format_utils import (
     format_remaining_text, get_expiry_emoji, format_date, format_date_code,
-    format_currency, format_currency_code, escape_html
+    format_currency, format_currency_code, escape_html,
+    is_sub_effectively_active, is_sub_renewing
 )
 from app import db
 from app.models import Subscription, Group, Creator, PricingPlan, Transaction
@@ -349,7 +350,7 @@ async def process_renewal(update: Update, context: ContextTypes.DEFAULT_TYPE, su
             return
 
         now = datetime.utcnow()
-        still_active = sub.status == 'active' and sub.end_date and sub.end_date > now
+        still_active = is_sub_effectively_active(sub, now)
         amount = float(plan.price)
         platform_fee = amount * 0.10
 
@@ -718,7 +719,7 @@ async def show_active_subscriptions(update: Update, context: ContextTypes.DEFAUL
         all_active = session.query(Subscription).filter(
             Subscription.telegram_user_id == str(user.id),
             Subscription.status == 'active',
-            Subscription.end_date > now
+            Subscription.end_date > now - timedelta(hours=2)
         ).order_by(Subscription.end_date).all()
 
         if not all_active:
@@ -814,10 +815,14 @@ async def show_subscription_detail(update: Update, context: ContextTypes.DEFAULT
         type_label = "canal" if (group and group.chat_type == 'channel') else "grupo"
         is_lifetime = getattr(plan, 'is_lifetime', False) or (plan and plan.duration_days == 0)
         now = datetime.utcnow()
-        is_active = sub.status == 'active' and sub.end_date > now
+        is_active = is_sub_effectively_active(sub, now)
+        renewing = is_sub_renewing(sub, now)
 
         # Status text
-        if is_active:
+        if renewing:
+            emoji = "🔄"
+            status_text = "Renovando..."
+        elif is_active:
             if is_lifetime:
                 emoji = "♾️"
                 status_text = "Ativo (vitalício)"

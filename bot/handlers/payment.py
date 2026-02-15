@@ -371,12 +371,13 @@ async def start_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         }
 
         # Verificar se já tem assinatura ativa neste grupo (troca de plano)
+        # Inclui margem de 2h para cobrir janela de renovação do Stripe
         user = query.from_user
         existing_sub = session.query(Subscription).filter(
             Subscription.group_id == group_id,
             Subscription.telegram_user_id == str(user.id),
             Subscription.status == 'active',
-            Subscription.end_date > datetime.utcnow()
+            Subscription.end_date > datetime.utcnow() - timedelta(hours=2)
         ).first()
 
         if existing_sub and not is_lifetime:
@@ -913,7 +914,7 @@ async def list_user_subscriptions(update: Update, context: ContextTypes.DEFAULT_
         subscriptions = session.query(Subscription).filter(
             Subscription.telegram_user_id == str(user.id),
             Subscription.status == 'active',
-            Subscription.end_date > datetime.utcnow()
+            Subscription.end_date > datetime.utcnow() - timedelta(hours=2)
         ).all()
 
         if not subscriptions:

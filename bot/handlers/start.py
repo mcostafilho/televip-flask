@@ -13,7 +13,7 @@ from bot.utils.database import get_db_session
 from bot.keyboards.menus import get_plans_menu
 from bot.utils.format_utils import (
     format_remaining_text, get_expiry_emoji, format_date, format_date_code,
-    format_currency, escape_html
+    format_currency, escape_html, is_sub_effectively_active, is_sub_renewing
 )
 from app.models import Group, Creator, PricingPlan, Subscription, Transaction
 from bot.handlers.payment_verification import check_payment_from_start
@@ -87,7 +87,7 @@ async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE
             Subscription.status.in_(['active', 'expired', 'cancelled'])
         ).order_by(Subscription.end_date.desc()).all()
 
-        active = [s for s in all_subs if s.status == 'active' and s.end_date > now]
+        active = [s for s in all_subs if is_sub_effectively_active(s, now)]
         expiring = [s for s in active if s.end_date <= now + timedelta(days=7)]
 
         # Histórico: só subs que foram realmente ativas (expiradas ou canceladas com transação paga)
@@ -95,7 +95,7 @@ async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE
         history_subs = [
             s for s in all_subs
             if s.status == 'expired'
-            or (s.status == 'active' and s.end_date <= now)
+            or (s.status == 'active' and s.end_date and s.end_date <= now and not is_sub_effectively_active(s, now))
             or (s.status == 'cancelled' and any(t.status == 'completed' for t in s.transactions))
         ]
         history_groups = {}
@@ -130,6 +130,9 @@ async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE
                 if is_lifetime:
                     remaining = "Vitalício"
                     emoji = "♾️"
+                elif is_sub_renewing(sub, now):
+                    remaining = "Renovando..."
+                    emoji = "🔄"
                 else:
                     remaining = format_remaining_text(sub.end_date)
                     emoji = get_expiry_emoji(sub.end_date)

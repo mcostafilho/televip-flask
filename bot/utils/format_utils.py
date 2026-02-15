@@ -18,6 +18,70 @@ def to_brt(dt: datetime) -> datetime:
     return dt.astimezone(BRT)
 
 
+def is_sub_effectively_active(sub, now=None) -> bool:
+    """
+    Verifica se uma assinatura está efetivamente ativa, considerando
+    a janela de ~1h que o Stripe leva para finalizar e cobrar invoices
+    de renovação (draft → finalized → paid).
+
+    Para subs Stripe auto-renew (cancel_at_period_end=False), tolera
+    até 2h após end_date antes de considerar expirada.
+    """
+    if now is None:
+        now = datetime.utcnow()
+
+    if sub.status != 'active':
+        return False
+
+    if not sub.end_date:
+        return False
+
+    # Ainda dentro do período — ativa normalmente
+    if sub.end_date > now:
+        return True
+
+    # end_date já passou — verificar se é Stripe auto-renew dentro da janela
+    is_stripe_autorenew = (
+        getattr(sub, 'stripe_subscription_id', None)
+        and not getattr(sub, 'is_legacy', False)
+        and not getattr(sub, 'cancel_at_period_end', False)
+    )
+
+    if is_stripe_autorenew:
+        grace = timedelta(hours=2)
+        return sub.end_date > (now - grace)
+
+    return False
+
+
+def is_sub_renewing(sub, now=None) -> bool:
+    """
+    Retorna True se a sub está na janela de renovação do Stripe
+    (end_date passou mas dentro de 2h, Stripe auto-renew ativo).
+    Útil para mostrar 'Renovando...' ao invés de 'Expirada'.
+    """
+    if now is None:
+        now = datetime.utcnow()
+
+    if sub.status != 'active' or not sub.end_date:
+        return False
+
+    if sub.end_date > now:
+        return False  # Ainda não expirou
+
+    is_stripe_autorenew = (
+        getattr(sub, 'stripe_subscription_id', None)
+        and not getattr(sub, 'is_legacy', False)
+        and not getattr(sub, 'cancel_at_period_end', False)
+    )
+
+    if is_stripe_autorenew:
+        grace = timedelta(hours=2)
+        return sub.end_date > (now - grace)
+
+    return False
+
+
 def format_currency(value: Union[float, int]) -> str:
     """
     Formatar valor monetário para Real brasileiro
