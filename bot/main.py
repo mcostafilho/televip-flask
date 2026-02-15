@@ -22,7 +22,7 @@ if sys.platform == 'win32':
 # Adicionar o diretório raiz ao path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand, BotCommandScopeAllPrivateChats, BotCommandScopeAllGroupChats, BotCommandScopeAllChatAdministrators
 from telegram.constants import ParseMode
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler,
@@ -160,11 +160,34 @@ async def post_init(application: Application) -> None:
         bot_info = await application.bot.get_me()
         logger.info(f"✅ Bot @{bot_info.username} iniciado com sucesso!")
 
-        # Registrar apenas os comandos ativos no menu do Telegram
-        await application.bot.set_my_commands([
-            BotCommand("start", "Menu principal"),
-            BotCommand("status", "Ver suas assinaturas"),
-        ])
+        # Limpar comandos globais (sem escopo)
+        await application.bot.set_my_commands([])
+
+        # Comandos para CHAT PRIVADO (assinantes)
+        await application.bot.set_my_commands(
+            [
+                BotCommand("start", "Menu principal"),
+                BotCommand("status", "Ver suas assinaturas"),
+            ],
+            scope=BotCommandScopeAllPrivateChats()
+        )
+
+        # Comandos para ADMINS em grupos (criadores)
+        await application.bot.set_my_commands(
+            [
+                BotCommand("setup", "Configurar grupo"),
+                BotCommand("stats", "Estatísticas do grupo"),
+                BotCommand("broadcast", "Enviar mensagem aos assinantes"),
+                BotCommand("antileak", "Proteção anti-vazamento"),
+            ],
+            scope=BotCommandScopeAllChatAdministrators()
+        )
+
+        # Membros comuns em grupos: nenhum comando visível
+        await application.bot.set_my_commands(
+            [],
+            scope=BotCommandScopeAllGroupChats()
+        )
 
         # Iniciar tarefas agendadas (controle de assinaturas)
         from bot.jobs.scheduled_tasks import setup_jobs
