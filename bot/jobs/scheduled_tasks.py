@@ -10,6 +10,7 @@ from telegram.error import TelegramError
 from telegram.constants import ParseMode
 
 from bot.utils.database import get_db_session
+from bot.utils.format_utils import try_fix_stale_end_date
 from app.models import Subscription, Group, Transaction
 
 logger = logging.getLogger(__name__)
@@ -84,7 +85,14 @@ async def check_expired_subscriptions():
 
             warned = 0
             skipped = 0
+            fixed = 0
             for sub in newly_expired:
+                # Auto-corrigir end_date defasado (webhook pode ter falhado)
+                if try_fix_stale_end_date(sub):
+                    fixed += 1
+                    logger.info(f"Sub {sub.id}: end_date corrigido pelo auto-fix")
+                    continue  # end_date atualizado, sub continua ativa
+
                 is_stripe_managed = (
                     sub.stripe_subscription_id
                     and not sub.is_legacy
@@ -155,10 +163,11 @@ async def check_expired_subscriptions():
 
             session.commit()
 
-            if warned or removed or skipped or suspended_processed:
+            if warned or removed or skipped or suspended_processed or fixed:
                 logger.info(
                     f"Expiradas: {warned} avisadas, {removed} removidas, "
-                    f"{skipped} stripe aguardando, {suspended_processed} suspensas"
+                    f"{skipped} stripe aguardando, {fixed} corrigidas, "
+                    f"{suspended_processed} suspensas"
                 )
 
     except Exception as e:
@@ -371,6 +380,13 @@ async def audit_group_members():
                 for sub in inactive_subs:
                     # Skip if user has another active subscription for the same group
                     if sub.telegram_user_id in active_user_ids:
+                        continue
+
+                    # Auto-corrigir sub expirada que deveria estar ativa
+                    if sub.status == 'expired' and try_fix_stale_end_date(sub):
+                        sub.status = 'active'
+                        active_user_ids.add(sub.telegram_user_id)
+                        logger.info(f"Audit fix: sub {sub.id} reativada (pagamento encontrado)")
                         continue
 
                     # Skip if user is whitelisted

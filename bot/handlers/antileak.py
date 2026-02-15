@@ -283,8 +283,9 @@ async def antileak_message_monitor(update: Update, context: ContextTypes.DEFAULT
 
     violations = []
 
-    # 1. Detectar forwards
-    if message.forward_from or message.forward_from_chat:
+    # 1. Detectar forwards (forward_date é sempre definido para mensagens encaminhadas,
+    #    mesmo quando o remetente tem privacidade de forward ativada)
+    if message.forward_date or message.forward_from or message.forward_from_chat:
         violations.append('forward')
 
     # 2. Detectar links de convite Telegram
