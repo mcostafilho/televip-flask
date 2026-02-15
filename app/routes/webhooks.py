@@ -62,37 +62,42 @@ def stripe_webhook():
     logger.info(f"Event ID: {event['id']}")
     
     # Processar diferentes tipos de eventos
-    if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
-        handle_checkout_session_completed(session)
-        
-    elif event['type'] == 'payment_intent.succeeded':
-        payment_intent = event['data']['object']
-        handle_payment_intent_succeeded(payment_intent)
-        
-    elif event['type'] == 'payment_intent.payment_failed':
-        payment_intent = event['data']['object']
-        handle_payment_failed(payment_intent)
-        
-    elif event['type'] == 'invoice.paid':
-        invoice = event['data']['object']
-        handle_invoice_paid(invoice)
+    try:
+        if event['type'] == 'checkout.session.completed':
+            session = event['data']['object']
+            handle_checkout_session_completed(session)
 
-    elif event['type'] == 'invoice.created':
-        invoice = event['data']['object']
-        handle_invoice_created(invoice)
+        elif event['type'] == 'payment_intent.succeeded':
+            payment_intent = event['data']['object']
+            handle_payment_intent_succeeded(payment_intent)
 
-    elif event['type'] == 'invoice.payment_failed':
-        invoice = event['data']['object']
-        handle_invoice_payment_failed(invoice)
+        elif event['type'] == 'payment_intent.payment_failed':
+            payment_intent = event['data']['object']
+            handle_payment_failed(payment_intent)
 
-    elif event['type'] == 'customer.subscription.deleted':
-        stripe_subscription = event['data']['object']
-        handle_subscription_deleted(stripe_subscription)
+        elif event['type'] == 'invoice.paid':
+            invoice = event['data']['object']
+            handle_invoice_paid(invoice)
 
-    elif event['type'] == 'charge.dispute.created':
-        dispute = event['data']['object']
-        handle_dispute_created(dispute)
+        elif event['type'] == 'invoice.created':
+            invoice = event['data']['object']
+            handle_invoice_created(invoice)
+
+        elif event['type'] == 'invoice.payment_failed':
+            invoice = event['data']['object']
+            handle_invoice_payment_failed(invoice)
+
+        elif event['type'] == 'customer.subscription.deleted':
+            stripe_subscription = event['data']['object']
+            handle_subscription_deleted(stripe_subscription)
+
+        elif event['type'] == 'charge.dispute.created':
+            dispute = event['data']['object']
+            handle_dispute_created(dispute)
+
+    except Exception as e:
+        logger.error(f"Webhook processing error for {event['type']}: {e}", exc_info=True)
+        return jsonify({'error': 'Processing failed'}), 500
 
     return jsonify({'status': 'success'}), 200
 
@@ -552,8 +557,9 @@ def handle_invoice_paid(invoice):
             logger.info(f"Unhandled billing_reason: {billing_reason}")
 
     except Exception as e:
-        logger.error(f"Error processing invoice.paid: {e}")
+        logger.error(f"Error processing invoice.paid: {e}", exc_info=True)
         db.session.rollback()
+        raise  # Re-raise para webhook retornar 500 e Stripe tentar novamente
 
 
 def handle_invoice_created(invoice):

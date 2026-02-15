@@ -102,21 +102,25 @@ def is_sub_renewing(sub, now=None) -> bool:
 
 
 def try_fix_stale_end_date(sub):
-    """Se a sub tem uma transação de renovação completed mas end_date defasado,
-    corrige o end_date baseado no plano. Retorna True se corrigiu."""
+    """Se a sub tem end_date defasado mas pagamento confirmado, corrige.
+    Primeiro tenta via Transaction local, depois consulta Stripe como fallback.
+    Retorna True se corrigiu."""
+    import logging
+    _logger = logging.getLogger(__name__)
+
     try:
         from app.models.subscription import Transaction
         from app.models.group import PricingPlan
         from app import db
 
-        if not sub.end_date or sub.status != 'active':
+        if not sub.end_date or sub.status not in ('active', 'expired'):
             return False
 
         now = datetime.utcnow()
         if sub.end_date > now:
             return False  # end_date está no futuro, ok
 
-        # Buscar transação de renovação completed após o end_date
+        # 1. Tentar via Transaction local (mais rápido)
         renewal_txn = Transaction.query.filter(
             Transaction.subscription_id == sub.id,
             Transaction.status == 'completed',
@@ -124,18 +128,94 @@ def try_fix_stale_end_date(sub):
             Transaction.paid_at >= sub.end_date - timedelta(hours=1)
         ).order_by(Transaction.paid_at.desc()).first()
 
-        if not renewal_txn:
+        if renewal_txn:
+            plan = PricingPlan.query.get(sub.plan_id) if sub.plan_id else None
+            if plan and plan.duration_days > 0:
+                sub.end_date = renewal_txn.paid_at + timedelta(days=plan.duration_days)
+                if sub.status == 'expired':
+                    sub.status = 'active'
+                db.session.commit()
+                _logger.info(f"try_fix: sub {sub.id} corrigida via Transaction local")
+                return True
+
+        # 2. Fallback: consultar Stripe se a sub tem stripe_subscription_id
+        stripe_sub_id = getattr(sub, 'stripe_subscription_id', None)
+        if not stripe_sub_id:
             return False
 
-        # Corrigir end_date baseado no plano
-        plan = PricingPlan.query.get(sub.plan_id) if sub.plan_id else None
-        if plan and plan.duration_days > 0:
-            sub.end_date = renewal_txn.paid_at + timedelta(days=plan.duration_days)
-            db.session.commit()
-            return True
+        try:
+            import stripe
+            stripe_sub = stripe.Subscription.retrieve(stripe_sub_id)
+        except Exception as e:
+            _logger.warning(f"try_fix: erro ao consultar Stripe sub {stripe_sub_id}: {e}")
+            return False
 
-    except Exception:
-        pass
+        if stripe_sub.get('status') not in ('active', 'trialing'):
+            return False  # Stripe também diz que não está ativa
+
+        # Stripe diz que está ativa — sincronizar end_date
+        current_period_end = stripe_sub.get('current_period_end')
+        if not current_period_end:
+            return False
+
+        new_end = datetime.utcfromtimestamp(current_period_end)
+        if new_end <= now:
+            return False  # Período do Stripe também já expirou
+
+        sub.end_date = new_end
+        if sub.status == 'expired':
+            sub.status = 'active'
+
+        # Criar Transaction que o webhook não criou
+        latest_invoice_id = stripe_sub.get('latest_invoice')
+        if latest_invoice_id:
+            existing = Transaction.query.filter_by(
+                stripe_invoice_id=latest_invoice_id
+            ).first()
+            if not existing:
+                try:
+                    invoice = stripe.Invoice.retrieve(latest_invoice_id)
+                    amount = invoice.get('amount_paid', 0) / 100
+                    billing_reason = invoice.get('billing_reason', 'subscription_cycle')
+                    paid_at_ts = invoice.get('status_transitions', {}).get('paid_at')
+
+                    group = sub.group
+                    creator = group.creator if group else None
+                    fees = creator.get_fee_rates(group_id=sub.group_id) if creator else None
+
+                    txn = Transaction(
+                        subscription_id=sub.id,
+                        amount=amount,
+                        payment_method='stripe',
+                        status='completed',
+                        paid_at=datetime.utcfromtimestamp(paid_at_ts) if paid_at_ts else now,
+                        stripe_invoice_id=latest_invoice_id,
+                        billing_reason=billing_reason,
+                        custom_fixed_fee=fees['fixed_fee'] if fees and fees['is_custom'] else None,
+                        custom_percentage_fee=fees['percentage_fee'] if fees and fees['is_custom'] else None,
+                    )
+                    db.session.add(txn)
+                    db.session.flush()
+
+                    # Creditar criador
+                    if creator:
+                        if creator.balance is None:
+                            creator.balance = 0
+                        creator.balance += txn.net_amount
+                        if creator.total_earned is None:
+                            creator.total_earned = 0
+                        creator.total_earned += txn.net_amount
+
+                    _logger.info(f"try_fix: Transaction criada via Stripe sync (invoice {latest_invoice_id})")
+                except Exception as e:
+                    _logger.warning(f"try_fix: erro ao criar Transaction: {e}")
+
+        db.session.commit()
+        _logger.info(f"try_fix: sub {sub.id} sincronizada com Stripe (end_date={new_end})")
+        return True
+
+    except Exception as e:
+        _logger.error(f"try_fix: erro inesperado para sub {getattr(sub, 'id', '?')}: {e}")
     return False
 
 

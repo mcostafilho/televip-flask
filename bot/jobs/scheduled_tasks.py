@@ -77,6 +77,21 @@ async def check_expired_subscriptions():
             grace_cutoff = now - timedelta(days=grace_days)
             stripe_grace_cutoff = now - timedelta(days=3)
 
+            # ── Fase 0: Recuperar subs Stripe marcadas como expired incorretamente ──
+            falsely_expired = session.query(Subscription).filter(
+                Subscription.status == 'expired',
+                Subscription.stripe_subscription_id.isnot(None),
+                Subscription.is_legacy == False,
+                Subscription.end_date >= now - timedelta(days=7)
+            ).all()
+            recovered = 0
+            for sub in falsely_expired:
+                if try_fix_stale_end_date(sub):
+                    recovered += 1
+                    logger.info(f"Sub {sub.id}: recuperada de expired via Stripe sync")
+            if recovered:
+                logger.info(f"Fase 0: {recovered} subs recuperadas de expired")
+
             # ── Fase 1: Marcar como expiradas + avisar (NÃO remove ainda) ──
             newly_expired = session.query(Subscription).filter(
                 Subscription.status == 'active',
