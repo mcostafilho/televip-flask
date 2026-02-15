@@ -129,10 +129,25 @@ async def handle_payment_confirmed(query, context, transaction, db_session):
 
         # Atualizar transação e crédito do criador
         if is_stripe_managed:
-            # Stripe subscription: let invoice.paid webhook handle transaction + credit
-            # Bot only activates subscription and shows invite link to user
+            # Mark transaction as completed (webhook may have failed)
+            transaction.status = 'completed'
+            transaction.paid_at = transaction.paid_at or datetime.utcnow()
             subscription.status = 'active'
-            logger.info(f"Subscription {subscription.id} ativada pelo bot (crédito via webhook invoice.paid)")
+
+            # Credit creator (webhook checks already_credited to avoid double)
+            group = subscription.group
+            if group and group.creator:
+                creator = group.creator
+                net = transaction.net_amount or transaction.amount or 0
+                if creator.balance is None:
+                    creator.balance = 0
+                creator.balance += net
+                if creator.total_earned is None:
+                    creator.total_earned = 0
+                creator.total_earned += net
+                logger.info(f"Crédito via bot: criador {creator.id} +R${net}")
+
+            logger.info(f"Subscription {subscription.id} e transação {transaction.id} completadas pelo bot")
         else:
             # Legacy one-time payment: bot handles everything
             transaction.status = 'completed'

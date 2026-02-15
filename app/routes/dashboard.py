@@ -235,6 +235,42 @@ def transactions():
     page = request.args.get('page', 1, type=int)
     per_page = 20
 
+    # Auto-fix: corrigir transações pendentes de subs Stripe já ativas
+    # (causado por webhook que falhava antes do fix de import)
+    stale_cutoff = datetime.utcnow() - timedelta(hours=2)
+    stale_pending = Transaction.query.join(Subscription).join(Group).filter(
+        Group.creator_id == effective.id,
+        Transaction.status == 'pending',
+        Transaction.created_at < stale_cutoff,
+        Subscription.status == 'active',
+        Subscription.stripe_subscription_id.isnot(None)
+    ).all()
+    fixed_count = 0
+    for txn in stale_pending:
+        sub = txn.subscription
+        # Só corrigir se não existe outra transação completed para esta sub
+        has_completed = Transaction.query.filter(
+            Transaction.subscription_id == sub.id,
+            Transaction.status == 'completed'
+        ).first()
+        if not has_completed:
+            txn.status = 'completed'
+            txn.paid_at = txn.paid_at or txn.created_at
+            # Creditar o criador (não foi creditado pelo webhook quebrado)
+            creator = sub.group.creator if sub.group else None
+            if creator:
+                net = txn.net_amount or txn.amount or 0
+                if creator.balance is None:
+                    creator.balance = 0
+                creator.balance += net
+                if creator.total_earned is None:
+                    creator.total_earned = 0
+                creator.total_earned += net
+            fixed_count += 1
+            logger.info(f"Auto-fix: transação {txn.id} completed + criador creditado R${txn.net_amount}")
+    if fixed_count:
+        db.session.commit()
+
     # Query base
     query = Transaction.query.join(
         Subscription
