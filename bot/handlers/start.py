@@ -88,6 +88,12 @@ async def show_user_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE
             Subscription.status.in_(['active', 'expired', 'cancelled'])
         ).order_by(Subscription.end_date.desc()).all()
 
+        # Auto-corrigir subs Stripe expiradas incorretamente ANTES de categorizar
+        for s in all_subs:
+            if s.status == 'expired' and getattr(s, 'stripe_subscription_id', None) and not getattr(s, 'is_legacy', False):
+                if s.end_date and s.end_date <= now:
+                    try_fix_stale_end_date(s)
+
         active = [s for s in all_subs if is_sub_effectively_active(s, now)]
         expiring = [s for s in active if s.end_date <= now + timedelta(days=7)]
 

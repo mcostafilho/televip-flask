@@ -51,7 +51,14 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await message.reply_text(text, parse_mode=ParseMode.HTML)
             return
 
-        # Separar por status
+        # Auto-corrigir subs Stripe expiradas incorretamente ANTES de categorizar
+        now = datetime.utcnow()
+        for s in all_subs:
+            if s.status == 'expired' and s.stripe_subscription_id and not s.is_legacy:
+                if s.end_date and s.end_date <= now:
+                    try_fix_stale_end_date(s)
+
+        # Separar por status (após correção)
         active = [s for s in all_subs if s.status == 'active']
         expired = [s for s in all_subs if s.status == 'expired']
         cancelled = [s for s in all_subs if s.status == 'cancelled']

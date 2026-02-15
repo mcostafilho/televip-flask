@@ -928,11 +928,22 @@ async def list_user_subscriptions(update: Update, context: ContextTypes.DEFAULT_
         message = update
 
     with get_db_session() as session:
-        subscriptions = session.query(Subscription).filter(
+        now = datetime.utcnow()
+
+        # Incluir expired para tentar recuperar via Stripe sync
+        all_subs = session.query(Subscription).filter(
             Subscription.telegram_user_id == str(user.id),
-            Subscription.status == 'active',
-            Subscription.end_date > datetime.utcnow() - timedelta(hours=2)
+            Subscription.status.in_(['active', 'expired']),
+            Subscription.end_date > now - timedelta(days=7)
         ).all()
+
+        # Auto-corrigir subs Stripe expiradas antes de filtrar
+        for s in all_subs:
+            if s.status == 'expired' and s.stripe_subscription_id and not s.is_legacy:
+                if s.end_date and s.end_date <= now:
+                    try_fix_stale_end_date(s)
+
+        subscriptions = [s for s in all_subs if s.status == 'active']
 
         if not subscriptions:
             text = (
