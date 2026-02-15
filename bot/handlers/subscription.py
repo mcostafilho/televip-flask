@@ -19,6 +19,7 @@ from bot.utils.format_utils import (
 )
 from app import db
 from app.models import Subscription, Group, Creator, PricingPlan, Transaction
+from app.services.payment_service import PaymentService
 
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
@@ -372,14 +373,30 @@ async def process_renewal(update: Update, context: ContextTypes.DEFAULT_TYPE, su
         now = datetime.utcnow()
         still_active = is_sub_effectively_active(sub, now)
         amount = float(plan.price)
-        platform_fee = amount * 0.10
+
+        # Calculate fees using bot's session (same logic as start_payment)
+        from bot.handlers.payment import _get_fee_rates
+        creator = group.creator
+        if creator:
+            fees = _get_fee_rates(session, creator, group)
+            fee_result = PaymentService.calculate_fees(
+                amount,
+                fixed_fee=fees['fixed_fee'] if fees['is_custom'] else None,
+                percentage_fee=fees['percentage_fee'] if fees['is_custom'] else None
+            )
+            platform_fee = float(fee_result['total_fee'])
+            creator_amount = float(fee_result['net_amount'])
+        else:
+            fee_result = PaymentService.calculate_fees(amount)
+            platform_fee = float(fee_result['total_fee'])
+            creator_amount = float(fee_result['net_amount'])
 
         checkout_data = {
             'group_id': group.id,
             'plan_id': plan.id,
             'amount': amount,
             'platform_fee': platform_fee,
-            'creator_amount': amount - platform_fee,
+            'creator_amount': creator_amount,
             'duration_days': plan.duration_days,
             'is_lifetime': False,
             'group_name': group.name,

@@ -28,6 +28,46 @@ logger = logging.getLogger(__name__)
 # Helpers
 # ──────────────────────────────────────────────
 
+def _get_fee_rates(session, creator, group):
+    """Calculate fee rates using the bot's DB session.
+
+    Creator.get_fee_rates() uses Flask's db.session internally (Group.query),
+    which is unavailable in the bot process.  This helper replicates the same
+    priority logic using the provided SQLAlchemy session.
+    """
+    from sqlalchemy import func
+
+    # 1. Group custom fees (highest priority)
+    if group.custom_fixed_fee is not None or group.custom_percentage_fee is not None:
+        return {
+            'fixed_fee': group.custom_fixed_fee if group.custom_fixed_fee is not None else PaymentService.FIXED_FEE,
+            'percentage_fee': group.custom_percentage_fee if group.custom_percentage_fee is not None else PaymentService.PERCENTAGE_FEE,
+            'is_custom': True,
+        }
+
+    # 2. Creator custom fees
+    if creator.custom_fixed_fee is not None or creator.custom_percentage_fee is not None:
+        return {
+            'fixed_fee': creator.custom_fixed_fee if creator.custom_fixed_fee is not None else PaymentService.FIXED_FEE,
+            'percentage_fee': creator.custom_percentage_fee if creator.custom_percentage_fee is not None else PaymentService.PERCENTAGE_FEE,
+            'is_custom': True,
+        }
+
+    # 3. Tiered by active subscriber count
+    subscriber_count = session.query(func.count(Subscription.id)).filter(
+        Subscription.group_id == group.id,
+        Subscription.status == 'active'
+    ).scalar() or 0
+
+    tiered_pct = PaymentService.get_tiered_percentage(subscriber_count)
+
+    return {
+        'fixed_fee': PaymentService.FIXED_FEE,
+        'percentage_fee': tiered_pct,
+        'is_custom': tiered_pct != PaymentService.PERCENTAGE_FEE,
+    }
+
+
 def _payment_method_keyboard(group_id, no_boleto=False):
     """Keyboard padrão: escolha de método de pagamento."""
     if no_boleto:
@@ -362,7 +402,7 @@ async def start_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Calcular taxas usando PaymentService (faixa por grupo)
         creator = session.query(Creator).get(group.creator_id)
         if creator:
-            fees = creator.get_fee_rates(group_id=group_id)
+            fees = _get_fee_rates(session, creator, group)
             fee_result = PaymentService.calculate_fees(
                 amount,
                 fixed_fee=fees['fixed_fee'] if fees['is_custom'] else None,
