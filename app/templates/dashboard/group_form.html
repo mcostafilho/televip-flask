@@ -199,8 +199,11 @@
                                 <div id="plansContainer">
                                     {% if group and group.pricing_plans.filter_by(is_active=True).count() > 0 %}
                                         {% for plan in group.pricing_plans.filter_by(is_active=True) %}
+                                        {% set active_subs = plan_sub_counts.get(plan.id, 0) if plan_sub_counts is defined else 0 %}
                                         <div class="plan-item">
+                                            <input type="hidden" name="plan_id[]" value="{{ plan.id }}">
                                             <input type="hidden" name="plan_lifetime[]" class="lifetime-hidden" value="{{ '1' if plan.is_lifetime else '0' }}">
+                                            <input type="hidden" name="plan_duration_original[]" value="{{ plan.duration_days }}">
                                             <div class="row g-3">
                                                 <div class="col-md-4">
                                                     <label class="form-label">Nome do Plano</label>
@@ -212,10 +215,14 @@
                                                     <label class="form-label">Duração (dias)</label>
                                                     <input type="number" name="plan_duration[]" class="form-control duration-input"
                                                            value="{{ plan.duration_days }}" min="1" step="1" required
-                                                           {{ 'disabled' if plan.is_lifetime else '' }}
+                                                           {{ 'disabled' if plan.is_lifetime or active_subs > 0 else '' }}
                                                            {{ 'placeholder=∞' if plan.is_lifetime else '' }}>
+                                                    {% if active_subs > 0 and not plan.is_lifetime %}
+                                                    <small class="text-warning"><i class="bi bi-lock-fill"></i> {{ active_subs }} assinante(s) ativo(s)</small>
+                                                    {% endif %}
                                                     <div class="form-check lifetime-check mt-1">
-                                                        <input class="form-check-input" type="checkbox" onchange="toggleLifetime(this)" {{ 'checked' if plan.is_lifetime else '' }}>
+                                                        <input class="form-check-input" type="checkbox" onchange="toggleLifetime(this)" {{ 'checked' if plan.is_lifetime else '' }}
+                                                               {{ 'disabled' if active_subs > 0 else '' }}>
                                                         <label class="form-check-label">&#8734; Vitalício</label>
                                                     </div>
                                                 </div>
@@ -236,7 +243,9 @@
                                     {% else %}
                                         <!-- Plano padrão -->
                                         <div class="plan-item">
+                                            <input type="hidden" name="plan_id[]" value="">
                                             <input type="hidden" name="plan_lifetime[]" class="lifetime-hidden" value="0">
+                                            <input type="hidden" name="plan_duration_original[]" value="">
                                             <div class="row g-3">
                                                 <div class="col-md-4">
                                                     <label class="form-label">Nome do Plano</label>
@@ -699,7 +708,9 @@ function addPlan() {
     const newPlan = document.createElement('div');
     newPlan.className = 'plan-item';
     newPlan.innerHTML = `
+        <input type="hidden" name="plan_id[]" value="">
         <input type="hidden" name="plan_lifetime[]" class="lifetime-hidden" value="0">
+        <input type="hidden" name="plan_duration_original[]" value="">
         <div class="row g-3">
             <div class="col-md-4">
                 <label class="form-label">Nome do Plano</label>

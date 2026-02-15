@@ -88,6 +88,40 @@ def _validate_plan_input(name, price_str, duration_str, description=None, is_lif
     return errors, price, duration
 
 
+def _notify_plan_price_change(plan, old_price, new_price):
+    """Notificar assinantes ativos sobre mudança de preço via Telegram."""
+    bot_token = os.getenv('TELEGRAM_BOT_TOKEN') or os.getenv('BOT_TOKEN')
+    if not bot_token:
+        return
+
+    group = plan.group
+    creator = group.creator
+    active_subs = Subscription.query.filter_by(
+        plan_id=plan.id, status='active'
+    ).all()
+
+    for sub in active_subs:
+        end_date_str = sub.end_date.strftime('%d/%m/%Y') if sub.end_date else 'N/A'
+        text = (
+            f"<b>Alteração de preço</b>\n\n"
+            f"O criador <b>{escape(creator.name)}</b> alterou o valor do plano "
+            f"<b>{escape(plan.name)}</b> do grupo <b>{escape(group.name)}</b>.\n\n"
+            f"Valor anterior: <code>R$ {old_price:.2f}</code>\n"
+            f"Novo valor: <code>R$ {new_price:.2f}</code>\n\n"
+            f"Sua próxima renovação em <code>{end_date_str}</code> será "
+            f"no novo valor.\n\n"
+            f"<i>Se preferir, pode cancelar a qualquer momento.</i>"
+        )
+        try:
+            requests.post(
+                f'https://api.telegram.org/bot{bot_token}/sendMessage',
+                json={'chat_id': sub.telegram_user_id, 'text': text, 'parse_mode': 'HTML'},
+                timeout=5
+            )
+        except Exception:
+            pass
+
+
 def _escape_ilike(search_term):
     """Escape SQL ILIKE wildcard characters in user input."""
     return search_term.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
@@ -367,37 +401,63 @@ def edit(id):
                 })
         group.whitelist_json = json.dumps(new_whitelist)
 
-        # Safe plan editing: deactivate plans that have ANY subscriptions referencing them
-        existing_plans = PricingPlan.query.filter_by(group_id=group.id).all()
-        for plan in existing_plans:
-            sub_count = Subscription.query.filter(
-                Subscription.plan_id == plan.id
-            ).count()
-            if sub_count > 0:
-                # Deactivate instead of delete — subscriptions reference this plan
-                plan.is_active = False
-            else:
-                db.session.delete(plan)
-
-        # Add new plans from form with validation — máximo 5
+        # In-place plan editing: update existing plans, create new ones
+        plan_ids = request.form.getlist('plan_id[]')
         plan_names = request.form.getlist('plan_name[]')[:6]
         plan_durations = request.form.getlist('plan_duration[]')
+        plan_durations_original = request.form.getlist('plan_duration_original[]')
         plan_prices = request.form.getlist('plan_price[]')
         plan_lifetimes = request.form.getlist('plan_lifetime[]')
 
+        submitted_plan_ids = set()
         for i in range(len(plan_names)):
-            if plan_names[i]:
-                lifetime = (plan_lifetimes[i] == '1') if i < len(plan_lifetimes) else False
-                errs, price, duration = _validate_plan_input(
-                    plan_names[i],
-                    plan_prices[i] if i < len(plan_prices) else '0',
-                    plan_durations[i] if i < len(plan_durations) else '0',
-                    is_lifetime=lifetime
-                )
-                if errs:
-                    for e in errs:
-                        flash(e, 'error')
-                    continue
+            if not plan_names[i]:
+                continue
+
+            plan_id_str = plan_ids[i] if i < len(plan_ids) else ''
+            lifetime = (plan_lifetimes[i] == '1') if i < len(plan_lifetimes) else False
+
+            # For plans with active subs, duration comes from hidden original field
+            duration_str = plan_durations[i] if i < len(plan_durations) else '0'
+            if not duration_str and i < len(plan_durations_original) and plan_durations_original[i]:
+                duration_str = plan_durations_original[i]
+
+            errs, price, duration = _validate_plan_input(
+                plan_names[i],
+                plan_prices[i] if i < len(plan_prices) else '0',
+                duration_str,
+                is_lifetime=lifetime
+            )
+            if errs:
+                for e in errs:
+                    flash(e, 'error')
+                continue
+
+            if plan_id_str:
+                # Update existing plan in-place
+                plan = PricingPlan.query.get(int(plan_id_str))
+                if plan and plan.group_id == group.id:
+                    old_price = float(plan.price)
+
+                    active_sub_count = Subscription.query.filter_by(
+                        plan_id=plan.id, status='active'
+                    ).count()
+
+                    plan.name = plan_names[i][:30]
+                    plan.price = price
+                    plan.is_lifetime = lifetime
+                    plan.is_active = True
+
+                    if active_sub_count == 0:
+                        plan.duration_days = duration
+                    # else: keep existing duration — active subs depend on it
+
+                    if price != old_price and active_sub_count > 0:
+                        _notify_plan_price_change(plan, old_price, price)
+
+                    submitted_plan_ids.add(plan.id)
+            else:
+                # Create new plan
                 plan = PricingPlan(
                     group_id=group.id,
                     name=plan_names[i][:30],
@@ -407,12 +467,31 @@ def edit(id):
                     is_active=True
                 )
                 db.session.add(plan)
-        
+
+        # Deactivate or delete plans NOT in submitted list
+        existing_plans = PricingPlan.query.filter_by(group_id=group.id, is_active=True).all()
+        for plan in existing_plans:
+            if plan.id not in submitted_plan_ids:
+                has_subs = Subscription.query.filter(
+                    Subscription.plan_id == plan.id
+                ).count() > 0
+                if has_subs:
+                    plan.is_active = False
+                else:
+                    db.session.delete(plan)
+
         db.session.commit()
         flash('Grupo atualizado com sucesso!', 'success')
         return redirect(url_for('groups.list'))
-    
-    return render_template('dashboard/group_form.html', group=group)
+
+    # GET: compute active subscriber counts per plan
+    plan_sub_counts = {}
+    for plan in group.pricing_plans.filter_by(is_active=True):
+        plan_sub_counts[plan.id] = Subscription.query.filter_by(
+            plan_id=plan.id, status='active'
+        ).count()
+
+    return render_template('dashboard/group_form.html', group=group, plan_sub_counts=plan_sub_counts)
 
 @bp.route('/<int:id>/delete', methods=['POST'])
 @login_required

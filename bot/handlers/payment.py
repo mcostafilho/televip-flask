@@ -206,6 +206,33 @@ async def show_group_plans(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         group_name = escape_html(group.name)
 
+        # Verificar se já tem assinatura ativa neste grupo
+        existing_active = session.query(Subscription).filter(
+            Subscription.group_id == group_id,
+            Subscription.telegram_user_id == str(query.from_user.id),
+            Subscription.status == 'active',
+            Subscription.end_date > datetime.utcnow() - timedelta(hours=2)
+        ).first()
+
+        if existing_active:
+            plan_name = escape_html(existing_active.plan.name) if existing_active.plan else "N/A"
+            end_date_str = format_date(existing_active.end_date)
+            text = (
+                f"Você já possui uma assinatura ativa para "
+                f"<b>{group_name}</b>.\n\n"
+                f"Plano: <code>{plan_name}</code>\n"
+                f"Válida até: {end_date_str}"
+            )
+            keyboard = [
+                [InlineKeyboardButton("Ver Detalhes", callback_data=f"sub_detail_{existing_active.id}")],
+                [InlineKeyboardButton("↩ Voltar", callback_data="subs_history")]
+            ]
+            await query.edit_message_text(
+                text, parse_mode=ParseMode.HTML,
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+            return
+
         if not group.is_active:
             await query.edit_message_text(
                 f"O {('canal' if group.chat_type == 'channel' else 'grupo')} <b>{group_name}</b> "
