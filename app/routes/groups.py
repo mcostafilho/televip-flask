@@ -586,7 +586,7 @@ def toggle(id):
 
 @bp.route('/<int:group_id>/broadcast', methods=['GET', 'POST'])
 @login_required
-@limiter.limit("10 per hour")
+@limiter.limit("10 per hour", methods=["POST"])
 def broadcast(group_id):
     """Enviar mensagem para todos os assinantes do grupo"""
     if is_admin_viewing():
