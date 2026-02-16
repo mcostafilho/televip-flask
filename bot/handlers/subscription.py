@@ -61,7 +61,8 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Separar por status (após correção)
         active = [s for s in all_subs if s.status == 'active']
-        expired = [s for s in all_subs if s.status == 'expired']
+        active_group_ids = {s.group_id for s in active}
+        expired = [s for s in all_subs if s.status == 'expired' and s.group_id not in active_group_ids]
         cancelled = [s for s in all_subs if s.status == 'cancelled']
 
         # Calcular estatísticas
@@ -967,6 +968,15 @@ async def show_subscription_history(update: Update, context: ContextTypes.DEFAUL
     now = datetime.utcnow()
 
     with get_db_session() as session:
+        # Buscar group_ids com assinatura ativa para excluí-los do histórico
+        active_group_ids = {
+            s.group_id for s in session.query(Subscription).filter(
+                Subscription.telegram_user_id == str(user.id),
+                Subscription.status == 'active',
+                Subscription.end_date > now - timedelta(hours=2)
+            ).all()
+        }
+
         # Buscar todas as subs não-ativas do usuário
         all_history = session.query(Subscription).filter(
             Subscription.telegram_user_id == str(user.id),
@@ -985,6 +995,9 @@ async def show_subscription_history(update: Update, context: ContextTypes.DEFAUL
             has_completed = any(t.status == 'completed' for t in sub.transactions)
             if has_completed:
                 all_history.append(sub)
+
+        # Excluir grupos que já têm assinatura ativa
+        all_history = [s for s in all_history if s.group_id not in active_group_ids]
 
         # Agrupar por grupo — manter só a sub mais recente de cada grupo
         groups_map = {}
