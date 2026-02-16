@@ -5,6 +5,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 import json
+from flask_limiter.util import get_remote_address
 from app import db, limiter
 from app.models import Group, PricingPlan, Subscription, Transaction, LeakIncident
 from app.utils.admin_helpers import get_effective_creator, is_admin_viewing
@@ -586,7 +587,7 @@ def toggle(id):
 
 @bp.route('/<int:group_id>/broadcast', methods=['GET', 'POST'])
 @login_required
-@limiter.limit("10 per hour", methods=["POST"])
+@limiter.limit("10 per hour", methods=["POST"], key_func=lambda: str(current_user.id) if current_user.is_authenticated else get_remote_address())
 def broadcast(group_id):
     """Enviar mensagem para todos os assinantes do grupo"""
     if is_admin_viewing():
