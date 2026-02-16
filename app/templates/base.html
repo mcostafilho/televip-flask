@@ -57,8 +57,13 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link{% if request.endpoint and request.endpoint.startswith('groups.') %} active{% endif %}" href="{{ url_for('groups.list') }}">
+                            <a class="nav-link{% if request.endpoint and request.endpoint.startswith('groups.') and request.endpoint != 'groups.antileak_dashboard' %} active{% endif %}" href="{{ url_for('groups.list') }}">
                                 <i class="bi bi-collection"></i> Grupos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.endpoint == 'groups.antileak_dashboard' %} active{% endif %}" href="{{ url_for('groups.antileak_dashboard') }}">
+                                <i class="bi bi-shield-lock"></i> Anti-Vazamento
                             </a>
                         </li>
                         <li class="nav-item">

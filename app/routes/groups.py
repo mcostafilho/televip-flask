@@ -898,6 +898,24 @@ def stats(id):
                          daily_subscriptions=daily_subscriptions,
                          plan_distribution=plan_distribution)
 
+@bp.route('/antileak')
+@login_required
+def antileak_dashboard():
+    """Página dedicada Anti-Vazamento com visão geral de todos os grupos"""
+    effective = get_effective_creator()
+    groups = Group.query.filter_by(creator_id=effective.id).all()
+
+    groups_data = []
+    for group in groups:
+        active_count = Subscription.query.filter_by(group_id=group.id, status='active').count()
+        groups_data.append({
+            'group': group,
+            'active_subscribers': active_count,
+        })
+
+    return render_template('dashboard/antileak.html', groups_data=groups_data)
+
+
 @bp.route('/<int:id>/antileak', methods=['POST'])
 @login_required
 def toggle_antileak(id):
@@ -911,6 +929,9 @@ def toggle_antileak(id):
     db.session.commit()
     status = 'ativado' if group.anti_leak_enabled else 'desativado'
     flash(f'Anti-vazamento {status} para {group.name}!', 'success')
+
+    if request.args.get('from') == 'antileak':
+        return redirect(url_for('groups.antileak_dashboard'))
     return redirect(url_for('groups.edit', id=id))
 
 
