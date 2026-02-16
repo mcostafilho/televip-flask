@@ -1162,7 +1162,9 @@ async def show_group_history(update: Update, context: ContextTypes.DEFAULT_TYPE)
             plan_name = escape_html(plan.name) if plan else "N/A"
             plan_price = format_currency(plan.price) if plan else "N/A"
 
-            text += f"\n▸ <b>{plan_name}</b> — {plan_price}\n"
+            # Header com período para diferenciar subs do mesmo plano
+            start_str = format_date(sub.start_date) if sub.start_date else "?"
+            text += f"\n▸ <b>{plan_name}</b> — {plan_price} · desde {start_str}\n"
 
             # Buscar transações completed, ordenadas por data
             completed_txns = sorted(
@@ -1170,21 +1172,30 @@ async def show_group_history(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 key=lambda t: t.paid_at or t.created_at or datetime.min
             )
 
-            # Evento: Início
-            first_txn = completed_txns[0] if completed_txns else None
+            # Verificar se há múltiplas txns no mesmo dia (para mostrar horário)
+            txn_dates = [format_date(t.paid_at or t.created_at) for t in completed_txns]
+            has_same_day = len(txn_dates) != len(set(txn_dates))
 
-            if first_txn and getattr(first_txn, 'billing_reason', None) == 'subscription_create':
+            # Evento: Início — combinar com primeiro pagamento se mesmo dia
+            first_txn = completed_txns[0] if completed_txns else None
+            first_txn_date = format_date(first_txn.paid_at or first_txn.created_at) if first_txn else None
+
+            if first_txn and (
+                getattr(first_txn, 'billing_reason', None) == 'subscription_create'
+                or first_txn_date == start_str
+            ):
                 # Combinar início com primeiro pagamento
-                text += f"  🟢 Iniciou em {format_date(sub.start_date)} · 💳 {format_currency(first_txn.amount)} · {_payment_method_label(sub)}\n"
+                text += f"  🟢 Iniciou em {start_str} · 💳 {format_currency(first_txn.amount)} · {_payment_method_label(sub)}\n"
                 remaining_txns = completed_txns[1:]
             else:
-                text += f"  🟢 Iniciou em {format_date(sub.start_date)}\n"
+                text += f"  🟢 Iniciou em {start_str}\n"
                 remaining_txns = completed_txns
 
             # Eventos de pagamento subsequentes
             for txn in remaining_txns:
                 reason = getattr(txn, 'billing_reason', None) or ''
-                txn_date = format_date(txn.paid_at or txn.created_at)
+                txn_dt = txn.paid_at or txn.created_at
+                txn_date = format_date(txn_dt, include_time=has_same_day)
                 txn_amount = format_currency(txn.amount)
 
                 if reason == 'subscription_cycle':
@@ -1204,7 +1215,7 @@ async def show_group_history(update: Update, context: ContextTypes.DEFAULT_TYPE)
             if sub.status == 'expired' or (sub.status == 'active' and sub.end_date and sub.end_date <= now):
                 text += f"  ❌ Expirou em {format_date(sub.end_date)}\n"
             elif sub.status == 'cancelled':
-                text += f"  🚫 Cancelada\n"
+                text += f"  🚫 Cancelada em {format_date(sub.end_date)}\n"
             elif sub.status == 'active' and sub.end_date and sub.end_date > now:
                 text += f"  ✅ Ativa até {format_date(sub.end_date)}\n"
 
