@@ -126,6 +126,35 @@ def _escape_ilike(search_term):
     """Escape SQL ILIKE wildcard characters in user input."""
     return search_term.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
 
+
+def _notify_creator_leak_detected(group, sub, incident):
+    """Notificar o criador via Telegram sobre vazamento identificado."""
+    bot_token = os.getenv('TELEGRAM_BOT_TOKEN') or os.getenv('BOT_TOKEN')
+    creator = group.creator
+    if not bot_token or not creator or not creator.telegram_id:
+        return
+
+    username_display = f"@{sub.telegram_username}" if sub.telegram_username else sub.telegram_user_id
+    text = (
+        f"&#9888;&#65039; <b>Vazamento identificado!</b>\n\n"
+        f"<b>Grupo:</b> {escape(group.name)}\n"
+        f"<b>Suspeito:</b> {escape(username_display)}\n"
+        f"<b>Telegram ID:</b> <code>{sub.telegram_user_id}</code>\n"
+        f"<b>Plano:</b> {escape(sub.plan.name) if sub.plan else 'N/A'}\n"
+        f"<b>Status:</b> {sub.status}\n\n"
+        f"O suspeito foi adicionado a lista de vazadores.\n"
+        f"Acesse o painel Anti-Vazamento para decidir a acao (bloquear, remover, etc)."
+    )
+    try:
+        requests.post(
+            f'https://api.telegram.org/bot{bot_token}/sendMessage',
+            json={'chat_id': creator.telegram_id, 'text': text, 'parse_mode': 'HTML'},
+            timeout=5,
+        )
+    except Exception:
+        pass
+
+
 @bp.route('/')
 @login_required
 def list():
@@ -1080,6 +1109,64 @@ def delete_incident(incident_id):
     return jsonify({'success': True})
 
 
+@bp.route('/antileak/<int:incident_id>/block', methods=['POST'])
+@login_required
+def block_suspect(incident_id):
+    """Bloquear suspeito: cancela assinatura e remove do grupo Telegram"""
+    if is_admin_viewing():
+        return jsonify({'error': 'Ação não permitida no modo admin.'}), 403
+
+    incident = LeakIncident.query.get_or_404(incident_id)
+    group = Group.query.get(incident.group_id)
+    if not group or group.creator_id != current_user.id:
+        return jsonify({'error': 'Não autorizado'}), 403
+
+    sub = Subscription.query.get(incident.subscription_id)
+    errors = []
+
+    # 1. Cancel subscription
+    if sub and sub.status == 'active':
+        sub.status = 'cancelled'
+        db.session.commit()
+    elif sub:
+        pass  # already expired/cancelled
+    else:
+        errors.append('Assinatura não encontrada')
+
+    # 2. Ban from Telegram group
+    bot_token = os.getenv('TELEGRAM_BOT_TOKEN') or os.getenv('BOT_TOKEN')
+    kicked = False
+    if bot_token and group.telegram_id and incident.telegram_user_id:
+        try:
+            resp = requests.post(
+                f'https://api.telegram.org/bot{bot_token}/banChatMember',
+                json={
+                    'chat_id': group.telegram_id,
+                    'user_id': int(incident.telegram_user_id),
+                },
+                timeout=10,
+            )
+            if resp.status_code == 200 and resp.json().get('ok'):
+                kicked = True
+            else:
+                errors.append('Falha ao remover do grupo Telegram')
+        except Exception:
+            errors.append('Erro de conexão ao remover do grupo')
+    else:
+        errors.append('Bot não configurado ou grupo sem Telegram ID')
+
+    # Update incident status
+    incident.subscription_status = 'blocked'
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'subscription_cancelled': sub.status if sub else None,
+        'kicked_from_group': kicked,
+        'errors': errors,
+    })
+
+
 @bp.route('/<int:id>/decode-watermark', methods=['POST'])
 @login_required
 def decode_watermark_route(id):
@@ -1104,6 +1191,9 @@ def decode_watermark_route(id):
             )
             db.session.add(incident)
             db.session.commit()
+
+            # Notify creator via Telegram
+            _notify_creator_leak_detected(group, sub, incident)
 
             return jsonify({
                 'found': True,

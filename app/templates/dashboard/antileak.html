@@ -190,16 +190,30 @@
                             <td><code>{{ inc.telegram_user_id }}</code></td>
                             <td>{{ inc.plan_name or 'N/A' }}</td>
                             <td>
-                                <span class="badge {{ 'bg-success' if inc.subscription_status == 'active' else 'bg-secondary' }}">
-                                    {{ inc.subscription_status or 'N/A' }}
-                                </span>
+                                {% if inc.subscription_status == 'blocked' %}
+                                <span class="badge bg-danger">Bloqueado</span>
+                                {% elif inc.subscription_status == 'active' %}
+                                <span class="badge bg-success">Ativo</span>
+                                {% elif inc.subscription_status == 'cancelled' %}
+                                <span class="badge bg-warning text-dark">Cancelado</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ inc.subscription_status or 'N/A' }}</span>
+                                {% endif %}
                             </td>
                             <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ inc.leaked_text_preview or '' }}">
                                 {{ inc.leaked_text_preview[:80] if inc.leaked_text_preview else '-' }}{{ '...' if inc.leaked_text_preview and inc.leaked_text_preview|length > 80 else '' }}
                             </td>
-                            <td>
-                                <button type="button" class="btn btn-outline-danger btn-sm py-0 px-1"
-                                        onclick="deleteIncident({{ inc.id }})" title="Remover">
+                            <td class="text-nowrap">
+                                {% if inc.subscription_status not in ('blocked', 'cancelled') %}
+                                <button type="button" class="btn btn-danger btn-sm py-0 px-2"
+                                        onclick="blockSuspect({{ inc.id }})" title="Bloquear e remover do grupo">
+                                    <i class="bi bi-slash-circle"></i> Bloquear
+                                </button>
+                                {% else %}
+                                <span class="text-muted small"><i class="bi bi-check-circle"></i> Bloqueado</span>
+                                {% endif %}
+                                <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1 ms-1"
+                                        onclick="deleteIncident({{ inc.id }})" title="Remover registro">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </td>
@@ -238,6 +252,33 @@ function toggleAntiLeak(groupId) {
         alert('Erro ao alterar anti-vazamento. Tente novamente.');
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-shield-check"></i> Tentar novamente';
+    });
+}
+
+function blockSuspect(incidentId) {
+    if (!confirm('Tem certeza? Isso vai cancelar a assinatura e remover o usuario do grupo Telegram.')) return;
+    var btn = event.target.closest('button');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+
+    fetch('/groups/antileak/' + incidentId + '/block', {
+        method: 'POST',
+        headers: {'X-CSRFToken': '{{ csrf_token() }}'},
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.error || 'Erro ao bloquear.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-slash-circle"></i> Bloquear';
+        }
+    })
+    .catch(function() {
+        alert('Erro ao bloquear. Tente novamente.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-slash-circle"></i> Bloquear';
     });
 }
 
