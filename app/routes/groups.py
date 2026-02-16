@@ -620,10 +620,15 @@ def broadcast(group_id):
             flash('Por favor, digite uma mensagem ou envie uma mídia.', 'error')
             return redirect(url_for('groups.broadcast', group_id=group_id))
 
-        # Length limits: caption=1024, text=4000
-        max_length = 1024 if has_media else 4000
+        # Length limits: caption=1024 (minus overhead for header+warning), text=4000
+        if has_media:
+            # Reserve space for header (~40 chars) and anti-leak warning (~200 chars)
+            overhead = 50 + (200 if group.anti_leak_enabled else 0)
+            max_length = 1024 - overhead
+        else:
+            max_length = 4000
         if message and len(message) > max_length:
-            flash(f'Mensagem muito longa. Máximo de {max_length} caracteres{"  (limite de legenda)" if has_media else ""}.', 'error')
+            flash(f'Mensagem muito longa. Maximo de {max_length} caracteres{"  (limite de legenda)" if has_media else ""}.', 'error')
             return redirect(url_for('groups.broadcast', group_id=group_id))
 
         # Broadcast cooldown — 5 minutes between broadcasts
@@ -688,15 +693,13 @@ def broadcast(group_id):
                 msg_text = f"<b>Mensagem de {group_name_safe}</b>\n\n{msg_safe}" if msg_safe else f"<b>Mensagem de {group_name_safe}</b>"
 
                 if group.anti_leak_enabled:
-                    msg_text += (
-                        "\n\n&#8205;\n"
-                        "<i>&#9888;&#65039; Este conteudo e exclusivo e confidencial. "
-                        "Nao salve, nao copie, nao compartilhe e nao encaminhe. "
-                        "Possuimos metodos avancados de rastreamento que identificam "
-                        "o responsavel por qualquer vazamento. "
-                        "Quem for identificado sera removido permanentemente e podera "
-                        "responder nas medidas cabiveis.</i>"
+                    warning = (
+                        "\n\n<i>&#9888; Conteudo exclusivo e confidencial. "
+                        "Nao salve, copie ou compartilhe. "
+                        "Temos rastreamento avancado que identifica vazamentos. "
+                        "Vazadores serao removidos permanentemente.</i>"
                     )
+                    msg_text += warning
 
                 if has_media:
                     # Send photo or video

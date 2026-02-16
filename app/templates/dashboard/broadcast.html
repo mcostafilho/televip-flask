@@ -191,7 +191,9 @@ function updatePreview() {
 
 function updateCharLimit() {
     var hasMedia = document.getElementById('media').files.length > 0;
-    var limit = hasMedia ? 1024 : 4000;
+    var antiLeak = {{ 'true' if group.anti_leak_enabled else 'false' }};
+    var overhead = 50 + (antiLeak ? 200 : 0);
+    var limit = hasMedia ? (1024 - overhead) : 4000;
     document.getElementById('message').setAttribute('maxlength', limit);
     document.getElementById('charLimitLabel').textContent = 'Maximo ' + limit + ' caracteres' + (hasMedia ? ' (limite de legenda).' : '.');
 }
