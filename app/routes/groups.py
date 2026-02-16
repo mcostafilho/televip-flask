@@ -620,13 +620,9 @@ def broadcast(group_id):
             flash('Por favor, digite uma mensagem ou envie uma mídia.', 'error')
             return redirect(url_for('groups.broadcast', group_id=group_id))
 
-        # Length limits: caption=1024 (minus overhead for header+warning), text=4000
-        if has_media:
-            # Reserve space for header (~40 chars) and anti-leak warning (~200 chars)
-            overhead = 50 + (200 if group.anti_leak_enabled else 0)
-            max_length = 1024 - overhead
-        else:
-            max_length = 4000
+        # Length limits: caption=1024, text=4000
+        # Warning is sent as separate message for media, so no overhead deduction
+        max_length = 1024 if has_media else 4000
         if message and len(message) > max_length:
             flash(f'Mensagem muito longa. Maximo de {max_length} caracteres{"  (limite de legenda)" if has_media else ""}.', 'error')
             return redirect(url_for('groups.broadcast', group_id=group_id))
@@ -692,17 +688,15 @@ def broadcast(group_id):
                 msg_safe = message.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") if message else ''
                 msg_text = f"<b>Mensagem de {group_name_safe}</b>\n\n{msg_safe}" if msg_safe else f"<b>Mensagem de {group_name_safe}</b>"
 
-                if group.anti_leak_enabled:
-                    warning = (
-                        "\n\n<i>&#9888; Conteudo exclusivo e confidencial. "
-                        "Nao salve, copie ou compartilhe. "
-                        "Temos rastreamento avancado que identifica vazamentos. "
-                        "Vazadores serao removidos permanentemente.</i>"
-                    )
-                    msg_text += warning
+                anti_leak_warning = (
+                    "<i>&#9888; Conteudo exclusivo e confidencial. "
+                    "Nao salve, copie ou compartilhe. "
+                    "Temos rastreamento avancado que identifica vazamentos. "
+                    "Vazadores serao removidos permanentemente.</i>"
+                ) if group.anti_leak_enabled else None
 
                 if has_media:
-                    # Send photo or video
+                    # Send photo or video (caption = just the message, no warning)
                     endpoint = 'sendVideo' if is_video else 'sendPhoto'
                     field_name = 'video' if is_video else 'photo'
 
@@ -721,22 +715,48 @@ def broadcast(group_id):
                         files=files,
                     )
 
+                    # Send warning as separate reply after media
+                    if response.status_code == 200 and anti_leak_warning:
+                        resp_data = response.json()
+                        media_msg_id = resp_data.get('result', {}).get('message_id')
+                        warn_payload = {
+                            'chat_id': sub.telegram_user_id,
+                            'text': anti_leak_warning,
+                            'parse_mode': 'HTML',
+                            'protect_content': True,
+                        }
+                        if media_msg_id:
+                            warn_payload['reply_to_message_id'] = media_msg_id
+                        warn_resp = requests.post(
+                            f'https://api.telegram.org/bot{bot_token}/sendMessage',
+                            json=warn_payload,
+                        )
+                        # Include warning msg in auto-delete list too
+                        if auto_delete_seconds > 0 and warn_resp.status_code == 200:
+                            warn_msg_id = warn_resp.json().get('result', {}).get('message_id')
+                            if warn_msg_id:
+                                messages_to_delete.append((sub.telegram_user_id, warn_msg_id))
+
                     if response.status_code == 200 and auto_delete_seconds > 0:
                         resp_data = response.json()
                         msg_id = resp_data.get('result', {}).get('message_id')
                         if msg_id:
                             messages_to_delete.append((sub.telegram_user_id, msg_id))
                 else:
-                    # Send text message
+                    # Send text message — warning inline for text
+                    text_to_send = msg_text
+                    if anti_leak_warning:
+                        text_to_send += "\n\n" + anti_leak_warning
+
                     payload = {
                         'chat_id': sub.telegram_user_id,
-                        'text': msg_text,
+                        'text': text_to_send,
                         'parse_mode': 'HTML',
                     }
 
                     if group.anti_leak_enabled:
                         from bot.utils.watermark import watermark_text
-                        payload['text'] = watermark_text(msg_text, sub.id)
+                        payload['text'] = watermark_text(text_to_send, sub.id)
                         payload['protect_content'] = True
 
                     response = requests.post(
