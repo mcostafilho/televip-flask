@@ -128,6 +128,11 @@ def _escape_ilike(search_term):
     return search_term.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
 
 
+def _sanitize_log(message):
+    """Remove bot tokens and other secrets from log messages."""
+    return re.sub(r'bot[0-9]+:[A-Za-z0-9_-]+', 'bot***:***', message)
+
+
 def _notify_creator_leak_detected(group, sub, incident):
     """Notificar o criador via Telegram sobre vazamento identificado."""
     bot_token = os.getenv('TELEGRAM_BOT_TOKEN') or os.getenv('BOT_TOKEN')
@@ -249,12 +254,12 @@ def create():
                                                  group=None, show_success_modal=False)
 
             except requests.exceptions.RequestException as req_error:
-                logger.error(f"Telegram connection error: {req_error}")
+                logger.error(f"Telegram connection error: {_sanitize_log(str(req_error))}")
                 flash('Erro de conexão com o Telegram. Tente novamente.', 'error')
                 return render_template('dashboard/group_form.html',
                                      group=None, show_success_modal=False)
             except Exception as e:
-                logger.error(f"Erro na validação do grupo Telegram: {e}")
+                logger.error(f"Erro na validação do grupo Telegram: {_sanitize_log(str(e))}")
                 flash('Erro ao validar o grupo. Tente novamente.', 'error')
                 return render_template('dashboard/group_form.html',
                                      group=None, show_success_modal=False)
@@ -281,6 +286,8 @@ def create():
                 tid = tid.strip()
                 if tid and tid.isdigit():
                     wl_name = whitelist_names[i].strip() if i < len(whitelist_names) else ''
+                    # Sanitize name: strip HTML tags
+                    wl_name = re.sub(r'<[^>]+>', '', wl_name)
                     whitelist_data.append({
                         'telegram_id': tid,
                         'name': wl_name[:50],
@@ -422,6 +429,7 @@ def edit(id):
             tid = tid.strip()
             if tid and tid.isdigit():
                 name = whitelist_names[i].strip() if i < len(whitelist_names) else ''
+                name = re.sub(r'<[^>]+>', '', name)  # Strip HTML tags
                 # Preserve original added_at if entry already existed
                 existing = next((e for e in group.get_whitelist() if e['telegram_id'] == tid), None)
                 new_whitelist.append({
@@ -608,6 +616,20 @@ def broadcast(group_id):
             if media_file.content_type not in allowed_types:
                 flash('Tipo de arquivo não suportado. Envie uma imagem ou vídeo.', 'error')
                 return redirect(url_for('groups.broadcast', group_id=group_id))
+            # Validate magic bytes (MIME type can be spoofed)
+            header = media_file.read(12)
+            media_file.seek(0)
+            valid_magic = (
+                header[:3] == b'\xff\xd8\xff' or          # JPEG
+                header[:8] == b'\x89PNG\r\n\x1a\n' or     # PNG
+                header[:4] in (b'GIF8',) or                # GIF
+                header[:4] == b'RIFF' or                   # WebP (RIFF container)
+                header[4:8] in (b'ftyp', b'moov', b'mdat') or  # MP4/MOV
+                header[:4] == b'\x1a\x45\xdf\xa3'         # WebM (EBML)
+            )
+            if not valid_magic:
+                flash('Arquivo invalido. Envie uma imagem ou video real.', 'error')
+                return redirect(url_for('groups.broadcast', group_id=group_id))
             # Check file size (max 50MB)
             media_file.seek(0, 2)
             file_size = media_file.tell()
@@ -646,9 +668,14 @@ def broadcast(group_id):
             return redirect(url_for('groups.subscribers', id=group_id))
 
         # Filter by selected subscription_ids (if provided)
+        # Security: active_subs already filtered by group_id, so intersection
+        # with user-supplied IDs cannot leak subs from other groups
         selected_ids = request.form.getlist('subscription_ids')
         if selected_ids:
-            selected_ids_set = set(int(sid) for sid in selected_ids if sid.isdigit())
+            selected_ids_set = set()
+            for sid in selected_ids:
+                if sid.isdigit():
+                    selected_ids_set.add(int(sid))
             active_subs = [s for s in active_subs if s.id in selected_ids_set]
 
         if not active_subs:
@@ -684,8 +711,8 @@ def broadcast(group_id):
 
         for sub in active_subs:
             try:
-                group_name_safe = group.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-                msg_safe = message.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") if message else ''
+                group_name_safe = escape(group.name)
+                msg_safe = escape(message) if message else ''
                 msg_text = f"<b>Mensagem de {group_name_safe}</b>\n\n{msg_safe}" if msg_safe else f"<b>Mensagem de {group_name_safe}</b>"
 
                 anti_leak_warning = (

@@ -2,6 +2,7 @@
 Webhooks para processar notificações de pagamento do Stripe
 """
 from flask import Blueprint, request, jsonify
+from markupsafe import escape
 import stripe
 import os
 import logging
@@ -260,7 +261,7 @@ def handle_dispute_created(dispute):
 
         # Notificar usuario
         group_name = subscription.group.name if subscription.group else 'N/A'
-        group_name_safe = group_name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        group_name_safe = escape(group_name)
         notify_user_via_bot(
             subscription.telegram_user_id,
             f"<b>Assinatura suspensa</b>\n\n"
@@ -322,8 +323,7 @@ def notify_bot_payment_complete(subscription, transaction):
             if not invite_link and group.telegram_username:
                 invite_link = f"https://t.me/{group.telegram_username}"
 
-        group_name = group.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-
+        group_name = group.name
         text = (
             f"<b>Pagamento aprovado!</b>\n\n"
             f"<pre>"
@@ -531,7 +531,7 @@ def handle_invoice_paid(invoice):
             logger.info(f"Subscription {subscription.id} renewed until {subscription.end_date}")
 
             # Notify user about renewal with cancel option
-            group_name_safe = group.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            group_name_safe = escape(group.name)
             type_label = "canal" if group.chat_type == 'channel' else "grupo"
             renewal_text = (
                 f"<b>Assinatura renovada!</b>\n\n"
@@ -588,8 +588,8 @@ def handle_invoice_created(invoice):
 
         group = subscription.group
         plan = subscription.plan
-        group_name_safe = group.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-        plan_name_safe = plan.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") if plan else 'N/A'
+        group_name_safe = escape(group.name)
+        plan_name_safe = escape(plan.name) if plan else 'N/A'
 
         from app.services.payment_service import PaymentService
         amount = plan.price if plan else 0
@@ -644,8 +644,7 @@ def handle_invoice_payment_failed(invoice):
         group = subscription.group
         payment_type = subscription.payment_method_type or 'card'
 
-        group_name_safe = group.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-
+        group_name_safe = escape(group.name)
         # Link for user to update payment method / pay invoice
         payment_url = invoice.get('hosted_invoice_url')
         keyboard = None
@@ -750,8 +749,7 @@ def handle_subscription_deleted(stripe_subscription):
         # Remove user from group via bot
         remove_user_from_group_via_bot(subscription)
 
-        group_name_safe = group.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-
+        group_name_safe = escape(group.name)
         # Notify user
         notify_user_via_bot(
             subscription.telegram_user_id,

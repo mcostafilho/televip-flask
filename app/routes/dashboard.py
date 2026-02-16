@@ -287,6 +287,7 @@ def transactions():
 
     group_id = request.args.get('group_id', type=int)
     if group_id:
+        # Security: ownership already enforced by Group.creator_id filter in base query
         query = query.filter(Subscription.group_id == group_id)
 
     # Ordenar por data
