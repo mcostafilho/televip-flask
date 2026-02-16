@@ -951,7 +951,7 @@ async def show_subscription_detail(update: Update, context: ContextTypes.DEFAULT
 # ──────────────────────────────────────────────
 
 async def show_subscription_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Histórico agrupado por grupo — só subs reais (não tentativas abandonadas)"""
+    """Histórico completo agrupado por grupo — todas as subs reais (não tentativas abandonadas)"""
     query = update.callback_query
     await query.answer()
     user = query.from_user
@@ -968,25 +968,13 @@ async def show_subscription_history(update: Update, context: ContextTypes.DEFAUL
     now = datetime.utcnow()
 
     with get_db_session() as session:
-        # Buscar group_ids com assinatura ativa para excluí-los do histórico
-        active_group_ids = {
-            s.group_id for s in session.query(Subscription).filter(
-                Subscription.telegram_user_id == str(user.id),
-                Subscription.status == 'active',
-                Subscription.end_date > now - timedelta(hours=2)
-            ).all()
-        }
-
-        # Buscar todas as subs não-ativas do usuário
-        all_history = session.query(Subscription).filter(
+        # Buscar TODAS as subs do usuário (ativas, expiradas, canceladas com pagamento)
+        all_subs = session.query(Subscription).filter(
             Subscription.telegram_user_id == str(user.id),
-            db.or_(
-                Subscription.status == 'expired',
-                db.and_(Subscription.status == 'active', Subscription.end_date <= now)
-            )
+            Subscription.status.in_(['active', 'expired'])
         ).order_by(Subscription.end_date.desc()).all()
 
-        # Também incluir canceladas que tiveram pagamento real (não abandonos)
+        # Incluir canceladas que tiveram pagamento real (não abandonos)
         cancelled_real = session.query(Subscription).filter(
             Subscription.telegram_user_id == str(user.id),
             Subscription.status == 'cancelled'
@@ -994,10 +982,9 @@ async def show_subscription_history(update: Update, context: ContextTypes.DEFAUL
         for sub in cancelled_real:
             has_completed = any(t.status == 'completed' for t in sub.transactions)
             if has_completed:
-                all_history.append(sub)
+                all_subs.append(sub)
 
-        # Excluir grupos que já têm assinatura ativa
-        all_history = [s for s in all_history if s.group_id not in active_group_ids]
+        all_history = all_subs
 
         # Agrupar por grupo — manter todas as subs por grupo
         groups_subs = {}
@@ -1044,7 +1031,10 @@ async def show_subscription_history(update: Update, context: ContextTypes.DEFAUL
 
             sub_count, total_invested = groups_stats.get(sub.group_id, (1, 0))
 
-            if sub.status == 'cancelled':
+            if sub.status == 'active' and sub.end_date and sub.end_date > now:
+                emoji = "✅"
+                date_text = f"Ativa até {format_date(sub.end_date)}"
+            elif sub.status == 'cancelled':
                 emoji = "🚫"
                 date_text = f"Cancelada em {format_date(sub.end_date)}"
             else:
@@ -1052,7 +1042,7 @@ async def show_subscription_history(update: Update, context: ContextTypes.DEFAUL
                 date_text = f"Expirou em {format_date(sub.end_date)}"
 
             text += f"\n{emoji} <b>{group_name}</b>\n"
-            text += f"   Última: {plan_name} · {date_text}\n"
+            text += f"   {plan_name} · {date_text}\n"
             sub_word = "assinatura" if sub_count == 1 else "assinaturas"
             invested_word = "investido" if sub_count == 1 else "investidos"
             text += f"   {sub_count} {sub_word} · {format_currency(total_invested)} {invested_word}\n"
@@ -1064,7 +1054,9 @@ async def show_subscription_history(update: Update, context: ContextTypes.DEFAUL
             group_name_short = group.name[:18] if group else "N/A"
 
             row = [InlineKeyboardButton(f"📋 {group_name_short}", callback_data=f"group_history_{group.id}" if group else f"sub_detail_{sub.id}")]
-            if group:
+            # Só mostrar "Assinar" se grupo não tem sub ativa
+            is_active = sub.status == 'active' and sub.end_date and sub.end_date > now
+            if group and not is_active:
                 row.append(InlineKeyboardButton("🔄 Assinar", callback_data=f"group_{group.id}"))
             keyboard.append(row)
 
