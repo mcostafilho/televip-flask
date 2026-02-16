@@ -433,22 +433,10 @@
                                     </ul>
                                 </div>
 
-                                <!-- Decodificador de Watermark -->
-                                <div class="mt-3 p-3" style="background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
-                                    <h6 style="font-size: 0.9rem; font-weight: 600;">
-                                        <i class="bi bi-search"></i> Identificar Vazador
-                                    </h6>
-                                    <p class="text-muted small mb-2">
-                                        Cole abaixo o texto vazado para identificar qual assinante o compartilhou.
-                                    </p>
-                                    <div class="mb-2">
-                                        <textarea class="form-control" id="leakedTextInput" rows="3"
-                                                  placeholder="Cole o texto vazado aqui..." style="font-size: 0.85rem;"></textarea>
-                                    </div>
-                                    <button type="button" class="btn btn-outline-warning btn-sm" onclick="decodeWatermark()">
+                                <div class="mt-2">
+                                    <a href="{{ url_for('groups.antileak_dashboard') }}" class="btn btn-outline-warning btn-sm">
                                         <i class="bi bi-fingerprint"></i> Identificar Vazador
-                                    </button>
-                                    <div id="watermarkResult" class="mt-2" style="display:none;"></div>
+                                    </a>
                                 </div>
                                 {% endif %}
 
@@ -958,47 +946,6 @@ if (coverFileInput) {
         };
         reader.readAsDataURL(file);
     });
-}
-
-// Decodificar marca d'água invisível
-function decodeWatermark() {
-    var text = document.getElementById('leakedTextInput').value;
-    var resultDiv = document.getElementById('watermarkResult');
-
-    if (!text.trim()) {
-        resultDiv.style.display = 'block';
-        resultDiv.innerHTML = '<div class="alert alert-warning small mb-0"><i class="bi bi-exclamation-triangle"></i> Cole o texto vazado acima.</div>';
-        return;
-    }
-
-    {% if group %}
-    fetch('{{ url_for("groups.decode_watermark_route", id=group.id) }}', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'leaked_text=' + encodeURIComponent(text) + '&csrf_token={{ csrf_token() }}'
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        resultDiv.style.display = 'block';
-        if (data.found) {
-            resultDiv.innerHTML =
-                '<div class="alert alert-danger small mb-0">' +
-                '<i class="bi bi-person-exclamation"></i> <strong>Vazador identificado!</strong><br>' +
-                '<pre class="mb-0 mt-1" style="color: inherit;">' +
-                'Username:  ' + data.username + '\n' +
-                'Telegram:  ' + data.telegram_id + '\n' +
-                'Plano:     ' + data.plan + '\n' +
-                'Status:    ' + data.status +
-                '</pre></div>';
-        } else {
-            resultDiv.innerHTML = '<div class="alert alert-secondary small mb-0"><i class="bi bi-question-circle"></i> Nenhuma marca d\'agua encontrada neste texto.</div>';
-        }
-    })
-    .catch(function() {
-        resultDiv.style.display = 'block';
-        resultDiv.innerHTML = '<div class="alert alert-danger small mb-0">Erro ao decodificar. Tente novamente.</div>';
-    });
-    {% endif %}
 }
 
 // Toggle anti-leak via fetch (avoids nested form issue)
