@@ -43,15 +43,61 @@
             </div>
         </div>
 
+        <!-- Anti-leak info block -->
+        <div class="content-card mb-3">
+            <div class="alert alert-secondary small mb-0" style="background: rgba(124,92,252,0.06); border: 1px solid rgba(124,92,252,0.15); color: #b0b4cc;">
+                <i class="bi bi-shield-lock text-info"></i>
+                <strong>Proteção Anti-Vazamento {% if group.anti_leak_enabled %}<span class="badge bg-success">Ativada</span>{% else %}<span class="badge bg-secondary">Desativada</span>{% endif %}</strong>
+                <ul class="mb-0 mt-2" style="padding-left: 18px;">
+                    {% if group.anti_leak_enabled %}
+                    <li><strong>Texto:</strong> mensagens de texto terão <strong>marca d'agua invisivel</strong> (prova anti-vazamento) + <strong>protecao contra copia</strong></li>
+                    <li><strong>Fotos e videos:</strong> enviados com <code>protect_content</code> (impede salvar/encaminhar), mas <strong>sem</strong> marca d'agua</li>
+                    {% else %}
+                    <li>Ative o anti-vazamento na <a href="{{ url_for('groups.antileak_dashboard') }}">pagina Anti-Vazamento</a> para proteger seus broadcasts com marca d'agua invisivel</li>
+                    {% endif %}
+                </ul>
+                <div class="mt-2 p-2" style="background: rgba(255,255,255,0.04); border-radius: 8px;">
+                    <i class="bi bi-robot text-info"></i>
+                    <strong>Dica:</strong> Voce tambem pode enviar broadcasts pelo <strong>bot do Telegram</strong> usando o comando <code>/broadcast</code>, mas sera enviado para <strong>todos</strong> os assinantes ativos (sem filtro por plano).
+                </div>
+            </div>
+        </div>
+
         <!-- Conteudo -->
         <div class="content-card">
-            <div class="alert alert-info">
-                <i class="bi bi-info-circle"></i>
-                Esta mensagem será enviada para <strong>{{ active_count }}</strong> assinantes ativos do grupo <strong>{{ group.name }}</strong>.
-            </div>
-
-            <form method="POST" action="{{ url_for('groups.broadcast', group_id=group.id) }}">
+            <form method="POST" action="{{ url_for('groups.broadcast', group_id=group.id) }}" enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                <!-- Recipient selector -->
+                <div class="mb-4">
+                    <label class="form-label"><i class="bi bi-people"></i> Destinatarios</label>
+                    <select class="form-select mb-2" id="planFilter" onchange="filterByPlan()">
+                        <option value="all">Todos os planos ({{ active_count }} assinantes)</option>
+                        {% for plan in plans %}
+                        <option value="{{ plan.id }}">{{ plan.name }} ({{ subs_by_plan.get(plan.id, [])|length }} assinantes)</option>
+                        {% endfor %}
+                    </select>
+                    <div id="subscriberCheckboxes" style="max-height: 200px; overflow-y: auto; background: rgba(255,255,255,0.03); border-radius: 8px; padding: 0.5rem; border: 1px solid rgba(255,255,255,0.08);">
+                        <div class="form-check mb-1">
+                            <input class="form-check-input" type="checkbox" id="selectAll" checked onchange="toggleAll()">
+                            <label class="form-check-label small" for="selectAll"><strong>Selecionar todos</strong></label>
+                        </div>
+                        {% for sub in active_subs %}
+                        <div class="form-check mb-1 sub-check" data-plan="{{ sub.plan_id }}">
+                            <input class="form-check-input sub-checkbox" type="checkbox" name="subscription_ids" value="{{ sub.id }}" id="sub-{{ sub.id }}" checked>
+                            <label class="form-check-label small" for="sub-{{ sub.id }}">
+                                {{ sub.telegram_username or sub.telegram_user_id }}
+                                <span class="text-muted">- {{ sub.plan.name if sub.plan else 'N/A' }}</span>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <small class="form-text text-muted">
+                        <span id="selectedCount">{{ active_count }}</span> de {{ active_count }} assinantes selecionados
+                    </small>
+                </div>
+
+                <!-- Message -->
                 <div class="mb-4">
                     <label class="form-label" for="message">Mensagem</label>
                     <textarea
@@ -60,18 +106,29 @@
                         name="message"
                         rows="6"
                         placeholder="Digite sua mensagem aqui..."
-                        required
                         maxlength="4000"
                     ></textarea>
                     <small class="form-text text-muted">
-                        Máximo 4000 caracteres. Você pode usar **negrito** e _itálico_.
+                        <span id="charLimitLabel">Maximo 4000 caracteres.</span> Voce pode usar **negrito** e _italico_.
                     </small>
                 </div>
 
+                <!-- Media upload -->
                 <div class="mb-4">
-                    <label class="form-label">Pré-visualização:</label>
+                    <label class="form-label" for="media"><i class="bi bi-image"></i> Foto ou Video (opcional)</label>
+                    <input type="file" class="form-control" id="media" name="media" accept="image/*,video/*" onchange="onMediaChange()">
+                    <small class="form-text text-muted">
+                        Formatos aceitos: JPEG, PNG, GIF, WebP, MP4, WebM. Maximo 50MB.
+                        {% if group.anti_leak_enabled %}Midia e enviada com protecao contra copia, mas <strong>sem</strong> marca d'agua.{% endif %}
+                    </small>
+                    <div id="mediaPreview" class="mt-2" style="display:none;"></div>
+                </div>
+
+                <!-- Preview -->
+                <div class="mb-4">
+                    <label class="form-label">Pre-visualizacao:</label>
                     <div class="content-card" id="preview" style="padding: 1rem 1.25rem; min-height: 60px; border: 1px dashed rgba(255,255,255,0.1);">
-                        <em class="text-muted">A pré-visualização aparecerá aqui...</em>
+                        <em class="text-muted">A pre-visualizacao aparecera aqui...</em>
                     </div>
                 </div>
 
@@ -79,7 +136,7 @@
                     <a href="{{ url_for('groups.subscribers', id=group.id) }}" class="btn btn-secondary">
                         Cancelar
                     </a>
-                    <button type="submit" class="btn btn-primary" onclick="return confirm('Confirma o envio desta mensagem para {{ active_count }} assinantes?')">
+                    <button type="submit" class="btn btn-primary" id="submitBtn" onclick="return confirmSend()">
                         <i class="bi bi-send"></i> Enviar Mensagem
                     </button>
                 </div>
@@ -91,15 +148,102 @@
 
 {% block extra_js %}
 <script>
+// Preview
 document.getElementById('message').addEventListener('input', function() {
-    let text = this.value;
+    updatePreview();
+    updateCharLimit();
+});
+
+function updatePreview() {
+    var text = document.getElementById('message').value;
+    text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     text = text.replace(/_(.*?)_/g, '<em>$1</em>');
     text = text.replace(/\n/g, '<br>');
     if (text.trim() === '') {
-        text = '<em class="text-muted">A pré-visualização aparecerá aqui...</em>';
+        text = '<em class="text-muted">A pre-visualizacao aparecera aqui...</em>';
+    } else {
+        text = '<strong>Mensagem de {{ group.name }}</strong><br><br>' + text;
     }
-    document.getElementById('preview').innerHTML = '<strong>Mensagem de {{ group.name }}</strong><br><br>' + text;
+    document.getElementById('preview').innerHTML = text;
+}
+
+function updateCharLimit() {
+    var hasMedia = document.getElementById('media').files.length > 0;
+    var limit = hasMedia ? 1024 : 4000;
+    document.getElementById('message').setAttribute('maxlength', limit);
+    document.getElementById('charLimitLabel').textContent = 'Maximo ' + limit + ' caracteres' + (hasMedia ? ' (limite de legenda).' : '.');
+}
+
+// Media change
+function onMediaChange() {
+    updateCharLimit();
+    var input = document.getElementById('media');
+    var preview = document.getElementById('mediaPreview');
+    if (input.files.length > 0) {
+        var file = input.files[0];
+        preview.style.display = 'block';
+        if (file.type.startsWith('image/')) {
+            var url = URL.createObjectURL(file);
+            preview.innerHTML = '<img src="' + url + '" style="max-height: 120px; border-radius: 8px;">';
+        } else if (file.type.startsWith('video/')) {
+            preview.innerHTML = '<span class="badge bg-info"><i class="bi bi-camera-video"></i> ' + file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + 'MB)</span>';
+        }
+    } else {
+        preview.style.display = 'none';
+        preview.innerHTML = '';
+    }
+}
+
+// Plan filter
+function filterByPlan() {
+    var planId = document.getElementById('planFilter').value;
+    var checks = document.querySelectorAll('.sub-check');
+    checks.forEach(function(el) {
+        if (planId === 'all' || el.getAttribute('data-plan') === planId) {
+            el.style.display = '';
+            el.querySelector('.sub-checkbox').checked = true;
+        } else {
+            el.style.display = 'none';
+            el.querySelector('.sub-checkbox').checked = false;
+        }
+    });
+    document.getElementById('selectAll').checked = true;
+    updateSelectedCount();
+}
+
+// Select all toggle
+function toggleAll() {
+    var checked = document.getElementById('selectAll').checked;
+    var visible = document.querySelectorAll('.sub-check:not([style*="display: none"]) .sub-checkbox');
+    visible.forEach(function(cb) { cb.checked = checked; });
+    updateSelectedCount();
+}
+
+// Count selected
+function updateSelectedCount() {
+    var count = document.querySelectorAll('.sub-checkbox:checked').length;
+    document.getElementById('selectedCount').textContent = count;
+}
+
+// Listen for individual checkbox changes
+document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('sub-checkbox')) {
+        updateSelectedCount();
+        var allVisible = document.querySelectorAll('.sub-check:not([style*="display: none"]) .sub-checkbox');
+        var allChecked = Array.from(allVisible).every(function(cb) { return cb.checked; });
+        document.getElementById('selectAll').checked = allChecked;
+    }
 });
+
+// Confirm send
+function confirmSend() {
+    var count = document.querySelectorAll('.sub-checkbox:checked').length;
+    if (count === 0) {
+        alert('Selecione pelo menos um assinante.');
+        return false;
+    }
+    return confirm('Confirma o envio desta mensagem para ' + count + ' assinante(s)?');
+}
 </script>
 {% endblock %}

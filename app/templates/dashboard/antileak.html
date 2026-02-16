@@ -159,6 +159,59 @@
             </a>
         </div>
         {% endif %}
+
+        <!-- Suspeitos Identificados -->
+        <div class="content-card mt-4">
+            <h5 class="mb-3">
+                <i class="bi bi-person-exclamation" style="color: #dc3545;"></i>
+                Suspeitos Identificados
+            </h5>
+            {% if incidents %}
+            <div class="table-responsive">
+                <table class="table table-sm" style="color: #b0b4cc; font-size: 0.88rem;">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Grupo</th>
+                            <th>Username</th>
+                            <th>Telegram ID</th>
+                            <th>Plano</th>
+                            <th>Status</th>
+                            <th>Texto vazado</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for inc in incidents %}
+                        <tr id="incident-{{ inc.id }}">
+                            <td class="text-nowrap">{{ inc.detected_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>{{ inc.group.name if inc.group else 'N/A' }}</td>
+                            <td>{{ inc.telegram_username or 'N/A' }}</td>
+                            <td><code>{{ inc.telegram_user_id }}</code></td>
+                            <td>{{ inc.plan_name or 'N/A' }}</td>
+                            <td>
+                                <span class="badge {{ 'bg-success' if inc.subscription_status == 'active' else 'bg-secondary' }}">
+                                    {{ inc.subscription_status or 'N/A' }}
+                                </span>
+                            </td>
+                            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ inc.leaked_text_preview or '' }}">
+                                {{ inc.leaked_text_preview[:80] if inc.leaked_text_preview else '-' }}{{ '...' if inc.leaked_text_preview and inc.leaked_text_preview|length > 80 else '' }}
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-outline-danger btn-sm py-0 px-1"
+                                        onclick="deleteIncident({{ inc.id }})" title="Remover">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted mb-0">Nenhum vazador identificado ainda.</p>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -186,6 +239,24 @@ function toggleAntiLeak(groupId) {
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-shield-check"></i> Tentar novamente';
     });
+}
+
+function deleteIncident(incidentId) {
+    if (!confirm('Remover este registro de vazamento?')) return;
+    fetch('/groups/antileak/' + incidentId, {
+        method: 'DELETE',
+        headers: {'X-CSRFToken': '{{ csrf_token() }}'},
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            var row = document.getElementById('incident-' + incidentId);
+            if (row) row.remove();
+        } else {
+            alert(data.error || 'Erro ao remover.');
+        }
+    })
+    .catch(function() { alert('Erro ao remover. Tente novamente.'); });
 }
 
 function decodeWatermark(groupId) {

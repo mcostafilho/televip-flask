@@ -6,7 +6,7 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 import json
 from app import db, limiter
-from app.models import Group, PricingPlan, Subscription, Transaction
+from app.models import Group, PricingPlan, Subscription, Transaction, LeakIncident
 from app.utils.admin_helpers import get_effective_creator, is_admin_viewing
 from datetime import datetime, timedelta
 from sqlalchemy import func
@@ -568,17 +568,35 @@ def broadcast(group_id):
 
     if request.method == 'POST':
         message = request.form.get('message', '').strip()
+        media_file = request.files.get('media')
+        has_media = media_file and media_file.filename
 
-        if not message:
-            flash('Por favor, digite uma mensagem.', 'error')
+        # Validate media file if present
+        if has_media:
+            allowed_types = {'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+                             'video/mp4', 'video/mpeg', 'video/quicktime', 'video/webm'}
+            if media_file.content_type not in allowed_types:
+                flash('Tipo de arquivo não suportado. Envie uma imagem ou vídeo.', 'error')
+                return redirect(url_for('groups.broadcast', group_id=group_id))
+            # Check file size (max 50MB)
+            media_file.seek(0, 2)
+            file_size = media_file.tell()
+            media_file.seek(0)
+            if file_size > 50 * 1024 * 1024:
+                flash('Arquivo muito grande. Máximo 50MB.', 'error')
+                return redirect(url_for('groups.broadcast', group_id=group_id))
+
+        if not message and not has_media:
+            flash('Por favor, digite uma mensagem ou envie uma mídia.', 'error')
             return redirect(url_for('groups.broadcast', group_id=group_id))
 
-        # Fix #17: Message length cap (Telegram limit)
-        if len(message) > 4000:
-            flash('Mensagem muito longa. Máximo de 4000 caracteres.', 'error')
+        # Length limits: caption=1024, text=4000
+        max_length = 1024 if has_media else 4000
+        if message and len(message) > max_length:
+            flash(f'Mensagem muito longa. Máximo de {max_length} caracteres{"  (limite de legenda)" if has_media else ""}.', 'error')
             return redirect(url_for('groups.broadcast', group_id=group_id))
 
-        # Fix #17: Broadcast cooldown — 5 minutes between broadcasts
+        # Broadcast cooldown — 5 minutes between broadcasts
         if group.last_broadcast_at:
             cooldown_remaining = (group.last_broadcast_at + timedelta(minutes=5)) - datetime.utcnow()
             if cooldown_remaining.total_seconds() > 0:
@@ -596,18 +614,58 @@ def broadcast(group_id):
             flash('Nenhum assinante ativo para enviar mensagem.', 'warning')
             return redirect(url_for('groups.subscribers', id=group_id))
 
+        # Filter by selected subscription_ids (if provided)
+        selected_ids = request.form.getlist('subscription_ids')
+        if selected_ids:
+            selected_ids_set = set(int(sid) for sid in selected_ids if sid.isdigit())
+            active_subs = [s for s in active_subs if s.id in selected_ids_set]
+
+        if not active_subs:
+            flash('Nenhum assinante selecionado.', 'warning')
+            return redirect(url_for('groups.broadcast', group_id=group_id))
+
         sent_count = 0
         failed_count = 0
 
         bot_token = os.getenv('TELEGRAM_BOT_TOKEN') or os.getenv('BOT_TOKEN')
 
-        if bot_token:
-            for sub in active_subs:
-                try:
-                    group_name_safe = group.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-                    msg_safe = message.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-                    msg_text = f"<b>Mensagem de {group_name_safe}</b>\n\n{msg_safe}"
+        if not bot_token:
+            flash('Bot do Telegram não configurado.', 'error')
+            return redirect(url_for('groups.subscribers', id=group_id))
 
+        # Read media bytes once if present
+        media_bytes = media_file.read() if has_media else None
+        media_content_type = media_file.content_type if has_media else None
+        media_filename = secure_filename(media_file.filename) if has_media else None
+        is_video = media_content_type and media_content_type.startswith('video/')
+
+        for sub in active_subs:
+            try:
+                group_name_safe = group.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                msg_safe = message.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") if message else ''
+                msg_text = f"<b>Mensagem de {group_name_safe}</b>\n\n{msg_safe}" if msg_safe else f"<b>Mensagem de {group_name_safe}</b>"
+
+                if has_media:
+                    # Send photo or video
+                    endpoint = 'sendVideo' if is_video else 'sendPhoto'
+                    field_name = 'video' if is_video else 'photo'
+
+                    data = {
+                        'chat_id': sub.telegram_user_id,
+                        'caption': msg_text,
+                        'parse_mode': 'HTML',
+                    }
+                    if group.anti_leak_enabled:
+                        data['protect_content'] = 'true'
+
+                    files = {field_name: (media_filename, media_bytes, media_content_type)}
+                    response = requests.post(
+                        f'https://api.telegram.org/bot{bot_token}/{endpoint}',
+                        data=data,
+                        files=files,
+                    )
+                else:
+                    # Send text message
                     payload = {
                         'chat_id': sub.telegram_user_id,
                         'text': msg_text,
@@ -623,15 +681,13 @@ def broadcast(group_id):
                         f'https://api.telegram.org/bot{bot_token}/sendMessage',
                         json=payload,
                     )
-                    if response.status_code == 200:
-                        sent_count += 1
-                    else:
-                        failed_count += 1
-                except Exception:
+
+                if response.status_code == 200:
+                    sent_count += 1
+                else:
                     failed_count += 1
-        else:
-            flash('Bot do Telegram não configurado.', 'error')
-            return redirect(url_for('groups.subscribers', id=group_id))
+            except Exception:
+                failed_count += 1
 
         # Update broadcast cooldown timestamp
         group.last_broadcast_at = datetime.utcnow()
@@ -641,14 +697,26 @@ def broadcast(group_id):
         return redirect(url_for('groups.subscribers', id=group_id))
 
     # GET - mostrar formulário
-    active_count = Subscription.query.filter_by(
+    active_subs = Subscription.query.filter_by(
         group_id=group_id,
         status='active'
-    ).count()
+    ).all()
+
+    # Group subscribers by plan
+    plans = PricingPlan.query.filter_by(group_id=group_id, is_active=True).all()
+    subs_by_plan = {}
+    for sub in active_subs:
+        plan_id = sub.plan_id
+        if plan_id not in subs_by_plan:
+            subs_by_plan[plan_id] = []
+        subs_by_plan[plan_id].append(sub)
 
     return render_template('dashboard/broadcast.html',
                          group=group,
-                         active_count=active_count)
+                         active_count=len(active_subs),
+                         active_subs=active_subs,
+                         plans=plans,
+                         subs_by_plan=subs_by_plan)
 
 @bp.route('/<int:id>/subscribers')
 @login_required
@@ -906,14 +974,22 @@ def antileak_dashboard():
     groups = Group.query.filter_by(creator_id=effective.id).all()
 
     groups_data = []
+    group_ids = []
     for group in groups:
         active_count = Subscription.query.filter_by(group_id=group.id, status='active').count()
         groups_data.append({
             'group': group,
             'active_subscribers': active_count,
         })
+        group_ids.append(group.id)
 
-    return render_template('dashboard/antileak.html', groups_data=groups_data)
+    incidents = []
+    if group_ids:
+        incidents = LeakIncident.query.filter(
+            LeakIncident.group_id.in_(group_ids)
+        ).order_by(LeakIncident.detected_at.desc()).limit(100).all()
+
+    return render_template('dashboard/antileak.html', groups_data=groups_data, incidents=incidents)
 
 
 @bp.route('/<int:id>/antileak', methods=['POST'])
@@ -935,6 +1011,23 @@ def toggle_antileak(id):
     return redirect(url_for('groups.edit', id=id))
 
 
+@bp.route('/antileak/<int:incident_id>', methods=['DELETE'])
+@login_required
+def delete_incident(incident_id):
+    """Excluir incidente de vazamento"""
+    if is_admin_viewing():
+        return jsonify({'error': 'Ação não permitida no modo admin.'}), 403
+
+    incident = LeakIncident.query.get_or_404(incident_id)
+    group = Group.query.get(incident.group_id)
+    if not group or group.creator_id != current_user.id:
+        return jsonify({'error': 'Não autorizado'}), 403
+
+    db.session.delete(incident)
+    db.session.commit()
+    return jsonify({'success': True})
+
+
 @bp.route('/<int:id>/decode-watermark', methods=['POST'])
 @login_required
 def decode_watermark_route(id):
@@ -948,8 +1041,21 @@ def decode_watermark_route(id):
     if sub_id:
         sub = Subscription.query.get(sub_id)
         if sub and sub.group_id == group.id:
+            incident = LeakIncident(
+                group_id=group.id,
+                subscription_id=sub.id,
+                telegram_user_id=sub.telegram_user_id,
+                telegram_username=sub.telegram_username,
+                plan_name=sub.plan.name if sub.plan else 'N/A',
+                subscription_status=sub.status,
+                leaked_text_preview=text[:200] if text else None,
+            )
+            db.session.add(incident)
+            db.session.commit()
+
             return jsonify({
                 'found': True,
+                'incident_id': incident.id,
                 'subscription_id': sub.id,
                 'username': sub.telegram_username or 'N/A',
                 'telegram_id': sub.telegram_user_id,
