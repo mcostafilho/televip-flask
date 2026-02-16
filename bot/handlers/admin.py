@@ -539,6 +539,15 @@ async def handle_broadcast_confirm(update: Update, context: ContextTypes.DEFAULT
                 msg_text = f"<b>Mensagem de {group_name}</b>\n\n{escaped_message}"
 
                 if anti_leak:
+                    msg_text += (
+                        "\n\n&#8205;\n"
+                        "<i>&#9888;&#65039; Este conteudo e exclusivo e confidencial. "
+                        "Nao salve, nao copie, nao compartilhe e nao encaminhe. "
+                        "Possuimos metodos avancados de rastreamento que identificam "
+                        "o responsavel por qualquer vazamento. "
+                        "Quem for identificado sera removido permanentemente e podera "
+                        "responder nas medidas cabiveis.</i>"
+                    )
                     from bot.utils.watermark import watermark_text
                     msg_text = watermark_text(msg_text, sub.id)
 

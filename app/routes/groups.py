@@ -645,6 +645,17 @@ def broadcast(group_id):
                 msg_safe = message.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") if message else ''
                 msg_text = f"<b>Mensagem de {group_name_safe}</b>\n\n{msg_safe}" if msg_safe else f"<b>Mensagem de {group_name_safe}</b>"
 
+                if group.anti_leak_enabled:
+                    msg_text += (
+                        "\n\n&#8205;\n"
+                        "<i>&#9888;&#65039; Este conteudo e exclusivo e confidencial. "
+                        "Nao salve, nao copie, nao compartilhe e nao encaminhe. "
+                        "Possuimos metodos avancados de rastreamento que identificam "
+                        "o responsavel por qualquer vazamento. "
+                        "Quem for identificado sera removido permanentemente e podera "
+                        "responder nas medidas cabiveis.</i>"
+                    )
+
                 if has_media:
                     # Send photo or video
                     endpoint = 'sendVideo' if is_video else 'sendPhoto'
