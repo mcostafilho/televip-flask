@@ -35,6 +35,33 @@
                     <li>Ferramenta para <strong>identificar vazadores</strong> pelo texto vazado</li>
                 </ol>
             </div>
+
+            <!-- Como usar a ferramenta -->
+            <div class="alert alert-secondary small mb-3" style="background: rgba(255,193,7,0.06); border: 1px solid rgba(255,193,7,0.18); color: #b0b4cc;">
+                <i class="bi bi-fingerprint text-warning"></i>
+                <strong>Como funciona a identificação de vazadores:</strong>
+                <p class="mt-2 mb-2">
+                    Cada <strong>broadcast de texto</strong> que você envia é personalizado com uma marca d'água invisível única para cada assinante.
+                    Se alguém copiar e compartilhar o texto fora do grupo, você pode identificar quem foi.
+                </p>
+                <strong>Como identificar uma suspeita de vazamento:</strong>
+                <ol class="mb-2 mt-1" style="padding-left: 18px;">
+                    <li>Encontre o texto vazado &mdash; em outro grupo, site, rede social, print, etc.</li>
+                    <li><strong>Copie o texto exato</strong> do broadcast que foi vazado (precisa conter os caracteres invisíveis)</li>
+                    <li>Cole no campo "Identificar Vazador" do grupo correspondente abaixo</li>
+                    <li>O sistema vai revelar o nome e Telegram ID do assinante que recebeu aquela cópia</li>
+                </ol>
+                <div class="d-flex flex-column gap-1 mt-2">
+                    <span><i class="bi bi-check-circle text-success"></i> <strong>Funciona com:</strong> broadcasts de texto (mensagens enviadas pelo painel ou bot)</span>
+                    <span><i class="bi bi-x-circle text-danger"></i> <strong>Não funciona com:</strong> imagens, vídeos, áudios, stickers ou mensagens que o assinante digitou manualmente</span>
+                </div>
+                <div class="mt-2 p-2" style="background: rgba(255,255,255,0.04); border-radius: 8px;">
+                    <i class="bi bi-exclamation-triangle text-warning"></i>
+                    <strong>Importante:</strong> O texto precisa ser <strong>copiado e colado</strong>, não digitado novamente.
+                    Se alguém tirar um print/screenshot e você redigitar o texto, a marca d'água se perde.
+                </div>
+            </div>
+
             <div class="alert alert-info small mb-0">
                 <i class="bi bi-lightbulb"></i>
                 <strong>Dica:</strong> Para proteção máxima, ative também a proteção nativa do Telegram:
@@ -94,11 +121,12 @@
                             <i class="bi bi-fingerprint"></i> Identificar Vazador
                         </h6>
                         <p class="text-muted small mb-2">
-                            Cole abaixo o texto vazado para identificar qual assinante o compartilhou.
+                            Cole o <strong>texto exato do broadcast vazado</strong> (copiado, não digitado).
+                            O sistema vai identificar qual assinante deste grupo recebeu aquela cópia.
                         </p>
                         <div class="mb-2">
                             <textarea class="form-control" id="leakedText-{{ item.group.id }}" rows="3"
-                                      placeholder="Cole o texto vazado aqui..." style="font-size: 0.85rem;"></textarea>
+                                      placeholder="Cole aqui o texto do broadcast que foi vazado..." style="font-size: 0.85rem;"></textarea>
                         </div>
                         <button type="button" class="btn btn-outline-warning btn-sm"
                                 onclick="decodeWatermark({{ item.group.id }})">
