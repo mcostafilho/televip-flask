@@ -174,7 +174,11 @@
 
                         <div class="row-info">
                             <div class="row-title">
-                                @{{ sub.telegram_username or 'Sem username' }}
+                                {% if sub.telegram_username %}
+                                    <a href="https://t.me/{{ sub.telegram_username }}" target="_blank" rel="noopener" style="color: inherit; text-decoration: none;">@{{ sub.telegram_username }}</a>
+                                {% else %}
+                                    <code>{{ sub.telegram_user_id }}</code>
+                                {% endif %}
                                 {% if sub.status == 'active' and sub.end_date >= now and (sub.end_date - now).days > 7 %}
                                     <span class="glow-dot green"></span>
                                 {% elif sub.status == 'active' and sub.end_date >= now %}
@@ -183,7 +187,7 @@
                             </div>
                             <div class="row-sub">
                                 {{ sub.plan.name }} &middot; R$ {{ "%.2f"|format(sub.plan.price) }}
-                                &middot; ID: {{ sub.telegram_user_id }}
+                                {% if sub.telegram_username %}&middot; ID: {{ sub.telegram_user_id }}{% endif %}
                             </div>
                         </div>
                     </div>
