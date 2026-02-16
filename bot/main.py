@@ -41,7 +41,7 @@ from bot.handlers.subscription import (
     cancel_subscription, confirm_cancel_subscription,
     reactivate_subscription, get_invite_link,
     show_active_subscriptions, show_subscription_detail,
-    show_subscription_history, show_subscription_transactions
+    show_subscription_history, show_group_history, show_subscription_transactions
 )
 from bot.handlers.admin import (
     setup_command, stats_command, broadcast_command,
@@ -235,6 +235,7 @@ def setup_handlers(application: Application) -> None:
     # Callbacks de gestão de assinaturas
     application.add_handler(CallbackQueryHandler(show_active_subscriptions, pattern=r"^subs_active(_p\d+)?$"))
     application.add_handler(CallbackQueryHandler(show_subscription_history, pattern=r"^subs_history(_p\d+)?$"))
+    application.add_handler(CallbackQueryHandler(show_group_history, pattern=r"^group_history_\d+$"))
     application.add_handler(CallbackQueryHandler(show_subscription_detail, pattern=r"^sub_detail_\d+$"))
     application.add_handler(CallbackQueryHandler(show_subscription_transactions, pattern=r"^sub_txns_\d+$"))
 

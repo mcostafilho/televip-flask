@@ -999,12 +999,25 @@ async def show_subscription_history(update: Update, context: ContextTypes.DEFAUL
         # Excluir grupos que já têm assinatura ativa
         all_history = [s for s in all_history if s.group_id not in active_group_ids]
 
-        # Agrupar por grupo — manter só a sub mais recente de cada grupo
-        groups_map = {}
+        # Agrupar por grupo — manter todas as subs por grupo
+        groups_subs = {}
         for sub in all_history:
             gid = sub.group_id
-            if gid not in groups_map or (sub.end_date and sub.end_date > groups_map[gid].end_date):
-                groups_map[gid] = sub
+            if gid not in groups_subs:
+                groups_subs[gid] = []
+            groups_subs[gid].append(sub)
+
+        # Para cada grupo: sub mais recente + stats
+        groups_map = {}
+        groups_stats = {}  # {group_id: (count, total_invested)}
+        for gid, subs in groups_subs.items():
+            latest = max(subs, key=lambda s: s.end_date or datetime.min)
+            groups_map[gid] = latest
+            count = len(subs)
+            total = sum(
+                float(t.amount) for s in subs for t in s.transactions if t.status == 'completed'
+            )
+            groups_stats[gid] = (count, total)
 
         grouped = sorted(groups_map.values(), key=lambda s: s.end_date or datetime.min, reverse=True)
 
@@ -1029,8 +1042,7 @@ async def show_subscription_history(update: Update, context: ContextTypes.DEFAUL
             group_name = escape_html(group.name) if group else "N/A"
             plan_name = escape_html(plan.name) if plan else "N/A"
 
-            # Contar quantas subs reais teve neste grupo
-            group_sub_count = sum(1 for s in all_history if s.group_id == sub.group_id)
+            sub_count, total_invested = groups_stats.get(sub.group_id, (1, 0))
 
             if sub.status == 'cancelled':
                 emoji = "🚫"
@@ -1040,17 +1052,18 @@ async def show_subscription_history(update: Update, context: ContextTypes.DEFAUL
                 date_text = f"Expirou em {format_date(sub.end_date)}"
 
             text += f"\n{emoji} <b>{group_name}</b>\n"
-            text += f"   {plan_name} · {date_text}\n"
-            if group_sub_count > 1:
-                text += f"   ({group_sub_count} assinaturas)\n"
+            text += f"   Última: {plan_name} · {date_text}\n"
+            sub_word = "assinatura" if sub_count == 1 else "assinaturas"
+            invested_word = "investido" if sub_count == 1 else "investidos"
+            text += f"   {sub_count} {sub_word} · {format_currency(total_invested)} {invested_word}\n"
 
-        # Botões: por grupo — detalhes + assinar novamente
+        # Botões: por grupo — timeline + assinar novamente
         keyboard = []
         for sub in page_items:
             group = sub.group
             group_name_short = group.name[:18] if group else "N/A"
 
-            row = [InlineKeyboardButton(f"📋 {group_name_short}", callback_data=f"sub_detail_{sub.id}")]
+            row = [InlineKeyboardButton(f"📋 {group_name_short}", callback_data=f"group_history_{group.id}" if group else f"sub_detail_{sub.id}")]
             if group:
                 row.append(InlineKeyboardButton("🔄 Assinar", callback_data=f"group_{group.id}"))
             keyboard.append(row)
@@ -1065,6 +1078,163 @@ async def show_subscription_history(update: Update, context: ContextTypes.DEFAUL
             keyboard.append(nav_row)
 
         keyboard.append([InlineKeyboardButton("↩ Voltar", callback_data="back_to_start")])
+
+        await query.edit_message_text(
+            text, parse_mode=ParseMode.HTML,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+
+
+# ──────────────────────────────────────────────
+# Fase 5b: Timeline por Grupo
+# ──────────────────────────────────────────────
+
+def _payment_method_label(sub):
+    """Label curto para método de pagamento"""
+    method = getattr(sub, 'payment_method_type', None)
+    if method == 'boleto':
+        return 'Boleto'
+    return 'Cartão'
+
+
+async def show_group_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Timeline completa de assinaturas do usuário em um grupo — callback group_history_{group_id}"""
+    query = update.callback_query
+    await query.answer()
+    user = query.from_user
+
+    group_id = int(query.data.replace("group_history_", ""))
+
+    with get_db_session() as session:
+        group = session.query(Group).get(group_id)
+        if not group:
+            await query.edit_message_text(
+                "Grupo não encontrado.",
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton("↩ Voltar", callback_data="subs_history")
+                ]])
+            )
+            return
+
+        group_name = escape_html(group.name)
+
+        # Buscar TODAS as subs do usuário neste grupo (com pagamento real ou ativas/expiradas)
+        all_subs = session.query(Subscription).filter(
+            Subscription.telegram_user_id == str(user.id),
+            Subscription.group_id == group_id
+        ).order_by(Subscription.start_date.desc()).all()
+
+        # Filtrar: só subs com pagamento real ou status significativo
+        subs = []
+        for sub in all_subs:
+            if sub.status in ('active', 'expired'):
+                subs.append(sub)
+            elif sub.status == 'cancelled':
+                has_completed = any(t.status == 'completed' for t in sub.transactions)
+                if has_completed:
+                    subs.append(sub)
+
+        if not subs:
+            await query.edit_message_text(
+                f"📋 <b>{group_name}</b>\n\nNenhuma assinatura encontrada.",
+                parse_mode=ParseMode.HTML,
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton("↩ Voltar", callback_data="subs_history")
+                ]])
+            )
+            return
+
+        # Stats gerais
+        total_invested = sum(
+            float(t.amount) for s in subs for t in s.transactions if t.status == 'completed'
+        )
+        sub_count = len(subs)
+        sub_word = "assinatura" if sub_count == 1 else "assinaturas"
+        invested_word = "investido" if sub_count == 1 else "investidos"
+
+        text = f"📋 <b>{group_name}</b>\n\n"
+        text += f"{sub_count} {sub_word} · {format_currency(total_invested)} {invested_word}\n"
+        text += "━━━━━━━━━━━━━━━━━━━━━━\n"
+
+        # Limitar a 3 mais recentes se mais de 5
+        display_subs = subs
+        hidden_count = 0
+        if len(subs) > 5:
+            display_subs = subs[:3]
+            hidden_count = len(subs) - 3
+
+        now = datetime.utcnow()
+
+        for sub in display_subs:
+            plan = sub.plan
+            plan_name = escape_html(plan.name) if plan else "N/A"
+            plan_price = format_currency(plan.price) if plan else "N/A"
+
+            text += f"\n▸ <b>{plan_name}</b> — {plan_price}\n"
+
+            # Buscar transações completed, ordenadas por data
+            completed_txns = sorted(
+                [t for t in sub.transactions if t.status == 'completed'],
+                key=lambda t: t.paid_at or t.created_at or datetime.min
+            )
+
+            # Evento: Início
+            first_txn = completed_txns[0] if completed_txns else None
+
+            if first_txn and getattr(first_txn, 'billing_reason', None) == 'subscription_create':
+                # Combinar início com primeiro pagamento
+                text += f"  🟢 Iniciou em {format_date(sub.start_date)} · 💳 {format_currency(first_txn.amount)} · {_payment_method_label(sub)}\n"
+                remaining_txns = completed_txns[1:]
+            else:
+                text += f"  🟢 Iniciou em {format_date(sub.start_date)}\n"
+                remaining_txns = completed_txns
+
+            # Eventos de pagamento subsequentes
+            for txn in remaining_txns:
+                reason = getattr(txn, 'billing_reason', None) or ''
+                txn_date = format_date(txn.paid_at or txn.created_at)
+                txn_amount = format_currency(txn.amount)
+
+                if reason == 'subscription_cycle':
+                    text += f"  🔄 Renovou em {txn_date} · {txn_amount}\n"
+                elif reason == 'plan_change':
+                    text += f"  🔀 Trocou de plano · {txn_amount}\n"
+                elif reason == 'lifetime_purchase':
+                    text += f"  💳 Pagou {txn_amount} · Vitalício\n"
+                else:
+                    text += f"  💳 Pagou {txn_amount} em {txn_date}\n"
+
+            # Cancelou renovação?
+            if getattr(sub, 'cancel_at_period_end', False) and sub.status == 'active':
+                text += "  ⏹ Cancelou renovação\n"
+
+            # Status final
+            if sub.status == 'expired' or (sub.status == 'active' and sub.end_date and sub.end_date <= now):
+                text += f"  ❌ Expirou em {format_date(sub.end_date)}\n"
+            elif sub.status == 'cancelled':
+                text += f"  🚫 Cancelada\n"
+            elif sub.status == 'active' and sub.end_date and sub.end_date > now:
+                text += f"  ✅ Ativa até {format_date(sub.end_date)}\n"
+
+        if hidden_count > 0:
+            text += f"\n<i>...e mais {hidden_count} anteriores</i>\n"
+
+        # Truncar se necessário (Telegram max 4096)
+        if len(text) > 4000:
+            text = text[:3990] + "\n..."
+
+        # Botões
+        keyboard = []
+
+        # "Assinar novamente" se grupo ativo e sem sub ativa
+        has_active = any(
+            s.status == 'active' and s.end_date and s.end_date > now
+            for s in all_subs
+        )
+        if group and not has_active:
+            keyboard.append([InlineKeyboardButton("🔄 Assinar Novamente", callback_data=f"group_{group.id}")])
+
+        keyboard.append([InlineKeyboardButton("↩ Voltar", callback_data="subs_history")])
 
         await query.edit_message_text(
             text, parse_mode=ParseMode.HTML,
