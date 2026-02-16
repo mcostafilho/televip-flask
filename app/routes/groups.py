@@ -728,12 +728,21 @@ def subscriber_details(id, sub_id):
     sub = Subscription.query.filter_by(id=sub_id, group_id=group.id).first_or_404()
 
     now = datetime.utcnow()
-    days_left = (sub.end_date - now).days if sub.end_date > now else 0
+
+    if sub.end_date and sub.end_date > now:
+        remaining_seconds = (sub.end_date - now).total_seconds()
+        remaining_hours = int(remaining_seconds / 3600)
+        if remaining_hours < 24:
+            time_left = f"{remaining_hours}h"
+        else:
+            time_left = f"{remaining_hours // 24}d"
+    else:
+        time_left = None
 
     transactions = sub.transactions.order_by(Transaction.created_at.desc()).limit(10).all()
 
     return render_template('dashboard/_subscriber_details.html',
-                           sub=sub, now=now, days_left=days_left,
+                           sub=sub, now=now, time_left=time_left,
                            transactions=transactions)
 
 

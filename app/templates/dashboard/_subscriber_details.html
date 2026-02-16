@@ -1,38 +1,81 @@
 <div class="row">
     <div class="col-md-6">
         <h6 class="text-muted mb-3">Informações do Assinante</h6>
-        <p><strong>Username:</strong> @{{ sub.telegram_username or "Sem username" }}</p>
-        <p><strong>Telegram ID:</strong> {{ sub.telegram_user_id }}</p>
+        <p><strong>Username:</strong>
+            {% if sub.telegram_username %}
+                <a href="https://t.me/{{ sub.telegram_username }}" target="_blank" rel="noopener">@{{ sub.telegram_username }}</a>
+            {% else %}
+                Sem username
+            {% endif %}
+        </p>
+        <p><strong>Telegram ID:</strong> <code>{{ sub.telegram_user_id }}</code></p>
         <p><strong>Status:</strong>
-            <span class="badge bg-{{ 'success' if sub.status == 'active' and sub.end_date > now else 'danger' }}">
-                {{ sub.status|capitalize }}
-            </span>
+            {% if sub.status == 'active' and sub.end_date > now %}
+                <span class="badge bg-success">Ativa</span>
+                {% if sub.cancel_at_period_end %}
+                    <span class="badge bg-warning text-dark">Cancelamento agendado</span>
+                {% endif %}
+            {% elif sub.status == 'cancelled' %}
+                <span class="badge bg-secondary">Cancelada</span>
+            {% else %}
+                <span class="badge bg-danger">Expirada</span>
+            {% endif %}
         </p>
     </div>
     <div class="col-md-6">
         <h6 class="text-muted mb-3">Assinatura</h6>
-        <p><strong>Plano:</strong> {{ sub.plan.name }} - R$ {{ "%.2f"|format(sub.plan.price) }}</p>
-        <p><strong>Inicio:</strong> {{ sub.start_date.strftime("%d/%m/%Y") }}</p>
-        <p><strong>Expira:</strong> {{ sub.end_date.strftime("%d/%m/%Y") }}
-            {% if sub.status == 'active' and days_left > 0 %} ({{ days_left }} dias){% endif %}
+        <p><strong>Plano:</strong> {{ sub.plan.name }} — R$ {{ "%.2f"|format(sub.plan.price) }}</p>
+        <p><strong>Início:</strong> {{ sub.start_date.strftime("%d/%m/%Y %H:%M") }}</p>
+        <p><strong>Expira:</strong> {{ sub.end_date.strftime("%d/%m/%Y %H:%M") }}
+            {% if time_left %} ({{ time_left }} restantes){% endif %}
         </p>
-        <p><strong>Renovação auto:</strong> {{ "Sim" if sub.auto_renew else "Nao" }}</p>
+        <p><strong>Renovação:</strong>
+            {% if sub.cancel_at_period_end %}
+                Cancelada pelo assinante
+            {% elif sub.stripe_subscription_id and not sub.is_legacy %}
+                Automática (Stripe)
+            {% elif sub.auto_renew %}
+                Automática
+            {% else %}
+                Manual
+            {% endif %}
+        </p>
+        {% if sub.stripe_subscription_id %}
+        <p><strong>Stripe:</strong> <code style="font-size: 0.75rem;">{{ sub.stripe_subscription_id }}</code></p>
+        {% endif %}
     </div>
 </div>
 
 {% if transactions %}
 <hr>
-<h6 class="text-muted mb-3">Historico de Pagamentos</h6>
+<h6 class="text-muted mb-3">Histórico de Pagamentos</h6>
 <table class="table table-sm">
-    <thead><tr><th>Data</th><th>Valor</th><th>Status</th></tr></thead>
+    <thead><tr><th>Data</th><th>Tipo</th><th>Valor</th><th>Método</th><th>Status</th></tr></thead>
     <tbody>
     {% for t in transactions %}
         <tr>
-            <td>{{ t.created_at.strftime("%d/%m/%Y %H:%M") }}</td>
+            <td>{{ (t.paid_at or t.created_at).strftime("%d/%m/%Y %H:%M") }}</td>
+            <td>
+                {% if t.billing_reason == 'subscription_create' %}
+                    Assinatura
+                {% elif t.billing_reason == 'subscription_cycle' %}
+                    Renovação
+                {% elif t.billing_reason == 'plan_change' %}
+                    Troca de plano
+                {% elif t.billing_reason == 'lifetime_purchase' %}
+                    Vitalício
+                {% else %}
+                    Pagamento
+                {% endif %}
+            </td>
             <td>R$ {{ "%.2f"|format(t.amount) }}</td>
+            <td>{{ t.payment_method or '—' }}</td>
             <td><span class="badge bg-{{ 'success' if t.status == 'completed' else 'warning' if t.status == 'pending' else 'danger' }}">{{ t.status|capitalize }}</span></td>
         </tr>
     {% endfor %}
     </tbody>
 </table>
+{% else %}
+<hr>
+<p class="text-muted text-center">Nenhum pagamento registrado</p>
 {% endif %}
