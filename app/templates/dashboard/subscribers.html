@@ -202,15 +202,24 @@
                             </div>
                             <div class="row-metric">
                                 {% if sub.status == 'active' and sub.end_date > now %}
-                                <span class="row-metric-value {% if (sub.end_date - now).days <= 7 %}yellow{% else %}green{% endif %}" style="font-size: 0.82rem;">
-                                    {{ (sub.end_date - now).days }}d restantes
-                                </span>
+                                    {% set remaining_hours = ((sub.end_date - now).total_seconds() / 3600) | int %}
+                                    {% if remaining_hours < 24 %}
+                                    <span class="row-metric-value yellow" style="font-size: 0.82rem;">
+                                        {{ remaining_hours }}h restantes
+                                    </span>
+                                    {% else %}
+                                        {% set remaining_days = (remaining_hours / 24) | int %}
+                                    <span class="row-metric-value {% if remaining_days <= 7 %}yellow{% else %}green{% endif %}" style="font-size: 0.82rem;">
+                                        {{ remaining_days }}d restantes
+                                    </span>
+                                    {% endif %}
+                                <span class="row-metric-label">expira em {{ sub.end_date.strftime('%d/%m/%y') }}</span>
                                 {% else %}
                                 <span class="row-metric-value" style="color: var(--galactic-danger); font-size: 0.82rem;">
                                     {{ sub.end_date.strftime('%d/%m/%y') }}
                                 </span>
+                                <span class="row-metric-label">expirou</span>
                                 {% endif %}
-                                <span class="row-metric-label">expira</span>
                             </div>
                         </div>
                         <div class="row-actions">
