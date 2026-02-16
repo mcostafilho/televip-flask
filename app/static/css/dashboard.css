@@ -1621,27 +1621,32 @@ html:has(.dashboard-wrapper) body {
 }
 
 .btn-group-action-primary {
-    background: rgba(124, 92, 252, 0.2);
-    border: 1px solid rgba(124, 92, 252, 0.5);
-    color: #a78bfa;
+    background: #7c5cfc;
+    border: none;
+    color: #fff;
+    font-weight: 500;
+    box-shadow: 0 2px 6px rgba(124, 92, 252, 0.35);
+    transition: all 0.2s ease;
 }
 
 .btn-group-action-primary:hover {
-    background: rgba(124, 92, 252, 0.35);
-    border-color: rgba(124, 92, 252, 0.7);
-    color: #c4b5fd;
+    background: #6d4fed;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(124, 92, 252, 0.5);
     transform: translateY(-1px);
 }
 
 .btn-group-action-secondary {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    color: #e2e8f0;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-weight: 500;
+    transition: all 0.2s ease;
 }
 
 .btn-group-action-secondary:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.35);
     color: #fff;
     transform: translateY(-1px);
 }
@@ -1668,9 +1673,9 @@ html:has(.dashboard-wrapper) body {
 
 /* Create button */
 .create-button {
-    background: linear-gradient(135deg, var(--galactic-accent-1), var(--galactic-accent-2));
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: #7c5cfc;
+    color: #fff;
+    border: none;
     padding: 0.75rem 1.5rem;
     border-radius: 12px;
     font-weight: 600;
@@ -1680,12 +1685,14 @@ html:has(.dashboard-wrapper) body {
     justify-content: center;
     gap: 0.5rem;
     text-decoration: none;
+    box-shadow: 0 2px 8px rgba(124, 92, 252, 0.4);
 }
 
 .create-button:hover {
+    background: #6d4fed;
     transform: translateY(-2px);
-    box-shadow: 0 5px 20px rgba(124, 92, 252, 0.4);
-    color: white;
+    box-shadow: 0 5px 20px rgba(124, 92, 252, 0.5);
+    color: #fff;
     text-decoration: none;
 }
 
