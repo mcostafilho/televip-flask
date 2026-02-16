@@ -505,8 +505,25 @@
                                         <li>O <strong>nome do plano</strong> pode ter no máximo <strong>30 caracteres</strong>.</li>
                                         <li>O <strong>preço mínimo</strong> por plano é de <strong>R$ 5,00</strong> (exigência do Stripe para boleto).</li>
                                         <li>A <strong>duração</strong> é definida em <strong>dias inteiros</strong> (ex: 7, 30, 90, 365) ou <strong>vitalício</strong>.</li>
-                                        <li>Planos podem ser editados ou desativados a qualquer momento.</li>
+                                        <li>Planos podem ser editados a qualquer momento, com algumas regras de proteção (veja abaixo).</li>
                                     </ul>
+
+                                    <h6>Editando Planos Existentes</h6>
+                                    <p>
+                                        Ao editar um grupo, os planos existentes são <strong>atualizados no lugar</strong> (sem perder o histórico de assinaturas).
+                                        Para proteger assinantes ativos, algumas regras se aplicam:
+                                    </p>
+                                    <ul>
+                                        <li><strong>Nome e preço</strong> &mdash; podem ser alterados livremente a qualquer momento.</li>
+                                        <li><strong>Duração</strong> &mdash; só pode ser alterada se o plano <strong>não tiver assinantes ativos</strong>. Caso tenha, o campo fica bloqueado no painel.</li>
+                                        <li><strong>Remover plano</strong> &mdash; planos com assinaturas (ativas ou históricas) são <strong>desativados</strong> em vez de deletados, preservando o histórico.</li>
+                                    </ul>
+                                    <div class="wiki-highlight">
+                                        <strong><i class="bi bi-info-circle-fill" style="color: #7c5cfc;"></i> Notificação de mudança de preço:</strong>
+                                        Se você alterar o preço de um plano que possui assinantes ativos, todos eles serão
+                                        <strong>notificados automaticamente via Telegram</strong> com o valor anterior, o novo valor
+                                        e a data da próxima renovação.
+                                    </div>
 
                                     <h6>Whitelist (Lista de Exceção)</h6>
                                     <p>
@@ -854,6 +871,12 @@
                                         <li><strong>Pagamentos</strong> &mdash; lista todas as transações de uma assinatura (valores, datas, status).</li>
                                         <li><strong>Link de acesso</strong> &mdash; gera um novo link de convite de uso único (expira em 7 dias).</li>
                                     </ul>
+                                    <div class="wiki-highlight warning">
+                                        <strong><i class="bi bi-exclamation-triangle-fill" style="color: #fbbf24;"></i> Proteção contra assinaturas duplicadas:</strong>
+                                        Se o assinante já possui uma assinatura ativa para um grupo, o bot <strong>não permite criar outra</strong>.
+                                        Em vez disso, exibe os detalhes da assinatura existente com um botão para ver mais informações.
+                                        Isso vale tanto para o botão &ldquo;Assinar&rdquo; no histórico quanto para &ldquo;Assinar Novamente&rdquo; nos detalhes.
+                                    </div>
                                     <div class="wiki-highlight">
                                         <strong><i class="bi bi-info-circle-fill" style="color: #7c5cfc;"></i> Assinatura vinculada ao Telegram:</strong>
                                         A assinatura é vinculada ao <strong>Telegram ID</strong> de quem realizou a compra pelo bot.
@@ -1282,6 +1305,20 @@
                                             <div id="fq11" class="accordion-collapse collapse" data-bs-parent="#faqInner">
                                                 <div class="accordion-body" style="padding: 0 20px 16px;">
                                                     Grupos inativos continuam visíveis na sua página pública (se marcados como públicos), mas exibem um aviso de que <strong>não estão aceitando novas assinaturas</strong>. Os planos ficam ocultos e o botão de assinar é substituído por uma mensagem informativa. Os membros existentes não são removidos.
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="accordion-item" style="background: rgba(255,255,255,0.03); border-color: rgba(124,92,252,0.08);">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed" style="font-size: 15px; padding: 16px 20px;" type="button" data-bs-toggle="collapse" data-bs-target="#fq12">
+                                                    Posso alterar o preço ou a duração de um plano que já tem assinantes?
+                                                </button>
+                                            </h2>
+                                            <div id="fq12" class="accordion-collapse collapse" data-bs-parent="#faqInner">
+                                                <div class="accordion-body" style="padding: 0 20px 16px;">
+                                                    <strong>Preço:</strong> sim, pode ser alterado a qualquer momento. Os assinantes ativos serão notificados automaticamente pelo bot sobre o novo valor e a data da próxima renovação.
+                                                    <strong>Duração:</strong> só pode ser alterada se o plano não tiver nenhum assinante ativo. Caso tenha, o campo fica bloqueado no painel para proteger os assinantes atuais.
                                                 </div>
                                             </div>
                                         </div>
