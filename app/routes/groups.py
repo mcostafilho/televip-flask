@@ -472,10 +472,13 @@ def edit(id):
         existing_plans = PricingPlan.query.filter_by(group_id=group.id, is_active=True).all()
         for plan in existing_plans:
             if plan.id not in submitted_plan_ids:
-                has_subs = Subscription.query.filter(
-                    Subscription.plan_id == plan.id
+                has_active_subs = Subscription.query.filter_by(
+                    plan_id=plan.id, status='active'
                 ).count() > 0
-                if has_subs:
+                if has_active_subs:
+                    # NEVER deactivate a plan with active subscribers
+                    pass
+                elif Subscription.query.filter(Subscription.plan_id == plan.id).count() > 0:
                     plan.is_active = False
                 else:
                     db.session.delete(plan)
@@ -485,11 +488,17 @@ def edit(id):
         return redirect(url_for('groups.list'))
 
     # GET: compute active subscriber counts per plan
+    # Also auto-heal: reactivate any plan that has active subs but was incorrectly deactivated
     plan_sub_counts = {}
-    for plan in group.pricing_plans.filter_by(is_active=True):
-        plan_sub_counts[plan.id] = Subscription.query.filter_by(
+    for plan in group.pricing_plans:
+        active_count = Subscription.query.filter_by(
             plan_id=plan.id, status='active'
         ).count()
+        if active_count > 0:
+            if not plan.is_active:
+                plan.is_active = True
+                db.session.commit()
+            plan_sub_counts[plan.id] = active_count
 
     return render_template('dashboard/group_form.html', group=group, plan_sub_counts=plan_sub_counts)
 
