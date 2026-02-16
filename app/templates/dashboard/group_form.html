@@ -213,8 +213,11 @@
                                                 </div>
                                                 <div class="col-md-3">
                                                     <label class="form-label">Duração (dias)</label>
-                                                    <input type="number" name="plan_duration[]" class="form-control duration-input"
-                                                           value="{{ plan.duration_days }}" min="1" step="1" required
+                                                    {% if plan.is_lifetime or active_subs > 0 %}
+                                                    <input type="hidden" name="plan_duration[]" value="{{ plan.duration_days }}">
+                                                    {% endif %}
+                                                    <input type="number" {{ 'name=plan_duration[]' if not plan.is_lifetime and active_subs == 0 else '' }} class="form-control duration-input"
+                                                           value="{{ plan.duration_days }}" min="1" step="1" {{ 'required' if not plan.is_lifetime and active_subs == 0 else '' }}
                                                            {{ 'disabled' if plan.is_lifetime or active_subs > 0 else '' }}
                                                            {{ 'placeholder=∞' if plan.is_lifetime else '' }}>
                                                     {% if active_subs > 0 and not plan.is_lifetime %}
@@ -797,18 +800,33 @@ function toggleLifetime(checkbox) {
     const hiddenInput = planItem.querySelector('.lifetime-hidden');
 
     if (checkbox.checked) {
-        durationInput.dataset.prevValue = durationInput.value;
+        durationInput.dataset.prevValue = durationInput.value || '30';
         durationInput.value = '';
         durationInput.placeholder = '\u221E';
         durationInput.disabled = true;
         durationInput.required = false;
+        durationInput.removeAttribute('name');
         hiddenInput.value = '1';
+        // Add hidden duration input so array stays aligned
+        let hiddenDur = planItem.querySelector('.duration-hidden-fallback');
+        if (!hiddenDur) {
+            hiddenDur = document.createElement('input');
+            hiddenDur.type = 'hidden';
+            hiddenDur.name = 'plan_duration[]';
+            hiddenDur.className = 'duration-hidden-fallback';
+            durationInput.parentElement.appendChild(hiddenDur);
+        }
+        hiddenDur.value = durationInput.dataset.prevValue;
     } else {
         durationInput.value = durationInput.dataset.prevValue || '30';
         durationInput.placeholder = '';
         durationInput.disabled = false;
         durationInput.required = true;
+        durationInput.name = 'plan_duration[]';
         hiddenInput.value = '0';
+        // Remove hidden fallback since the real input submits now
+        const hiddenDur = planItem.querySelector('.duration-hidden-fallback');
+        if (hiddenDur) hiddenDur.remove();
     }
 }
 
