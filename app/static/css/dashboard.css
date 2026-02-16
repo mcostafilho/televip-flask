@@ -1620,6 +1620,32 @@ html:has(.dashboard-wrapper) body {
     font-size: 0.875rem;
 }
 
+.btn-group-action-primary {
+    background: rgba(124, 92, 252, 0.2);
+    border: 1px solid rgba(124, 92, 252, 0.5);
+    color: #a78bfa;
+}
+
+.btn-group-action-primary:hover {
+    background: rgba(124, 92, 252, 0.35);
+    border-color: rgba(124, 92, 252, 0.7);
+    color: #c4b5fd;
+    transform: translateY(-1px);
+}
+
+.btn-group-action-secondary {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #e2e8f0;
+}
+
+.btn-group-action-secondary:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
 .groups-page .empty-groups {
     text-align: center;
     padding: 5rem 2rem;
@@ -1644,10 +1670,10 @@ html:has(.dashboard-wrapper) body {
 .create-button {
     background: linear-gradient(135deg, var(--galactic-accent-1), var(--galactic-accent-2));
     color: white;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.25);
     padding: 0.75rem 1.5rem;
     border-radius: 12px;
-    font-weight: 500;
+    font-weight: 600;
     transition: all 0.3s ease;
     display: inline-flex;
     align-items: center;

@@ -23,7 +23,7 @@
                 </div>
                 <div>
                     <a href="{{ url_for('groups.create') }}" class="btn create-button">
-                        <i class="bi bi-plus-circle"></i> Novo Grupo
+                        <i class="bi bi-plus-circle"></i> Novo Grupo/Canal
                     </a>
                 </div>
             </div>
@@ -88,10 +88,10 @@
 
                     <!-- Ações -->
                     <div class="group-actions">
-                        <a href="{{ url_for('groups.subscribers', id=group.id) }}" class="btn btn-primary">
+                        <a href="{{ url_for('groups.subscribers', id=group.id) }}" class="btn btn-group-action-primary">
                             <i class="bi bi-people"></i> Assinantes
                         </a>
-                        <a href="{{ url_for('groups.edit', id=group.id) }}" class="btn btn-outline-secondary">
+                        <a href="{{ url_for('groups.edit', id=group.id) }}" class="btn btn-group-action-secondary">
                             <i class="bi bi-gear"></i> Configurar
                         </a>
                         <div class="dropdown">
@@ -139,7 +139,7 @@
                 seu conteúdo exclusivo no Telegram!
             </p>
             <a href="{{ url_for('groups.create') }}" class="btn create-button">
-                <i class="bi bi-plus-circle"></i> Criar Primeiro Grupo
+                <i class="bi bi-plus-circle"></i> Criar Primeiro Grupo/Canal
             </a>
         </div>
         {% endif %}
