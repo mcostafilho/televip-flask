@@ -639,6 +639,18 @@ def broadcast(group_id):
         media_filename = secure_filename(media_file.filename) if has_media else None
         is_video = media_content_type and media_content_type.startswith('video/')
 
+        # Auto-delete timer for media (seconds, 0 = no auto-delete)
+        auto_delete_seconds = 0
+        if has_media:
+            try:
+                auto_delete_seconds = int(request.form.get('auto_delete', '0'))
+            except (ValueError, TypeError):
+                auto_delete_seconds = 0
+            if auto_delete_seconds not in (0, 30, 60, 120, 300):
+                auto_delete_seconds = 0
+
+        messages_to_delete = []  # (chat_id, message_id) for auto-delete
+
         for sub in active_subs:
             try:
                 group_name_safe = group.name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
@@ -675,6 +687,12 @@ def broadcast(group_id):
                         data=data,
                         files=files,
                     )
+
+                    if response.status_code == 200 and auto_delete_seconds > 0:
+                        resp_data = response.json()
+                        msg_id = resp_data.get('result', {}).get('message_id')
+                        if msg_id:
+                            messages_to_delete.append((sub.telegram_user_id, msg_id))
                 else:
                     # Send text message
                     payload = {
@@ -699,6 +717,29 @@ def broadcast(group_id):
                     failed_count += 1
             except Exception:
                 failed_count += 1
+
+        # Schedule auto-delete of media messages in background thread
+        if messages_to_delete and auto_delete_seconds > 0:
+            import threading
+
+            def _delete_messages(token, msgs, delay):
+                import time as _time
+                _time.sleep(delay)
+                for chat_id, msg_id in msgs:
+                    try:
+                        requests.post(
+                            f'https://api.telegram.org/bot{token}/deleteMessage',
+                            json={'chat_id': chat_id, 'message_id': msg_id},
+                        )
+                    except Exception:
+                        pass
+
+            t = threading.Thread(
+                target=_delete_messages,
+                args=(bot_token, messages_to_delete, auto_delete_seconds),
+                daemon=True,
+            )
+            t.start()
 
         # Update broadcast cooldown timestamp
         group.last_broadcast_at = datetime.utcnow()

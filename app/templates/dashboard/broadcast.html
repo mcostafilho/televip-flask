@@ -51,7 +51,7 @@
                 <ul class="mb-0 mt-2" style="padding-left: 18px;">
                     {% if group.anti_leak_enabled %}
                     <li><strong>Texto:</strong> mensagens de texto terão <strong>marca d'agua invisivel</strong> (prova anti-vazamento) + <strong>protecao contra copia</strong></li>
-                    <li><strong>Fotos e videos:</strong> enviados com <code>protect_content</code> (impede salvar/encaminhar), mas <strong>sem</strong> marca d'agua</li>
+                    <li><strong>Fotos e videos:</strong> enviados com <code>protect_content</code> (impede salvar/encaminhar), mas <strong>sem</strong> marca d'agua. Use o <strong>auto-delete</strong> para que a midia desapareca apos um tempo</li>
                     {% else %}
                     <li>Ative o anti-vazamento na <a href="{{ url_for('groups.antileak_dashboard') }}">pagina Anti-Vazamento</a> para proteger seus broadcasts com marca d'agua invisivel</li>
                     {% endif %}
@@ -122,6 +122,23 @@
                         {% if group.anti_leak_enabled %}Midia e enviada com protecao contra copia, mas <strong>sem</strong> marca d'agua.{% endif %}
                     </small>
                     <div id="mediaPreview" class="mt-2" style="display:none;"></div>
+
+                    <!-- Auto-delete timer (visible only when media selected) -->
+                    <div id="autoDeleteSection" class="mt-2" style="display:none;">
+                        <label class="form-label small" for="auto_delete">
+                            <i class="bi bi-clock-history text-warning"></i> Auto-deletar midia apos:
+                        </label>
+                        <select class="form-select form-select-sm" id="auto_delete" name="auto_delete" style="max-width: 250px;">
+                            <option value="0">Nao deletar (permanente)</option>
+                            <option value="30">30 segundos</option>
+                            <option value="60" selected>1 minuto</option>
+                            <option value="120">2 minutos</option>
+                            <option value="300">5 minutos</option>
+                        </select>
+                        <small class="form-text text-muted d-block mt-1">
+                            A midia sera enviada e depois apagada automaticamente apos o tempo escolhido. Dificulta que o assinante salve o conteudo.
+                        </small>
+                    </div>
                 </div>
 
                 <!-- Preview -->
@@ -180,9 +197,11 @@ function onMediaChange() {
     updateCharLimit();
     var input = document.getElementById('media');
     var preview = document.getElementById('mediaPreview');
+    var autoDeleteSection = document.getElementById('autoDeleteSection');
     if (input.files.length > 0) {
         var file = input.files[0];
         preview.style.display = 'block';
+        autoDeleteSection.style.display = 'block';
         if (file.type.startsWith('image/')) {
             var url = URL.createObjectURL(file);
             preview.innerHTML = '<img src="' + url + '" style="max-height: 120px; border-radius: 8px;">';
@@ -192,6 +211,7 @@ function onMediaChange() {
     } else {
         preview.style.display = 'none';
         preview.innerHTML = '';
+        autoDeleteSection.style.display = 'none';
     }
 }
 
