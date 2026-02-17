@@ -186,7 +186,7 @@ def try_fix_stale_end_date(sub):
                 _logger.warning(f"try_fix: erro ao buscar period do invoice: {e}")
 
         if not current_period_end:
-            _logger.warning(f"try_fix: nao conseguiu obter period_end para sub {stripe_sub_id}")
+            _logger.warning(f"try_fix: não conseguiu obter period_end para sub {stripe_sub_id}")
             return False
 
         new_end = datetime.utcfromtimestamp(current_period_end)

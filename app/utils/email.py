@@ -14,7 +14,7 @@ def send_email(to_email: str, subject: str, html_body: str, text_body: Optional[
     from_email = os.getenv('MAIL_FROM', 'TeleVIP <contato@webflag.com.br>')
 
     if not smtp_password:
-        print(f"[AVISO] SMTP_PASSWORD nao configurado. Email para {to_email} nao enviado.")
+        print(f"[AVISO] SMTP_PASSWORD não configurado. Email para {to_email} não enviado.")
         return False
 
     try:
@@ -124,7 +124,7 @@ def send_password_reset_email(user, token: str):
 
 
 def send_confirmation_email(user, token: str):
-    """Enviar email de confirmacao de conta"""
+    """Enviar email de confirmação de conta"""
     confirm_url = url_for('auth.confirm_email', token=token, _external=True)
 
     subject = "Confirme seu email - TeleVIP"
@@ -148,9 +148,9 @@ def send_confirmation_email(user, token: str):
                 <h1>Confirme seu Email</h1>
             </div>
             <div class="content">
-                <p>Ola <strong>{user.name}</strong>,</p>
+                <p>Olá <strong>{user.name}</strong>,</p>
 
-                <p>Obrigado por se cadastrar no TeleVIP! Para ativar sua conta, confirme seu email clicando no botao abaixo:</p>
+                <p>Obrigado por se cadastrar no TeleVIP! Para ativar sua conta, confirme seu email clicando no botão abaixo:</p>
 
                 <div style="text-align: center;">
                     <a href="{confirm_url}" class="button">Confirmar Meu Email</a>
@@ -164,12 +164,12 @@ def send_confirmation_email(user, token: str):
                 <p><strong>Importante:</strong></p>
                 <ul>
                     <li>Este link expira em 24 horas</li>
-                    <li>Se voce nao criou esta conta, ignore este email</li>
+                    <li>Se você não criou esta conta, ignore este email</li>
                 </ul>
             </div>
             <div class="footer">
-                <p>TeleVIP - Transforme seu Telegram em uma maquina de lucros</p>
-                <p>Este e um email automatico, por favor nao responda.</p>
+                <p>TeleVIP - Transforme seu Telegram em uma máquina de lucros</p>
+                <p>Este é um email automático, por favor não responda.</p>
             </div>
         </div>
     </body>
@@ -179,14 +179,14 @@ def send_confirmation_email(user, token: str):
     text_body = f"""
     Confirme seu Email - TeleVIP
 
-    Ola {user.name},
+    Olá {user.name},
 
     Obrigado por se cadastrar no TeleVIP! Para ativar sua conta, acesse o link abaixo:
     {confirm_url}
 
     Este link expira em 24 horas.
 
-    Se voce nao criou esta conta, ignore este email.
+    Se você não criou esta conta, ignore este email.
 
     Atenciosamente,
     Equipe TeleVIP

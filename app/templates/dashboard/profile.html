@@ -213,11 +213,11 @@
                             <div class="col-md-8">
                                 <label class="form-label">Chave PIX</label>
                                 <input type="text" class="form-control"
-                                       value="{{ user.pix_key.split(':', 1)[1] if user.pix_key and ':' in user.pix_key else (user.pix_key or 'Nao cadastrada') }}" disabled>
+                                       value="{{ user.pix_key.split(':', 1)[1] if user.pix_key and ':' in user.pix_key else (user.pix_key or 'Não cadastrada') }}" disabled>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Telefone / WhatsApp</label>
-                                <input type="text" class="form-control" value="{{ user.phone or 'Nao informado' }}" disabled>
+                                <input type="text" class="form-control" value="{{ user.phone or 'Não informado' }}" disabled>
                             </div>
                         </div>
                         {% else %}
@@ -345,7 +345,7 @@
                                     {% endif %}
                                 </div>
 
-                                <!-- Aparencia da Pagina -->
+                                <!-- Aparência da Página -->
                                 <div class="col-12">
                                     <hr class="my-3">
                                     <h6 class="text-muted mb-3">
@@ -641,7 +641,7 @@ if (avatarFileInput) {
         var file = this.files[0];
         if (!file) return;
         if (file.size > 2 * 1024 * 1024) {
-            alert('Arquivo muito grande. Maximo 2MB.');
+            alert('Arquivo muito grande. Máximo 2MB.');
             return;
         }
         var formData = new FormData();
@@ -672,7 +672,7 @@ if (avatarFileInput) {
                 alert(data.error || 'Erro ao enviar avatar.');
             }
         })
-        .catch(function() { alert('Erro de conexao.'); });
+        .catch(function() { alert('Erro de conexão.'); });
     });
 }
 

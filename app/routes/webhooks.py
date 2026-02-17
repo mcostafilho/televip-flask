@@ -144,7 +144,7 @@ def handle_checkout_session_completed(session):
 
     # Legacy mode='payment' — original logic
     if session.get('payment_status') != 'paid':
-        logger.warning(f"Pagamento nao esta pago. Status: {session.get('payment_status')}")
+        logger.warning(f"Pagamento não está pago. Status: {session.get('payment_status')}")
         return
 
     try:
@@ -157,7 +157,7 @@ def handle_checkout_session_completed(session):
         subscription_id = metadata.get('subscription_id')
 
         if not transaction_id:
-            logger.error("Transaction ID nao encontrado nos metadados")
+            logger.error("Transaction ID não encontrado nos metadados")
             return
 
         transaction = Transaction.query.filter_by(
@@ -166,7 +166,7 @@ def handle_checkout_session_completed(session):
         ).first()
 
         if not transaction:
-            logger.error(f"Transacao {transaction_id} nao encontrada ou ja processada")
+            logger.error(f"Transação {transaction_id} não encontrada ou já processada")
             return
 
         transaction.status = 'completed'
@@ -175,7 +175,7 @@ def handle_checkout_session_completed(session):
 
         subscription = transaction.subscription
         if not subscription:
-            logger.error("Assinatura nao encontrada para a transacao")
+            logger.error("Assinatura não encontrada para a transação")
             return
 
         subscription.status = 'active'
@@ -232,7 +232,7 @@ def handle_payment_failed(payment_intent):
 
 
 def handle_dispute_created(dispute):
-    """Processar criação de disputa — suspender assinatura e remover usuario do grupo"""
+    """Processar criação de disputa — suspender assinatura e remover usuário do grupo"""
     logger.warning(f"Disputa criada: {dispute['id']}")
 
     # Buscar transação pelo payment intent
@@ -246,7 +246,7 @@ def handle_dispute_created(dispute):
     ).first()
 
     if not transaction:
-        logger.warning(f"Transacao nao encontrada para payment_intent={payment_intent}")
+        logger.warning(f"Transação não encontrada para payment_intent={payment_intent}")
         return
 
     transaction.status = 'disputed'
@@ -256,10 +256,10 @@ def handle_dispute_created(dispute):
         subscription.status = 'suspended'
         db.session.commit()
 
-        # Remover usuario do grupo imediatamente
+        # Remover usuário do grupo imediatamente
         remove_user_from_group_via_bot(subscription)
 
-        # Notificar usuario
+        # Notificar usuário
         group_name = subscription.group.name if subscription.group else 'N/A'
         group_name_safe = escape(group_name)
         notify_user_via_bot(
@@ -280,7 +280,7 @@ def handle_dispute_created(dispute):
             )
 
         logger.warning(
-            f"Dispute: usuario {subscription.telegram_user_id} removido do grupo "
+            f"Dispute: usuário {subscription.telegram_user_id} removido do grupo "
             f"{subscription.group_id}, assinatura {subscription.id} suspensa"
         )
     else:

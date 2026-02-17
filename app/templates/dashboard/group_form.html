@@ -117,7 +117,7 @@
                                               maxlength="500"
                                               placeholder="Descreva o conteúdo exclusivo do seu grupo...">{{ group.description if group else '' }}</textarea>
                                     <div class="d-flex justify-content-between">
-                                        <small class="form-text" style="color: #b0b4cc;">Aparece na pagina de venda do grupo.</small>
+                                        <small class="form-text" style="color: #b0b4cc;">Aparece na página de venda do grupo.</small>
                                         <small class="form-text" style="color: #b0b4cc;"><span id="descCharCount">{{ (group.description if group else '')|length }}</span>/500</small>
                                     </div>
                                 </div>
@@ -354,7 +354,7 @@
                                     <div class="col-md-4">
                                         <label class="form-label">Nome/Nota (opcional)</label>
                                         <input type="text" class="form-control" id="newWhitelistName"
-                                               placeholder="Ex: Joao (moderador)" maxlength="50">
+                                               placeholder="Ex: João (moderador)" maxlength="50">
                                     </div>
                                     <div class="col-md-4">
                                         <button type="button" class="btn btn-outline-primary w-100" onclick="addWhitelistEntry()">
@@ -441,7 +441,7 @@
                                 {% endif %}
 
                                 {% else %}
-                                <!-- Criacao de grupo: checkbox simples -->
+                                <!-- Criação de grupo: checkbox simples -->
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" name="anti_leak_enabled"
                                            id="antiLeakCreate">
@@ -468,7 +468,7 @@
                                     <input class="form-check-input" type="checkbox" name="is_public"
                                            id="isPublic" {{ 'checked' if group and group.is_public else '' }}>
                                     <label class="form-check-label" for="isPublic">
-                                        Exibir na minha pagina publica (/c/username)
+                                        Exibir na minha página pública (/c/username)
                                     </label>
                                 </div>
                             </div>
@@ -832,7 +832,7 @@ function addWhitelistEntry() {
 
     // Check duplicate
     if (document.getElementById('wl-hidden-' + telegramId)) {
-        alert('Este Telegram ID ja esta na lista.');
+        alert('Este Telegram ID já está na lista.');
         return;
     }
 
@@ -929,7 +929,7 @@ if (coverFileInput) {
         var file = this.files[0];
         if (!file) return;
         if (file.size > 2 * 1024 * 1024) {
-            alert('Arquivo muito grande. Maximo 2MB.');
+            alert('Arquivo muito grande. Máximo 2MB.');
             this.value = '';
             return;
         }

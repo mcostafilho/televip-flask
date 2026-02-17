@@ -190,7 +190,7 @@
         <div class="content-card">
             <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                 <h5 class="mb-0">
-                    <i class="bi bi-people"></i> Criadores de Conteudo
+                    <i class="bi bi-people"></i> Criadores de Conteúdo
                 </h5>
                 <div class="d-flex gap-1 flex-wrap">
                     <button class="btn btn-sm btn-outline-secondary" onclick="filterCreators('all')" style="border-radius: 20px;">Todos</button>
@@ -274,7 +274,7 @@
                             <form method="POST" action="{{ url_for('admin.block_creator', creator_id=creator.id) }}" class="d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <button type="submit" class="row-action-btn" style="color: var(--galactic-danger);" title="Bloquear"
-                                        onclick="return confirm('Bloquear {{ creator.name }}? O criador nao podera acessar o dashboard.')">
+                                        onclick="return confirm('Bloquear {{ creator.name }}? O criador não poderá acessar o dashboard.')">
                                     <i class="bi bi-lock"></i>
                                 </button>
                             </form>
@@ -338,7 +338,7 @@
                         <label class="form-label fw-bold">Telegram User ID do Investigador</label>
                         <input type="text" id="investigatorUserId" class="form-control"
                                placeholder="Ex: 123456789" inputmode="numeric" pattern="[0-9]*">
-                        <div class="form-text">ID numerico do Telegram do investigador que entrara nos grupos.</div>
+                        <div class="form-text">ID numérico do Telegram do investigador que entrará nos grupos.</div>
                     </div>
                     <button class="btn btn-primary w-100" onclick="submitInvestigate()">
                         <i class="bi bi-search"></i> Gerar Links de Convite
@@ -408,7 +408,7 @@ function openInvestigate(creatorId, creatorName) {
 function submitInvestigate() {
     const userId = document.getElementById('investigatorUserId').value.trim();
     if (!userId || !/^\d+$/.test(userId)) {
-        alert('Informe um Telegram User ID numerico valido.');
+        alert('Informe um Telegram User ID numérico válido.');
         return;
     }
 

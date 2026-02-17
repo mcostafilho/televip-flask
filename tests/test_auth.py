@@ -177,7 +177,7 @@ class TestRegister:
             'password': 'NoDigitHere',
             'confirm_password': 'NoDigitHere',
         }, follow_redirects=True)
-        assert 'numero' in resp.data.decode('utf-8').lower()
+        assert 'número' in resp.data.decode('utf-8').lower()
 
     def test_register_password_mismatch(self, client):
         resp = client.post('/register', data={

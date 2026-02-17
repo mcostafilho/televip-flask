@@ -331,7 +331,7 @@ class TestStartCommand:
     """Testes do comando /start"""
 
     def test_start_no_args_new_user(self, app_ctx):
-        """Novo usuario sem assinaturas ve mensagem de boas-vindas"""
+        """Novo usuário sem assinaturas vê mensagem de boas-vindas"""
         from bot.handlers.start import start_command
 
         user = make_user(999)
@@ -347,7 +347,7 @@ class TestStartCommand:
         assert 'não possui assinaturas' in text
 
     def test_start_no_args_with_active_subs(self, app_ctx, group_a, plan_a_monthly):
-        """Usuario com assinatura ativa ve dashboard"""
+        """Usuário com assinatura ativa vê dashboard"""
         from bot.handlers.start import start_command
 
         user_id = 888
@@ -406,7 +406,7 @@ class TestStartCommand:
         assert 'Cancelado' in text or 'cancelado' in text
 
     def test_start_with_pending_transaction(self, app_ctx, group_a, plan_a_monthly):
-        """Usuario com transacao pendente ve botao de verificacao"""
+        """Usuário com transação pendente vê botão de verificação"""
         from bot.handlers.start import start_command
 
         user_id = 555
@@ -469,7 +469,7 @@ class TestSubscriptionFlow:
         assert '29,90' in text  # format_currency uses comma: "R$ 29,90"
 
     def test_flow_by_legacy_id(self, app_ctx, group_a, plan_a_monthly):
-        """Iniciar assinatura usando ID numerico (backward compat)"""
+        """Iniciar assinatura usando ID numérico (backward compat)"""
         from bot.handlers.start import start_subscription_flow
 
         user = make_user(101)
@@ -485,7 +485,7 @@ class TestSubscriptionFlow:
         assert group_a.name in text
 
     def test_flow_invalid_slug(self, app_ctx):
-        """Slug invalido mostra mensagem de erro"""
+        """Slug inválido mostra mensagem de erro"""
         from bot.handlers.start import start_subscription_flow
 
         user = make_user(102)
@@ -533,7 +533,7 @@ class TestSubscriptionFlow:
         assert 'indisponível' in text
 
     def test_flow_already_subscribed(self, app_ctx, group_a, plan_a_monthly):
-        """Usuario ja assinante recebe mensagem de que ja eh assinante"""
+        """Usuário já assinante recebe mensagem de que já é assinante"""
         from bot.handlers.start import start_subscription_flow
 
         user_id = 105
@@ -597,7 +597,7 @@ class TestSubscriptionFlow:
         assert '79,90' in text
 
     def test_flow_shows_creator_info(self, app_ctx, group_a, plan_a_monthly):
-        """Mostra informacoes do criador"""
+        """Mostra informações do criador"""
         from bot.handlers.start import start_subscription_flow
 
         user = make_user(108)
@@ -620,10 +620,10 @@ class TestSubscriptionFlow:
 # ===========================================================================
 
 class TestMultiGroupUser:
-    """Testes de usuario assinando multiplos grupos de criadores diferentes"""
+    """Testes de usuário assinando múltiplos grupos de criadores diferentes"""
 
     def test_user_subscribes_two_groups(self, app_ctx, group_a, group_b, plan_a_monthly, plan_b_monthly):
-        """Usuario assina dois grupos de criadores diferentes"""
+        """Usuário assina dois grupos de criadores diferentes"""
         user_id = 200
 
         sub_a = Subscription(
@@ -656,7 +656,7 @@ class TestMultiGroupUser:
         assert 'Beta VIP' in group_names
 
     def test_user_cancels_one_keeps_other(self, app_ctx, group_a, group_b, plan_a_monthly, plan_b_monthly):
-        """Cancelar um grupo nao afeta o outro"""
+        """Cancelar um grupo não afeta o outro"""
         user_id = 201
 
         sub_a = Subscription(
@@ -691,7 +691,7 @@ class TestMultiGroupUser:
         assert sub_a.cancel_at_period_end is True
 
     def test_user_different_plans_same_group(self, app_ctx, group_a, plan_a_monthly, plan_a_quarterly):
-        """Usuario nao pode ter duas assinaturas ativas no mesmo grupo"""
+        """Usuário não pode ter duas assinaturas ativas no mesmo grupo"""
         user_id = 202
 
         sub_monthly = Subscription(
@@ -839,7 +839,7 @@ class TestPaymentFlow:
         assert checkout['amount'] == float(plan_a_monthly.price)
 
     def test_start_payment_invalid_callback(self, app_ctx):
-        """Callback invalido mostra erro"""
+        """Callback inválido mostra erro"""
         from bot.handlers.payment import start_payment
 
         user = make_user(302)
@@ -923,7 +923,7 @@ class TestPaymentFlow:
 # ===========================================================================
 
 class TestPaymentVerification:
-    """Testes da verificacao de pagamento"""
+    """Testes da verificação de pagamento"""
 
     def test_no_pending_transactions(self, app_ctx):
         """Sem transacoes pendentes mostra mensagem apropriada"""
@@ -1058,7 +1058,7 @@ class TestPaymentVerification:
 
     @patch('bot.handlers.payment_verification.verify_payment', new_callable=AsyncMock)
     def test_payment_pending_shows_retry(self, mock_verify, app_ctx, group_a, plan_a_monthly):
-        """Pagamento ainda nao confirmado mostra opcao de retry"""
+        """Pagamento ainda não confirmado mostra opção de retry"""
         mock_verify.return_value = False
 
         user_id = 402
@@ -1095,7 +1095,7 @@ class TestPaymentVerification:
 
     @patch('bot.handlers.payment_verification.verify_payment', new_callable=AsyncMock)
     def test_fallback_to_context_session_id(self, mock_verify, app_ctx, group_a, plan_a_monthly):
-        """Usa session_id do contexto quando nao encontra transacao recente"""
+        """Usa session_id do contexto quando não encontra transação recente"""
         mock_verify.return_value = False
 
         user_id = 403
@@ -1140,7 +1140,7 @@ class TestCancellationFlow:
     """Testes do fluxo de cancelamento"""
 
     def test_cancel_shows_confirmation(self, app_ctx, group_a, plan_a_monthly):
-        """Cancelar mostra mensagem de confirmacao com data de fim"""
+        """Cancelar mostra mensagem de confirmação com data de fim"""
         from bot.handlers.subscription import cancel_subscription
 
         user_id = 500
@@ -1166,11 +1166,11 @@ class TestCancellationFlow:
         assert 'Cancelar assinatura' in text
         assert 'Alpha Premium' in text
         assert 'mantém acesso' in text.lower() or 'acesso até' in text.lower()
-        # Nao deve dizer "imediatamente"
+        # Não deve dizer "imediatamente"
         assert 'imediatamente' not in text.lower()
 
     def test_cancel_wrong_user_rejected(self, app_ctx, group_a, plan_a_monthly):
-        """Usuario nao pode cancelar assinatura de outro"""
+        """Usuário não pode cancelar assinatura de outro"""
         from bot.handlers.subscription import cancel_subscription
 
         sub = Subscription(
@@ -1183,7 +1183,7 @@ class TestCancellationFlow:
         _db.session.add(sub)
         _db.session.commit()
 
-        user = make_user(111111)  # Outro usuario
+        user = make_user(111111)  # Outro usuário
         query = make_callback_query(user=user, data=f'cancel_sub_{sub.id}')
         update = make_update(user=user, callback_query=query)
         ctx = make_context()
@@ -1195,7 +1195,7 @@ class TestCancellationFlow:
         assert 'não encontrada' in text or 'cancelada' in text
 
     def test_cancel_already_cancelled(self, app_ctx, group_a, plan_a_monthly):
-        """Nao pode cancelar assinatura ja cancelada"""
+        """Não pode cancelar assinatura já cancelada"""
         from bot.handlers.subscription import cancel_subscription
 
         user_id = 502
@@ -1246,7 +1246,7 @@ class TestCancellationFlow:
         asyncio.get_event_loop().run_until_complete(confirm_cancel_subscription(update, ctx))
 
         _db.session.refresh(sub)
-        assert sub.status == 'active'  # Ainda ativo, nao cancelado imediatamente
+        assert sub.status == 'active'  # Ainda ativo, não cancelado imediatamente
         assert sub.cancel_at_period_end is True
         assert sub.auto_renew is False
 
@@ -1296,11 +1296,11 @@ class TestCancellationFlow:
         # Reativar option is in the button, not in message text
         kwargs = query.edit_message_text.call_args[1]
         buttons = kwargs.get('reply_markup', None)
-        assert buttons is not None  # Deve oferecer opcao de reativar
+        assert buttons is not None  # Deve oferecer opção de reativar
 
     def test_cancel_one_of_multiple_subs(self, app_ctx, group_a, group_b,
                                           plan_a_monthly, plan_b_monthly):
-        """Cancelar uma de varias assinaturas nao afeta as outras"""
+        """Cancelar uma de várias assinaturas não afeta as outras"""
         user_id = 505
 
         sub_a = Subscription(
@@ -1384,7 +1384,7 @@ class TestReactivationFlow:
         assert 'reativada' in text.lower()
 
     def test_reactivate_legacy_not_allowed(self, app_ctx, group_a, plan_a_monthly):
-        """Nao pode reativar assinatura sem stripe_subscription_id"""
+        """Não pode reativar assinatura sem stripe_subscription_id"""
         from bot.handlers.subscription import reactivate_subscription
 
         user_id = 601
@@ -1411,7 +1411,7 @@ class TestReactivationFlow:
         assert 'nao pode ser reativada' in text.lower() or 'não pode' in text.lower()
 
     def test_reactivate_wrong_user(self, app_ctx, group_a, plan_a_monthly):
-        """Nao pode reativar assinatura de outro usuario"""
+        """Não pode reativar assinatura de outro usuário"""
         from bot.handlers.subscription import reactivate_subscription
 
         sub = Subscription(
@@ -1606,7 +1606,7 @@ class TestStatusCommand:
         assert 'investido' in text.lower()
 
     def test_status_via_callback(self, app_ctx, group_a, plan_a_monthly):
-        """Status funciona via callback query tambem"""
+        """Status funciona via callback query também"""
         from bot.handlers.subscription import status_command
 
         user_id = 706
@@ -1642,10 +1642,10 @@ class TestStatusCommand:
 # ===========================================================================
 
 class TestScheduledTasks:
-    """Testes das tarefas agendadas (expiracao e lembretes)"""
+    """Testes das tarefas agendadas (expiração e lembretes)"""
 
     def test_expired_subscription_marked(self, app_ctx, group_a, plan_a_monthly):
-        """Assinatura legacy expirada eh marcada como expired"""
+        """Assinatura legacy expirada é marcada como expired"""
         from bot.jobs.scheduled_tasks import check_expired_subscriptions
         import bot.jobs.scheduled_tasks as tasks
 
@@ -1673,7 +1673,7 @@ class TestScheduledTasks:
         assert sub.status == 'expired'
 
     def test_stripe_managed_not_expired_by_task(self, app_ctx, group_a, plan_a_monthly):
-        """Assinatura Stripe-managed NAO eh expirada por tarefa agendada"""
+        """Assinatura Stripe-managed NÃO é expirada por tarefa agendada"""
         from bot.jobs.scheduled_tasks import check_expired_subscriptions
         import bot.jobs.scheduled_tasks as tasks
 
@@ -1697,10 +1697,10 @@ class TestScheduledTasks:
         asyncio.get_event_loop().run_until_complete(check_expired_subscriptions())
 
         _db.session.refresh(sub)
-        assert sub.status == 'active'  # Stripe gerencia, nao a task
+        assert sub.status == 'active'  # Stripe gerencia, não a task
 
     def test_expired_task_removes_from_group(self, app_ctx, group_a, plan_a_monthly):
-        """Tarefa de expiracao tenta remover usuario do grupo"""
+        """Tarefa de expiração tenta remover usuário do grupo"""
         from bot.jobs.scheduled_tasks import check_expired_subscriptions
         import bot.jobs.scheduled_tasks as tasks
 
@@ -1730,7 +1730,7 @@ class TestScheduledTasks:
         )
 
     def test_expired_task_notifies_user(self, app_ctx, group_a, plan_a_monthly):
-        """Tarefa de expiracao envia notificacao ao usuario"""
+        """Tarefa de expiração envia notificação ao usuário"""
         from bot.jobs.scheduled_tasks import check_expired_subscriptions
         import bot.jobs.scheduled_tasks as tasks
 
@@ -1762,7 +1762,7 @@ class TestScheduledTasks:
                 'expirada' in text.lower() or 'renov' in text.lower())
 
     def test_active_not_expired_not_touched(self, app_ctx, group_a, plan_a_monthly):
-        """Assinatura ativa nao expirada nao eh tocada"""
+        """Assinatura ativa não expirada não é tocada"""
         from bot.jobs.scheduled_tasks import check_expired_subscriptions
         import bot.jobs.scheduled_tasks as tasks
 
@@ -1787,7 +1787,7 @@ class TestScheduledTasks:
         assert sub.status == 'active'
 
     def test_renewal_reminder_3_days(self, app_ctx, group_a, plan_a_monthly):
-        """Lembrete de renovacao enviado quando faltam 3 dias"""
+        """Lembrete de renovação enviado quando faltam 3 dias"""
         from bot.jobs.scheduled_tasks import send_renewal_reminders
         import bot.jobs.scheduled_tasks as tasks
 
@@ -1819,7 +1819,7 @@ class TestScheduledTasks:
 # ===========================================================================
 
 class TestRenewalFlow:
-    """Testes do fluxo de renovacao"""
+    """Testes do fluxo de renovação"""
 
     def test_renewals_list_shows_expiring(self, app_ctx, group_a, plan_a_monthly):
         """Lista de renovacoes mostra assinaturas expirando"""
@@ -1982,7 +1982,7 @@ class TestEdgeCases:
     """Testes de casos extremos e seguranca"""
 
     def test_subscription_id_enumeration_protection(self, app_ctx, group_a, plan_a_monthly):
-        """Nao pode cancelar assinatura de outro via ID sequencial"""
+        """Não pode cancelar assinatura de outro via ID sequencial"""
         from bot.handlers.subscription import cancel_subscription
 
         victim_sub = Subscription(
@@ -2004,10 +2004,10 @@ class TestEdgeCases:
         asyncio.get_event_loop().run_until_complete(cancel_subscription(update, ctx))
 
         _db.session.refresh(victim_sub)
-        assert victim_sub.status == 'active'  # Nao cancelou
+        assert victim_sub.status == 'active'  # Não cancelou
 
     def test_reactivation_id_enumeration_protection(self, app_ctx, group_a, plan_a_monthly):
-        """Nao pode reativar assinatura de outro via ID"""
+        """Não pode reativar assinatura de outro via ID"""
         from bot.handlers.subscription import reactivate_subscription
 
         victim_sub = Subscription(
@@ -2031,7 +2031,7 @@ class TestEdgeCases:
         asyncio.get_event_loop().run_until_complete(reactivate_subscription(update, ctx))
 
         _db.session.refresh(victim_sub)
-        assert victim_sub.cancel_at_period_end is True  # Nao reativou
+        assert victim_sub.cancel_at_period_end is True  # Não reativou
 
     def test_nonexistent_subscription_cancel(self, app_ctx):
         """Cancelar assinatura inexistente mostra erro"""
@@ -2081,7 +2081,7 @@ class TestEdgeCases:
         assert len(slugs) == 10  # Todos unicos
 
     def test_callback_data_uses_int_not_slug(self, app_ctx, group_a, plan_a_monthly):
-        """callback_data plan_ usa ID numerico (seguro, interno)"""
+        """callback_data plan_ usa ID numérico (seguro, interno)"""
         from bot.handlers.start import start_subscription_flow
 
         user = make_user(1202)
@@ -2098,7 +2098,7 @@ class TestEdgeCases:
         for row in markup.inline_keyboard:
             for button in row:
                 if button.callback_data and button.callback_data.startswith('plan_'):
-                    # Deve usar IDs inteiros, nao slugs
+                    # Deve usar IDs inteiros, não slugs
                     parts = button.callback_data.split('_')
                     assert parts[1].isdigit()
                     assert parts[2].isdigit()
@@ -2106,7 +2106,7 @@ class TestEdgeCases:
     @patch('bot.handlers.payment_verification.verify_payment', new_callable=AsyncMock)
     def test_double_payment_verification(self, mock_verify, app_ctx, group_a,
                                           plan_a_monthly, creator_a):
-        """Verificacao dupla nao atualiza saldo duas vezes"""
+        """Verificação dupla não atualiza saldo duas vezes"""
         mock_verify.return_value = True
 
         user_id = 1203
@@ -2141,12 +2141,12 @@ class TestEdgeCases:
 
         import asyncio
 
-        # Primeira verificacao
+        # Primeira verificação
         asyncio.get_event_loop().run_until_complete(check_payment_status(update, ctx))
         _db.session.refresh(creator_a)
         balance_after_first = creator_a.balance
 
-        # Segunda verificacao - transacao ja completed, nao deve encontrar pendentes
+        # Segunda verificação - transação já completed, não deve encontrar pendentes
         query2 = make_callback_query(user=user, data='check_payment_status')
         update2 = MagicMock()
         update2.callback_query = query2
@@ -2154,7 +2154,7 @@ class TestEdgeCases:
 
         asyncio.get_event_loop().run_until_complete(check_payment_status(update2, ctx2))
         _db.session.refresh(creator_a)
-        assert creator_a.balance == balance_after_first  # Saldo nao duplicou
+        assert creator_a.balance == balance_after_first  # Saldo não duplicou
 
     def test_multiple_creators_balance_isolation(self, app_ctx, group_a, group_b,
                                                   plan_a_monthly, plan_b_monthly,
@@ -2220,7 +2220,7 @@ class TestEdgeCases:
 # ===========================================================================
 
 class TestFullUserJourney:
-    """Testes end-to-end do fluxo completo de um usuario"""
+    """Testes end-to-end do fluxo completo de um usuário"""
 
     @patch('bot.handlers.payment_verification.verify_payment', new_callable=AsyncMock)
     def test_complete_journey_subscribe_use_cancel(self, mock_verify, app_ctx,
@@ -2282,7 +2282,7 @@ class TestFullUserJourney:
         _db.session.refresh(sub_a)
         assert sub_a.status == 'active'
 
-        # STEP 5: Assinar grupo B tambem
+        # STEP 5: Assinar grupo B também
         sub_b = Subscription(
             group_id=group_b.id, plan_id=plan_b_monthly.id,
             telegram_user_id=str(user_id), telegram_username='journeyuser',
@@ -2332,9 +2332,9 @@ class TestFullUserJourney:
         asyncio.get_event_loop().run_until_complete(confirm_cancel_subscription(update, ctx))
         _db.session.refresh(sub_a)
         assert sub_a.cancel_at_period_end is True
-        assert sub_a.status == 'active'  # Ainda ativo ate expirar
+        assert sub_a.status == 'active'  # Ainda ativo até expirar
 
-        # STEP 8: sub B nao afetada
+        # STEP 8: sub B não afetada
         _db.session.refresh(sub_b)
         assert sub_b.status == 'active'
         assert sub_b.cancel_at_period_end is not True
@@ -2347,10 +2347,10 @@ class TestFullUserJourney:
         assert creator_a.balance != creator_b.balance  # Saldos diferentes
 
     def test_user_journey_blocked_creator_midway(self, app_ctx, group_a, plan_a_monthly, creator_a):
-        """Criador bloqueado apos usuario assinar - link nao deve funcionar para novos"""
+        """Criador bloqueado após usuário assinar - link não deve funcionar para novos"""
         import asyncio
 
-        # Primeiro usuario assina normalmente
+        # Primeiro usuário assina normalmente
         sub = Subscription(
             group_id=group_a.id, plan_id=plan_a_monthly.id,
             telegram_user_id='1301', telegram_username='earlybird',
@@ -2361,11 +2361,11 @@ class TestFullUserJourney:
         _db.session.add(sub)
         _db.session.commit()
 
-        # Criador eh bloqueado
+        # Criador é bloqueado
         creator_a.is_blocked = True
         _db.session.commit()
 
-        # Novo usuario tenta assinar o mesmo grupo
+        # Novo usuário tenta assinar o mesmo grupo
         from bot.handlers.start import start_subscription_flow
         new_user = make_user(1302)
         update = make_update(user=new_user)
@@ -2377,7 +2377,7 @@ class TestFullUserJourney:
         text = update.message.reply_text.call_args[0][0]
         assert 'indisponível' in text
 
-        # Limpar bloqueio para nao afetar outros testes
+        # Limpar bloqueio para não afetar outros testes
         creator_a.is_blocked = False
         _db.session.commit()
 

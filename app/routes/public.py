@@ -11,7 +11,7 @@ bp = Blueprint('public', __name__, url_prefix='/c')
 
 @bp.route('/<username>')
 def creator_page(username):
-    """Pagina publica do criador — perfil + grid de grupos"""
+    """Página pública do criador — perfil + grid de grupos"""
     creator = Creator.query.filter(
         Creator.username == username,
         Creator.is_active == True,
@@ -22,7 +22,7 @@ def creator_page(username):
         creator_id=creator.id, is_public=True
     ).all()
 
-    # Para cada grupo: menor preco e contagem de assinantes ativos
+    # Para cada grupo: menor preço e contagem de assinantes ativos
     for group in groups:
         group.subscriber_count = Subscription.query.filter_by(
             group_id=group.id, status='active'

@@ -50,31 +50,31 @@
                 <strong>Proteção Anti-Vazamento {% if group.anti_leak_enabled %}<span class="badge bg-success">Ativada</span>{% else %}<span class="badge bg-secondary">Desativada</span>{% endif %}</strong>
                 <ul class="mb-0 mt-2" style="padding-left: 18px;">
                     {% if group.anti_leak_enabled %}
-                    <li><strong>Texto:</strong> mensagens de texto terão <strong>marca d'agua invisivel</strong> (prova anti-vazamento) + <strong>protecao contra copia</strong></li>
-                    <li><strong>Fotos e videos:</strong> enviados com <code>protect_content</code> (impede salvar/encaminhar), mas <strong>sem</strong> marca d'agua. Use o <strong>auto-delete</strong> para que a midia desapareca apos um tempo</li>
+                    <li><strong>Texto:</strong> mensagens de texto terão <strong>marca d'água invisível</strong> (prova anti-vazamento) + <strong>proteção contra cópia</strong></li>
+                    <li><strong>Fotos e vídeos:</strong> enviados com <code>protect_content</code> (impede salvar/encaminhar), mas <strong>sem</strong> marca d'água. Use o <strong>auto-delete</strong> para que a mídia desapareça após um tempo</li>
                     {% else %}
-                    <li>Ative o anti-vazamento na <a href="{{ url_for('groups.antileak_dashboard') }}">pagina Anti-Vazamento</a> para proteger seus broadcasts com marca d'agua invisivel</li>
+                    <li>Ative o anti-vazamento na <a href="{{ url_for('groups.antileak_dashboard') }}">página Anti-Vazamento</a> para proteger seus broadcasts com marca d'água invisível</li>
                     {% endif %}
                 </ul>
                 <div class="mt-2 p-2" style="background: rgba(255,255,255,0.04); border-radius: 8px;">
                     <i class="bi bi-robot text-info"></i>
-                    <strong>Dica:</strong> Voce tambem pode enviar broadcasts pelo <strong>bot do Telegram</strong> usando o comando <code>/broadcast</code>, mas sera enviado para <strong>todos</strong> os assinantes ativos (sem filtro por plano).
+                    <strong>Dica:</strong> Você também pode enviar broadcasts pelo <strong>bot do Telegram</strong> usando o comando <code>/broadcast</code>, mas será enviado para <strong>todos</strong> os assinantes ativos (sem filtro por plano).
                 </div>
                 <div class="mt-2 p-2" style="background: rgba(255,193,7,0.06); border-radius: 8px;">
                     <i class="bi bi-speedometer2 text-warning"></i>
-                    <strong>Limites:</strong> Maximo <strong>10 envios por hora</strong> e intervalo minimo de <strong>5 minutos</strong> entre cada broadcast.
+                    <strong>Limites:</strong> Máximo <strong>10 envios por hora</strong> e intervalo mínimo de <strong>5 minutos</strong> entre cada broadcast.
                 </div>
             </div>
         </div>
 
-        <!-- Conteudo -->
+        <!-- Conteúdo -->
         <div class="content-card">
             <form method="POST" action="{{ url_for('groups.broadcast', group_id=group.id) }}" enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
                 <!-- Recipient selector -->
                 <div class="mb-4">
-                    <label class="form-label"><i class="bi bi-people"></i> Destinatarios</label>
+                    <label class="form-label"><i class="bi bi-people"></i> Destinatários</label>
                     <select class="form-select mb-2" id="planFilter" onchange="filterByPlan()">
                         <option value="all">Todos os planos ({{ active_count }} assinantes)</option>
                         {% for plan in plans %}
@@ -113,43 +113,43 @@
                         maxlength="4000"
                     ></textarea>
                     <small class="form-text text-muted">
-                        <span id="charLimitLabel">Maximo 4000 caracteres.</span> Voce pode usar **negrito** e _italico_.
+                        <span id="charLimitLabel">Máximo 4000 caracteres.</span> Você pode usar **negrito** e _itálico_.
                     </small>
                 </div>
 
                 <!-- Media upload -->
                 <div class="mb-4">
-                    <label class="form-label" for="media"><i class="bi bi-image"></i> Foto ou Video (opcional)</label>
+                    <label class="form-label" for="media"><i class="bi bi-image"></i> Foto ou Vídeo (opcional)</label>
                     <input type="file" class="form-control" id="media" name="media" accept="image/*,video/*" onchange="onMediaChange()">
                     <small class="form-text text-muted">
-                        Formatos aceitos: JPEG, PNG, GIF, WebP, MP4, WebM. Maximo 50MB.
-                        {% if group.anti_leak_enabled %}Midia e enviada com protecao contra copia, mas <strong>sem</strong> marca d'agua.{% endif %}
+                        Formatos aceitos: JPEG, PNG, GIF, WebP, MP4, WebM. Máximo 50MB.
+                        {% if group.anti_leak_enabled %}Mídia é enviada com proteção contra cópia, mas <strong>sem</strong> marca d'água.{% endif %}
                     </small>
                     <div id="mediaPreview" class="mt-2" style="display:none;"></div>
 
                     <!-- Auto-delete timer (visible only when media selected) -->
                     <div id="autoDeleteSection" class="mt-2" style="display:none;">
                         <label class="form-label small" for="auto_delete">
-                            <i class="bi bi-clock-history text-warning"></i> Auto-deletar midia apos:
+                            <i class="bi bi-clock-history text-warning"></i> Auto-deletar mídia após:
                         </label>
                         <select class="form-select form-select-sm" id="auto_delete" name="auto_delete" style="max-width: 250px;">
-                            <option value="0">Nao deletar (permanente)</option>
+                            <option value="0">Não deletar (permanente)</option>
                             <option value="30">30 segundos</option>
                             <option value="60" selected>1 minuto</option>
                             <option value="120">2 minutos</option>
                             <option value="300">5 minutos</option>
                         </select>
                         <small class="form-text text-muted d-block mt-1">
-                            A midia sera enviada e depois apagada automaticamente apos o tempo escolhido. Dificulta que o assinante salve o conteudo.
+                            A mídia será enviada e depois apagada automaticamente após o tempo escolhido. Dificulta que o assinante salve o conteúdo.
                         </small>
                     </div>
                 </div>
 
                 <!-- Preview -->
                 <div class="mb-4">
-                    <label class="form-label">Pre-visualizacao:</label>
+                    <label class="form-label">Pré-visualização:</label>
                     <div class="content-card" id="preview" style="padding: 1rem 1.25rem; min-height: 60px; border: 1px dashed rgba(255,255,255,0.1);">
-                        <em class="text-muted">A pre-visualizacao aparecera aqui...</em>
+                        <em class="text-muted">A pré-visualização aparecerá aqui...</em>
                     </div>
                 </div>
 
@@ -182,7 +182,7 @@ function updatePreview() {
     text = text.replace(/_(.*?)_/g, '<em>$1</em>');
     text = text.replace(/\n/g, '<br>');
     if (text.trim() === '') {
-        text = '<em class="text-muted">A pre-visualizacao aparecera aqui...</em>';
+        text = '<em class="text-muted">A pré-visualização aparecerá aqui...</em>';
     } else {
         text = '<strong>Mensagem de {{ group.name }}</strong><br><br>' + text;
     }
@@ -193,7 +193,7 @@ function updateCharLimit() {
     var hasMedia = document.getElementById('media').files.length > 0;
     var limit = hasMedia ? 1024 : 4000;
     document.getElementById('message').setAttribute('maxlength', limit);
-    document.getElementById('charLimitLabel').textContent = 'Maximo ' + limit + ' caracteres' + (hasMedia ? ' (limite de legenda).' : '.');
+    document.getElementById('charLimitLabel').textContent = 'Máximo ' + limit + ' caracteres' + (hasMedia ? ' (limite de legenda).' : '.');
 }
 
 // Media change

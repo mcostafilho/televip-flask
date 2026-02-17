@@ -32,7 +32,7 @@ async def _reply_private(update: Update, context: ContextTypes.DEFAULT_TYPE, tex
     # Adicionar nota de contexto ao texto
     group_name = escape_html(chat.title or 'Grupo')
     private_note = (
-        f"\n\n<i>Respondido no privado para nao expor no grupo "
+        f"\n\n<i>Respondido no privado para não expor no grupo "
         f"<b>{group_name}</b>.</i>"
     )
     text_with_note = text + private_note
@@ -57,7 +57,7 @@ async def _reply_private(update: Update, context: ContextTypes.DEFAULT_TYPE, tex
         await context.bot.send_message(
             chat_id=chat.id,
             text=f"{user.mention_html()}, te enviei uma mensagem no privado. "
-                 f"Se nao recebeu, inicie o bot primeiro: @{bot_me.username}",
+                 f"Se não recebeu, inicie o bot primeiro: @{bot_me.username}",
             parse_mode=ParseMode.HTML,
         )
 
@@ -85,7 +85,7 @@ async def setup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         bot_member = await context.bot.get_chat_member(chat.id, context.bot.id)
         if bot_member.status not in ['administrator', 'creator']:
             await _reply_private(update, context,
-                "<b>Bot sem permissao</b>\n\n"
+                "<b>Bot sem permissão</b>\n\n"
                 "O bot precisa ser administrador deste grupo.\n\n"
                 "<i>Promova o bot a administrador e tente novamente.</i>"
             )
@@ -109,13 +109,13 @@ async def setup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if not creator:
             text = (
-                f"<b>Informacoes do grupo</b>\n\n"
+                f"<b>Informações do grupo</b>\n\n"
                 f"<pre>"
                 f"Grupo:       {chat.title}\n"
                 f"Telegram ID: {chat.id}"
                 f"</pre>\n\n"
-                f"Copie o ID acima e cole no formulario de criacao de grupo no site.\n\n"
-                f"<i>Conta Telegram nao vinculada.\n"
+                f"Copie o ID acima e cole no formulário de criação de grupo no site.\n\n"
+                f"<i>Conta Telegram não vinculada.\n"
                 f"Seu Telegram ID: <code>{user.id}</code>\n"
                 f"Acesse seu perfil no site e adicione seu Telegram ID.</i>"
             )
@@ -176,7 +176,7 @@ async def setup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"Grupo:       {chat.title}\n"
                 f"Telegram ID: {chat.id}"
                 f"</pre>\n\n"
-                f"<b>Proximos passos:</b>\n"
+                f"<b>Próximos passos:</b>\n"
                 f"1. Crie planos de assinatura no painel web\n"
                 f"2. Compartilhe o link de convite com seus clientes"
             )
@@ -195,9 +195,9 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Se for no privado, mostrar resumo com link
     if chat.type == 'private':
         text = (
-            "<b>Relatorios e Estatisticas</b>\n\n"
-            "Acesse o painel completo com graficos, receita, "
-            "assinantes e historico de transacoes pelo portal:"
+            "<b>Relatórios e Estatísticas</b>\n\n"
+            "Acesse o painel completo com gráficos, receita, "
+            "assinantes e histórico de transações pelo portal:"
         )
         keyboard = [
             [InlineKeyboardButton("Abrir Dashboard", url="https://televip.app/dashboard")]
@@ -220,10 +220,10 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Responder no privado com link pro dashboard
     group_title = escape_html(chat.title or 'Grupo')
     text = (
-        f"<b>Relatorios — {group_title}</b>\n\n"
-        "Acesse o painel completo com graficos, receita, "
-        "assinantes e historico de transacoes pelo portal:"
-        f"\n\n<i>Respondido no privado para nao expor no grupo "
+        f"<b>Relatórios — {group_title}</b>\n\n"
+        "Acesse o painel completo com gráficos, receita, "
+        "assinantes e histórico de transações pelo portal:"
+        f"\n\n<i>Respondido no privado para não expor no grupo "
         f"<b>{group_title}</b>.</i>"
     )
     keyboard = [
@@ -248,7 +248,7 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(
             chat_id=chat.id,
             text=f"{user.mention_html()}, te enviei no privado. "
-                 f"Se nao recebeu, inicie o bot: @{bot_me.username}",
+                 f"Se não recebeu, inicie o bot: @{bot_me.username}",
             parse_mode=ParseMode.HTML,
         )
 
@@ -293,7 +293,7 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             group_title = escape_html(chat.title or 'Grupo')
             text += (
-                f"\n\n<i>Respondido no privado para nao expor no grupo "
+                f"\n\n<i>Respondido no privado para não expor no grupo "
                 f"<b>{group_title}</b>.</i>"
             )
             try:
@@ -307,7 +307,7 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await context.bot.send_message(
                     chat_id=chat.id,
                     text=f"{user.mention_html()}, te enviei no privado. "
-                         f"Se nao recebeu, inicie o bot: @{bot_me.username}",
+                         f"Se não recebeu, inicie o bot: @{bot_me.username}",
                     parse_mode=ParseMode.HTML,
                 )
 
@@ -423,7 +423,7 @@ async def confirm_broadcast_private(update: Update, context: ContextTypes.DEFAUL
         f"<b>Confirmar Broadcast — {group_title}</b>\n\n"
         f"<b>Mensagem:</b>\n{escaped_message}\n\n"
         f"Deseja enviar esta mensagem para todos os assinantes ativos?"
-        f"\n\n<i>Respondido no privado para nao expor no grupo "
+        f"\n\n<i>Respondido no privado para não expor no grupo "
         f"<b>{group_title}</b>.</i>"
     )
     keyboard = [
@@ -444,8 +444,8 @@ async def confirm_broadcast_private(update: Update, context: ContextTypes.DEFAUL
         bot_me = await context.bot.get_me()
         await context.bot.send_message(
             chat_id=chat.id,
-            text=f"{user.mention_html()}, te enviei a confirmacao no privado. "
-                 f"Se nao recebeu, inicie o bot: @{bot_me.username}",
+            text=f"{user.mention_html()}, te enviei a confirmação no privado. "
+                 f"Se não recebeu, inicie o bot: @{bot_me.username}",
             parse_mode=ParseMode.HTML,
         )
 
@@ -540,10 +540,10 @@ async def handle_broadcast_confirm(update: Update, context: ContextTypes.DEFAULT
 
                 if anti_leak:
                     msg_text += (
-                        "\n\n<i>&#9888; Conteudo exclusivo e confidencial. "
-                        "Nao salve, copie ou compartilhe. "
-                        "Temos rastreamento avancado que identifica vazamentos. "
-                        "Vazadores serao removidos permanentemente.</i>"
+                        "\n\n<i>&#9888; Conteúdo exclusivo e confidencial. "
+                        "Não salve, copie ou compartilhe. "
+                        "Temos rastreamento avançado que identifica vazamentos. "
+                        "Vazadores serão removidos permanentemente.</i>"
                     )
                     from bot.utils.watermark import watermark_text
                     msg_text = watermark_text(msg_text, sub.id)
@@ -727,7 +727,7 @@ async def handle_join_request(update: Update, context: ContextTypes.DEFAULT_TYPE
                 pass  # Não é crítico se falhar
 
 async def handle_new_chat_members(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handler para novos membros no chat - verificacao rapida de assinatura"""
+    """Handler para novos membros no chat - verificação rápida de assinatura"""
     message = update.message
 
     if not message or not message.new_chat_members:
@@ -736,7 +736,7 @@ async def handle_new_chat_members(update: Update, context: ContextTypes.DEFAULT_
     chat = message.chat
 
     for new_member in message.new_chat_members:
-        # Ignorar se for o proprio bot
+        # Ignorar se for o próprio bot
         if new_member.id == context.bot.id:
             continue
 
@@ -752,19 +752,19 @@ async def handle_new_chat_members(update: Update, context: ContextTypes.DEFAULT_
             if not group:
                 continue
 
-            # Verificar se esta na lista de excecao (whitelist criador ou system)
+            # Verificar se esta na lista de exceção (whitelist criador ou system)
             if group.is_whitelisted(str(new_member.id)) or group.is_system_whitelisted(str(new_member.id)):
-                logger.info(f"Usuario {new_member.id} na whitelist do grupo {chat.id} - permitido")
+                logger.info(f"Usuário {new_member.id} na whitelist do grupo {chat.id} - permitido")
                 continue
 
             # Verificar se é admin/creator do grupo (moderadores)
             try:
                 member_info = await context.bot.get_chat_member(chat.id, new_member.id)
                 if member_info.status in ['administrator', 'creator']:
-                    logger.info(f"Usuario {new_member.id} e admin do grupo {chat.id} - permitido")
+                    logger.info(f"Usuário {new_member.id} é admin do grupo {chat.id} - permitido")
                     continue
             except Exception:
-                pass  # Se falhar, continua verificacao normal
+                pass  # Se falhar, continua verificação normal
 
             subscription = session.query(Subscription).filter_by(
                 group_id=group.id,
@@ -784,7 +784,7 @@ async def handle_new_chat_members(update: Update, context: ContextTypes.DEFAULT_
                         user_id=new_member.id,
                         only_if_banned=True
                     )
-                    logger.warning(f"Usuario {new_member.id} removido do grupo {chat.id} - sem assinatura")
+                    logger.warning(f"Usuário {new_member.id} removido do grupo {chat.id} - sem assinatura")
 
                     # Delete the "joined" system message to avoid confusion
                     try:
@@ -809,10 +809,10 @@ async def handle_new_chat_members(update: Update, context: ContextTypes.DEFAULT_
                         pass  # User may have blocked bot
 
                 except Exception as e:
-                    logger.error(f"Erro ao remover usuario nao autorizado: {e}")
+                    logger.error(f"Erro ao remover usuário não autorizado: {e}")
             else:
                 # Authorized — send welcome privately
-                logger.info(f"Usuario {new_member.id} autorizado no grupo {chat.id}")
+                logger.info(f"Usuário {new_member.id} autorizado no grupo {chat.id}")
                 remaining = format_remaining_text(subscription.end_date)
                 group_name = escape_html(group.name)
                 plan_name = escape_html(subscription.plan.name) if subscription.plan else "N/A"
@@ -865,7 +865,7 @@ async def handle_chat_member_update(update: Update, context: ContextTypes.DEFAUL
 
         # Verificar whitelists
         if group.is_whitelisted(str(user.id)) or group.is_system_whitelisted(str(user.id)):
-            logger.info(f"Usuario {user.id} na whitelist do canal {chat.id} - permitido")
+            logger.info(f"Usuário {user.id} na whitelist do canal {chat.id} - permitido")
             return
 
         # Verificar se é admin/creator
@@ -888,7 +888,7 @@ async def handle_chat_member_update(update: Update, context: ContextTypes.DEFAUL
             try:
                 await context.bot.ban_chat_member(chat_id=chat.id, user_id=user.id)
                 await context.bot.unban_chat_member(chat_id=chat.id, user_id=user.id, only_if_banned=True)
-                logger.warning(f"Usuario {user.id} removido do canal {chat.id} - sem assinatura")
+                logger.warning(f"Usuário {user.id} removido do canal {chat.id} - sem assinatura")
 
                 group_name = escape_html(group.name)
 
@@ -905,10 +905,10 @@ async def handle_chat_member_update(update: Update, context: ContextTypes.DEFAUL
                 except Exception:
                     pass
             except Exception as e:
-                logger.error(f"Erro ao remover usuario de canal: {e}")
+                logger.error(f"Erro ao remover usuário de canal: {e}")
         else:
             # Autorizado — enviar boas-vindas no privado
-            logger.info(f"Usuario {user.id} autorizado no canal {chat.id}")
+            logger.info(f"Usuário {user.id} autorizado no canal {chat.id}")
             group_name = escape_html(group.name)
             plan_name = escape_html(subscription.plan.name) if subscription.plan else "N/A"
             remaining = format_remaining_text(subscription.end_date)

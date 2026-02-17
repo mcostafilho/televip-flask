@@ -209,7 +209,7 @@ html:has(.dashboard-wrapper) body {
     50%      { box-shadow: 0 0 0 4px rgba(52, 211, 153, 0); }
 }
 
-/* === Grid de Estatisticas === */
+/* === Grid de Estatísticas === */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -419,7 +419,7 @@ html:has(.dashboard-wrapper) body {
 .stat-sparkline .bar.yellow { background: var(--galactic-warning); }
 .stat-sparkline .bar.cyan   { background: var(--galactic-accent-2); }
 
-/* === Cards de Conteudo === */
+/* === Cards de Conteúdo === */
 .content-card {
     background: var(--galactic-card);
     backdrop-filter: var(--galactic-glass-blur);

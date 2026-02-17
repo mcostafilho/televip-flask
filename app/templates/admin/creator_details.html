@@ -30,7 +30,7 @@
                         <h1 class="h3 mb-1">{{ creator.name }}</h1>
                         <p class="text-muted mb-0">
                             {{ creator.email }} &middot; @{{ creator.username }}
-                            &middot; Telegram: {{ creator.telegram_id or 'Nao configurado' }}
+                            &middot; Telegram: {{ creator.telegram_id or 'Não configurado' }}
                             &middot; Cadastro: {{ creator.created_at.strftime('%d/%m/%Y %H:%M') }}
                         </p>
                     </div>
@@ -369,7 +369,7 @@
             {% else %}
             <div class="empty-state-v2">
                 <div class="empty-icon"><i class="bi bi-clock-history"></i></div>
-                <p class="text-muted mb-0">Nenhuma transacao ainda</p>
+                <p class="text-muted mb-0">Nenhuma transação ainda</p>
             </div>
             {% endif %}
         </div>

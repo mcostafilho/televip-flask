@@ -224,7 +224,7 @@
 
     // --- Type A: Space fact pill badges (original style) ---
     var facts = [
-        { icon: 'bi-globe-americas', text: 'ISS orbita a', val: '27.600 km/h' },
+        { icon: 'bi-globe-americas', text: 'ISS órbita a', val: '27.600 km/h' },
         { icon: 'bi-rocket-takeoff', text: 'Distância à Lua:', val: '384.400 km' },
         { icon: 'bi-people-fill', text: 'Humanos no espaço:', val: '7 agora' },
         { icon: 'bi-sun-fill', text: '1M de Terras cabem', val: 'no Sol' },

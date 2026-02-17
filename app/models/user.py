@@ -34,7 +34,7 @@ class Creator(UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     is_blocked = db.Column(db.Boolean, default=False)
 
-    # Aparencia da pagina publica
+    # Aparência da página pública
     page_theme = db.Column(db.String(20), default='galactic', nullable=False, server_default='galactic')
 
     # Taxas personalizadas (NULL = usar padrao do sistema)

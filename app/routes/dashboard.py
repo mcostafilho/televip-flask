@@ -317,7 +317,7 @@ def withdrawals():
 def withdraw():
     """Solicitar saque com validação de saldo"""
     if is_admin_viewing():
-        flash('Acao nao permitida no modo admin.', 'warning')
+        flash('Ação não permitida no modo admin.', 'warning')
         return redirect(url_for('dashboard.index'))
 
     from app.models import Withdrawal
@@ -458,7 +458,7 @@ def profile():
 def profile_reset_password():
     """Enviar email de redefinição de senha para o usuário logado"""
     if is_admin_viewing():
-        flash('Acao nao permitida no modo admin.', 'warning')
+        flash('Ação não permitida no modo admin.', 'warning')
         return redirect(url_for('dashboard.profile'))
 
     if not current_user.password_hash:
@@ -481,7 +481,7 @@ def profile_reset_password():
 def update_profile():
     """Atualizar perfil"""
     if is_admin_viewing():
-        flash('Acao nao permitida no modo admin.', 'warning')
+        flash('Ação não permitida no modo admin.', 'warning')
         return redirect(url_for('dashboard.profile'))
 
     name = request.form.get('name')
@@ -675,7 +675,7 @@ def upload_avatar():
 def delete_account():
     """Excluir conta (LGPD) - soft delete com anonimização"""
     if is_admin_viewing():
-        flash('Acao nao permitida no modo admin.', 'warning')
+        flash('Ação não permitida no modo admin.', 'warning')
         return redirect(url_for('dashboard.profile'))
 
     from flask_login import logout_user

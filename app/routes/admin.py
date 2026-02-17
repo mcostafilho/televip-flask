@@ -173,7 +173,7 @@ def users():
 @login_required
 @admin_required
 def view_creator_dashboard(creator_id):
-    """Admin entra no modo de visualizacao do criador"""
+    """Admin entra no modo de visualização do criador"""
     creator = Creator.query.get_or_404(creator_id)
     session['admin_viewing_id'] = creator.id
     return redirect(url_for('dashboard.index'))
@@ -280,11 +280,11 @@ def update_creator_fees(creator_id):
             fixed_val = Decimal(fixed) if fixed else None
             pct_val = Decimal(pct) / 100 if pct else None
         except Exception:
-            flash('Valores de taxa invalidos!', 'error')
+            flash('Valores de taxa inválidos!', 'error')
             return redirect(url_for('admin.creator_details', creator_id=creator_id))
 
         if fixed_val is not None and fixed_val < 0:
-            flash('Taxa fixa nao pode ser negativa!', 'error')
+            flash('Taxa fixa não pode ser negativa!', 'error')
             return redirect(url_for('admin.creator_details', creator_id=creator_id))
         if pct_val is not None and (pct_val < 0 or pct_val > 1):
             flash('Taxa percentual deve ser entre 0% e 100%!', 'error')
@@ -319,11 +319,11 @@ def update_group_fees(group_id):
             fixed_val = Decimal(fixed) if fixed else None
             pct_val = Decimal(pct) / 100 if pct else None
         except Exception:
-            flash('Valores de taxa invalidos!', 'error')
+            flash('Valores de taxa inválidos!', 'error')
             return redirect(url_for('admin.creator_details', creator_id=creator_id))
 
         if fixed_val is not None and fixed_val < 0:
-            flash('Taxa fixa nao pode ser negativa!', 'error')
+            flash('Taxa fixa não pode ser negativa!', 'error')
             return redirect(url_for('admin.creator_details', creator_id=creator_id))
         if pct_val is not None and (pct_val < 0 or pct_val > 1):
             flash('Taxa percentual deve ser entre 0% e 100%!', 'error')
@@ -474,6 +474,6 @@ def investigate_creator(creator_id):
 @login_required
 @admin_required
 def exit_creator_view():
-    """Sair do modo de visualizacao e voltar ao painel admin"""
+    """Sair do modo de visualização e voltar ao painel admin"""
     session.pop('admin_viewing_id', None)
     return redirect(url_for('admin.index'))

@@ -148,8 +148,8 @@ def _notify_creator_leak_detected(group, sub, incident):
         f"<b>Telegram ID:</b> <code>{sub.telegram_user_id}</code>\n"
         f"<b>Plano:</b> {escape(sub.plan.name) if sub.plan else 'N/A'}\n"
         f"<b>Status:</b> {sub.status}\n\n"
-        f"O suspeito foi adicionado a lista de vazadores.\n"
-        f"Acesse o painel Anti-Vazamento para decidir a acao (bloquear, remover, etc)."
+        f"O suspeito foi adicionado à lista de vazadores.\n"
+        f"Acesse o painel Anti-Vazamento para decidir a ação (bloquear, remover, etc)."
     )
     try:
         requests.post(
@@ -204,7 +204,7 @@ def create():
         if chat_type not in ('group', 'channel'):
             chat_type = 'group'
 
-        # Validar formato do telegram_id (deve ser numerico, opcionalmente com -)
+        # Validar formato do telegram_id (deve ser numérico, opcionalmente com -)
         if telegram_id and not telegram_id.lstrip('-').isdigit():
             flash('ID do Telegram deve ser numérico.', 'error')
             return render_template('dashboard/group_form.html',
@@ -628,7 +628,7 @@ def broadcast(group_id):
                 header[:4] == b'\x1a\x45\xdf\xa3'         # WebM (EBML)
             )
             if not valid_magic:
-                flash('Arquivo invalido. Envie uma imagem ou video real.', 'error')
+                flash('Arquivo inválido. Envie uma imagem ou vídeo real.', 'error')
                 return redirect(url_for('groups.broadcast', group_id=group_id))
             # Check file size (max 50MB)
             media_file.seek(0, 2)
@@ -646,7 +646,7 @@ def broadcast(group_id):
         # Warning is sent as separate message for media, so no overhead deduction
         max_length = 1024 if has_media else 4000
         if message and len(message) > max_length:
-            flash(f'Mensagem muito longa. Maximo de {max_length} caracteres{"  (limite de legenda)" if has_media else ""}.', 'error')
+            flash(f'Mensagem muito longa. Máximo de {max_length} caracteres{"  (limite de legenda)" if has_media else ""}.', 'error')
             return redirect(url_for('groups.broadcast', group_id=group_id))
 
         # Broadcast cooldown — 5 minutes between broadcasts
@@ -716,10 +716,10 @@ def broadcast(group_id):
                 msg_text = f"<b>Mensagem de {group_name_safe}</b>\n\n{msg_safe}" if msg_safe else f"<b>Mensagem de {group_name_safe}</b>"
 
                 anti_leak_warning = (
-                    "<i>&#9888; Conteudo exclusivo e confidencial. "
-                    "Nao salve, copie ou compartilhe. "
-                    "Temos rastreamento avancado que identifica vazamentos. "
-                    "Vazadores serao removidos permanentemente.</i>"
+                    "<i>&#9888; Conteúdo exclusivo e confidencial. "
+                    "Não salve, copie ou compartilhe. "
+                    "Temos rastreamento avançado que identifica vazamentos. "
+                    "Vazadores serão removidos permanentemente.</i>"
                 ) if group.anti_leak_enabled else None
 
                 if has_media:
@@ -888,7 +888,7 @@ def subscribers(id):
         (page - 1) * per_page
     ).limit(per_page).all()
 
-    # Estatisticas
+    # Estatísticas
     active_count = Subscription.query.filter_by(group_id=id, status='active').count()
     expired_count = Subscription.query.filter_by(group_id=id, status='expired').count()
     expiring_soon = Subscription.query.filter(

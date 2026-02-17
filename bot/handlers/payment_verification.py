@@ -103,7 +103,7 @@ async def handle_payment_confirmed(query, context, transaction, db_session):
     # IDEMPOTENCY: If transaction is already completed, skip processing
     # This prevents race condition from multiple rapid clicks
     if transaction.status == 'completed':
-        logger.info(f"Transacao {transaction.id} ja completada, pulando processamento duplicado")
+        logger.info(f"Transação {transaction.id} já completada, pulando processamento duplicado")
         subscription = transaction.subscription
         # Still show the success message with invite link
     else:

@@ -85,7 +85,7 @@ async def antileak_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             try:
                 await context.bot.send_message(
                     chat_id=user.id,
-                    text="Grupo nao configurado. Use /setup primeiro.",
+                    text="Grupo não configurado. Use /setup primeiro.",
                     parse_mode=ParseMode.HTML,
                 )
             except Exception:
@@ -114,25 +114,25 @@ async def antileak_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         layer1 = "ON" if has_protected else "OFF"
         layer2 = "ON" if invite_blocked else "OFF"
-        layer2_text = "membros nao podem convidar" if invite_blocked else "membros podem convidar"
+        layer2_text = "membros não podem convidar" if invite_blocked else "membros podem convidar"
         layer3 = "ON" if enabled else "OFF"
-        layer3_text = "bot envia com protecao" if enabled else "desativado"
+        layer3_text = "bot envia com proteção" if enabled else "desativado"
         layer4 = "ON" if enabled else "OFF"
         layer4_text = "ativa em broadcasts" if enabled else "desativada"
 
         text = (
             f"<b>Anti-Vazamento — {group_name}</b>\n"
             f"Status: <b>[{status_icon}] {status_text}</b>\n\n"
-            f"<b>Camadas de protecao:</b>\n"
+            f"<b>Camadas de proteção:</b>\n"
         )
 
         if not has_protected:
             text += (
-                f"[OFF] Protecao de conteudo (Telegram)\n"
+                f"[OFF] Proteção de conteúdo (Telegram)\n"
                 f"      <b>ESSENCIAL para bloquear encaminhamentos!</b>\n"
             )
         else:
-            text += f"[ON] Protecao de conteudo (Telegram) — ativada\n"
+            text += f"[ON] Proteção de conteúdo (Telegram) — ativada\n"
 
         text += (
             f"[{layer2}] Bloqueio de convites — {layer2_text}\n"
@@ -142,20 +142,20 @@ async def antileak_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if not has_protected:
             text += (
-                "\n<b>IMPORTANTE:</b> Sem a protecao nativa do Telegram, "
+                "\n<b>IMPORTANTE:</b> Sem a proteção nativa do Telegram, "
                 "membros podem encaminhar mensagens para fora do grupo. "
-                "O bot so consegue monitorar o que acontece <b>dentro</b> "
+                "O bot só consegue monitorar o que acontece <b>dentro</b> "
                 "do grupo.\n\n"
                 "<b>Como ativar:</b>\n"
-                "1. Abra as configuracoes do grupo\n"
-                "2. Toque em <b>Permissoes</b>\n"
-                "3. Ative <b>Restringir salvar conteudo</b>\n\n"
-                "<i>Isso impede forward, copia e print de todas as "
+                "1. Abra as configurações do grupo\n"
+                "2. Toque em <b>Permissões</b>\n"
+                "3. Ative <b>Restringir salvar conteúdo</b>\n\n"
+                "<i>Isso impede forward, cópia e print de todas as "
                 "mensagens do grupo.</i>\n"
             )
 
         text += (
-            f"\n<i>Respondido no privado para nao expor no grupo "
+            f"\n<i>Respondido no privado para não expor no grupo "
             f"<b>{group_name}</b>.</i>"
         )
 
@@ -178,7 +178,7 @@ async def antileak_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(
                 chat_id=chat.id,
                 text=f"{user.mention_html()}, te enviei o status no privado. "
-                     f"Se nao recebeu, inicie o bot: @{bot_me.username}",
+                     f"Se não recebeu, inicie o bot: @{bot_me.username}",
                 parse_mode=ParseMode.HTML,
             )
 
@@ -193,7 +193,7 @@ async def handle_antileak_toggle(update: Update, context: ContextTypes.DEFAULT_T
     with get_db_session() as session:
         group = session.query(Group).get(group_id)
         if not group:
-            await query.edit_message_text("Grupo nao encontrado.")
+            await query.edit_message_text("Grupo não encontrado.")
             return
 
         # Toggle
@@ -210,7 +210,7 @@ async def handle_antileak_toggle(update: Update, context: ContextTypes.DEFAULT_T
             else:
                 await restore_default_permissions(context.bot, group)
         except Exception as e:
-            logger.warning(f"Erro ao alterar permissoes do grupo {group.id}: {e}")
+            logger.warning(f"Erro ao alterar permissões do grupo {group.id}: {e}")
 
         status = "ativado" if enabled else "desativado"
         btn_label = "Desativar Anti-Leak" if enabled else "Ativar Anti-Leak"
@@ -230,21 +230,21 @@ async def handle_antileak_toggle(update: Update, context: ContextTypes.DEFAULT_T
         if enabled:
             text += (
                 "<b>Protecoes ativas:</b>\n"
-                "- Membros nao podem convidar outros\n"
-                "- Mensagens do bot protegidas contra copia\n"
-                "- Marca d'agua invisivel em broadcasts\n"
+                "- Membros não podem convidar outros\n"
+                "- Mensagens do bot protegidas contra cópia\n"
+                "- Marca d'agua invisível em broadcasts\n"
                 "- Forwards e links de convite detectados e removidos\n"
             )
             if not has_protected:
                 text += (
                     "\n<b>IMPORTANTE:</b> Para bloquear encaminhamentos "
-                    "para fora do grupo, ative tambem a protecao nativa "
+                    "para fora do grupo, ative também a proteção nativa "
                     "do Telegram:\n"
-                    "Configuracoes do grupo > Permissoes > "
-                    "<b>Restringir salvar conteudo</b>\n"
+                    "Configuracoes do grupo > Permissões > "
+                    "<b>Restringir salvar conteúdo</b>\n"
                 )
         else:
-            text += "Todas as protecoes foram desativadas.\n"
+            text += "Todas as proteções foram desativadas.\n"
 
         keyboard = [[
             InlineKeyboardButton(btn_label, callback_data=f"antileak_toggle_{group.id}")
@@ -315,8 +315,8 @@ async def antileak_message_monitor(update: Update, context: ContextTypes.DEFAULT
             text=(
                 f"<b>Mensagem removida</b>\n\n"
                 f"Sua mensagem em <b>{safe_name}</b> foi removida.\n"
-                f"Motivo: conteudo protegido ({reasons}).\n\n"
-                f"<i>Este grupo tem protecao anti-vazamento ativada.</i>"
+                f"Motivo: conteúdo protegido ({reasons}).\n\n"
+                f"<i>Este grupo tem proteção anti-vazamento ativada.</i>"
             ),
             parse_mode=ParseMode.HTML,
         )

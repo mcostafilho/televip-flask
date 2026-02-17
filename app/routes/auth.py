@@ -129,11 +129,11 @@ def register():
         if len(password) < 8:
             errors.append('A senha deve ter pelo menos 8 caracteres')
         elif not any(c.isupper() for c in password):
-            errors.append('A senha deve conter pelo menos uma letra maiuscula')
+            errors.append('A senha deve conter pelo menos uma letra maiúscula')
         elif not any(c.isdigit() for c in password):
-            errors.append('A senha deve conter pelo menos um numero')
+            errors.append('A senha deve conter pelo menos um número')
         elif password != confirm_password:
-            errors.append('As senhas nao coincidem')
+            errors.append('As senhas não coincidem')
 
         # Se houver erros, mostrar
         if errors:
@@ -154,7 +154,7 @@ def register():
             db.session.add(user)
             db.session.commit()
 
-            # Enviar email de confirmacao
+            # Enviar email de confirmação
             try:
                 token = generate_confirmation_token(user.email)
                 send_confirmation_email(user, token)
@@ -220,9 +220,9 @@ def reset_password(token):
         if len(password) < 8:
             flash('A senha deve ter pelo menos 8 caracteres', 'error')
         elif not any(c.isupper() for c in password) or not any(c.isdigit() for c in password):
-            flash('A senha deve conter pelo menos uma letra maiuscula e um numero', 'error')
+            flash('A senha deve conter pelo menos uma letra maiúscula e um número', 'error')
         elif password != confirm_password:
-            flash('As senhas nao coincidem', 'error')
+            flash('As senhas não coincidem', 'error')
         else:
             # Atualizar senha
             user.set_password(password)
@@ -239,16 +239,16 @@ def confirm_email(token):
     """Confirmar email via token"""
     email = verify_confirmation_token(token)
     if not email:
-        flash('Link de confirmacao invalido ou expirado.', 'error')
+        flash('Link de confirmação inválido ou expirado.', 'error')
         return redirect(url_for('auth.login'))
 
     user = Creator.query.filter_by(email=email).first()
     if not user:
-        flash('Usuario nao encontrado.', 'error')
+        flash('Usuário não encontrado.', 'error')
         return redirect(url_for('auth.login'))
 
     if user.is_verified:
-        flash('Email ja confirmado! Faca login.', 'info')
+        flash('Email já confirmado! Faça login.', 'info')
         return redirect(url_for('auth.login'))
 
     user.is_verified = True
@@ -260,14 +260,14 @@ def confirm_email(token):
     except Exception:
         logger.error("Failed to send welcome email", exc_info=True)
 
-    flash('Email confirmado com sucesso! Faca login para comecar.', 'success')
+    flash('Email confirmado com sucesso! Faça login para começar.', 'success')
     return redirect(url_for('auth.login'))
 
 
 @bp.route('/resend-confirmation', methods=['POST'])
 @limiter.limit("3 per minute")
 def resend_confirmation():
-    """Reenviar email de confirmacao"""
+    """Reenviar email de confirmação"""
     email = request.form.get('email', '').strip().lower()
 
     user = Creator.query.filter_by(email=email).first()
@@ -278,7 +278,7 @@ def resend_confirmation():
         except Exception:
             logger.error("Failed to resend confirmation email", exc_info=True)
 
-    flash('Se o email estiver cadastrado, voce recebera um novo link de confirmacao.', 'info')
+    flash('Se o email estiver cadastrado, você receberá um novo link de confirmação.', 'info')
     return redirect(url_for('auth.login'))
 
 

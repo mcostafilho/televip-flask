@@ -15,7 +15,7 @@ from app.models import Subscription, Group, Transaction
 
 logger = logging.getLogger(__name__)
 
-# Referencia global para o bot
+# Referência global para o bot
 _application = None
 
 
@@ -58,7 +58,7 @@ async def send_reminders_loop():
 
     while True:
         try:
-            logger.info("Enviando lembretes de renovacao...")
+            logger.info("Enviando lembretes de renovação...")
             await send_renewal_reminders()
             await asyncio.sleep(43200)  # 12 horas
         except asyncio.CancelledError:
@@ -158,7 +158,7 @@ async def check_expired_subscriptions():
                 if has_pending_payment:
                     logger.info(
                         f"Sub {sub.id}: pagamento pendente encontrado, "
-                        f"adiando remoção do usuario {sub.telegram_user_id}"
+                        f"adiando remoção do usuário {sub.telegram_user_id}"
                     )
                     continue
 
@@ -190,10 +190,10 @@ async def check_expired_subscriptions():
 
 
 async def remove_from_group(subscription):
-    """Remover usuario do grupo via Telegram Bot API (respeitando whitelist e admins).
+    """Remover usuário do grupo via Telegram Bot API (respeitando whitelist e admins).
     Returns True if user was actually removed, False otherwise."""
     if not _application:
-        logger.warning("Bot nao disponivel para remover usuario")
+        logger.warning("Bot não disponível para remover usuário")
         return False
 
     try:
@@ -206,7 +206,7 @@ async def remove_from_group(subscription):
 
         # Verificar se esta na whitelist (criador) ou system whitelist (plataforma)
         if group.is_whitelisted(str(user_id)) or group.is_system_whitelisted(str(user_id)):
-            logger.info(f"Usuario {user_id} na whitelist do grupo {chat_id} - nao removido")
+            logger.info(f"Usuário {user_id} na whitelist do grupo {chat_id} - não removido")
             return False
 
         # Verificar status do membro no grupo
@@ -216,7 +216,7 @@ async def remove_from_group(subscription):
                 user_id=user_id
             )
             if member_info.status in ['administrator', 'creator']:
-                logger.info(f"Usuario {user_id} e admin do grupo {chat_id} - nao removido")
+                logger.info(f"Usuário {user_id} é admin do grupo {chat_id} - não removido")
                 return False
             if member_info.status in ['left', 'kicked']:
                 # Já não está no grupo
@@ -236,11 +236,11 @@ async def remove_from_group(subscription):
             only_if_banned=True
         )
 
-        logger.info(f"Usuario {user_id} removido do grupo {chat_id}")
+        logger.info(f"Usuário {user_id} removido do grupo {chat_id}")
         return True
 
     except TelegramError as e:
-        logger.error(f"Erro Telegram ao remover usuario: {e}")
+        logger.error(f"Erro Telegram ao remover usuário: {e}")
         return False
     except Exception as e:
         logger.error(f"Erro ao remover do grupo: {e}")
@@ -248,7 +248,7 @@ async def remove_from_group(subscription):
 
 
 async def notify_expiration_warning(subscription, grace_days=2):
-    """Avisar usuario que assinatura expirou — tem X dias para renovar antes da remoção"""
+    """Avisar usuário que assinatura expirou — tem X dias para renovar antes da remoção"""
     if not _application:
         return
 
@@ -284,13 +284,13 @@ async def notify_expiration_warning(subscription, grace_days=2):
         )
 
     except TelegramError:
-        logger.warning(f"Nao foi possivel avisar usuario {subscription.telegram_user_id}")
+        logger.warning(f"Não foi possível avisar usuário {subscription.telegram_user_id}")
     except Exception as e:
-        logger.error(f"Erro ao notificar expiracao: {e}")
+        logger.error(f"Erro ao notificar expiração: {e}")
 
 
 async def notify_removal(subscription):
-    """Notificar usuario que foi removido do grupo após grace period"""
+    """Notificar usuário que foi removido do grupo após grace period"""
     if not _application:
         return
 
@@ -326,9 +326,9 @@ async def notify_removal(subscription):
         )
 
     except TelegramError:
-        logger.warning(f"Nao foi possivel notificar remocao de {subscription.telegram_user_id}")
+        logger.warning(f"Não foi possível notificar remoção de {subscription.telegram_user_id}")
     except Exception as e:
-        logger.error(f"Erro ao notificar remocao: {e}")
+        logger.error(f"Erro ao notificar remoção: {e}")
 
 
 async def audit_members_loop():
@@ -349,7 +349,7 @@ async def audit_members_loop():
 
 
 async def audit_group_members():
-    """Verificar se usuarios sem assinatura ativa ainda estao nos grupos"""
+    """Verificar se usuários sem assinatura ativa ainda estão nos grupos"""
     if not _application:
         return
 
@@ -434,7 +434,7 @@ async def audit_group_members():
                             )
                             total_removed += 1
                             logger.info(
-                                f"Audit: usuario {user_id} removido do grupo "
+                                f"Audit: usuário {user_id} removido do grupo "
                                 f"{group.name} (assinatura {sub.status})"
                             )
 
@@ -447,7 +447,7 @@ async def audit_group_members():
                     # Rate limiting: avoid hitting Telegram API too fast
                     await asyncio.sleep(0.5)
 
-            logger.info(f"Auditoria concluida: {total_removed} usuarios removidos")
+            logger.info(f"Auditoria concluída: {total_removed} usuários removidos")
 
             # Reforçar permissões anti-leak em grupos com proteção ativa
             from bot.handlers.antileak import enforce_antileak_permissions
@@ -456,7 +456,7 @@ async def audit_group_members():
                     try:
                         await enforce_antileak_permissions(_application.bot, group)
                     except Exception as e:
-                        logger.warning(f"Erro ao reforcar anti-leak no grupo {group.id}: {e}")
+                        logger.warning(f"Erro ao reforçar anti-leak no grupo {group.id}: {e}")
 
     except Exception as e:
         logger.error(f"Erro na auditoria de membros: {e}")
@@ -519,7 +519,7 @@ async def send_renewal_reminders():
 
 
 async def send_renewal_notification(subscription, days_left):
-    """Enviar lembrete individual de renovacao - diferenciado por tipo"""
+    """Enviar lembrete individual de renovação - diferenciado por tipo"""
     if not _application:
         return
 
@@ -655,7 +655,7 @@ async def send_renewal_notification(subscription, days_left):
         )
 
     except TelegramError:
-        pass  # Usuario bloqueou o bot
+        pass  # Usuário bloqueou o bot
     except Exception as e:
         logger.error(f"Erro ao enviar lembrete: {e}")
 
